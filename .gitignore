@@ -1,11 +1,20 @@
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*.egg-info/
 venv/
 .env
-.venv/
-*.egg-info/
+
+# Node
+node_modules/
 dist/
-build/
-.idea/
+.vite/
+*.timestamp-*.mjs
+
+# IDE
 .vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
