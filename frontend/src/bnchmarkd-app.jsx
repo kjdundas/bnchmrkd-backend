@@ -1596,17 +1596,17 @@ export default function BnchMrkdApp() {
             </div>
 
             {/* Title */}
-            <h1 className="text-6xl sm:text-7xl font-bold text-white mb-4 tracking-tight" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif", fontWeight: 700}}>
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold text-white mb-3 sm:mb-4 tracking-tight" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif", fontWeight: 700}}>
               bnchmrkd<span className="text-orange-500">.</span>
             </h1>
 
             {/* Slogan */}
-            <p className="text-xl sm:text-2xl text-slate-400 font-light mb-10 tracking-wide">
+            <p className="text-lg sm:text-xl md:text-2xl text-slate-400 font-light mb-8 sm:mb-10 tracking-wide">
               The context behind sports performance
             </p>
 
             {/* How it works steps */}
-            <div className="flex items-center gap-3 sm:gap-5 mb-12">
+            <div className="flex items-center gap-2 sm:gap-5 mb-8 sm:mb-12">
               {[
                 { icon: Upload, label: 'Enter Results' },
                 { icon: Target, label: 'Get Benchmarked' },
@@ -1616,13 +1616,13 @@ export default function BnchMrkdApp() {
                 return (
                   <React.Fragment key={i}>
                     {i > 0 && (
-                      <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
+                      <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600 flex-shrink-0" />
                     )}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-                        <StepIcon className="w-4 h-4 text-orange-400" />
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+                        <StepIcon className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />
                       </div>
-                      <span className="text-sm font-medium text-slate-300 whitespace-nowrap">{step.label}</span>
+                      <span className="text-xs sm:text-sm font-medium text-slate-300">{step.label}</span>
                     </div>
                   </React.Fragment>
                 );
@@ -1630,24 +1630,24 @@ export default function BnchMrkdApp() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xl">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-xl px-2 sm:px-0">
               <button
                 onClick={() => setCurrentView('categories')}
-                className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.02] transition-all shadow-lg shadow-orange-500/20 text-lg"
+                className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.02] transition-all shadow-lg shadow-orange-500/20 text-base sm:text-lg"
               >
                 <Target className="w-5 h-5" />
                 Benchmark
               </button>
               <button
                 onClick={() => setCurrentView('explorer')}
-                className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-slate-800/80 text-slate-200 font-semibold rounded-xl border border-orange-500/30 hover:bg-slate-700/80 hover:border-orange-500/60 hover:scale-[1.02] transition-all text-lg backdrop-blur-sm"
+                className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 py-3 sm:py-4 bg-slate-800/80 text-slate-200 font-semibold rounded-xl border border-orange-500/30 hover:bg-slate-700/80 hover:border-orange-500/60 hover:scale-[1.02] transition-all text-base sm:text-lg backdrop-blur-sm"
               >
                 <Search className="w-5 h-5" />
                 Explore Athletes
               </button>
               <button
                 onClick={() => setCurrentView('about')}
-                className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-slate-800/80 text-slate-200 font-semibold rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-600 hover:scale-[1.02] transition-all text-lg backdrop-blur-sm"
+                className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 py-3 sm:py-4 bg-slate-800/80 text-slate-200 font-semibold rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-600 hover:scale-[1.02] transition-all text-base sm:text-lg backdrop-blur-sm"
               >
                 <Database className="w-5 h-5" />
                 About Our Data
@@ -2025,21 +2025,21 @@ export default function BnchMrkdApp() {
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-500/8 rounded-full blur-3xl"></div>
           </div>
 
-          <main className="max-w-6xl mx-auto px-4 py-8 relative z-10">
+          <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 relative z-10">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-4 sm:mb-8">
               <button onClick={() => { setCurrentView('landing'); setSelectedAthlete(null); setAthleteProfile(null); setAthleteTrajectory(null); setExplorerSearch(''); setExplorerResults([]); }} className="flex items-center gap-2 text-slate-300 hover:text-orange-400 transition-colors">
                 <ChevronLeft className="w-5 h-5" />
-                <span>Back</span>
+                <span className="hidden sm:inline">Back</span>
               </button>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-xl sm:text-2xl font-bold text-white">
                 Athlete Explorer<span className="text-orange-500">.</span>
               </h1>
-              <div className="w-20"></div>
+              <div className="w-10 sm:w-20"></div>
             </div>
 
             {/* Search + Filter Bar */}
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6">
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-3 sm:p-6 mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -2048,7 +2048,7 @@ export default function BnchMrkdApp() {
                     value={explorerSearch}
                     onChange={(e) => setExplorerSearch(e.target.value)}
                     placeholder="Search 2,322 Olympic athletes..."
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/25 text-lg"
+                    className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-slate-900/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/25 text-base sm:text-lg"
                     autoFocus
                   />
                 </div>
@@ -2074,11 +2074,11 @@ export default function BnchMrkdApp() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Left: Search Results List */}
               <div className="lg:col-span-1">
                 {explorerResults.length > 0 ? (
-                  <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
+                  <div className="space-y-2 max-h-[40vh] lg:max-h-[70vh] overflow-y-auto pr-1 sm:pr-2">
                     {explorerResults.map(a => (
                       <button
                         key={a.id}
@@ -2123,19 +2123,19 @@ export default function BnchMrkdApp() {
                 ) : athleteProfile ? (
                   <div className="space-y-6">
                     {/* Profile Header Card */}
-                    <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
-                      <div className="flex items-start justify-between">
+                    <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div>
-                          <h2 className="text-2xl font-bold text-white">{athleteProfile.name}</h2>
-                          <div className="flex items-center gap-4 mt-2 text-slate-400">
+                          <h2 className="text-xl sm:text-2xl font-bold text-white">{athleteProfile.name}</h2>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-sm sm:text-base text-slate-400">
                             <span className="flex items-center gap-1"><Globe className="w-4 h-4" />{athleteProfile.country || 'Unknown'}</span>
                             {athleteProfile.gender && <span className="flex items-center gap-1"><User className="w-4 h-4" />{athleteProfile.gender}</span>}
                             {athleteProfile.date_of_birth && <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{athleteProfile.date_of_birth}</span>}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="flex flex-wrap gap-1.5 sm:justify-end">
                           {athleteProfile.disciplines && athleteProfile.disciplines.map(d => (
-                            <span key={d} className="inline-block px-3 py-1 bg-orange-500/15 text-orange-400 rounded-full text-sm font-medium ml-2 mb-1">{d}</span>
+                            <span key={d} className="inline-block px-2.5 py-0.5 sm:px-3 sm:py-1 bg-orange-500/15 text-orange-400 rounded-full text-xs sm:text-sm font-medium">{d}</span>
                           ))}
                         </div>
                       </div>
@@ -2162,13 +2162,13 @@ export default function BnchMrkdApp() {
                           </h3>
                           <div className="space-y-2">
                             {athleteProfile.olympic_results.map((r, i) => (
-                              <div key={i} className="flex items-center justify-between bg-slate-900/40 rounded-lg px-4 py-2">
-                                <div>
+                              <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-slate-900/40 rounded-lg px-3 sm:px-4 py-2 gap-1 sm:gap-0">
+                                <div className="text-sm sm:text-base">
                                   <span className="text-white font-medium">{r.games || r.year}</span>
-                                  <span className="text-slate-500 mx-2">·</span>
+                                  <span className="text-slate-500 mx-1 sm:mx-2">·</span>
                                   <span className="text-slate-400">{r.discipline}</span>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 sm:gap-3">
                                   {r.time && <span className="text-orange-400 font-mono">{typeof r.time === 'number' ? r.time.toFixed(2) : r.time}s</span>}
                                   {r.position && <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                                     r.position <= 3 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'
@@ -2189,7 +2189,7 @@ export default function BnchMrkdApp() {
                           <TrendingUp className="w-5 h-5 text-orange-400" />
                           Career Trajectory — {athleteTrajectory.discipline || ''}
                         </h3>
-                        <ResponsiveContainer width="100%" height={350}>
+                        <ResponsiveContainer width="100%" height={280}>
                           <ComposedChart data={athleteTrajectory.seasons
                             .filter(s => s.best_time)
                             .sort((a, b) => (a.age || a.year) - (b.age || b.year))
@@ -2560,11 +2560,11 @@ export default function BnchMrkdApp() {
           <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
             {/* ── SNAPSHOT HEADER ── */}
-            <div className="bg-slate-800/90 rounded-2xl border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="bg-slate-800/90 rounded-2xl border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6">
                 <div>
-                  <p className="text-sm text-orange-400 font-semibold mb-1 uppercase tracking-wider">Quick Snapshot</p>
-                  <h2 className="text-3xl font-bold text-white mb-1">
+                  <p className="text-xs sm:text-sm text-orange-400 font-semibold mb-1 uppercase tracking-wider">Quick Snapshot</p>
+                  <h2 className="text-xl sm:text-3xl font-bold text-white mb-1">
                     {analysisResults.discipline} &bull; {analysisResults.gender} &bull; Age {analysisResults.age}
                   </h2>
                   <p className="text-slate-400">{analysisResults.careerPhase}</p>
@@ -2938,17 +2938,17 @@ export default function BnchMrkdApp() {
             )}
 
             {/* ── SUMMARY HEADER ── */}
-            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
                 <div className="md:col-span-2">
-                  <h2 className="text-4xl font-bold text-white mb-2">{analysisResults.name}</h2>
-                  <p className="text-slate-400 mb-4">
+                  <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">{analysisResults.name}</h2>
+                  <p className="text-sm sm:text-base text-slate-400 mb-4">
                     {analysisResults.discipline} &bull; {analysisResults.gender} &bull; Age {analysisResults.age} &bull; {analysisResults.careerPhase}
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Personal Best</p>
-                      <p className="text-2xl font-bold text-orange-600">{analysisResults.personalBest}s</p>
+                      <p className="text-xl sm:text-2xl font-bold text-orange-600">{analysisResults.personalBest}s</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Trajectory</p>
@@ -3032,7 +3032,7 @@ export default function BnchMrkdApp() {
                   <p className="text-sm text-slate-400 mb-4">
                     Absolute times plotted against age with projections, confidence intervals, and Olympic threshold reference lines
                   </p>
-                  <ResponsiveContainer width="100%" height={480}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <ComposedChart data={analysisResults.chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <defs>
                         <linearGradient id="ci90Gradient" x1="0" y1="0" x2="0" y2="1">
@@ -3075,7 +3075,7 @@ export default function BnchMrkdApp() {
                   <p className="text-sm text-slate-400 mb-4">
                     Your season-best performance expressed as percentage off personal best, compared to Olympic population norms
                   </p>
-                  <ResponsiveContainer width="100%" height={480}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <ComposedChart data={analysisResults.pctOffPBChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <defs>
                         <linearGradient id="pctBandGrad" x1="0" y1="0" x2="0" y2="1">
@@ -3107,7 +3107,7 @@ export default function BnchMrkdApp() {
                   <p className="text-sm text-slate-400 mb-4">
                     Population percentile corridor showing where you sit among Olympic-level athletes at each age
                   </p>
-                  <ResponsiveContainer width="100%" height={480}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <ComposedChart data={analysisResults.percentileBandData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <defs>
                         <linearGradient id="p90Band" x1="0" y1="0" x2="0" y2="1">
@@ -3153,7 +3153,7 @@ export default function BnchMrkdApp() {
                     Year-on-year improvement rate showing momentum between seasons. Positive = faster, negative = slower.
                   </p>
                   {analysisResults.improvementChartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={480}>
+                    <ResponsiveContainer width="100%" height={320}>
                       <BarChart data={analysisResults.improvementChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis dataKey="label" label={{ value: 'Age Period', position: 'insideBottom', offset: -10, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} />
