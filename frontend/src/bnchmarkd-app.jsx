@@ -3768,13 +3768,16 @@ export default function BnchMrkdApp() {
                     <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
                     <YAxis reversed tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
                     <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }}
-                      formatter={(v, name) => v != null ? [`${parseFloat(v).toFixed(2)}s`, name === 'you' ? 'You' : name === 'projected' ? 'Projected' : name === 'finalist' ? 'Finalist Median' : name === 'semiFinalist' ? 'Semi-Finalist Median' : 'Qualifier Median'] : null}
+                      formatter={(v, dataKey) => {
+                        if (v == null) return null;
+                        const labels = { you: 'You', finalist: 'Finalist Median', semiFinalist: 'Semi-Finalist Median', qualifier: 'Qualifier Median' };
+                        return [`${parseFloat(v).toFixed(2)}s`, labels[dataKey] || dataKey];
+                      }}
                       labelFormatter={(l) => `Age ${l}`} />
                     {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
                     {trajToggles.semiFinalist && <Line type="monotone" dataKey="semiFinalist" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Semi-Finalist Median" />}
                     {trajToggles.finalist && <Line type="monotone" dataKey="finalist" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Finalist Median" />}
-                    <Line type="monotone" dataKey="projected" stroke="#e8712a" strokeWidth={2} dot={false} strokeDasharray="4 4" name="Projected" connectNulls={false} />
-                    <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 4, fill: '#e8712a' }} activeDot={{ r: 6, fill: '#f97316' }} name="You" connectNulls={false} />
+                    <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 5, fill: '#e8712a', stroke: '#fff', strokeWidth: 1 }} activeDot={{ r: 7, fill: '#f97316' }} name="You" connectNulls={false} />
                   </LineChart>
                 </ResponsiveContainer>
                 <div className={`mt-4 p-3 rounded text-sm ${
