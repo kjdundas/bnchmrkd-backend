@@ -38,6 +38,7 @@ export default function BnchMrkdApp() {
   // Scraping state
   const [scraping, setScraping] = useState(false);
   const [chartView, setChartView] = useState('time'); // 'time' | 'pctOff' | 'percentileBand' | 'improvementRate'
+  const [trajToggles, setTrajToggles] = useState({ finalist: true, semiFinalist: true, qualifier: false });
   const [scrapeProgress, setScrapeProgress] = useState({ step: '', message: '', progress: 0 });
   const [multiResults, setMultiResults] = useState(null); // { "100m": analysisResult, "200m": ... }
   const [activeDiscipline, setActiveDiscipline] = useState(null);
@@ -1117,6 +1118,19 @@ export default function BnchMrkdApp() {
           return row;
         });
       })(),
+      // Trajectory comparison data: athlete vs finalist/semi-finalist/qualifier median curves
+      trajectoryComparison: AGES.filter(a => benchmarkData.percentiles[a]).map(a => {
+        const userEntry = annualSeries.find(r => r.age === a);
+        const projEntry = projections.find(p => p.age === a);
+        return {
+          age: a,
+          you: userEntry ? parseFloat(userEntry.time.toFixed(2)) : null,
+          projected: projEntry ? parseFloat(projEntry.projectedTime.toFixed(2)) : null,
+          finalist: parseFloat((thresholds.optimal * (1 + benchmarkData.percentiles[a].p50 / 100)).toFixed(2)),
+          semiFinalist: parseFloat((thresholds.s80 * (1 + benchmarkData.percentiles[a].p50 / 100)).toFixed(2)),
+          qualifier: parseFloat((thresholds.s90 * (1 + benchmarkData.percentiles[a].p50 / 100)).toFixed(2)),
+        };
+      }),
       // ROD per season (Rate of Development)
       rodData: (() => {
         const rodArr = [];
@@ -3725,46 +3739,53 @@ export default function BnchMrkdApp() {
                 </div>
               </div>
 
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-orange-500" />
-                  Improvement Rate Comparison
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-orange-500" />
+                  Career Trajectory vs Benchmarks
                 </h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={[
-                    { name: 'You', improvement: analysisResults.improvementRate },
-                    { name: 'Finalist Norm', improvement: analysisResults.finalistNorm },
-                    { name: 'Non-Finalist', improvement: analysisResults.nonFinalistNorm }
-                  ]}>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {[
+                    { key: 'finalist', label: 'Finalists', color: '#10b981' },
+                    { key: 'semiFinalist', label: 'Semi-Finalists', color: '#f59e0b' },
+                    { key: 'qualifier', label: 'Qualifiers', color: '#94a3b8' },
+                  ].map(t => (
+                    <button key={t.key} onClick={() => setTrajToggles(prev => ({ ...prev, [t.key]: !prev[t.key] }))}
+                      className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium border transition-all ${
+                        trajToggles[t.key]
+                          ? 'border-transparent text-white'
+                          : 'border-slate-600 text-slate-400 bg-transparent hover:border-slate-500'
+                      }`}
+                      style={trajToggles[t.key] ? { backgroundColor: t.color + '33', borderColor: t.color, color: t.color } : {}}
+                    >
+                      {trajToggles[t.key] ? '\u2713 ' : ''}{t.label}
+                    </button>
+                  ))}
+                </div>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                    <YAxis label={{ value: '%/year', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#94a3b8' }} />
-                    <Tooltip formatter={(v) => `${parseFloat(v).toFixed(2)}%/year`} contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }} />
-                    <Bar dataKey="improvement">
-                      <Cell fill="#e8712a" />
-                      <Cell fill="#10b981" />
-                      <Cell fill="#94a3b8" />
-                    </Bar>
-                  </BarChart>
+                    <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
+                    <YAxis reversed tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }}
+                      formatter={(v, name) => v != null ? [`${parseFloat(v).toFixed(2)}s`, name === 'you' ? 'You' : name === 'projected' ? 'Projected' : name === 'finalist' ? 'Finalist Median' : name === 'semiFinalist' ? 'Semi-Finalist Median' : 'Qualifier Median'] : null}
+                      labelFormatter={(l) => `Age ${l}`} />
+                    {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
+                    {trajToggles.semiFinalist && <Line type="monotone" dataKey="semiFinalist" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Semi-Finalist Median" />}
+                    {trajToggles.finalist && <Line type="monotone" dataKey="finalist" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Finalist Median" />}
+                    <Line type="monotone" dataKey="projected" stroke="#e8712a" strokeWidth={2} dot={false} strokeDasharray="4 4" name="Projected" connectNulls={false} />
+                    <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 4, fill: '#e8712a' }} activeDot={{ r: 6, fill: '#f97316' }} name="You" connectNulls={false} />
+                  </LineChart>
                 </ResponsiveContainer>
-                <div className={`mt-4 p-3 rounded ${
+                <div className={`mt-4 p-3 rounded text-sm ${
                   analysisResults.improvementRate >= analysisResults.finalistNorm
-                    ? 'bg-green-900/30 border border-green-800'
+                    ? 'bg-green-900/30 border border-green-800 text-green-300'
                     : analysisResults.improvementRate >= analysisResults.nonFinalistNorm
-                    ? 'bg-amber-900/30 border border-amber-800'
-                    : 'bg-red-900/30 border border-red-800'
+                    ? 'bg-amber-900/30 border border-amber-800 text-amber-300'
+                    : 'bg-red-900/30 border border-red-800 text-red-300'
                 }`}>
-                  <p className={`text-sm font-semibold ${
-                    analysisResults.improvementRate >= analysisResults.finalistNorm ? 'text-green-300'
-                    : analysisResults.improvementRate >= analysisResults.nonFinalistNorm ? 'text-amber-300'
-                    : 'text-red-300'
-                  }`}>
-                    {analysisResults.improvementRate >= analysisResults.finalistNorm
-                      ? '\u2713 Improvement rate exceeds finalist norms'
-                      : analysisResults.improvementRate >= analysisResults.nonFinalistNorm
-                      ? '\u26A0 Improvement rate between finalist and non-finalist norms'
-                      : '\u2717 Improvement rate below typical norms'}
-                  </p>
+                  <span className="font-semibold">Improvement rate: {analysisResults.improvementRate}%/year</span>
+                  <span className="text-slate-400"> — Finalist norm: {analysisResults.finalistNorm}%/yr | Non-finalist: {analysisResults.nonFinalistNorm}%/yr</span>
                 </div>
               </div>
             </div>
