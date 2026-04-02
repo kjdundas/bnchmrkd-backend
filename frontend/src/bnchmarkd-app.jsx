@@ -1572,7 +1572,7 @@ export default function BnchMrkdApp() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 overflow-x-hidden">
       {/* Scraping loading overlay */}
       {scraping && <LoadingAnimation />}
 
@@ -2995,26 +2995,26 @@ export default function BnchMrkdApp() {
             </div>
 
             {/* ── PERFORMANCE TRAJECTORY CHART WITH TABBED VIEWS ── */}
-            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <TrendingUp className="w-6 h-6 text-orange-500" />
+                <h3 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
                   Performance Trajectory
                 </h3>
               </div>
 
               {/* Chart View Tabs */}
-              <div className="flex gap-1 mb-6 bg-slate-700/60 rounded-lg p-1">
+              <div className="flex gap-1 mb-4 sm:mb-6 bg-slate-700/60 rounded-lg p-1 overflow-x-auto">
                 {[
-                  { id: 'time', label: 'Time vs Age', icon: Timer },
+                  { id: 'time', label: 'Time', icon: Timer },
                   { id: 'pctOff', label: '% Off PB', icon: Percent },
-                  { id: 'percentileBand', label: 'Percentile Band', icon: Layers },
-                  { id: 'improvementRate', label: 'Improvement Rate', icon: BarChart2 },
+                  { id: 'percentileBand', label: 'Percentile', icon: Layers },
+                  { id: 'improvementRate', label: 'Improvement', icon: BarChart2 },
                 ].map(tab => {
                   const TabIcon = tab.icon;
                   return (
                     <button key={tab.id} onClick={() => setChartView(tab.id)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-md text-sm font-medium transition-all ${
+                      className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                         chartView === tab.id
                           ? 'bg-slate-800/90 text-orange-600 shadow-sm'
                           : 'text-slate-400 hover:text-slate-300'
@@ -3184,7 +3184,7 @@ export default function BnchMrkdApp() {
 
             {/* ── YEAR-BY-YEAR PROJECTED TIMES TABLE ── */}
             {analysisResults.projections && analysisResults.projections.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-orange-500" />
                   Year-by-Year Projected Times
@@ -3248,7 +3248,7 @@ export default function BnchMrkdApp() {
 
             {/* ── SIMILAR ATHLETES ── */}
             {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                   <Users className="w-5 h-5 text-orange-500" />
                   Similar Athletes
@@ -3315,7 +3315,7 @@ export default function BnchMrkdApp() {
 
             {/* ── PERFORMANCE STANDARDS CHECKLIST ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-orange-500" />
                   Performance Standards
@@ -3328,7 +3328,7 @@ export default function BnchMrkdApp() {
                   {analysisResults.standards.map((std, idx) => {
                     const isNext = !std.met && (idx === 0 || analysisResults.standards[idx - 1].met);
                     return (
-                      <div key={idx} className={`relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+                      <div key={idx} className={`relative flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all ${
                         std.met
                           ? 'bg-green-900/30 border-green-800'
                           : isNext
@@ -3336,7 +3336,7 @@ export default function BnchMrkdApp() {
                           : 'bg-slate-700/50 border-slate-700'
                       }`}>
                         {/* Status icon */}
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                        <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
                           std.met ? 'bg-green-500' : isNext ? 'bg-orange-400' : 'bg-slate-600'
                         }`}>
                           {std.met ? (
@@ -3401,7 +3401,7 @@ export default function BnchMrkdApp() {
 
             {/* ── PROGRESSION MATRIX ── */}
             {analysisResults.raceHistory && analysisResults.raceHistory.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                   <Layers className="w-5 h-5 text-orange-500" />
                   Progression Matrix
@@ -3540,7 +3540,7 @@ export default function BnchMrkdApp() {
 
             {/* ── ROD / RODP — Rate of Development per Season ── */}
             {analysisResults.rodData && analysisResults.rodData.length > 1 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-orange-500" />
                   Rate of Development
@@ -3610,7 +3610,7 @@ export default function BnchMrkdApp() {
 
             {/* ── IMPROVEMENT SCENARIOS TABLE ── */}
             {analysisResults.improvementScenarios && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                   <Target className="w-5 h-5 text-orange-500" />
                   Performance Improvement Scenarios
@@ -3764,7 +3764,7 @@ export default function BnchMrkdApp() {
             </div>
 
             {/* ── PEAK PROJECTION DETAILS ── */}
-            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8 mb-8">
+            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-orange-500" />
                 Peak Performance Projection
