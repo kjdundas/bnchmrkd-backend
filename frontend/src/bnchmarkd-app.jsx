@@ -814,12 +814,14 @@ export default function BnchMrkdApp() {
     }
 
     // ── Projected peak time ──
-    const projectedPeakTime = projections.length > 0
+    // Peak projection should never be slower than the athlete's actual PB
+    const projectedFromModel = projections.length > 0
       ? Math.min(...projections.map(p => p.projectedTime))
       : pb;
-    const projectedPeakAge = projections.length > 0
-      ? projections.find(p => p.projectedTime === projectedPeakTime)?.age || peakAge
-      : peakAge;
+    const projectedPeakTime = Math.min(projectedFromModel, pb);
+    const projectedPeakAge = projectedPeakTime === pb
+      ? age  // Already at peak — PB is the peak
+      : (projections.find(p => p.projectedTime === projectedFromModel)?.age || peakAge);
 
     // ── Build combined chart data (actual + projected) ──
     const chartData = [];
@@ -2663,7 +2665,9 @@ export default function BnchMrkdApp() {
                 </p>
                 <div className="space-y-2.5">
                   {analysisResults.standards.map((std, idx) => {
-                    const isNext = !std.met && (idx === 0 || analysisResults.standards[idx - 1].met);
+                    // Next target = the easiest unmet standard (last unmet one in the list, since ordered hard→easy)
+                    const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+                    const isNext = idx === lastUnmetIdx;
                     return (
                       <div key={idx} className={`relative flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
                         std.met
@@ -3326,7 +3330,9 @@ export default function BnchMrkdApp() {
 
                 <div className="space-y-3">
                   {analysisResults.standards.map((std, idx) => {
-                    const isNext = !std.met && (idx === 0 || analysisResults.standards[idx - 1].met);
+                    // Next target = the easiest unmet standard (last unmet one in the list, since ordered hard→easy)
+                    const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+                    const isNext = idx === lastUnmetIdx;
                     return (
                       <div key={idx} className={`relative flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all ${
                         std.met
