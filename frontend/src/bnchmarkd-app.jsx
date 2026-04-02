@@ -1598,82 +1598,79 @@ export default function BnchMrkdApp() {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'landing' && (
         <div className="min-h-screen flex flex-col">
-          {/* Ambient glow */}
+          {/* Subtle ambient glow — single warm tone */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-500/8 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl"></div>
-            <div className="absolute top-1/3 right-1/5 w-56 h-56 bg-purple-500/4 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-orange-500/6 rounded-full blur-[120px]"></div>
           </div>
 
-          {/* Centered content */}
-          <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
-            {/* Logo Icon */}
-            <div className="mb-6">
-              <img src="/icon.svg" alt="bnchmrkd icon" className="w-32 h-32" />
+          {/* Main hero */}
+          <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 sm:px-6">
+            {/* Compact logo + wordmark */}
+            <div className="flex items-center gap-3 mb-6">
+              <img src="/icon.svg" alt="bnchmrkd" className="w-10 h-10 sm:w-12 sm:h-12" />
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif"}}>
+                bnchmrkd<span className="text-orange-500">.</span>
+              </h1>
             </div>
 
-            {/* Title */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold text-white mb-3 sm:mb-4 tracking-tight" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif", fontWeight: 700}}>
-              bnchmrkd<span className="text-orange-500">.</span>
-            </h1>
-
-            {/* Slogan */}
-            <p className="text-lg sm:text-xl md:text-2xl text-slate-400 font-light mb-8 sm:mb-10 tracking-wide">
-              The context behind sports performance
+            {/* Specific, value-driven tagline */}
+            <p className="text-base sm:text-lg md:text-xl text-slate-400 text-center max-w-lg mb-3 leading-relaxed">
+              Benchmark any track athlete against 25 years of Olympic career data.
+            </p>
+            <p className="text-sm text-slate-500 text-center max-w-md mb-8 sm:mb-10">
+              Trajectory analysis, peak projections, and percentile rankings — powered by statistical models, not opinion.
             </p>
 
-            {/* How it works steps */}
-            <div className="flex items-center gap-2 sm:gap-5 mb-8 sm:mb-12">
-              {[
-                { icon: Upload, label: 'Enter Results' },
-                { icon: Target, label: 'Get Benchmarked' },
-                { icon: TrendingUp, label: 'See Projections' },
-              ].map((step, i) => {
-                const StepIcon = step.icon;
-                return (
-                  <React.Fragment key={i}>
-                    {i > 0 && (
-                      <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600 flex-shrink-0" />
-                    )}
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-                        <StepIcon className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />
-                      </div>
-                      <span className="text-xs sm:text-sm font-medium text-slate-300">{step.label}</span>
-                    </div>
-                  </React.Fragment>
-                );
-              })}
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-xl px-2 sm:px-0">
+            {/* Primary CTA */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mb-10">
               <button
                 onClick={() => setCurrentView('categories')}
-                className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.02] transition-all shadow-lg shadow-orange-500/20 text-base sm:text-lg"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-400 transition-all text-base"
               >
-                <Target className="w-5 h-5" />
-                Benchmark
+                Benchmark an Athlete
+                <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setCurrentView('explorer')}
-                className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 py-3 sm:py-4 bg-slate-800/80 text-slate-200 font-semibold rounded-xl border border-orange-500/30 hover:bg-slate-700/80 hover:border-orange-500/60 hover:scale-[1.02] transition-all text-base sm:text-lg backdrop-blur-sm"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-700/80 hover:border-slate-600 hover:bg-slate-700/90 transition-all text-base"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4" />
                 Explore Athletes
-              </button>
-              <button
-                onClick={() => setCurrentView('about')}
-                className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 py-3 sm:py-4 bg-slate-800/80 text-slate-200 font-semibold rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-600 hover:scale-[1.02] transition-all text-base sm:text-lg backdrop-blur-sm"
-              >
-                <Database className="w-5 h-5" />
-                About Our Data
               </button>
             </div>
 
-            {/* Subtle data tagline */}
-            <p className="mt-10 text-sm text-slate-500 text-center max-w-lg">
-              Career results from over 2,000 Olympic athletes across 300,000+ events from the last 25 years.
+            {/* Data credibility strip */}
+            <div className="flex items-center gap-6 sm:gap-10 mb-6">
+              {[
+                { value: '311K+', label: 'Race Records' },
+                { value: '2,322', label: 'Olympic Athletes' },
+                { value: '7', label: 'Olympic Games' },
+                { value: '10', label: 'Disciplines' },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <p className="text-lg sm:text-xl font-bold text-white tabular-nums">{stat.value}</p>
+                  <p className="text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider font-medium">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="w-16 h-px bg-slate-700/60 mb-6"></div>
+
+            {/* Methodology link — subtle, not a primary button */}
+            <button
+              onClick={() => setCurrentView('about')}
+              className="text-sm text-slate-500 hover:text-orange-400 transition-colors flex items-center gap-1.5"
+            >
+              <Database className="w-3.5 h-3.5" />
+              How the data works
+            </button>
+          </div>
+
+          {/* Source line pinned to bottom */}
+          <div className="relative z-10 text-center pb-6 px-4">
+            <p className="text-xs text-slate-600">
+              Sydney 2000 – Paris 2024 · World Athletics competition records
             </p>
           </div>
         </div>
