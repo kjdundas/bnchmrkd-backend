@@ -39,6 +39,7 @@ export default function BnchMrkdApp() {
   const [scraping, setScraping] = useState(false);
   const [chartView, setChartView] = useState('time'); // 'time' | 'pctOff' | 'percentileBand' | 'improvementRate'
   const [trajToggles, setTrajToggles] = useState({ finalist: true, semiFinalist: true, qualifier: false });
+  const [dashTab, setDashTab] = useState('overview'); // 'overview' | 'trajectory' | 'benchmarks' | 'insights'
   const [scrapeProgress, setScrapeProgress] = useState({ step: '', message: '', progress: 0 });
   const [multiResults, setMultiResults] = useState(null); // { "100m": analysisResult, "200m": ... }
   const [activeDiscipline, setActiveDiscipline] = useState(null);
@@ -3012,6 +3013,159 @@ export default function BnchMrkdApp() {
               </div>
             </div>
 
+            {/* ── DASHBOARD TAB NAVIGATION ── */}
+            <div className="flex gap-1 bg-slate-800/90 rounded-xl border border-slate-700/50 p-1.5 mb-6 sm:mb-8 overflow-x-auto">
+              {[
+                { id: 'overview', label: 'Overview', icon: Target },
+                { id: 'trajectory', label: 'Trajectory', icon: TrendingUp },
+                { id: 'benchmarks', label: 'Benchmarks', icon: Users },
+                { id: 'insights', label: 'Insights', icon: Zap },
+              ].map(tab => {
+                const TabIcon = tab.icon;
+                return (
+                  <button key={tab.id} onClick={() => setDashTab(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                      dashTab === tab.id
+                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/25'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                    }`}>
+                    <TabIcon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ══════════ OVERVIEW TAB ══════════ */}
+            {dashTab === 'overview' && (<>
+
+            {/* ── COMPETITIVE OUTLOOK ── */}
+            {analysisResults.benchmarks && (
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-orange-500" />
+                  Competitive Outlook
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  {[
+                    { label: 'Finalist', prob: analysisResults.finalistProbability, color: 'green', threshold: analysisResults.thresholds.finalist },
+                    { label: 'Semi-Finalist', prob: analysisResults.semiFinalistProbability, color: 'amber', threshold: analysisResults.thresholds.semiFinalist },
+                    { label: 'Qualifier', prob: analysisResults.qualifierProbability, color: 'blue', threshold: analysisResults.thresholds.qualifier },
+                  ].map((item, idx) => (
+                    <div key={idx} className={`text-center p-5 rounded-xl border-2 ${
+                      item.prob >= 60 ? `bg-${item.color}-900/30 border-${item.color}-700`
+                      : item.prob >= 30 ? 'bg-slate-700/50 border-slate-600'
+                      : 'bg-slate-800/50 border-slate-700/30'
+                    }`}>
+                      <p className="text-sm text-slate-400 mb-2">{item.label} Probability</p>
+                      <p className={`text-4xl font-bold ${
+                        item.prob >= 60 ? `text-${item.color}-400` : item.prob >= 30 ? 'text-white' : 'text-slate-500'
+                      }`}>{item.prob}%</p>
+                      <p className="text-xs text-slate-500 mt-1">Threshold: {item.threshold}s</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── PERFORMANCE STANDARDS (in Overview) ── */}
+            {analysisResults.standards && analysisResults.standards.length > 0 && (
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                  Performance Standards
+                </h3>
+                <p className="text-sm text-slate-400 mb-6">
+                  Competition qualification standards and benchmark targets for {analysisResults.discipline} ({analysisResults.gender})
+                </p>
+                <div className="space-y-3">
+                  {analysisResults.standards.map((std, idx) => {
+                    const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+                    const isNext = idx === lastUnmetIdx;
+                    return (
+                      <div key={idx} className={`relative flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                        std.met ? 'bg-green-900/30 border-green-800'
+                        : isNext ? 'bg-orange-900/30 border-orange-300 shadow-sm'
+                        : 'bg-slate-700/50 border-slate-700'
+                      }`}>
+                        <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                          std.met ? 'bg-green-500' : isNext ? 'bg-orange-400' : 'bg-slate-600'
+                        }`}>
+                          {std.met ? <CheckCircle2 className="w-5 h-5 text-white" /> : <Circle className="w-5 h-5 text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                              std.tier === 'E1' ? 'bg-yellow-900/40 text-yellow-300'
+                              : std.tier === 'E2' ? 'bg-blue-900/40 text-blue-300'
+                              : std.tier === 'E3' ? 'bg-purple-900/40 text-purple-300'
+                              : 'bg-slate-700/60 text-slate-400'
+                            }`}>{std.tier}</span>
+                            <h4 className={`font-semibold truncate ${std.met ? 'text-green-300' : 'text-white'}`}>{std.label}</h4>
+                          </div>
+                          <p className="text-xs text-slate-400">{std.source}</p>
+                        </div>
+                        <div className="flex-shrink-0 text-right">
+                          <p className="text-lg font-bold text-white">{std.time}s</p>
+                          {std.met
+                            ? <p className="text-xs font-semibold text-green-600">{Math.abs(std.gap).toFixed(2)}s under</p>
+                            : <p className={`text-xs font-semibold ${isNext ? 'text-orange-600' : 'text-slate-400'}`}>{std.gap.toFixed(2)}s to go</p>
+                          }
+                        </div>
+                        {isNext && (
+                          <div className="absolute -right-1 -top-1 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full shadow">NEXT TARGET</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-6 p-4 bg-slate-700/50 rounded-lg border border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-300">Standards Met: {analysisResults.standards.filter(s => s.met).length} / {analysisResults.standards.length}</span>
+                    <div className="flex gap-1">
+                      {analysisResults.standards.map((s, i) => (
+                        <div key={i} className={`w-3 h-3 rounded-full ${s.met ? 'bg-green-500' : 'bg-slate-600'}`} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── RECOMMENDATIONS (in Overview) ── */}
+            {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-orange-500" />
+                  Recommendations
+                </h3>
+                <div className="space-y-4">
+                  {analysisResults.recommendations.map((rec, idx) => (
+                    <div key={idx} className={`p-4 rounded-xl border-l-4 ${
+                      rec.priority === 'high' ? 'border-l-red-500 bg-red-900/20' :
+                      rec.priority === 'medium' ? 'border-l-amber-500 bg-amber-900/20' :
+                      'border-l-blue-500 bg-blue-900/20'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
+                          rec.priority === 'high' ? 'bg-red-900/40 text-red-300' :
+                          rec.priority === 'medium' ? 'bg-amber-900/40 text-amber-300' :
+                          'bg-blue-900/40 text-blue-300'
+                        }`}>{rec.priority}</span>
+                        <h4 className="font-semibold text-white">{rec.title}</h4>
+                      </div>
+                      <p className="text-sm text-slate-300 leading-relaxed">{rec.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            </>)}
+
+            {/* ══════════ TRAJECTORY TAB ══════════ */}
+            {dashTab === 'trajectory' && (<>
+
             {/* ── PERFORMANCE TRAJECTORY CHART WITH TABBED VIEWS ── */}
             <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-2">
@@ -3200,226 +3354,7 @@ export default function BnchMrkdApp() {
               )}
             </div>
 
-            {/* ── YEAR-BY-YEAR PROJECTED TIMES TABLE ── */}
-            {analysisResults.projections && analysisResults.projections.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-orange-500" />
-                  Year-by-Year Projected Times
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Based on your {analysisResults.improvementRate}%/year improvement rate, {analysisResults.trajectoryType.toLowerCase()} trajectory pattern, and population age-performance curves
-                </p>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-slate-600">
-                        <th className="text-left py-3 px-4 font-semibold text-white">Age</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">Projected Time</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">50% CI</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">90% CI</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">vs Finalist</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analysisResults.projections.map((proj, idx) => {
-                        const gap = proj.projectedTime - analysisResults.thresholds.finalist;
-                        const meetsFinalist = gap <= 0;
-                        const meetsSemi = proj.projectedTime <= analysisResults.thresholds.semiFinalist;
-                        const meetsQualifier = proj.projectedTime <= analysisResults.thresholds.qualifier;
-
-                        return (
-                          <tr key={idx} className={`border-b border-slate-700/50 ${proj.age === analysisResults.peakProjection.age ? 'bg-orange-900/30' : 'hover:bg-slate-700'}`}>
-                            <td className="py-3 px-4 font-medium text-white">
-                              {proj.age}
-                              {proj.age === analysisResults.peakProjection.age && (
-                                <span className="ml-2 text-xs text-orange-600 font-semibold">PEAK</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-center font-bold text-white">{proj.projectedTime.toFixed(2)}s</td>
-                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci50Lower.toFixed(2)}s – {proj.ci50Upper.toFixed(2)}s</td>
-                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci90Lower.toFixed(2)}s – {proj.ci90Upper.toFixed(2)}s</td>
-                            <td className={`py-3 px-4 text-center font-semibold ${meetsFinalist ? 'text-green-600' : 'text-red-500'}`}>
-                              {meetsFinalist ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`}
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              {meetsFinalist ? (
-                                <span className="inline-block px-2 py-1 bg-green-900/40 text-green-300 rounded text-xs font-semibold">Finalist</span>
-                              ) : meetsSemi ? (
-                                <span className="inline-block px-2 py-1 bg-amber-900/40 text-amber-300 rounded text-xs font-semibold">Semi</span>
-                              ) : meetsQualifier ? (
-                                <span className="inline-block px-2 py-1 bg-blue-900/40 text-blue-300 rounded text-xs font-semibold">Qualifier</span>
-                              ) : (
-                                <span className="inline-block px-2 py-1 bg-slate-700/60 text-slate-400 rounded text-xs font-semibold">Developing</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* ── SIMILAR ATHLETES ── */}
-            {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-orange-500" />
-                  Similar Athletes
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Olympic athletes who recorded similar times at a comparable age — see how their careers developed
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {analysisResults.similarAthletes.map((athlete, idx) => {
-                    const isFaster = athlete.pb < analysisResults.personalBest;
-                    return (
-                      <div key={idx} className="relative bg-gradient-to-br from-slate-800 to-slate-800/80 rounded-xl border border-slate-700 p-5 hover:shadow-md transition-shadow">
-                        {/* Rank badge */}
-                        <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow">
-                          {idx + 1}
-                        </div>
-
-                        {/* Classification badge */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-bold text-white text-base">{athlete.name}</h4>
-                            <p className="text-xs text-slate-400 flex items-center gap-1">
-                              <Flag className="w-3 h-3" />
-                              {athlete.nationality}
-                            </p>
-                          </div>
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                            athlete.classification === 'F' ? 'bg-yellow-900/40 text-yellow-300'
-                            : athlete.classification === 'SF' ? 'bg-blue-900/40 text-blue-300'
-                            : 'bg-slate-700/60 text-slate-400'
-                          }`}>
-                            {athlete.classification === 'F' ? 'Finalist' : athlete.classification === 'SF' ? 'Semi' : 'Qualifier'}
-                          </span>
-                        </div>
-
-                        {/* Stats grid */}
-                        <div className="grid grid-cols-2 gap-3 mb-3">
-                          <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
-                            <p className="text-xs text-slate-400 mb-0.5">Personal Best</p>
-                            <p className="text-lg font-bold text-white">{athlete.pb}s</p>
-                          </div>
-                          <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
-                            <p className="text-xs text-slate-400 mb-0.5">Peak Age</p>
-                            <p className="text-lg font-bold text-white">{athlete.peakAge}</p>
-                          </div>
-                        </div>
-
-                        {/* Comparison line */}
-                        <div className={`rounded-lg p-2.5 text-center text-xs font-medium ${
-                          Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-700 border border-green-900/50'
-                          : 'bg-amber-900/30 text-amber-700 border border-amber-900/50'
-                        }`}>
-                          At age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}s</span>
-                          {' '}
-                          ({athlete.timeDiff < 0.05 ? 'virtually identical' :
-                            `${Math.abs(athlete.timeDiff).toFixed(2)}s ${athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower'}`})
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── PERFORMANCE STANDARDS CHECKLIST ── */}
-            {analysisResults.standards && analysisResults.standards.length > 0 && (
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-orange-500" />
-                  Performance Standards
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Competition qualification standards and benchmark targets for {analysisResults.discipline} ({analysisResults.gender})
-                </p>
-
-                <div className="space-y-3">
-                  {analysisResults.standards.map((std, idx) => {
-                    // Next target = the easiest unmet standard (last unmet one in the list, since ordered hard→easy)
-                    const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
-                    const isNext = idx === lastUnmetIdx;
-                    return (
-                      <div key={idx} className={`relative flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                        std.met
-                          ? 'bg-green-900/30 border-green-800'
-                          : isNext
-                          ? 'bg-orange-900/30 border-orange-300 shadow-sm'
-                          : 'bg-slate-700/50 border-slate-700'
-                      }`}>
-                        {/* Status icon */}
-                        <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
-                          std.met ? 'bg-green-500' : isNext ? 'bg-orange-400' : 'bg-slate-600'
-                        }`}>
-                          {std.met ? (
-                            <CheckCircle2 className="w-5 h-5 text-white" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-white" />
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                              std.tier === 'E1' ? 'bg-yellow-900/40 text-yellow-300'
-                              : std.tier === 'E2' ? 'bg-blue-900/40 text-blue-300'
-                              : std.tier === 'E3' ? 'bg-purple-900/40 text-purple-300'
-                              : 'bg-slate-700/60 text-slate-400'
-                            }`}>{std.tier}</span>
-                            <h4 className={`font-semibold truncate ${std.met ? 'text-green-300' : 'text-white'}`}>{std.label}</h4>
-                          </div>
-                          <p className="text-xs text-slate-400">{std.source}</p>
-                        </div>
-
-                        {/* Time + Gap */}
-                        <div className="flex-shrink-0 text-right">
-                          <p className="text-lg font-bold text-white">{std.time}s</p>
-                          {std.met ? (
-                            <p className="text-xs font-semibold text-green-600">{Math.abs(std.gap).toFixed(2)}s under</p>
-                          ) : (
-                            <p className={`text-xs font-semibold ${isNext ? 'text-orange-600' : 'text-slate-400'}`}>
-                              {std.gap.toFixed(2)}s to go
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Next target indicator */}
-                        {isNext && (
-                          <div className="absolute -right-1 -top-1 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full shadow">
-                            NEXT TARGET
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Summary */}
-                <div className="mt-6 p-4 bg-slate-700/50 rounded-lg border border-slate-700">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-300">
-                      Standards Met: {analysisResults.standards.filter(s => s.met).length} / {analysisResults.standards.length}
-                    </span>
-                    <div className="flex gap-1">
-                      {analysisResults.standards.map((s, i) => (
-                        <div key={i} className={`w-3 h-3 rounded-full ${s.met ? 'bg-green-500' : 'bg-slate-600'}`} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── PROGRESSION MATRIX ── */}
+            {/* ── PROGRESSION MATRIX (in Trajectory tab) ── */}
             {analysisResults.raceHistory && analysisResults.raceHistory.length > 0 && (
               <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -3468,97 +3403,7 @@ export default function BnchMrkdApp() {
               </div>
             )}
 
-            {/* ── CHAMPIONSHIP DATA + SEASONS BEST GAUGE (side by side) ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Championship Data Card */}
-              {analysisResults.championshipData && (
-                <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-orange-500" />
-                    Championship Data
-                  </h3>
-                  <div className="space-y-2">
-                    {[
-                      { label: 'Olympic Gold', time: analysisResults.championshipData.gold, color: 'bg-yellow-400', textColor: 'text-yellow-900' },
-                      { label: 'Olympic Silver', time: analysisResults.championshipData.silver, color: 'bg-gray-400', textColor: 'text-slate-200' },
-                      { label: 'Olympic Bronze', time: analysisResults.championshipData.bronze, color: 'bg-amber-600', textColor: 'text-amber-50' },
-                      { label: 'Olympic MQT', time: analysisResults.championshipData.mqt, color: 'bg-red-500', textColor: 'text-white' },
-                      { label: 'Asian Champs Gold', time: analysisResults.championshipData.asianGold, color: 'bg-blue-500', textColor: 'text-white' },
-                      { label: 'World U20 Gold', time: analysisResults.championshipData.u20Gold, color: 'bg-purple-500', textColor: 'text-white' },
-                    ].map((item, idx) => {
-                      const gap = analysisResults.personalBest - item.time;
-                      const met = gap <= 0;
-                      return (
-                        <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-700">
-                          <div className="flex items-center gap-2.5">
-                            <div className={`w-2.5 h-2.5 rounded-full ${item.color}`}></div>
-                            <span className="text-sm font-medium text-slate-300">{item.label}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-white">{item.time}s</span>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              met ? 'bg-green-900/40 text-green-700' : 'bg-slate-700/60 text-slate-400'
-                            }`}>
-                              {met ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Seasons Best Gauge */}
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-orange-500" />
-                  Seasons Best
-                </h3>
-                <div className="relative w-48 h-48">
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
-                    {/* Background arc */}
-                    <circle cx="100" cy="100" r="85" fill="none" stroke="#475569" strokeWidth="12" strokeLinecap="round"
-                      strokeDasharray="401 133" transform="rotate(135 100 100)" />
-                    {/* Colored arc — fill based on how close to PB */}
-                    {(() => {
-                      const sb = analysisResults.seasonsBest;
-                      const pb = analysisResults.personalBest;
-                      const worst = analysisResults.raceHistory.length > 0 ? Math.max(...analysisResults.raceHistory.map(r => r.time)) : pb * 1.1;
-                      const pctFill = Math.max(5, Math.min(100, ((worst - sb) / (worst - pb)) * 100));
-                      const arcLen = (pctFill / 100) * 401;
-                      const color = pctFill > 90 ? '#10b981' : pctFill > 60 ? '#f59e0b' : '#ef4444';
-                      return <circle cx="100" cy="100" r="85" fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"
-                        strokeDasharray={`${arcLen} ${534 - arcLen}`} transform="rotate(135 100 100)" />;
-                    })()}
-                    {/* Center text */}
-                    <text x="100" y="88" textAnchor="middle" className="text-3xl font-bold" fill="#f1f5f9" fontSize="28" fontWeight="bold">
-                      {analysisResults.seasonsBest.toFixed(2)}
-                    </text>
-                    <text x="100" y="108" textAnchor="middle" fill="#94a3b8" fontSize="11">seconds</text>
-                    <text x="100" y="130" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="600">
-                      PB: {analysisResults.personalBest.toFixed(2)}s
-                    </text>
-                    {/* Age labels around the arc */}
-                    {analysisResults.raceHistory.length >= 2 && (
-                      <>
-                        <text x="30" y="175" textAnchor="middle" fill="#94a3b8" fontSize="10">Age {analysisResults.raceHistory[0].age}</text>
-                        <text x="170" y="175" textAnchor="middle" fill="#94a3b8" fontSize="10">Age {analysisResults.raceHistory[analysisResults.raceHistory.length - 1].age}</text>
-                      </>
-                    )}
-                  </svg>
-                </div>
-                <div className="mt-2 text-center">
-                  <p className="text-xs text-slate-400">
-                    {analysisResults.seasonsBest <= analysisResults.personalBest + 0.005
-                      ? 'Season best equals personal best!'
-                      : `${(analysisResults.seasonsBest - analysisResults.personalBest).toFixed(2)}s off personal best`}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* ── ROD / RODP — Rate of Development per Season ── */}
+            {/* ── ROD / RODP (in Trajectory tab) ── */}
             {analysisResults.rodData && analysisResults.rodData.length > 1 && (
               <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -3628,7 +3473,291 @@ export default function BnchMrkdApp() {
               </div>
             )}
 
-            {/* ── IMPROVEMENT SCENARIOS TABLE ── */}
+            </>)}
+
+            {/* ══════════ BENCHMARKS TAB ══════════ */}
+            {dashTab === 'benchmarks' && (<>
+
+            {/* ── PERCENTILE RANKING (in Benchmarks tab) ── */}
+            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Target className="w-5 h-5 text-orange-500" />
+                Percentile Ranking
+              </h3>
+              <div className="mb-6">
+                <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden mb-2">
+                  <div className={`h-full ${getPercentileColor(analysisResults.percentileAtCurrentAge)} transition-all`}
+                    style={{ width: `${analysisResults.percentileAtCurrentAge}%` }} />
+                </div>
+                <p className="text-center font-bold text-white">
+                  Top {100 - analysisResults.percentileAtCurrentAge}% among Olympic-level athletes at age {analysisResults.age}
+                </p>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                {[
+                  { label: 'Elite', range: 'Top 10%', bg: 'bg-green-900/30', text: 'text-green-300', sub: 'text-green-700' },
+                  { label: 'National', range: 'Top 25%', bg: 'bg-blue-900/30', text: 'text-blue-300', sub: 'text-blue-700' },
+                  { label: 'Competitive', range: 'Top 50%', bg: 'bg-amber-900/30', text: 'text-amber-300', sub: 'text-amber-700' },
+                  { label: 'Developing', range: 'Below 50%', bg: 'bg-slate-800/50', text: 'text-white', sub: 'text-slate-300' },
+                ].map((tier, i) => (
+                  <div key={i} className={`p-2 ${tier.bg} rounded`}>
+                    <p className={`font-semibold ${tier.text}`}>{tier.label}</p>
+                    <p className={tier.sub}>{tier.range}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── CAREER TRAJECTORY VS BENCHMARKS (in Benchmarks tab) ── */}
+            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-orange-500" />
+                Career Trajectory vs Benchmarks
+              </h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {[
+                  { key: 'finalist', label: 'Finalists', color: '#10b981' },
+                  { key: 'semiFinalist', label: 'Semi-Finalists', color: '#f59e0b' },
+                  { key: 'qualifier', label: 'Qualifiers', color: '#94a3b8' },
+                ].map(t => (
+                  <button key={t.key} onClick={() => setTrajToggles(prev => ({ ...prev, [t.key]: !prev[t.key] }))}
+                    className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium border transition-all ${
+                      trajToggles[t.key]
+                        ? 'border-transparent text-white'
+                        : 'border-slate-600 text-slate-400 bg-transparent hover:border-slate-500'
+                    }`}
+                    style={trajToggles[t.key] ? { backgroundColor: t.color + '33', borderColor: t.color, color: t.color } : {}}
+                  >
+                    {trajToggles[t.key] ? '\u2713 ' : ''}{t.label}
+                  </button>
+                ))}
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
+                  <YAxis reversed tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }}
+                    formatter={(v, dataKey) => {
+                      if (v == null) return null;
+                      const labels = { you: 'You', finalist: 'Finalist Median', semiFinalist: 'Semi-Finalist Median', qualifier: 'Qualifier Median' };
+                      return [`${parseFloat(v).toFixed(2)}s`, labels[dataKey] || dataKey];
+                    }}
+                    labelFormatter={(l) => `Age ${l}`} />
+                  {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
+                  {trajToggles.semiFinalist && <Line type="monotone" dataKey="semiFinalist" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Semi-Finalist Median" />}
+                  {trajToggles.finalist && <Line type="monotone" dataKey="finalist" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Finalist Median" />}
+                  <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 5, fill: '#e8712a', stroke: '#fff', strokeWidth: 1 }} activeDot={{ r: 7, fill: '#f97316' }} name="You" connectNulls={false} />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className={`mt-4 p-3 rounded text-sm ${
+                analysisResults.improvementRate >= analysisResults.finalistNorm
+                  ? 'bg-green-900/30 border border-green-800 text-green-300'
+                  : analysisResults.improvementRate >= analysisResults.nonFinalistNorm
+                  ? 'bg-amber-900/30 border border-amber-800 text-amber-300'
+                  : 'bg-red-900/30 border border-red-800 text-red-300'
+              }`}>
+                <span className="font-semibold">Improvement rate: {analysisResults.improvementRate}%/year</span>
+                <span className="text-slate-400"> — Finalist norm: {analysisResults.finalistNorm}%/yr | Non-finalist: {analysisResults.nonFinalistNorm}%/yr</span>
+              </div>
+            </div>
+
+            {/* ── SIMILAR ATHLETES (in Benchmarks tab) ── */}
+            {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-orange-500" />
+                  Similar Athletes
+                </h3>
+                <p className="text-sm text-slate-400 mb-6">
+                  Olympic athletes who recorded similar times at a comparable age — see how their careers developed
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {analysisResults.similarAthletes.map((athlete, idx) => (
+                    <div key={idx} className="relative bg-gradient-to-br from-slate-800 to-slate-800/80 rounded-xl border border-slate-700 p-5 hover:shadow-md transition-shadow">
+                      <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow">{idx + 1}</div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-bold text-white text-base">{athlete.name}</h4>
+                          <p className="text-xs text-slate-400 flex items-center gap-1"><Flag className="w-3 h-3" />{athlete.nationality}</p>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                          athlete.classification === 'F' ? 'bg-yellow-900/40 text-yellow-300'
+                          : athlete.classification === 'SF' ? 'bg-blue-900/40 text-blue-300'
+                          : 'bg-slate-700/60 text-slate-400'
+                        }`}>
+                          {athlete.classification === 'F' ? 'Finalist' : athlete.classification === 'SF' ? 'Semi' : 'Qualifier'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
+                          <p className="text-xs text-slate-400 mb-0.5">Personal Best</p>
+                          <p className="text-lg font-bold text-white">{athlete.pb}s</p>
+                        </div>
+                        <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
+                          <p className="text-xs text-slate-400 mb-0.5">Peak Age</p>
+                          <p className="text-lg font-bold text-white">{athlete.peakAge}</p>
+                        </div>
+                      </div>
+                      <div className={`rounded-lg p-2.5 text-center text-xs font-medium ${
+                        Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-700 border border-green-900/50'
+                        : 'bg-amber-900/30 text-amber-700 border border-amber-900/50'
+                      }`}>
+                        At age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}s</span>
+                        {' '}({athlete.timeDiff < 0.05 ? 'virtually identical' : `${Math.abs(athlete.timeDiff).toFixed(2)}s ${athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower'}`})
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── CHAMPIONSHIP DATA (in Benchmarks tab) ── */}
+            {analysisResults.championshipData && (
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-orange-500" />
+                  Championship Data
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Olympic Gold', time: analysisResults.championshipData.gold, color: 'bg-yellow-400' },
+                    { label: 'Olympic Silver', time: analysisResults.championshipData.silver, color: 'bg-gray-400' },
+                    { label: 'Olympic Bronze', time: analysisResults.championshipData.bronze, color: 'bg-amber-600' },
+                    { label: 'Olympic MQT', time: analysisResults.championshipData.mqt, color: 'bg-red-500' },
+                    { label: 'Asian Champs Gold', time: analysisResults.championshipData.asianGold, color: 'bg-blue-500' },
+                    { label: 'World U20 Gold', time: analysisResults.championshipData.u20Gold, color: 'bg-purple-500' },
+                  ].map((item, idx) => {
+                    const gap = analysisResults.personalBest - item.time;
+                    const met = gap <= 0;
+                    return (
+                      <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-700">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-2.5 h-2.5 rounded-full ${item.color}`}></div>
+                          <span className="text-sm font-medium text-slate-300">{item.label}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-white">{item.time}s</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            met ? 'bg-green-900/40 text-green-700' : 'bg-slate-700/60 text-slate-400'
+                          }`}>
+                            {met ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            </>)}
+
+            {/* ══════════ INSIGHTS TAB ══════════ */}
+            {dashTab === 'insights' && (<>
+
+            {/* ── PEAK PROJECTION (in Insights tab) ── */}
+            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-orange-500" />
+                Peak Performance Projection
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                  <p className="text-sm text-slate-400 mb-1">Projected Peak Time</p>
+                  <p className="text-3xl font-bold text-orange-600">{analysisResults.peakProjection.time}s</p>
+                </div>
+                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                  <p className="text-sm text-slate-400 mb-1">Projected Peak Age</p>
+                  <p className="text-3xl font-bold text-white">{analysisResults.peakProjection.age}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {analysisResults.peakProjection.yearsToPeak > 0
+                      ? `${analysisResults.peakProjection.yearsToPeak} year${analysisResults.peakProjection.yearsToPeak !== 1 ? 's' : ''} away`
+                      : 'At or past peak'}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                  <p className="text-sm text-slate-400 mb-1">50% Confidence Interval</p>
+                  <p className="text-xl font-bold text-white">
+                    {analysisResults.peakProjection.ciLower}s – {analysisResults.peakProjection.ciUpper}s
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                  <p className="text-sm text-slate-400 mb-1">Projection Confidence</p>
+                  <p className="text-3xl font-bold text-white">
+                    {Math.round(analysisResults.peakProjection.confidence * 100)}%
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {analysisResults.peakProjection.confidence >= 0.7 ? 'High' : analysisResults.peakProjection.confidence >= 0.5 ? 'Moderate' : 'Low'} confidence
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ── YEAR-BY-YEAR PROJECTED TIMES (in Insights tab) ── */}
+            {analysisResults.projections && analysisResults.projections.length > 0 && (
+              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-orange-500" />
+                  Year-by-Year Projected Times
+                </h3>
+                <p className="text-sm text-slate-400 mb-6">
+                  Based on your {analysisResults.improvementRate}%/year improvement rate, {analysisResults.trajectoryType.toLowerCase()} trajectory pattern, and population age-performance curves
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-slate-600">
+                        <th className="text-left py-3 px-4 font-semibold text-white">Age</th>
+                        <th className="text-center py-3 px-4 font-semibold text-white">Projected Time</th>
+                        <th className="text-center py-3 px-4 font-semibold text-white">50% CI</th>
+                        <th className="text-center py-3 px-4 font-semibold text-white">90% CI</th>
+                        <th className="text-center py-3 px-4 font-semibold text-white">vs Finalist</th>
+                        <th className="text-center py-3 px-4 font-semibold text-white">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysisResults.projections.map((proj, idx) => {
+                        const gap = proj.projectedTime - analysisResults.thresholds.finalist;
+                        const meetsFinalist = gap <= 0;
+                        const meetsSemi = proj.projectedTime <= analysisResults.thresholds.semiFinalist;
+                        const meetsQualifier = proj.projectedTime <= analysisResults.thresholds.qualifier;
+
+                        return (
+                          <tr key={idx} className={`border-b border-slate-700/50 ${proj.age === analysisResults.peakProjection.age ? 'bg-orange-900/30' : 'hover:bg-slate-700'}`}>
+                            <td className="py-3 px-4 font-medium text-white">
+                              {proj.age}
+                              {proj.age === analysisResults.peakProjection.age && (
+                                <span className="ml-2 text-xs text-orange-600 font-semibold">PEAK</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-center font-bold text-white">{proj.projectedTime.toFixed(2)}s</td>
+                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci50Lower.toFixed(2)}s – {proj.ci50Upper.toFixed(2)}s</td>
+                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci90Lower.toFixed(2)}s – {proj.ci90Upper.toFixed(2)}s</td>
+                            <td className={`py-3 px-4 text-center font-semibold ${meetsFinalist ? 'text-green-600' : 'text-red-500'}`}>
+                              {meetsFinalist ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              {meetsFinalist ? (
+                                <span className="inline-block px-2 py-1 bg-green-900/40 text-green-300 rounded text-xs font-semibold">Finalist</span>
+                              ) : meetsSemi ? (
+                                <span className="inline-block px-2 py-1 bg-amber-900/40 text-amber-300 rounded text-xs font-semibold">Semi</span>
+                              ) : meetsQualifier ? (
+                                <span className="inline-block px-2 py-1 bg-blue-900/40 text-blue-300 rounded text-xs font-semibold">Qualifier</span>
+                              ) : (
+                                <span className="inline-block px-2 py-1 bg-slate-700/60 text-slate-400 rounded text-xs font-semibold">Developing</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── IMPROVEMENT SCENARIOS (in Insights tab) ── */}
             {analysisResults.improvementScenarios && (
               <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
                 <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -3677,187 +3806,7 @@ export default function BnchMrkdApp() {
               </div>
             )}
 
-            {/* ── COMPETITIVE OUTLOOK ── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {[
-                { label: 'Olympic Final', value: analysisResults.finalistProbability, icon: Award, color: '#dc2626' },
-                { label: 'Olympic Semi-Final', value: analysisResults.semiFinalistProbability, icon: Target, color: '#f59e0b' },
-                { label: 'Olympic Qualifier', value: analysisResults.qualifierProbability, icon: ArrowUpRight, color: '#3b82f6' }
-              ].map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <div key={idx} className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-white">{item.label}</h4>
-                      <Icon className="w-5 h-5 text-orange-500" />
-                    </div>
-                    <div className="relative w-24 h-24 mx-auto mb-4">
-                      <svg className="w-full h-full" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#334155" strokeWidth="6" />
-                        <circle cx="50" cy="50" r="45" fill="none"
-                          stroke={item.color} strokeWidth="6"
-                          strokeDasharray={`${(Math.min(100, item.value) / 100) * 282.7} 282.7`}
-                          strokeLinecap="round" transform="rotate(-90 50 50)" />
-                        <text x="50" y="55" textAnchor="middle" className="text-lg font-bold" fill="#f1f5f9">
-                          {Math.min(100, item.value)}%
-                        </text>
-                      </svg>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* ── PERCENTILE & IMPROVEMENT SIDE-BY-SIDE ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-orange-500" />
-                  Percentile Ranking
-                </h3>
-                <div className="mb-6">
-                  <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden mb-2">
-                    <div className={`h-full ${getPercentileColor(analysisResults.percentileAtCurrentAge)} transition-all`}
-                      style={{ width: `${analysisResults.percentileAtCurrentAge}%` }} />
-                  </div>
-                  <p className="text-center font-bold text-white">
-                    Top {100 - analysisResults.percentileAtCurrentAge}% among Olympic-level athletes at age {analysisResults.age}
-                  </p>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  {[
-                    { label: 'Elite', range: 'Top 10%', bg: 'bg-green-900/30', text: 'text-green-300', sub: 'text-green-700' },
-                    { label: 'National', range: 'Top 25%', bg: 'bg-blue-900/30', text: 'text-blue-300', sub: 'text-blue-700' },
-                    { label: 'Competitive', range: 'Top 50%', bg: 'bg-amber-900/30', text: 'text-amber-300', sub: 'text-amber-700' },
-                    { label: 'Developing', range: 'Below 50%', bg: 'bg-slate-800/50', text: 'text-white', sub: 'text-slate-300' },
-                  ].map((tier, i) => (
-                    <div key={i} className={`p-2 ${tier.bg} rounded`}>
-                      <p className={`font-semibold ${tier.text}`}>{tier.label}</p>
-                      <p className={tier.sub}>{tier.range}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8">
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-orange-500" />
-                  Career Trajectory vs Benchmarks
-                </h3>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {[
-                    { key: 'finalist', label: 'Finalists', color: '#10b981' },
-                    { key: 'semiFinalist', label: 'Semi-Finalists', color: '#f59e0b' },
-                    { key: 'qualifier', label: 'Qualifiers', color: '#94a3b8' },
-                  ].map(t => (
-                    <button key={t.key} onClick={() => setTrajToggles(prev => ({ ...prev, [t.key]: !prev[t.key] }))}
-                      className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium border transition-all ${
-                        trajToggles[t.key]
-                          ? 'border-transparent text-white'
-                          : 'border-slate-600 text-slate-400 bg-transparent hover:border-slate-500'
-                      }`}
-                      style={trajToggles[t.key] ? { backgroundColor: t.color + '33', borderColor: t.color, color: t.color } : {}}
-                    >
-                      {trajToggles[t.key] ? '\u2713 ' : ''}{t.label}
-                    </button>
-                  ))}
-                </div>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
-                    <YAxis reversed tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }}
-                      formatter={(v, dataKey) => {
-                        if (v == null) return null;
-                        const labels = { you: 'You', finalist: 'Finalist Median', semiFinalist: 'Semi-Finalist Median', qualifier: 'Qualifier Median' };
-                        return [`${parseFloat(v).toFixed(2)}s`, labels[dataKey] || dataKey];
-                      }}
-                      labelFormatter={(l) => `Age ${l}`} />
-                    {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
-                    {trajToggles.semiFinalist && <Line type="monotone" dataKey="semiFinalist" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Semi-Finalist Median" />}
-                    {trajToggles.finalist && <Line type="monotone" dataKey="finalist" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Finalist Median" />}
-                    <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 5, fill: '#e8712a', stroke: '#fff', strokeWidth: 1 }} activeDot={{ r: 7, fill: '#f97316' }} name="You" connectNulls={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-                <div className={`mt-4 p-3 rounded text-sm ${
-                  analysisResults.improvementRate >= analysisResults.finalistNorm
-                    ? 'bg-green-900/30 border border-green-800 text-green-300'
-                    : analysisResults.improvementRate >= analysisResults.nonFinalistNorm
-                    ? 'bg-amber-900/30 border border-amber-800 text-amber-300'
-                    : 'bg-red-900/30 border border-red-800 text-red-300'
-                }`}>
-                  <span className="font-semibold">Improvement rate: {analysisResults.improvementRate}%/year</span>
-                  <span className="text-slate-400"> — Finalist norm: {analysisResults.finalistNorm}%/yr | Non-finalist: {analysisResults.nonFinalistNorm}%/yr</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── PEAK PROJECTION DETAILS ── */}
-            <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-4 sm:p-8 mb-6 sm:mb-8">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-orange-500" />
-                Peak Performance Projection
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-1">Projected Peak Time</p>
-                  <p className="text-3xl font-bold text-orange-600">{analysisResults.peakProjection.time}s</p>
-                </div>
-                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-1">Projected Peak Age</p>
-                  <p className="text-3xl font-bold text-white">{analysisResults.peakProjection.age}</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {analysisResults.peakProjection.yearsToPeak > 0
-                      ? `${analysisResults.peakProjection.yearsToPeak} year${analysisResults.peakProjection.yearsToPeak !== 1 ? 's' : ''} away`
-                      : 'At or past peak'}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-1">50% Confidence Interval</p>
-                  <p className="text-xl font-bold text-white">
-                    {analysisResults.peakProjection.ciLower}s – {analysisResults.peakProjection.ciUpper}s
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-1">Projection Confidence</p>
-                  <p className="text-3xl font-bold text-white">
-                    {Math.round(analysisResults.peakProjection.confidence * 100)}%
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {analysisResults.peakProjection.confidence >= 0.7 ? 'High' : analysisResults.peakProjection.confidence >= 0.5 ? 'Moderate' : 'Low'} confidence
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* ── RECOMMENDATIONS ── */}
-            <div className="bg-gradient-to-br from-orange-950/40 to-amber-950/40 rounded-xl shadow-sm border border-orange-800 p-8 mb-8">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-orange-600" />
-                Analysis &amp; Recommendations
-              </h3>
-              <div className="space-y-4">
-                {analysisResults.recommendations.map((rec, idx) => (
-                  <div key={idx} className="bg-slate-800/90 bg-opacity-30 rounded-lg p-4 border border-orange-900/50">
-                    <div className="flex items-start gap-3">
-                      <span className={`mt-0.5 inline-block w-2 h-2 rounded-full flex-shrink-0 ${
-                        rec.type === 'trajectory' ? 'bg-purple-500'
-                        : rec.type === 'threshold' ? 'bg-red-500'
-                        : rec.type === 'improvement' ? 'bg-green-500'
-                        : 'bg-blue-500'
-                      }`}></span>
-                      <div>
-                        <p className="font-semibold text-white mb-1">{rec.title}</p>
-                        <p className="text-sm text-slate-300 leading-relaxed">{rec.text}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── METHODOLOGY NOTE ── */}
+            {/* ── METHODOLOGY (in Insights tab) ── */}
             <div className="bg-slate-700/50 rounded-xl border border-slate-700 p-6 mb-8">
               <h4 className="font-semibold text-slate-300 mb-2 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-slate-400" />
@@ -3872,6 +3821,8 @@ export default function BnchMrkdApp() {
                 rates observed in finalists. Competition probability estimates use logistic regression on z-scored PB and percentile rank features.
               </p>
             </div>
+
+            </>)}
 
             <div className="text-center mb-12">
               <button onClick={handleBack}
