@@ -19,6 +19,8 @@ export default function BnchMrkdApp() {
 
   const [currentView, setCurrentView] = useState('landing');
   const [activeTab, setActiveTab] = useState('manual');
+  const [disciplineCategory, setDisciplineCategory] = useState('sprints'); // 'sprints' | 'throws'
+  const isThrowsMode = disciplineCategory === 'throws';
   const [athleteData, setAthleteData] = useState({
     name: '',
     dateOfBirth: '',
@@ -1877,7 +1879,7 @@ export default function BnchMrkdApp() {
 
               {/* ── SPRINTS & HURDLES (ACTIVE) ── */}
               <button
-                onClick={() => setCurrentView('input')}
+                onClick={() => { setDisciplineCategory('sprints'); setAthleteData(d => ({...d, discipline: '100m'})); setQuickAnalysisData(d => ({...d, discipline: '100m'})); setCurrentView('input'); }}
                 className="group relative bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 text-left hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 hover:scale-[1.02] transition-all cursor-pointer"
               >
                 {/* Animated sprint lines */}
@@ -1908,7 +1910,7 @@ export default function BnchMrkdApp() {
 
               {/* ── THROWS (ACTIVE) ── */}
               <button
-                onClick={() => setCurrentView('input')}
+                onClick={() => { setDisciplineCategory('throws'); setAthleteData(d => ({...d, discipline: 'Discus Throw'})); setQuickAnalysisData(d => ({...d, discipline: 'Discus Throw'})); setCurrentView('input'); }}
                 className="group relative bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 text-left hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 hover:scale-[1.02] transition-all cursor-pointer"
               >
                 {/* Animated throw arc */}
@@ -2415,22 +2417,27 @@ export default function BnchMrkdApp() {
                     <label className="block text-sm font-semibold text-white mb-2">Discipline</label>
                     <select value={athleteData.discipline} onChange={(e) => handleManualEntry('discipline', e.target.value)}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
-                      <optgroup label="Sprints">
-                        <option value="100m">100m</option>
-                        <option value="200m">200m</option>
-                        <option value="400m">400m</option>
-                      </optgroup>
-                      <optgroup label="Hurdles">
-                        <option value="110mH">110m Hurdles</option>
-                        <option value="100mH">100m Hurdles</option>
-                        <option value="400mH">400m Hurdles</option>
-                      </optgroup>
-                      <optgroup label="Throws">
-                        <option value="Discus Throw">Discus Throw</option>
-                        <option value="Javelin Throw">Javelin Throw</option>
-                        <option value="Hammer Throw">Hammer Throw</option>
-                        <option value="Shot Put">Shot Put</option>
-                      </optgroup>
+                      {isThrowsMode ? (
+                        <>
+                          <option value="Discus Throw">Discus Throw</option>
+                          <option value="Javelin Throw">Javelin Throw</option>
+                          <option value="Hammer Throw">Hammer Throw</option>
+                          <option value="Shot Put">Shot Put</option>
+                        </>
+                      ) : (
+                        <>
+                          <optgroup label="Sprints">
+                            <option value="100m">100m</option>
+                            <option value="200m">200m</option>
+                            <option value="400m">400m</option>
+                          </optgroup>
+                          <optgroup label="Hurdles">
+                            <option value="110mH">110m Hurdles</option>
+                            <option value="100mH">100m Hurdles</option>
+                            <option value="400mH">400m Hurdles</option>
+                          </optgroup>
+                        </>
+                      )}
                     </select>
                   </div>
                   <div>
@@ -2446,7 +2453,7 @@ export default function BnchMrkdApp() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">Athlete Name</label>
-                    <input type="text" placeholder="e.g., Shelly-Ann Fraser-Pryce" value={athleteData.name}
+                    <input type="text" placeholder={isThrowsMode ? "e.g., Daniel Stahl" : "e.g., Shelly-Ann Fraser-Pryce"} value={athleteData.name}
                       onChange={(e) => handleManualEntry('name', e.target.value)}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
@@ -2460,7 +2467,7 @@ export default function BnchMrkdApp() {
 
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                   <Timer className="w-5 h-5 text-orange-500" />
-                  Race History
+                  {isThrowsMode ? 'Competition History' : 'Race History'}
                 </h3>
 
                 <div className="overflow-x-auto mb-6">
@@ -2468,8 +2475,8 @@ export default function BnchMrkdApp() {
                     <thead>
                       <tr className="border-b border-slate-600">
                         <th className="text-left py-3 px-4 font-semibold text-white">Date</th>
-                        <th className="text-left py-3 px-4 font-semibold text-white">{getUnitLabel(athleteData.discipline)}</th>
-                        <th className="text-left py-3 px-4 font-semibold text-white">Wind (m/s)</th>
+                        <th className="text-left py-3 px-4 font-semibold text-white">{isThrowsMode ? 'Distance (m)' : 'Time (s)'}</th>
+                        {!isThrowsMode && <th className="text-left py-3 px-4 font-semibold text-white">Wind (m/s)</th>}
                         <th className="text-left py-3 px-4 font-semibold text-white">Competition</th>
                         <th className="text-center py-3 px-4 font-semibold text-white">Action</th>
                       </tr>
@@ -2478,9 +2485,9 @@ export default function BnchMrkdApp() {
                       {athleteData.races.map((race, idx) => (
                         <tr key={idx} className="border-b border-slate-700 hover:bg-slate-700">
                           <td className="py-3 px-4"><input type="date" value={race.date} onChange={(e) => handleManualEntry('date', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>
-                          <td className="py-3 px-4"><input type="number" step="0.01" placeholder="e.g., 10.85" value={race.time} onChange={(e) => handleManualEntry('time', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>
-                          <td className="py-3 px-4"><input type="number" step="0.1" placeholder="-0.5 to +2.0" value={race.wind} onChange={(e) => handleManualEntry('wind', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>
-                          <td className="py-3 px-4"><input type="text" placeholder="e.g., Olympics" value={race.competition} onChange={(e) => handleManualEntry('competition', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>
+                          <td className="py-3 px-4"><input type="number" step="0.01" placeholder={isThrowsMode ? "e.g., 67.48" : "e.g., 10.85"} value={race.time} onChange={(e) => handleManualEntry('time', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>
+                          {!isThrowsMode && <td className="py-3 px-4"><input type="number" step="0.1" placeholder="-0.5 to +2.0" value={race.wind} onChange={(e) => handleManualEntry('wind', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>}
+                          <td className="py-3 px-4"><input type="text" placeholder={isThrowsMode ? "e.g., World Championships" : "e.g., Olympics"} value={race.competition} onChange={(e) => handleManualEntry('competition', e.target.value, idx)} className="w-full px-2 py-1 bg-slate-900 text-white border border-slate-600 rounded text-sm placeholder-slate-500" /></td>
                           <td className="py-3 px-4 text-center"><button onClick={() => removeRaceRow(idx)} className="text-red-500 hover:text-red-700 transition-colors"><Trash2 className="w-4 h-4" /></button></td>
                         </tr>
                       ))}
@@ -2489,7 +2496,7 @@ export default function BnchMrkdApp() {
                 </div>
 
                 <button onClick={addRaceRow} className="flex items-center gap-2 text-slate-300 hover:text-orange-600 transition-colors mb-8 font-medium">
-                  <Plus className="w-4 h-4" /> Add Race
+                  <Plus className="w-4 h-4" /> {isThrowsMode ? 'Add Result' : 'Add Race'}
                 </button>
 
                 {error && <div className="bg-red-900/30 border border-red-800 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>}
@@ -2514,22 +2521,27 @@ export default function BnchMrkdApp() {
                   <label className="block text-sm font-semibold text-white mb-2">Override Discipline (optional)</label>
                   <select className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
                     <option value="">Auto-detect</option>
-                    <optgroup label="Sprints">
-                      <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
-                    </optgroup>
-                    <optgroup label="Hurdles">
-                      <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
-                    </optgroup>
-                    <optgroup label="Throws">
-                      <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
-                    </optgroup>
+                    {isThrowsMode ? (
+                      <optgroup label="Throws">
+                        <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
+                      </optgroup>
+                    ) : (
+                      <>
+                        <optgroup label="Sprints">
+                          <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
+                        </optgroup>
+                        <optgroup label="Hurdles">
+                          <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
+                        </optgroup>
+                      </>
+                    )}
                   </select>
                 </div>
-                <p className="text-sm text-slate-400 mb-4 flex items-center gap-2"><ChevronRight className="w-4 h-4" /> We'll automatically import your full competition history and analyze all supported disciplines</p>
+                <p className="text-sm text-slate-400 mb-4 flex items-center gap-2"><ChevronRight className="w-4 h-4" /> {isThrowsMode ? "We'll automatically import your full competition history and analyze all supported throws disciplines" : "We'll automatically import your full competition history and analyze all supported disciplines"}</p>
                 <div className="bg-blue-900/30 border border-blue-800 rounded-lg p-4 mb-8">
                   <p className="text-sm text-blue-300">
-                    <span className="font-semibold">Supported disciplines:</span> 100m, 200m, 400m, 100m Hurdles, 110m Hurdles, 400m Hurdles, Discus Throw, Javelin Throw, Hammer Throw, Shot Put.
-                    All matching results will be automatically analyzed with separate tabs for each.
+                    <span className="font-semibold">Supported disciplines:</span> {isThrowsMode ? 'Discus Throw, Javelin Throw, Hammer Throw, Shot Put.' : '100m, 200m, 400m, 100m Hurdles, 110m Hurdles, 400m Hurdles.'}
+                    {' '}All matching results will be automatically analyzed with separate tabs for each.
                   </p>
                   <p className="text-xs text-blue-600 mt-2">
                     Requires the bnchmrkd backend server running on localhost:8000. Scraping takes 15-60 seconds depending on career length.
@@ -2546,21 +2558,26 @@ export default function BnchMrkdApp() {
             {/* Quick Analysis Tab */}
             {activeTab === 'quick' && (
               <div className="bg-slate-800/90 rounded-xl shadow-lg shadow-black/10 border border-slate-700/50 backdrop-blur-sm p-8">
-                <p className="text-slate-400 mb-6">Don't have full race data? Get insights with just the essentials.</p>
+                <p className="text-slate-400 mb-6">{isThrowsMode ? "Don't have full competition data? Get insights with just the essentials." : "Don't have full race data? Get insights with just the essentials."}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">Discipline</label>
                     <select value={quickAnalysisData.discipline} onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, discipline: e.target.value })}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
-                      <optgroup label="Sprints">
-                        <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
-                      </optgroup>
-                      <optgroup label="Hurdles">
-                        <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
-                      </optgroup>
-                      <optgroup label="Throws">
-                        <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
-                      </optgroup>
+                      {isThrowsMode ? (
+                        <optgroup label="Throws">
+                          <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
+                        </optgroup>
+                      ) : (
+                        <>
+                          <optgroup label="Sprints">
+                            <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
+                          </optgroup>
+                          <optgroup label="Hurdles">
+                            <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
+                          </optgroup>
+                        </>
+                      )}
                     </select>
                   </div>
                   <div>
@@ -2580,7 +2597,7 @@ export default function BnchMrkdApp() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">Personal Best {getUnitLabel(quickAnalysisData.discipline)}</label>
-                    <input type="number" step="0.01" placeholder={isThrowsDiscipline(quickAnalysisData.discipline) ? "e.g., 18.50" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
+                    <input type="number" step="0.01" placeholder={isThrowsMode ? "e.g., 65.50" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
                       onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, personalBest: e.target.value })}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
