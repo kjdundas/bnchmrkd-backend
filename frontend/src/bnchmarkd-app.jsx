@@ -1906,23 +1906,30 @@ export default function BnchMrkdApp() {
                 <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-orange-400 transition-colors" />
               </button>
 
-              {/* ── THROWS (COMING SOON) ── */}
-              <div className="relative bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/30 p-6 text-left opacity-60 cursor-not-allowed">
+              {/* ── THROWS (ACTIVE) ── */}
+              <button
+                onClick={() => setCurrentView('input')}
+                className="group relative bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 text-left hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 hover:scale-[1.02] transition-all cursor-pointer"
+              >
                 {/* Animated throw arc */}
-                <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4">
+                <div className="w-14 h-14 rounded-xl bg-orange-500/15 flex items-center justify-center mb-4">
                   <svg viewBox="0 0 48 48" className="w-8 h-8">
-                    <path d="M10 36 Q 24 8, 40 28" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 3">
+                    <path d="M10 36 Q 24 8, 40 28" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 3">
                       <animate attributeName="stroke-dashoffset" values="0;-14" dur="2s" repeatCount="indefinite" />
                     </path>
-                    <circle cx="40" cy="28" r="4" fill="#3b82f6" opacity="0.5">
+                    <circle cx="40" cy="28" r="4" fill="#f97316" opacity="0.5">
                       <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" />
                     </circle>
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-300 mb-1">Throws</h3>
-                <p className="text-sm text-slate-500 mb-3">Shot Put, Discus, Hammer, Javelin</p>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-400">Coming Soon</span>
-              </div>
+                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-orange-400 transition-colors">Throws</h3>
+                <p className="text-sm text-slate-400 mb-3">Shot Put, Discus, Hammer, Javelin</p>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400">Live</span>
+                  <span className="text-xs text-slate-400">8 event/gender combinations</span>
+                </div>
+                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-orange-400 transition-colors" />
+              </button>
 
               {/* ── JUMPS (COMING SOON) ── */}
               <div className="relative bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/30 p-6 text-left opacity-60 cursor-not-allowed">
