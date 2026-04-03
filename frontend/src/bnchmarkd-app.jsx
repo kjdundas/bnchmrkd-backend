@@ -530,6 +530,294 @@ export default function BnchMrkdApp() {
         { name: 'Late Developer', pct_off_pb: [11.0, 7.2, 5.0, 2.4, 2.2, 4.0], peakAge: 27 },
         { name: 'Plateau Pattern', pct_off_pb: [8.0, 5.5, 3.8, 3.0, 3.5, 4.8], peakAge: 25 }
       ]
+    },
+    MDT: {
+      percentiles: {
+        15: { p10: 6.5, p25: 10.2, p50: 18.5, p75: 20.0, p90: 26.0 },
+        16: { p10: 6.2, p25: 9.5, p50: 15.5, p75: 18.2, p90: 23.5 },
+        17: { p10: 5.8, p25: 8.8, p50: 12.8, p75: 16.5, p90: 21.5 },
+        18: { p10: 5.4, p25: 8.0, p50: 6.8, p75: 14.8, p90: 19.2 },
+        19: { p10: 5.0, p25: 7.2, p50: 5.5, p75: 13.0, p90: 17.2 },
+        20: { p10: 4.5, p25: 6.2, p50: 4.0, p75: 10.5, p90: 14.8 },
+        21: { p10: 3.9, p25: 5.2, p50: 3.0, p75: 8.8, p90: 12.8 },
+        22: { p10: 3.2, p25: 4.2, p50: 2.2, p75: 7.2, p90: 11.0 },
+        23: { p10: 2.4, p25: 3.2, p50: 1.5, p75: 5.8, p90: 9.2 },
+        24: { p10: 1.8, p25: 2.5, p50: 1.0, p75: 4.5, p90: 7.5 },
+        25: { p10: 1.6, p25: 2.4, p50: 1.2, p75: 4.8, p90: 8.0 },
+        26: { p10: 1.8, p25: 2.8, p50: 1.8, p75: 5.5, p90: 9.0 },
+        27: { p10: 2.2, p25: 3.4, p50: 2.5, p75: 6.5, p90: 10.5 },
+        28: { p10: 2.8, p25: 4.2, p50: 3.5, p75: 7.8, p90: 12.2 },
+        29: { p10: 3.5, p25: 5.2, p50: 4.8, p75: 9.2, p90: 14.0 },
+        30: { p10: 4.4, p25: 6.4, p50: 6.2, p75: 10.8, p90: 16.0 },
+        31: { p10: 5.4, p25: 7.6, p50: 7.8, p75: 12.5, p90: 18.2 },
+        32: { p10: 6.5, p25: 8.8, p50: 9.5, p75: 14.2, p90: 20.5 },
+        33: { p10: 7.8, p25: 10.2, p50: 11.5, p75: 16.2, p90: 23.0 },
+        34: { p10: 9.2, p25: 11.8, p50: 13.8, p75: 18.5, p90: 25.8 },
+        35: { p10: 10.8, p25: 13.6, p50: 16.2, p75: 21.0, p90: 28.8 },
+        36: { p10: 12.5, p25: 15.5, p50: 18.8, p75: 23.8, p90: 32.0 },
+        37: { p10: 14.4, p25: 17.6, p50: 21.5, p75: 26.8, p90: 35.5 },
+        38: { p10: 16.5, p25: 19.8, p50: 24.5, p75: 30.0, p90: 39.2 }
+      },
+      rocThresholds: { optimal: 67.50, s90: 69.00, s80: 68.00, s70: 67.00 },
+      calibration: { mean: 65.0, std: 3.5 },
+      improvement: { finalist_median: 4.2, finalist_std: 2.0, non_finalist_median: 2.0, non_finalist_std: 1.3 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.5, 2.0, 1.2, 0.8, 1.8, 3.0], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.2, 4.5, 2.8, 1.5, 2.2, 3.8], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.0, 3.0, 1.8, 1.2, 2.0, 3.2], peakAge: 27 }
+      ]
+    },
+    FDT: {
+      percentiles: {
+        15: { p10: 6.8, p25: 10.8, p50: 19.2, p75: 20.5, p90: 26.8 },
+        16: { p10: 6.4, p25: 10.0, p50: 15.8, p75: 18.8, p90: 24.0 },
+        17: { p10: 6.0, p25: 9.2, p50: 13.0, p75: 17.0, p90: 22.0 },
+        18: { p10: 5.6, p25: 8.4, p50: 7.0, p75: 15.2, p90: 20.0 },
+        19: { p10: 5.2, p25: 7.6, p50: 5.8, p75: 13.5, p90: 18.0 },
+        20: { p10: 4.7, p25: 6.6, p50: 4.2, p75: 11.0, p90: 15.5 },
+        21: { p10: 4.1, p25: 5.6, p50: 3.2, p75: 9.2, p90: 13.5 },
+        22: { p10: 3.4, p25: 4.6, p50: 2.4, p75: 7.5, p90: 11.5 },
+        23: { p10: 2.6, p25: 3.6, p50: 1.6, p75: 6.0, p90: 9.5 },
+        24: { p10: 2.0, p25: 2.8, p50: 1.0, p75: 4.8, p90: 8.0 },
+        25: { p10: 1.8, p25: 2.6, p50: 1.2, p75: 5.0, p90: 8.2 },
+        26: { p10: 2.0, p25: 3.0, p50: 1.8, p75: 5.8, p90: 9.2 },
+        27: { p10: 2.4, p25: 3.6, p50: 2.6, p75: 6.8, p90: 10.8 },
+        28: { p10: 3.0, p25: 4.4, p50: 3.6, p75: 8.0, p90: 12.5 },
+        29: { p10: 3.8, p25: 5.4, p50: 5.0, p75: 9.5, p90: 14.5 },
+        30: { p10: 4.7, p25: 6.6, p50: 6.5, p75: 11.2, p90: 16.5 },
+        31: { p10: 5.7, p25: 7.8, p50: 8.2, p75: 13.0, p90: 18.8 },
+        32: { p10: 6.8, p25: 9.0, p50: 10.0, p75: 14.8, p90: 21.2 },
+        33: { p10: 8.1, p25: 10.4, p50: 12.0, p75: 16.8, p90: 23.8 },
+        34: { p10: 9.5, p25: 12.0, p50: 14.2, p75: 19.0, p90: 26.8 },
+        35: { p10: 11.1, p25: 13.8, p50: 16.6, p75: 21.5, p90: 29.8 },
+        36: { p10: 12.8, p25: 15.8, p50: 19.2, p75: 24.2, p90: 33.0 },
+        37: { p10: 14.7, p25: 18.0, p50: 22.0, p75: 27.2, p90: 36.5 },
+        38: { p10: 16.8, p25: 20.4, p50: 25.0, p75: 30.5, p90: 40.2 }
+      },
+      rocThresholds: { optimal: 65.00, s90: 66.40, s80: 65.40, s70: 64.50 },
+      calibration: { mean: 62.0, std: 3.5 },
+      improvement: { finalist_median: 4.0, finalist_std: 2.0, non_finalist_median: 1.9, non_finalist_std: 1.3 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.8, 2.2, 1.5, 1.0, 2.0, 3.2], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.5, 4.8, 3.0, 1.8, 2.5, 4.0], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.2, 3.2, 2.0, 1.5, 2.2, 3.5], peakAge: 27 }
+      ]
+    },
+    MJT: {
+      percentiles: {
+        15: { p10: 7.2, p25: 11.2, p50: 20.0, p75: 21.5, p90: 27.5 },
+        16: { p10: 6.8, p25: 10.4, p50: 16.5, p75: 19.5, p90: 25.0 },
+        17: { p10: 6.4, p25: 9.6, p50: 13.5, p75: 17.8, p90: 23.0 },
+        18: { p10: 6.0, p25: 8.8, p50: 7.2, p75: 16.0, p90: 21.0 },
+        19: { p10: 5.6, p25: 8.0, p50: 6.0, p75: 14.5, p90: 19.0 },
+        20: { p10: 5.1, p25: 7.0, p50: 4.5, p75: 12.0, p90: 16.5 },
+        21: { p10: 4.5, p25: 6.0, p50: 3.5, p75: 10.2, p90: 14.5 },
+        22: { p10: 3.8, p25: 5.0, p50: 2.6, p75: 8.5, p90: 12.5 },
+        23: { p10: 3.0, p25: 4.0, p50: 1.8, p75: 7.0, p90: 10.5 },
+        24: { p10: 2.2, p25: 3.0, p50: 1.2, p75: 5.5, p90: 8.5 },
+        25: { p10: 2.0, p25: 2.8, p50: 1.4, p75: 5.8, p90: 9.0 },
+        26: { p10: 2.2, p25: 3.2, p50: 2.0, p75: 6.5, p90: 10.2 },
+        27: { p10: 2.6, p25: 3.8, p50: 2.8, p75: 7.5, p90: 11.8 },
+        28: { p10: 3.2, p25: 4.6, p50: 3.8, p75: 8.8, p90: 13.5 },
+        29: { p10: 4.0, p25: 5.6, p50: 5.2, p75: 10.2, p90: 15.5 },
+        30: { p10: 4.9, p25: 6.8, p50: 6.8, p75: 11.8, p90: 17.5 },
+        31: { p10: 5.9, p25: 8.0, p50: 8.5, p75: 13.5, p90: 19.8 },
+        32: { p10: 7.0, p25: 9.2, p50: 10.4, p75: 15.2, p90: 22.2 },
+        33: { p10: 8.3, p25: 10.6, p50: 12.5, p75: 17.2, p90: 25.0 },
+        34: { p10: 9.7, p25: 12.2, p50: 14.8, p75: 19.5, p90: 28.0 },
+        35: { p10: 11.3, p25: 14.0, p50: 17.4, p75: 22.0, p90: 31.2 },
+        36: { p10: 13.1, p25: 16.0, p50: 20.2, p75: 24.8, p90: 34.8 },
+        37: { p10: 15.1, p25: 18.2, p50: 23.2, p75: 27.8, p90: 38.5 },
+        38: { p10: 17.3, p25: 20.6, p50: 26.5, p75: 31.2, p90: 42.5 }
+      },
+      rocThresholds: { optimal: 88.00, s90: 89.80, s80: 88.40, s70: 87.50 },
+      calibration: { mean: 85.0, std: 4.0 },
+      improvement: { finalist_median: 4.5, finalist_std: 2.2, non_finalist_median: 2.1, non_finalist_std: 1.4 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [4.0, 2.2, 1.5, 1.0, 2.2, 3.5], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.8, 5.0, 3.2, 1.8, 2.5, 4.2], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.5, 3.5, 2.2, 1.5, 2.5, 3.8], peakAge: 27 }
+      ]
+    },
+    FJT: {
+      percentiles: {
+        15: { p10: 7.0, p25: 11.0, p50: 19.8, p75: 21.2, p90: 27.2 },
+        16: { p10: 6.6, p25: 10.2, p50: 16.2, p75: 19.2, p90: 24.8 },
+        17: { p10: 6.2, p25: 9.4, p50: 13.2, p75: 17.5, p90: 22.8 },
+        18: { p10: 5.8, p25: 8.6, p50: 6.8, p75: 15.8, p90: 20.8 },
+        19: { p10: 5.4, p25: 7.8, p50: 5.6, p75: 14.2, p90: 18.8 },
+        20: { p10: 4.9, p25: 6.8, p50: 4.0, p75: 11.5, p90: 16.2 },
+        21: { p10: 4.3, p25: 5.8, p50: 3.0, p75: 9.8, p90: 14.2 },
+        22: { p10: 3.6, p25: 4.8, p50: 2.2, p75: 8.0, p90: 12.2 },
+        23: { p10: 2.8, p25: 3.8, p50: 1.5, p75: 6.5, p90: 10.2 },
+        24: { p10: 2.0, p25: 2.8, p50: 1.0, p75: 5.2, p90: 8.5 },
+        25: { p10: 1.8, p25: 2.6, p50: 1.2, p75: 5.5, p90: 8.8 },
+        26: { p10: 2.0, p25: 3.0, p50: 1.8, p75: 6.2, p90: 9.8 },
+        27: { p10: 2.4, p25: 3.6, p50: 2.6, p75: 7.2, p90: 11.2 },
+        28: { p10: 3.0, p25: 4.4, p50: 3.6, p75: 8.5, p90: 13.0 },
+        29: { p10: 3.8, p25: 5.4, p50: 5.0, p75: 10.0, p90: 15.0 },
+        30: { p10: 4.7, p25: 6.6, p50: 6.5, p75: 11.8, p90: 17.2 },
+        31: { p10: 5.7, p25: 7.8, p50: 8.2, p75: 13.5, p90: 19.5 },
+        32: { p10: 6.8, p25: 9.0, p50: 10.0, p75: 15.2, p90: 22.0 },
+        33: { p10: 8.1, p25: 10.4, p50: 12.0, p75: 17.2, p90: 24.8 },
+        34: { p10: 9.5, p25: 12.0, p50: 14.2, p75: 19.5, p90: 27.8 },
+        35: { p10: 11.1, p25: 13.8, p50: 16.6, p75: 22.0, p90: 31.0 },
+        36: { p10: 12.8, p25: 15.8, p50: 19.2, p75: 24.8, p90: 34.2 },
+        37: { p10: 14.7, p25: 18.0, p50: 22.0, p75: 27.8, p90: 37.8 },
+        38: { p10: 16.8, p25: 20.4, p50: 25.0, p75: 31.2, p90: 41.5 }
+      },
+      rocThresholds: { optimal: 65.00, s90: 66.40, s80: 65.40, s70: 64.50 },
+      calibration: { mean: 62.0, std: 3.5 },
+      improvement: { finalist_median: 4.0, finalist_std: 2.0, non_finalist_median: 1.9, non_finalist_std: 1.3 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.8, 2.2, 1.5, 1.0, 2.0, 3.2], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.5, 4.8, 3.0, 1.8, 2.5, 4.0], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.2, 3.2, 2.0, 1.5, 2.2, 3.5], peakAge: 27 }
+      ]
+    },
+    MHT: {
+      percentiles: {
+        15: { p10: 6.2, p25: 9.8, p50: 17.8, p75: 19.2, p90: 25.0 },
+        16: { p10: 5.8, p25: 9.0, p50: 14.8, p75: 17.5, p90: 22.8 },
+        17: { p10: 5.4, p25: 8.2, p50: 12.2, p75: 16.0, p90: 20.8 },
+        18: { p10: 5.0, p25: 7.5, p50: 6.5, p75: 14.2, p90: 18.5 },
+        19: { p10: 4.6, p25: 6.8, p50: 5.2, p75: 12.8, p90: 16.5 },
+        20: { p10: 4.1, p25: 5.8, p50: 3.8, p75: 10.5, p90: 14.2 },
+        21: { p10: 3.5, p25: 4.8, p50: 2.8, p75: 8.8, p90: 12.2 },
+        22: { p10: 2.8, p25: 3.8, p50: 2.0, p75: 7.2, p90: 10.5 },
+        23: { p10: 2.0, p25: 2.8, p50: 1.2, p75: 5.8, p90: 8.8 },
+        24: { p10: 1.2, p25: 1.8, p50: 0.6, p75: 4.5, p90: 7.2 },
+        25: { p10: 1.0, p25: 1.8, p50: 0.8, p75: 4.8, p90: 7.8 },
+        26: { p10: 1.2, p25: 2.2, p50: 1.4, p75: 5.5, p90: 8.8 },
+        27: { p10: 1.6, p25: 2.8, p50: 2.2, p75: 6.5, p90: 10.2 },
+        28: { p10: 2.2, p25: 3.6, p50: 3.2, p75: 7.8, p90: 12.0 },
+        29: { p10: 2.9, p25: 4.6, p50: 4.5, p75: 9.2, p90: 13.8 },
+        30: { p10: 3.8, p25: 5.8, p50: 6.0, p75: 10.8, p90: 15.8 },
+        31: { p10: 4.8, p25: 7.0, p50: 7.6, p75: 12.5, p90: 18.0 },
+        32: { p10: 5.9, p25: 8.4, p50: 9.4, p75: 14.2, p90: 20.5 },
+        33: { p10: 7.2, p25: 9.8, p50: 11.5, p75: 16.2, p90: 23.2 },
+        34: { p10: 8.6, p25: 11.4, p50: 13.8, p75: 18.5, p90: 26.2 },
+        35: { p10: 10.2, p25: 13.2, p50: 16.4, p75: 21.0, p90: 29.5 },
+        36: { p10: 11.9, p25: 15.2, p50: 19.2, p75: 23.8, p90: 33.0 },
+        37: { p10: 13.8, p25: 17.4, p50: 22.2, p75: 26.8, p90: 36.8 },
+        38: { p10: 15.8, p25: 19.8, p50: 25.5, p75: 30.2, p90: 41.0 }
+      },
+      rocThresholds: { optimal: 79.00, s90: 80.60, s80: 79.40, s70: 78.50 },
+      calibration: { mean: 76.0, std: 3.5 },
+      improvement: { finalist_median: 4.0, finalist_std: 2.0, non_finalist_median: 1.9, non_finalist_std: 1.3 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.5, 2.0, 1.2, 0.8, 1.8, 3.0], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.2, 4.5, 2.8, 1.5, 2.2, 3.8], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.0, 3.0, 1.8, 1.2, 2.0, 3.2], peakAge: 27 }
+      ]
+    },
+    FHT: {
+      percentiles: {
+        15: { p10: 7.0, p25: 11.0, p50: 19.8, p75: 21.2, p90: 27.2 },
+        16: { p10: 6.6, p25: 10.2, p50: 16.2, p75: 19.2, p90: 24.8 },
+        17: { p10: 6.2, p25: 9.4, p50: 13.2, p75: 17.5, p90: 22.8 },
+        18: { p10: 5.8, p25: 8.6, p50: 6.8, p75: 15.8, p90: 20.8 },
+        19: { p10: 5.4, p25: 7.8, p50: 5.6, p75: 14.2, p90: 18.8 },
+        20: { p10: 4.9, p25: 6.8, p50: 4.0, p75: 11.5, p90: 16.2 },
+        21: { p10: 4.3, p25: 5.8, p50: 3.0, p75: 9.8, p90: 14.2 },
+        22: { p10: 3.6, p25: 4.8, p50: 2.2, p75: 8.0, p90: 12.2 },
+        23: { p10: 2.8, p25: 3.8, p50: 1.5, p75: 6.5, p90: 10.2 },
+        24: { p10: 2.0, p25: 2.8, p50: 1.0, p75: 5.2, p90: 8.5 },
+        25: { p10: 1.8, p25: 2.6, p50: 1.2, p75: 5.5, p90: 8.8 },
+        26: { p10: 2.0, p25: 3.0, p50: 1.8, p75: 6.2, p90: 9.8 },
+        27: { p10: 2.4, p25: 3.6, p50: 2.6, p75: 7.2, p90: 11.2 },
+        28: { p10: 3.0, p25: 4.4, p50: 3.6, p75: 8.5, p90: 13.0 },
+        29: { p10: 3.8, p25: 5.4, p50: 5.0, p75: 10.0, p90: 15.0 },
+        30: { p10: 4.7, p25: 6.6, p50: 6.5, p75: 11.8, p90: 17.2 },
+        31: { p10: 5.7, p25: 7.8, p50: 8.2, p75: 13.5, p90: 19.5 },
+        32: { p10: 6.8, p25: 9.0, p50: 10.0, p75: 15.2, p90: 22.0 },
+        33: { p10: 8.1, p25: 10.4, p50: 12.0, p75: 17.2, p90: 24.8 },
+        34: { p10: 9.5, p25: 12.0, p50: 14.2, p75: 19.5, p90: 27.8 },
+        35: { p10: 11.1, p25: 13.8, p50: 16.6, p75: 22.0, p90: 31.0 },
+        36: { p10: 12.8, p25: 15.8, p50: 19.2, p75: 24.8, p90: 34.2 },
+        37: { p10: 14.7, p25: 18.0, p50: 22.0, p75: 27.8, p90: 37.8 },
+        38: { p10: 16.8, p25: 20.4, p50: 25.0, p75: 31.2, p90: 41.5 }
+      },
+      rocThresholds: { optimal: 75.00, s90: 76.50, s80: 75.40, s70: 74.50 },
+      calibration: { mean: 72.0, std: 3.5 },
+      improvement: { finalist_median: 4.0, finalist_std: 2.0, non_finalist_median: 1.9, non_finalist_std: 1.3 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.8, 2.2, 1.5, 1.0, 2.0, 3.2], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.5, 4.8, 3.0, 1.8, 2.5, 4.0], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.2, 3.2, 2.0, 1.5, 2.2, 3.5], peakAge: 27 }
+      ]
+    },
+    MSP: {
+      percentiles: {
+        15: { p10: 8.0, p25: 12.5, p50: 21.5, p75: 23.2, p90: 29.5 },
+        16: { p10: 7.5, p25: 11.6, p50: 17.8, p75: 21.0, p90: 26.8 },
+        17: { p10: 7.0, p25: 10.8, p50: 14.6, p75: 19.2, p90: 24.5 },
+        18: { p10: 6.4, p25: 9.8, p50: 7.8, p75: 17.2, p90: 22.2 },
+        19: { p10: 5.8, p25: 8.8, p50: 6.2, p75: 15.2, p90: 20.0 },
+        20: { p10: 5.1, p25: 7.6, p50: 4.5, p75: 12.5, p90: 17.5 },
+        21: { p10: 4.4, p25: 6.4, p50: 3.3, p75: 10.5, p90: 15.2 },
+        22: { p10: 3.6, p25: 5.2, p50: 2.4, p75: 8.5, p90: 13.0 },
+        23: { p10: 2.8, p25: 4.0, p50: 1.6, p75: 6.8, p90: 11.0 },
+        24: { p10: 2.0, p25: 2.8, p50: 1.0, p75: 5.2, p90: 8.8 },
+        25: { p10: 1.8, p25: 2.6, p50: 1.2, p75: 5.5, p90: 9.0 },
+        26: { p10: 2.0, p25: 3.0, p50: 1.8, p75: 6.2, p90: 10.0 },
+        27: { p10: 2.4, p25: 3.6, p50: 2.6, p75: 7.2, p90: 11.5 },
+        28: { p10: 3.0, p25: 4.4, p50: 3.6, p75: 8.5, p90: 13.2 },
+        29: { p10: 3.8, p25: 5.4, p50: 5.0, p75: 10.0, p90: 15.2 },
+        30: { p10: 4.7, p25: 6.6, p50: 6.5, p75: 11.8, p90: 17.5 },
+        31: { p10: 5.7, p25: 7.8, p50: 8.2, p75: 13.5, p90: 20.0 },
+        32: { p10: 6.8, p25: 9.0, p50: 10.0, p75: 15.2, p90: 22.5 },
+        33: { p10: 8.1, p25: 10.4, p50: 12.0, p75: 17.2, p90: 25.2 },
+        34: { p10: 9.5, p25: 12.0, p50: 14.2, p75: 19.5, p90: 28.2 },
+        35: { p10: 11.1, p25: 13.8, p50: 16.6, p75: 22.0, p90: 31.5 },
+        36: { p10: 12.8, p25: 15.8, p50: 19.2, p75: 24.8, p90: 35.0 },
+        37: { p10: 14.7, p25: 18.0, p50: 22.0, p75: 27.8, p90: 38.8 },
+        38: { p10: 16.8, p25: 20.4, p50: 25.0, p75: 31.2, p90: 42.8 }
+      },
+      rocThresholds: { optimal: 21.50, s90: 22.05, s80: 21.65, s70: 21.25 },
+      calibration: { mean: 20.0, std: 1.2 },
+      improvement: { finalist_median: 3.8, finalist_std: 1.8, non_finalist_median: 1.8, non_finalist_std: 1.2 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.5, 2.0, 1.2, 0.8, 1.8, 3.0], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.2, 4.5, 2.8, 1.5, 2.2, 3.8], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.0, 3.0, 1.8, 1.2, 2.0, 3.2], peakAge: 27 }
+      ]
+    },
+    FSP: {
+      percentiles: {
+        15: { p10: 8.2, p25: 12.8, p50: 22.0, p75: 23.5, p90: 30.0 },
+        16: { p10: 7.7, p25: 11.9, p50: 18.2, p75: 21.5, p90: 27.5 },
+        17: { p10: 7.2, p25: 11.0, p50: 15.0, p75: 19.5, p90: 25.0 },
+        18: { p10: 6.6, p25: 10.0, p50: 8.0, p75: 17.5, p90: 22.8 },
+        19: { p10: 6.0, p25: 9.0, p50: 6.4, p75: 15.5, p90: 20.5 },
+        20: { p10: 5.3, p25: 7.8, p50: 4.6, p75: 12.8, p90: 18.0 },
+        21: { p10: 4.6, p25: 6.6, p50: 3.4, p75: 10.8, p90: 15.8 },
+        22: { p10: 3.8, p25: 5.4, p50: 2.5, p75: 8.8, p90: 13.5 },
+        23: { p10: 3.0, p25: 4.2, p50: 1.7, p75: 7.0, p90: 11.5 },
+        24: { p10: 2.2, p25: 3.0, p50: 1.0, p75: 5.5, p90: 9.2 },
+        25: { p10: 2.0, p25: 2.8, p50: 1.2, p75: 5.8, p90: 9.5 },
+        26: { p10: 2.2, p25: 3.2, p50: 1.8, p75: 6.5, p90: 10.5 },
+        27: { p10: 2.6, p25: 3.8, p50: 2.6, p75: 7.5, p90: 12.0 },
+        28: { p10: 3.2, p25: 4.6, p50: 3.6, p75: 8.8, p90: 13.8 },
+        29: { p10: 4.0, p25: 5.6, p50: 5.0, p75: 10.5, p90: 15.8 },
+        30: { p10: 4.9, p25: 6.8, p50: 6.5, p75: 12.2, p90: 18.0 },
+        31: { p10: 5.9, p25: 8.0, p50: 8.2, p75: 14.0, p90: 20.5 },
+        32: { p10: 7.0, p25: 9.2, p50: 10.0, p75: 15.8, p90: 23.0 },
+        33: { p10: 8.3, p25: 10.6, p50: 12.0, p75: 17.8, p90: 25.8 },
+        34: { p10: 9.7, p25: 12.2, p50: 14.2, p75: 20.2, p90: 29.0 },
+        35: { p10: 11.3, p25: 14.0, p50: 16.6, p75: 22.8, p90: 32.2 },
+        36: { p10: 13.1, p25: 16.0, p50: 19.2, p75: 25.5, p90: 35.8 },
+        37: { p10: 15.1, p25: 18.2, p50: 22.0, p75: 28.5, p90: 39.5 },
+        38: { p10: 17.3, p25: 20.6, p50: 25.0, p75: 31.8, p90: 43.5 }
+      },
+      rocThresholds: { optimal: 19.50, s90: 20.00, s80: 19.65, s70: 19.25 },
+      calibration: { mean: 18.5, std: 1.2 },
+      improvement: { finalist_median: 3.6, finalist_std: 1.8, non_finalist_median: 1.7, non_finalist_std: 1.2 },
+      clusters: [
+        { name: 'Prime Peaker', pct_off_pb: [3.5, 2.0, 1.2, 0.8, 1.8, 3.0], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [7.2, 4.5, 2.8, 1.5, 2.2, 3.8], peakAge: 30 },
+        { name: 'Consistent Performer', pct_off_pb: [5.0, 3.0, 1.8, 1.2, 2.0, 3.2], peakAge: 27 }
+      ]
     }
   };
 
@@ -617,6 +905,70 @@ export default function BnchMrkdApp() {
       { tier: 'E3', label: 'U20 Worlds Qualifying', time: 60.80, source: 'Entry standard 18/24', color: '#6366f1' },
       { tier: 'T1', label: 'Level 9 (U20)', time: 65.00, source: 'Development benchmark', color: '#94a3b8' },
     ],
+    MDT: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 68.50, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 66.00, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 61.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 59.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 57.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 52.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    FDT: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 66.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 63.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 58.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 56.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 53.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 48.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    MJT: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 89.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 85.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 80.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 77.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 74.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 68.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    FJT: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 66.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 63.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 58.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 56.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 53.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 48.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    MHT: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 80.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 77.00, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 71.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 68.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 65.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 58.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    FHT: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 76.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 72.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 66.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 63.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 60.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 54.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    MSP: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 22.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 21.10, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 19.50, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 18.80, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 18.00, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 16.50, source: 'Development benchmark', color: '#94a3b8' },
+    ],
+    FSP: [
+      { tier: 'E1', label: 'Olympic Medal Zone', time: 20.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
+      { tier: 'E1', label: 'Olympic MQT', time: 18.80, source: '2024 minimum qualifying distance', color: '#dc2626' },
+      { tier: 'E1', label: 'U20 WC Medal Zone', time: 17.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
+      { tier: 'E2', label: 'Asian Finalist', time: 16.50, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
+      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 15.50, source: 'Entry standard', color: '#6366f1' },
+      { tier: 'T1', label: 'Development Standard', time: 14.00, source: 'Development benchmark', color: '#94a3b8' },
+    ],
   };
 
 
@@ -633,6 +985,16 @@ export default function BnchMrkdApp() {
     intercept: 0.0
   };
 
+  // Logistic regression coefficients for throws disciplines
+  const THROWS_MODEL_COEFS = {
+    best_18_20_z: 1.560,
+    pct_rank: -0.875,
+    improv_z: 0.060,
+    consist_z: 0.032,
+    races_z: -0.055,
+    intercept: -1.830
+  };
+
   const getEventCode = (discipline, gender) => {
     const genderCode = gender === 'Male' ? 'M' : 'F';
     if (discipline === '100m') return `${genderCode}100`;
@@ -641,6 +1003,10 @@ export default function BnchMrkdApp() {
     if (discipline === '100mH') return 'F100H';
     if (discipline === '110mH') return 'M110H';
     if (discipline === '400mH') return `${genderCode}400H`;
+    if (discipline === 'Discus Throw') return `${genderCode}DT`;
+    if (discipline === 'Javelin Throw') return `${genderCode}JT`;
+    if (discipline === 'Hammer Throw') return `${genderCode}HT`;
+    if (discipline === 'Shot Put') return `${genderCode}SP`;
     throw new Error(`Unknown discipline: ${discipline}`);
   };
 
@@ -658,6 +1024,14 @@ export default function BnchMrkdApp() {
     F100H: { gold: 12.30, silver: 12.42, bronze: 12.50, mqt: 12.92, asianGold: 13.10, u20Gold: 12.90 },
     M400H: { gold: 46.60, silver: 47.20, bronze: 47.50, mqt: 49.00, asianGold: 50.74, u20Gold: 49.67 },
     F400H: { gold: 51.65, silver: 52.33, bronze: 52.63, mqt: 55.48, asianGold: 56.80, u20Gold: 56.23 },
+    MDT: { gold: 68.5, silver: 67.2, bronze: 66.0, mqt: 66.0, asianGold: 64.5, u20Gold: 61.0 },
+    FDT: { gold: 66.0, silver: 64.8, bronze: 63.5, mqt: 63.5, asianGold: 61.0, u20Gold: 58.0 },
+    MJT: { gold: 89.0, silver: 87.5, bronze: 86.0, mqt: 85.5, asianGold: 83.0, u20Gold: 80.0 },
+    FJT: { gold: 66.0, silver: 64.8, bronze: 63.5, mqt: 63.5, asianGold: 61.0, u20Gold: 58.0 },
+    MHT: { gold: 80.0, silver: 78.5, bronze: 77.0, mqt: 77.0, asianGold: 74.5, u20Gold: 71.0 },
+    FHT: { gold: 76.0, silver: 74.2, bronze: 72.5, mqt: 72.5, asianGold: 69.5, u20Gold: 66.0 },
+    MSP: { gold: 22.0, silver: 21.5, bronze: 21.1, mqt: 21.1, asianGold: 20.2, u20Gold: 19.0 },
+    FSP: { gold: 20.0, silver: 19.3, bronze: 18.8, mqt: 18.8, asianGold: 17.5, u20Gold: 16.5 },
   };
 
   const sigmoid = (x) => 1 / (1 + Math.exp(-x));
@@ -669,10 +1043,11 @@ export default function BnchMrkdApp() {
     const eventCode = getEventCode(discipline, gender);
     const benchmarkData = BENCHMARKS[eventCode];
     if (!benchmarkData) throw new Error(`No benchmarks for ${eventCode}`);
+    const isThrows = THROWS_CODES.includes(eventCode);
 
     // ── Build annual best series with absolute times ──
     const annualSeries = raceHistory.map(race => {
-      const percentOffPB = ((race.time - pb) / pb) * 100;
+      const percentOffPB = isThrows ? ((pb - race.time) / pb) * 100 : ((race.time - pb) / pb) * 100;
       return {
         age: race.age,
         time: parseFloat(race.time.toFixed(2)),
@@ -683,7 +1058,7 @@ export default function BnchMrkdApp() {
 
     // ── Compute percentile at current age (interpolated) ──
     const agePercentiles = benchmarkData.percentiles[Math.floor(age)];
-    const currentPctOffPB = ((pb - benchmarkData.rocThresholds.optimal) / benchmarkData.rocThresholds.optimal) * 100;
+    const currentPctOffPB = isThrows ? ((benchmarkData.rocThresholds.optimal - pb) / benchmarkData.rocThresholds.optimal) * 100 : ((pb - benchmarkData.rocThresholds.optimal) / benchmarkData.rocThresholds.optimal) * 100;
     let percentileAtCurrentAge = 50;
     if (agePercentiles) {
       // More precise interpolation between percentile bands
@@ -730,9 +1105,10 @@ export default function BnchMrkdApp() {
     // ── Compute finalist probability via logistic regression ──
     const pbZ = (pb - benchmarkData.calibration.mean) / benchmarkData.calibration.std;
     const percentileZ = (percentileAtCurrentAge - 50) / 25;
-    const logit = MODEL_COEFS.intercept +
-                  MODEL_COEFS.best_18_20_z * pbZ +
-                  MODEL_COEFS.pct_rank * percentileZ;
+    const coefs = isThrows ? THROWS_MODEL_COEFS : MODEL_COEFS;
+    const logit = coefs.intercept +
+                  coefs.best_18_20_z * pbZ +
+                  coefs.pct_rank * percentileZ;
     const finalistProbability = Math.round(sigmoid(logit) * 100);
     const semiFinalistProbability = Math.min(100, Math.round(sigmoid(logit + 0.5) * 100));
     const qualifierProbability = Math.min(100, Math.round(sigmoid(logit + 1.2) * 100));
@@ -743,7 +1119,7 @@ export default function BnchMrkdApp() {
     if (annualSeries.length >= 2) {
       const firstTime = annualSeries[0].time;
       const lastTime = annualSeries[annualSeries.length - 1].time;
-      const improvement = ((firstTime - lastTime) / firstTime) * 100;
+      const improvement = isThrows ? ((lastTime - firstTime) / firstTime) * 100 : ((firstTime - lastTime) / firstTime) * 100;
       const years = annualSeries[annualSeries.length - 1].age - annualSeries[0].age;
       if (years > 0) {
         improvementRate = improvement / years;
@@ -785,7 +1161,7 @@ export default function BnchMrkdApp() {
           const frac = yearsToPeak > 0 ? (peakAge - (startAge + y)) / yearsToPeak : 0;
           cumulativeImprovement += improvementRatePctPerYear * frac * 0.8;
         }
-        projectedTime = currentBest * (1 - cumulativeImprovement / 100);
+        projectedTime = isThrows ? currentBest * (1 + cumulativeImprovement / 100) : currentBest * (1 - cumulativeImprovement / 100);
       } else {
         // Post-peak: first project to peak, then apply age-related decline
         let cumulativeImprovementToPeak = 0;
@@ -793,13 +1169,13 @@ export default function BnchMrkdApp() {
           const frac = yearsToPeak > 0 ? (peakAge - (startAge + y)) / yearsToPeak : 0;
           cumulativeImprovementToPeak += improvementRatePctPerYear * frac * 0.8;
         }
-        const peakTime = currentBest * (1 - cumulativeImprovementToPeak / 100);
+        const peakTime = isThrows ? currentBest * (1 + cumulativeImprovementToPeak / 100) : currentBest * (1 - cumulativeImprovementToPeak / 100);
 
         // Post-peak decline rate from population curves (~0.3-0.5% per year)
         const yearsPostPeak = projAge - peakAge;
         const declineRate = 0.35 + (yearsPostPeak * 0.05); // accelerating decline
         const cumulativeDecline = yearsPostPeak * declineRate;
-        projectedTime = peakTime * (1 + cumulativeDecline / 100);
+        projectedTime = isThrows ? peakTime * (1 - cumulativeDecline / 100) : peakTime * (1 + cumulativeDecline / 100);
       }
 
       // ── Confidence intervals ──
@@ -824,11 +1200,11 @@ export default function BnchMrkdApp() {
     }
 
     // ── Projected peak time ──
-    // Peak projection should never be slower than the athlete's actual PB
+    // Peak projection should never be slower than the athlete's actual PB (for sprints) or worse than PB (for throws)
     const projectedFromModel = projections.length > 0
-      ? Math.min(...projections.map(p => p.projectedTime))
+      ? isThrows ? Math.max(...projections.map(p => p.projectedTime)) : Math.min(...projections.map(p => p.projectedTime))
       : pb;
-    const projectedPeakTime = Math.min(projectedFromModel, pb);
+    const projectedPeakTime = isThrows ? Math.max(projectedFromModel, pb) : Math.min(projectedFromModel, pb);
     const projectedPeakAge = projectedPeakTime === pb
       ? age  // Already at peak — PB is the peak
       : (projections.find(p => p.projectedTime === projectedFromModel)?.age || peakAge);
@@ -893,7 +1269,7 @@ export default function BnchMrkdApp() {
     // ── Competition readiness score (0-100) ──
     let readinessScore = 0;
     // Factor 1: How close is PB to finalist threshold (40 points)
-    const pbVsFinalist = (benchmarkData.rocThresholds.optimal - pb) / benchmarkData.rocThresholds.optimal * 100;
+    const pbVsFinalist = isThrows ? (pb - benchmarkData.rocThresholds.optimal) / benchmarkData.rocThresholds.optimal * 100 : (benchmarkData.rocThresholds.optimal - pb) / benchmarkData.rocThresholds.optimal * 100;
     readinessScore += Math.min(40, Math.max(0, 40 + pbVsFinalist * 8));
     // Factor 2: Improvement trend (30 points)
     readinessScore += Math.min(30, improvementRate * 10);
@@ -927,29 +1303,49 @@ export default function BnchMrkdApp() {
     }
 
     // Threshold proximity advice
-    if (pb <= thresholds.optimal) {
+    if (isThrows ? pb >= thresholds.optimal : pb <= thresholds.optimal) {
+      const unit = isThrows ? 'm' : 's';
+      const text = isThrows
+        ? `Your PB of ${pb}${unit} is at or above the Olympic finalist threshold of ${thresholds.optimal}${unit}. You are performing at a level consistent with Olympic finalists. Focus on technical consistency, competition strategy, and peaking for major championships.`
+        : `Your PB of ${pb}${unit} is at or below the Olympic finalist threshold of ${thresholds.optimal}${unit}. You are performing at a level consistent with Olympic finalists. Focus on race-day execution, tactical awareness, and peaking for major championships.`;
       recommendations.push({
         type: 'threshold',
         title: 'Finalist Threshold Met',
-        text: `Your PB of ${pb}s is at or below the Olympic finalist threshold of ${thresholds.optimal}s. You are performing at a level consistent with Olympic finalists. Focus on race-day execution, tactical awareness, and peaking for major championships.`
+        text: text
       });
-    } else if (pb <= thresholds.s80) {
+    } else if (isThrows ? pb >= thresholds.s80 : pb <= thresholds.s80) {
+      const unit = isThrows ? 'm' : 's';
+      const gainNeeded = isThrows ? (thresholds.optimal - pb).toFixed(2) : (pb - thresholds.optimal).toFixed(2);
+      const text = isThrows
+        ? `Your PB of ${pb}${unit} puts you within the semi-finalist threshold (${thresholds.s80}${unit}). You need to gain ${gainNeeded}${unit} to reach the finalist threshold. At your current improvement rate of ${improvementRate.toFixed(2)}%/year, this could take approximately ${Math.ceil((thresholds.optimal - pb) / (pb * improvementRate / 100))} competitive seasons.`
+        : `Your PB of ${pb}${unit} puts you within the semi-finalist threshold (${thresholds.s80}${unit}). You need to improve by ${gainNeeded}${unit} to reach the finalist threshold. At your current improvement rate of ${improvementRate.toFixed(2)}%/year, this could take approximately ${Math.ceil((pb - thresholds.optimal) / (pb * improvementRate / 100))} competitive seasons.`;
       recommendations.push({
         type: 'threshold',
         title: 'Semi-Finalist Range',
-        text: `Your PB of ${pb}s puts you within the semi-finalist threshold (${thresholds.s80}s). You need to improve by ${(pb - thresholds.optimal).toFixed(2)}s to reach the finalist threshold. At your current improvement rate of ${improvementRate.toFixed(2)}%/year, this could take approximately ${Math.ceil((pb - thresholds.optimal) / (pb * improvementRate / 100))} competitive seasons.`
+        text: text
       });
-    } else if (pb <= thresholds.s90) {
+    } else if (isThrows ? pb >= thresholds.s90 : pb <= thresholds.s90) {
+      const unit = isThrows ? 'm' : 's';
+      const gainS80 = isThrows ? (thresholds.s80 - pb).toFixed(2) : (pb - thresholds.s80).toFixed(2);
+      const gainOptimal = isThrows ? (thresholds.optimal - pb).toFixed(2) : (pb - thresholds.optimal).toFixed(2);
+      const text = isThrows
+        ? `Your PB of ${pb}${unit} puts you in the Olympic qualifier range (${thresholds.s90}${unit}). You need ${gainS80}${unit} improvement to reach semi-finalist level and ${gainOptimal}${unit} for finalist level. Focus on both physical development and technical refinement.`
+        : `Your PB of ${pb}${unit} puts you in the Olympic qualifier range (${thresholds.s90}${unit}). You need ${gainS80}${unit} improvement to reach semi-finalist level and ${gainOptimal}${unit} for finalist level. Focus on both physical development and race strategy optimization.`;
       recommendations.push({
         type: 'threshold',
         title: 'Qualifier Range',
-        text: `Your PB of ${pb}s puts you in the Olympic qualifier range (${thresholds.s90}s). You need ${(pb - thresholds.s80).toFixed(2)}s improvement to reach semi-finalist level and ${(pb - thresholds.optimal).toFixed(2)}s for finalist level. Focus on both physical development and race strategy optimization.`
+        text: text
       });
     } else {
+      const unit = isThrows ? 'm' : 's';
+      const distFromThreshold = isThrows ? (pb - thresholds.s90).toFixed(2) : (pb - thresholds.s90).toFixed(2);
+      const text = isThrows
+        ? `Your PB of ${pb}${unit} is ${distFromThreshold}${unit} below the qualifier identification threshold (${thresholds.s90}${unit}). Focus on consistent training, periodization, and developing technical excellence. Track your progress against the age-performance benchmarks shown in the chart.`
+        : `Your PB of ${pb}${unit} is ${distFromThreshold}${unit} above the qualifier identification threshold (${thresholds.s90}${unit}). Focus on consistent training, periodization, and developing a strong aerobic/anaerobic base. Track your progress against the age-performance benchmarks shown in the chart.`;
       recommendations.push({
         type: 'threshold',
         title: 'Building Toward Olympic Standards',
-        text: `Your PB of ${pb}s is ${(pb - thresholds.s90).toFixed(2)}s above the qualifier identification threshold (${thresholds.s90}s). Focus on consistent training, periodization, and developing a strong aerobic/anaerobic base. Track your progress against the age-performance benchmarks shown in the chart.`
+        text: text
       });
     }
 
@@ -1017,8 +1413,8 @@ export default function BnchMrkdApp() {
     // ── Build performance standards with met/not-met ──
     const standards = (PERFORMANCE_STANDARDS[eventCode] || []).map(std => ({
       ...std,
-      met: pb <= std.time,
-      gap: parseFloat((pb - std.time).toFixed(2)),
+      met: isThrows ? pb >= std.time : pb <= std.time,
+      gap: isThrows ? parseFloat((std.time - pb).toFixed(2)) : parseFloat((pb - std.time).toFixed(2)),
     }));
 
     // ── Build chart data for additional views ──
@@ -1049,7 +1445,9 @@ export default function BnchMrkdApp() {
       const prev = annualSeries[i - 1];
       const curr = annualSeries[i];
       if (curr.age > prev.age) {
-        const yoyImprovement = ((prev.time - curr.time) / prev.time) * 100;
+        const yoyImprovement = isThrows
+          ? ((curr.time - prev.time) / prev.time) * 100
+          : ((prev.time - curr.time) / prev.time) * 100;
         improvementChartData.push({
           label: `${prev.age}-${curr.age}`,
           improvement: parseFloat(yoyImprovement.toFixed(2)),
@@ -1065,7 +1463,8 @@ export default function BnchMrkdApp() {
       age,
       personalBest: pb,
       eventCode,
-      careerPBAge: annualSeries.length > 0 ? annualSeries.reduce((best, r) => r.time < best.time ? r : best, annualSeries[0]).age : age,
+      isThrows,
+      careerPBAge: annualSeries.length > 0 ? annualSeries.reduce((best, r) => isThrows ? (r.time > best.time ? r : best) : (r.time < best.time ? r : best), annualSeries[0]).age : age,
       trajectoryType,
       finalistProbability,
       semiFinalistProbability,
@@ -1100,9 +1499,9 @@ export default function BnchMrkdApp() {
         qualifier: thresholds.s90,
       },
       benchmarks: [
-        { label: 'Olympic Finalist Threshold', value: thresholds.optimal, met: pb <= thresholds.optimal, desc: 'Optimal ROC threshold — Youden\'s J statistic' },
-        { label: 'Semi-Finalist Threshold', value: thresholds.s80, met: pb <= thresholds.s80, desc: '80% sensitivity threshold' },
-        { label: 'Qualifier Identification', value: thresholds.s90, met: pb <= thresholds.s90, desc: '90% sensitivity threshold — captures 90% of eventual finalists' },
+        { label: 'Olympic Finalist Threshold', value: thresholds.optimal, met: isThrows ? pb >= thresholds.optimal : pb <= thresholds.optimal, desc: 'Optimal ROC threshold — Youden\'s J statistic' },
+        { label: 'Semi-Finalist Threshold', value: thresholds.s80, met: isThrows ? pb >= thresholds.s80 : pb <= thresholds.s80, desc: '80% sensitivity threshold' },
+        { label: 'Qualifier Identification', value: thresholds.s90, met: isThrows ? pb >= thresholds.s90 : pb <= thresholds.s90, desc: '90% sensitivity threshold — captures 90% of eventual finalists' },
       ],
       standards,
       similarAthletes,
@@ -1211,14 +1610,15 @@ export default function BnchMrkdApp() {
           racesByAge[raceAge].times.push(time);
         });
 
+        const isThrowsDisc = isThrowsDiscipline(athleteData.discipline);
         const raceHistory = Object.values(racesByAge).map(ageData => ({
           age: ageData.age,
-          time: Math.min(...ageData.times),
+          time: isThrowsDisc ? Math.max(...ageData.times) : Math.min(...ageData.times),
           nRaces: ageData.times.length
         })).sort((a, b) => a.age - b.age);
 
         if (raceHistory.length === 0) throw new Error('No valid races found.');
-        const pb = Math.min(...raceHistory.map(r => r.time));
+        const pb = isThrowsDisc ? Math.max(...raceHistory.map(r => r.time)) : Math.min(...raceHistory.map(r => r.time));
 
         const results = await runAnalysis({
           name: athleteData.name || 'Unknown',
@@ -1377,13 +1777,14 @@ export default function BnchMrkdApp() {
         racesByAge[raceAge].times.push(race.time);
       });
 
+      const isThrowsDisc = isThrowsDiscipline(discCode);
       const raceHistory = Object.values(racesByAge).map(ageData => ({
         age: ageData.age,
-        time: Math.min(...ageData.times),
+        time: isThrowsDisc ? Math.max(...ageData.times) : Math.min(...ageData.times),
         nRaces: ageData.times.length,
       })).sort((a, b) => a.age - b.age);
 
-      const pb = Math.min(...raceHistory.map(r => r.time));
+      const pb = isThrowsDisc ? Math.max(...raceHistory.map(r => r.time)) : Math.min(...raceHistory.map(r => r.time));
 
       // Map discipline code to what runAnalysis expects
       let discipline = discCode;
