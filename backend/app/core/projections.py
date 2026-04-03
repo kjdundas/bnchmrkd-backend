@@ -20,12 +20,13 @@ class PeakProjector:
     analysis to estimate ceiling performance and optimal timing.
     """
 
-    def __init__(self, event_code: str):
+    def __init__(self, event_code: str, is_throws: bool = False):
         """
         Initialize projector for a specific event.
 
         Args:
-            event_code: Internal event code (e.g., "M100", "F100H")
+            event_code: Internal event code (e.g., "M100", "F100H", "MDT")
+            is_throws: Whether this is a throws event (higher = better)
 
         Raises:
             ValueError: If event_code has no benchmark data
@@ -34,6 +35,7 @@ class PeakProjector:
             raise ValueError(f"No benchmark data for event {event_code}")
 
         self.event_code = event_code
+        self.is_throws = is_throws
         self.age_percentiles = AGE_PERFORMANCE_PERCENTILES[event_code]
 
     def project_peak(
@@ -69,8 +71,8 @@ class PeakProjector:
         times = [ab.best_time for ab in annual_bests]
         pct_off_pbs = [ab.pct_off_pb for ab in annual_bests]
 
-        # Current best
-        current_pb = min(times)
+        # Current best (max for throws, min for sprints/hurdles)
+        current_pb = max(times) if self.is_throws else min(times)
 
         # Step 1: Fit personal trajectory curve
         personal_curve_params = self._fit_personal_curve(ages, pct_off_pbs)
@@ -100,11 +102,17 @@ class PeakProjector:
             0.5, min(projected_peak_pct_off_pb, pct_off_pbs[0])
         )
 
-        # Convert % off PB to actual time
+        # Convert % off PB to actual time/distance
         # Using current PB as the reference
-        projected_peak_time = current_pb * (
-            1.0 + projected_peak_pct_off_pb / 100.0
-        )
+        if self.is_throws:
+            # For throws: distance = pb * (1 - pct_off_pb/100)
+            projected_peak_time = current_pb * (
+                1.0 - projected_peak_pct_off_pb / 100.0
+            )
+        else:
+            projected_peak_time = current_pb * (
+                1.0 + projected_peak_pct_off_pb / 100.0
+            )
 
         # Step 5: Calculate confidence interval
         ci_lower, ci_upper, confidence = self._calculate_confidence_interval(
@@ -359,10 +367,13 @@ class PeakProjector:
         # Confidence interval width
         ci_width = (1.0 - confidence) * improvement_potential * 2.0
 
-        ci_lower = max(
-            0.5, projected_peak_time - ci_width
-        )
-        ci_upper = projected_peak_time + ci_width
+        if self.is_throws:
+            # For throws: CI extends in distance (higher = better)
+            ci_lower = max(0.5, projected_peak_time - ci_width)
+            ci_upper = projected_peak_time + ci_width
+        else:
+            ci_lower = max(0.5, projected_peak_time - ci_width)
+            ci_upper = projected_peak_time + ci_width
 
         return ci_lower, ci_upper, confidence
 
@@ -386,8 +397,11 @@ class PeakProjector:
         # Get peak projection first
         peak_projection = self.project_peak(annual_bests, current_age)
 
-        # Current best time
-        current_pb = min(ab.best_time for ab in annual_bests)
+        # Current best time/distance
+        if self.is_throws:
+            current_pb = max(ab.best_time for ab in annual_bests)
+        else:
+            current_pb = min(ab.best_time for ab in annual_bests)
 
         projections = {}
 
@@ -403,7 +417,10 @@ class PeakProjector:
                 0.5,
             )
 
-            future_time = current_pb * (1.0 + pct_off_pb / 100.0)
+            if self.is_throws:
+                future_time = current_pb * (1.0 - pct_off_pb / 100.0)
+            else:
+                future_time = current_pb * (1.0 + pct_off_pb / 100.0)
             projections[future_age] = future_time
 
         return projections
@@ -428,14 +445,21 @@ class PeakProjector:
                 - improvement_needed: How much faster from current
                 - improvement_pct: As percentage
         """
-        current_pb = min(ab.best_time for ab in annual_bests)
+        if self.is_throws:
+            current_pb = max(ab.best_time for ab in annual_bests)
+        else:
+            current_pb = min(ab.best_time for ab in annual_bests)
 
         # Get the peak projection
         peak_proj = self.project_peak(annual_bests, current_age)
         peak_time = peak_proj["peak_time"]
 
-        improvement_seconds = current_pb - peak_time
-        improvement_pct = (improvement_seconds / current_pb) * 100.0
+        if self.is_throws:
+            # For throws: improvement = peak_distance - current_pb (positive = further)
+            improvement_seconds = peak_time - current_pb
+        else:
+            improvement_seconds = current_pb - peak_time
+        improvement_pct = abs(improvement_seconds / current_pb) * 100.0
 
         return {
             "ceiling_time": peak_time,

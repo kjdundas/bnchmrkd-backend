@@ -18,9 +18,11 @@ from app.core.benchmarks import (
     ROC_THRESHOLDS,
     TRAJECTORY_CENTROIDS,
     MODEL_COEFFICIENTS,
+    THROWS_MODEL_COEFFICIENTS,
     IMPROVEMENT_NORMS,
     MODEL_CALIBRATION,
     get_event_code,
+    is_throws_event,
     AgePercentile,
 )
 from app.core.projections import PeakProjector
@@ -194,6 +196,7 @@ class AthleteAnalyzer:
         self.gender = gender
         self.athlete_name = athlete_name
         self.event_code = get_event_code(discipline, gender)
+        self.is_throws = is_throws_event(self.event_code)
 
         # Load benchmarks
         if self.event_code not in AGE_PERFORMANCE_PERCENTILES:
@@ -206,7 +209,7 @@ class AthleteAnalyzer:
         self.trajectory_clusters = TRAJECTORY_CENTROIDS[self.event_code]
         self.improvement_norm = IMPROVEMENT_NORMS[self.event_code]
         self.calibration = MODEL_CALIBRATION[self.event_code]
-        self.projector = PeakProjector(self.event_code)
+        self.projector = PeakProjector(self.event_code, is_throws=self.is_throws)
 
     def analyze(self, races: List[RaceRecord]) -> AnalysisResult:
         """
@@ -229,7 +232,8 @@ class AthleteAnalyzer:
 
         # Extract basic stats
         all_times = [r.time_seconds for r in races]
-        pb = min(all_times)
+        # For throws, higher distance = better; for sprints, lower time = better
+        pb = max(all_times) if self.is_throws else min(all_times)
         current_age = races[-1].age
         n_races = len(races)
 
@@ -321,7 +325,7 @@ class AthleteAnalyzer:
         annual_bests = []
         for age in sorted(age_races.keys()):
             times = age_races[age]
-            best = min(times)
+            best = max(times) if self.is_throws else min(times)
             pct_off = self._compute_pct_off_pb(best, pb)
             annual_bests.append(
                 AnnualBest(
@@ -338,15 +342,21 @@ class AthleteAnalyzer:
         """
         Compute percentage off personal best.
 
+        For sprints/hurdles: ((time - pb) / pb) * 100 (positive = slower)
+        For throws: ((pb - distance) / pb) * 100 (positive = shorter)
+        Both preserve: 0 = at PB, positive = worse than PB.
+
         Args:
-            time: Current time
-            pb: Personal best time
+            time: Current time/distance
+            pb: Personal best time/distance
 
         Returns:
             Percentage off PB (0 = equals PB)
         """
         if pb <= 0:
             return 0.0
+        if self.is_throws:
+            return ((pb - time) / pb) * 100.0
         return ((time - pb) / pb) * 100.0
 
     def _classify_trajectory(
@@ -604,7 +614,10 @@ class AthleteAnalyzer:
         # Compute features for logistic regression
         races_18_20 = [r for r in races if 18 <= r.age <= 20]
         if races_18_20:
-            best_18_20 = min(r.time_seconds for r in races_18_20)
+            if self.is_throws:
+                best_18_20 = max(r.time_seconds for r in races_18_20)
+            else:
+                best_18_20 = min(r.time_seconds for r in races_18_20)
         else:
             best_18_20 = pb
 
@@ -670,12 +683,15 @@ class AthleteAnalyzer:
             races_18_20_z,
         ]
 
-        logit = MODEL_COEFFICIENTS.intercept
-        logit += MODEL_COEFFICIENTS.best_18_20_z * features[0]
-        logit += MODEL_COEFFICIENTS.pct_rank_at_20 * features[1]
-        logit += MODEL_COEFFICIENTS.improvement_y0_y2_z * features[2]
-        logit += MODEL_COEFFICIENTS.consistency_std_z * features[3]
-        logit += MODEL_COEFFICIENTS.races_18_20 * features[4]
+        # Use throws-specific model coefficients for throws events
+        coeff = THROWS_MODEL_COEFFICIENTS if self.is_throws else MODEL_COEFFICIENTS
+
+        logit = coeff.intercept
+        logit += coeff.best_18_20_z * features[0]
+        logit += coeff.pct_rank_at_20 * features[1]
+        logit += coeff.improvement_y0_y2_z * features[2]
+        logit += coeff.consistency_std_z * features[3]
+        logit += coeff.races_18_20 * features[4]
 
         # Convert logit to probability
         finalist_prob = 1.0 / (1.0 + (2.71828 ** (-logit)))
@@ -687,11 +703,21 @@ class AthleteAnalyzer:
 
         # Olympic qualifier (top ~0.1% of population)
         # Much stricter threshold
-        if pb <= self.roc_threshold.threshold_90_sensitivity:
+        # For throws: higher PB = better (>=), for sprints: lower PB = better (<=)
+        if self.is_throws:
+            meets_90 = pb >= self.roc_threshold.threshold_90_sensitivity
+            meets_80 = pb >= self.roc_threshold.threshold_80_sensitivity
+            meets_70 = pb >= self.roc_threshold.threshold_70_sensitivity
+        else:
+            meets_90 = pb <= self.roc_threshold.threshold_90_sensitivity
+            meets_80 = pb <= self.roc_threshold.threshold_80_sensitivity
+            meets_70 = pb <= self.roc_threshold.threshold_70_sensitivity
+
+        if meets_90:
             olympic_qualifier_prob = 0.8
-        elif pb <= self.roc_threshold.threshold_80_sensitivity:
+        elif meets_80:
             olympic_qualifier_prob = 0.5
-        elif pb <= self.roc_threshold.threshold_70_sensitivity:
+        elif meets_70:
             olympic_qualifier_prob = 0.25
         else:
             olympic_qualifier_prob = finalist_prob * 0.3
@@ -800,22 +826,35 @@ class AthleteAnalyzer:
             else:
                 benchmark = self.age_percentiles[ages[-1]]
 
-        # Convert % off PB to actual times using calibration mean
-        # For a benchmark at median (P50), estimate actual time
-        # assuming athlete is at median time in population
+        # Convert % off PB to actual times/distances using calibration mean
         estimated_pb = self.calibration.mean_time
 
-        benchmark_p90_time = estimated_pb * (1.0 + benchmark.p90 / 100.0)
-        benchmark_p75_time = estimated_pb * (1.0 + benchmark.p75 / 100.0)
-        benchmark_p50_time = estimated_pb * (1.0 + benchmark.p50 / 100.0)
-        benchmark_p25_time = estimated_pb * (1.0 + benchmark.p25 / 100.0)
-        benchmark_p10_time = estimated_pb * (1.0 + benchmark.p10 / 100.0)
+        if self.is_throws:
+            # For throws: distance = pb * (1 - pct_off_pb/100)
+            # P90 pct_off_pb is highest (worst), so P90 distance is lowest
+            benchmark_p90_time = estimated_pb * (1.0 - benchmark.p90 / 100.0)
+            benchmark_p75_time = estimated_pb * (1.0 - benchmark.p75 / 100.0)
+            benchmark_p50_time = estimated_pb * (1.0 - benchmark.p50 / 100.0)
+            benchmark_p25_time = estimated_pb * (1.0 - benchmark.p25 / 100.0)
+            benchmark_p10_time = estimated_pb * (1.0 - benchmark.p10 / 100.0)
+        else:
+            # For sprints/hurdles: time = pb * (1 + pct_off_pb/100)
+            benchmark_p90_time = estimated_pb * (1.0 + benchmark.p90 / 100.0)
+            benchmark_p75_time = estimated_pb * (1.0 + benchmark.p75 / 100.0)
+            benchmark_p50_time = estimated_pb * (1.0 + benchmark.p50 / 100.0)
+            benchmark_p25_time = estimated_pb * (1.0 + benchmark.p25 / 100.0)
+            benchmark_p10_time = estimated_pb * (1.0 + benchmark.p10 / 100.0)
 
         current_percentile = self._interpolate_percentile(
             current_pct_off_pb, benchmark
         )
 
-        athlete_vs_p50 = current_time - benchmark_p50_time
+        # athlete_vs_p50: negative = better than median, positive = worse
+        if self.is_throws:
+            # For throws: athlete is better if distance > benchmark
+            athlete_vs_p50 = benchmark_p50_time - current_time
+        else:
+            athlete_vs_p50 = current_time - benchmark_p50_time
 
         return BenchmarksAtAge(
             current_age_benchmark_p90=benchmark_p90_time,
@@ -869,6 +908,18 @@ class AthleteAnalyzer:
                 "You show a 'Plateau Pattern' with steady performance. Consider "
                 "periodically introducing new training stimuli to avoid "
                 "long-term plateaus."
+            )
+        elif trajectory_class.cluster_name == "Prime Peaker":
+            recommendations.append(
+                "You match the 'Prime Peaker' trajectory: peak performance "
+                "concentrated in prime competitive years. Focus on maximizing "
+                "performance in major championship windows."
+            )
+        elif trajectory_class.cluster_name == "Consistent Performer":
+            recommendations.append(
+                "You match the 'Consistent Performer' trajectory: maintaining "
+                "a high level across many years. Your longevity is an asset — "
+                "continue smart training to extend your competitive window."
             )
 
         # Percentile-based recommendations

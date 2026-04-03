@@ -68,7 +68,7 @@ class ManualAnalysisRequest(BaseModel):
     discipline: str = Field(
         ...,
         min_length=1,
-        max_length=10,
+        max_length=20,
         description="Event code (e.g., '100m', '400m')",
     )
     gender: str = Field(
@@ -116,7 +116,7 @@ class URLAnalysisRequest(BaseModel):
     discipline: Optional[str] = Field(
         None,
         min_length=1,
-        max_length=10,
+        max_length=20,
         description="Event code (optional, inferred from profile if not provided)",
     )
 
@@ -145,7 +145,7 @@ class QuickAnalysisRequest(BaseModel):
     discipline: str = Field(
         ...,
         min_length=1,
-        max_length=10,
+        max_length=20,
         description="Event code (e.g., '100m', '400m')",
     )
     gender: str = Field(
@@ -217,8 +217,9 @@ class DisciplineInfo(BaseModel):
     """
 
     name: str = Field(..., description="Full name of the discipline")
-    code: str = Field(..., description="Short code (e.g., '100m')")
+    code: str = Field(..., description="Short code (e.g., '100m', 'Discus Throw')")
     genders: list[str] = Field(..., description="Supported genders ('M', 'F')")
+    category: str = Field("Sprints", description="Category: Sprints, Hurdles, or Throws")
     supported: bool = Field(True, description="Whether discipline is supported")
 
 

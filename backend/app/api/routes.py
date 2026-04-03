@@ -35,12 +35,19 @@ manual_scraper = ManualScraper()
 
 # Supported disciplines (matching benchmarks.py VALID_DISCIPLINES)
 SUPPORTED_DISCIPLINES = {
-    "100m": {"name": "100 Metres", "code": "100m", "genders": ["M", "F"]},
-    "200m": {"name": "200 Metres", "code": "200m", "genders": ["M", "F"]},
-    "400m": {"name": "400 Metres", "code": "400m", "genders": ["M", "F"]},
-    "100mH": {"name": "100m Hurdles", "code": "100mH", "genders": ["F"]},
-    "110mH": {"name": "110m Hurdles", "code": "110mH", "genders": ["M"]},
-    "400mH": {"name": "400m Hurdles", "code": "400mH", "genders": ["M", "F"]},
+    # Sprints
+    "100m": {"name": "100 Metres", "code": "100m", "genders": ["M", "F"], "category": "Sprints"},
+    "200m": {"name": "200 Metres", "code": "200m", "genders": ["M", "F"], "category": "Sprints"},
+    "400m": {"name": "400 Metres", "code": "400m", "genders": ["M", "F"], "category": "Sprints"},
+    # Hurdles
+    "100mH": {"name": "100m Hurdles", "code": "100mH", "genders": ["F"], "category": "Hurdles"},
+    "110mH": {"name": "110m Hurdles", "code": "110mH", "genders": ["M"], "category": "Hurdles"},
+    "400mH": {"name": "400m Hurdles", "code": "400mH", "genders": ["M", "F"], "category": "Hurdles"},
+    # Throws
+    "Discus Throw": {"name": "Discus Throw", "code": "Discus Throw", "genders": ["M", "F"], "category": "Throws"},
+    "Javelin Throw": {"name": "Javelin Throw", "code": "Javelin Throw", "genders": ["M", "F"], "category": "Throws"},
+    "Hammer Throw": {"name": "Hammer Throw", "code": "Hammer Throw", "genders": ["M", "F"], "category": "Throws"},
+    "Shot Put": {"name": "Shot Put", "code": "Shot Put", "genders": ["M", "F"], "category": "Throws"},
 }
 
 
@@ -309,6 +316,7 @@ async def get_disciplines() -> dict[str, Any]:
             name=info["name"],
             code=info["code"],
             genders=info["genders"],
+            category=info.get("category", "Sprints"),
             supported=True,
         )
         for info in SUPPORTED_DISCIPLINES.values()

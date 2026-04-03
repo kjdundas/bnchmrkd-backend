@@ -11,6 +11,12 @@ import {
 } from 'lucide-react';
 
 export default function BnchMrkdApp() {
+  // Throws discipline detection helpers
+  const THROWS_DISCIPLINES = ['Discus Throw', 'Javelin Throw', 'Hammer Throw', 'Shot Put'];
+  const THROWS_CODES = ['MDT', 'FDT', 'MJT', 'FJT', 'MHT', 'FHT', 'MSP', 'FSP'];
+  const isThrowsDiscipline = (disc) => THROWS_DISCIPLINES.includes(disc) || THROWS_CODES.includes(disc);
+  const getUnitLabel = (disc) => isThrowsDiscipline(disc) ? 'Distance (m)' : 'Time (s)';
+
   const [currentView, setCurrentView] = useState('landing');
   const [activeTab, setActiveTab] = useState('manual');
   const [athleteData, setAthleteData] = useState({
@@ -1404,7 +1410,7 @@ export default function BnchMrkdApp() {
     if (Object.keys(results).filter(k => !k.startsWith('_')).length === 0) {
       const foundDiscs = Object.keys(disciplines).join(', ') || 'none';
       const failInfo = results._failedDisciplines ? ' Errors: ' + Object.entries(results._failedDisciplines).map(([k,v]) => `${k}: ${v}`).join('; ') : '';
-      setError(`No analyzable disciplines found. Scraped disciplines: ${foundDiscs}. We currently support: 100m (M/F), 200m (M/F), 400m (M/F), 100mH (F), 110mH (M), 400mH (M/F).${failInfo}`);
+      setError(`No analyzable disciplines found. Scraped disciplines: ${foundDiscs}. We currently support: 100m (M/F), 200m (M/F), 400m (M/F), 100mH (F), 110mH (M), 400mH (M/F), Discus Throw (M/F), Javelin Throw (M/F), Hammer Throw (M/F), Shot Put (M/F).${failInfo}`);
       setScraping(false);
       return;
     }
@@ -1710,7 +1716,7 @@ export default function BnchMrkdApp() {
               {[
                 { value: '2,322', label: 'Olympic Athletes', sub: 'Sydney 2000 – Paris 2024' },
                 { value: '311K+', label: 'Career Races', sub: 'Analysed and classified' },
-                { value: '10', label: 'Disciplines', sub: 'Sprints & hurdles' },
+                { value: '14', label: 'Disciplines', sub: 'Sprints, hurdles & throws' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
                 <div key={i} className="bg-slate-800/80 backdrop-blur-sm rounded-xl border border-slate-700/50 p-5 text-center">
@@ -2072,12 +2078,22 @@ export default function BnchMrkdApp() {
                   className="px-4 py-3 bg-slate-900/60 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:border-orange-500/50"
                 >
                   <option value="all">All Disciplines</option>
-                  <option value="100m">100m</option>
-                  <option value="200m">200m</option>
-                  <option value="400m">400m</option>
-                  <option value="100mH">100m Hurdles</option>
-                  <option value="110mH">110m Hurdles</option>
-                  <option value="400mH">400m Hurdles</option>
+                  <optgroup label="Sprints">
+                    <option value="100m">100m</option>
+                    <option value="200m">200m</option>
+                    <option value="400m">400m</option>
+                  </optgroup>
+                  <optgroup label="Hurdles">
+                    <option value="100mH">100m Hurdles</option>
+                    <option value="110mH">110m Hurdles</option>
+                    <option value="400mH">400m Hurdles</option>
+                  </optgroup>
+                  <optgroup label="Throws">
+                    <option value="Discus Throw">Discus Throw</option>
+                    <option value="Javelin Throw">Javelin Throw</option>
+                    <option value="Hammer Throw">Hammer Throw</option>
+                    <option value="Shot Put">Shot Put</option>
+                  </optgroup>
                 </select>
               </div>
               {explorerLoading && (
@@ -2223,12 +2239,12 @@ export default function BnchMrkdApp() {
                               stroke="#94a3b8"
                               tick={{ fill: '#94a3b8', fontSize: 12 }}
                               domain={['auto', 'auto']}
-                              reversed
-                              label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
+                              reversed={!isThrowsDiscipline(athleteTrajectory.discipline)}
+                              label={{ value: getUnitLabel(athleteTrajectory.discipline), angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
                             />
                             <Tooltip
                               contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }}
-                              formatter={(value, name) => [typeof value === 'number' ? value.toFixed(2) + 's' : value, name === 'bestTime' ? 'Season Best' : name]}
+                              formatter={(value, name) => [typeof value === 'number' ? value.toFixed(2) + (isThrowsDiscipline(athleteTrajectory.discipline) ? 'm' : 's') : value, name === 'bestTime' ? 'Season Best' : name]}
                               labelFormatter={(label) => `Age ${label}`}
                             />
                             <Legend wrapperStyle={{ color: '#94a3b8' }} />
@@ -2392,12 +2408,22 @@ export default function BnchMrkdApp() {
                     <label className="block text-sm font-semibold text-white mb-2">Discipline</label>
                     <select value={athleteData.discipline} onChange={(e) => handleManualEntry('discipline', e.target.value)}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
-                      <option value="100m">100m</option>
-                      <option value="200m">200m</option>
-                      <option value="400m">400m</option>
-                      <option value="110mH">110m Hurdles</option>
-                      <option value="100mH">100m Hurdles</option>
-                      <option value="400mH">400m Hurdles</option>
+                      <optgroup label="Sprints">
+                        <option value="100m">100m</option>
+                        <option value="200m">200m</option>
+                        <option value="400m">400m</option>
+                      </optgroup>
+                      <optgroup label="Hurdles">
+                        <option value="110mH">110m Hurdles</option>
+                        <option value="100mH">100m Hurdles</option>
+                        <option value="400mH">400m Hurdles</option>
+                      </optgroup>
+                      <optgroup label="Throws">
+                        <option value="Discus Throw">Discus Throw</option>
+                        <option value="Javelin Throw">Javelin Throw</option>
+                        <option value="Hammer Throw">Hammer Throw</option>
+                        <option value="Shot Put">Shot Put</option>
+                      </optgroup>
                     </select>
                   </div>
                   <div>
@@ -2435,7 +2461,7 @@ export default function BnchMrkdApp() {
                     <thead>
                       <tr className="border-b border-slate-600">
                         <th className="text-left py-3 px-4 font-semibold text-white">Date</th>
-                        <th className="text-left py-3 px-4 font-semibold text-white">Time (seconds)</th>
+                        <th className="text-left py-3 px-4 font-semibold text-white">{getUnitLabel(athleteData.discipline)}</th>
                         <th className="text-left py-3 px-4 font-semibold text-white">Wind (m/s)</th>
                         <th className="text-left py-3 px-4 font-semibold text-white">Competition</th>
                         <th className="text-center py-3 px-4 font-semibold text-white">Action</th>
@@ -2481,14 +2507,21 @@ export default function BnchMrkdApp() {
                   <label className="block text-sm font-semibold text-white mb-2">Override Discipline (optional)</label>
                   <select className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
                     <option value="">Auto-detect</option>
-                    <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
-                    <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
+                    <optgroup label="Sprints">
+                      <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
+                    </optgroup>
+                    <optgroup label="Hurdles">
+                      <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
+                    </optgroup>
+                    <optgroup label="Throws">
+                      <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
+                    </optgroup>
                   </select>
                 </div>
                 <p className="text-sm text-slate-400 mb-4 flex items-center gap-2"><ChevronRight className="w-4 h-4" /> We'll automatically import your full competition history and analyze all supported disciplines</p>
                 <div className="bg-blue-900/30 border border-blue-800 rounded-lg p-4 mb-8">
                   <p className="text-sm text-blue-300">
-                    <span className="font-semibold">Supported disciplines:</span> 100m, 200m, 400m, 100m Hurdles, 110m Hurdles, 400m Hurdles.
+                    <span className="font-semibold">Supported disciplines:</span> 100m, 200m, 400m, 100m Hurdles, 110m Hurdles, 400m Hurdles, Discus Throw, Javelin Throw, Hammer Throw, Shot Put.
                     All matching results will be automatically analyzed with separate tabs for each.
                   </p>
                   <p className="text-xs text-blue-600 mt-2">
@@ -2512,8 +2545,15 @@ export default function BnchMrkdApp() {
                     <label className="block text-sm font-semibold text-white mb-2">Discipline</label>
                     <select value={quickAnalysisData.discipline} onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, discipline: e.target.value })}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
-                      <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
-                      <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
+                      <optgroup label="Sprints">
+                        <option value="100m">100m</option><option value="200m">200m</option><option value="400m">400m</option>
+                      </optgroup>
+                      <optgroup label="Hurdles">
+                        <option value="110mH">110m Hurdles</option><option value="100mH">100m Hurdles</option><option value="400mH">400m Hurdles</option>
+                      </optgroup>
+                      <optgroup label="Throws">
+                        <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
+                      </optgroup>
                     </select>
                   </div>
                   <div>
@@ -2532,8 +2572,8 @@ export default function BnchMrkdApp() {
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-white mb-2">Personal Best Time (seconds)</label>
-                    <input type="number" step="0.01" placeholder="e.g., 10.85" value={quickAnalysisData.personalBest}
+                    <label className="block text-sm font-semibold text-white mb-2">Personal Best {getUnitLabel(quickAnalysisData.discipline)}</label>
+                    <input type="number" step="0.01" placeholder={isThrowsDiscipline(quickAnalysisData.discipline) ? "e.g., 18.50" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
                       onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, personalBest: e.target.value })}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
@@ -2587,7 +2627,7 @@ export default function BnchMrkdApp() {
                   {/* PB */}
                   <div className="text-center">
                     <p className="text-xs text-slate-400 mb-1">Personal Best</p>
-                    <p className="text-3xl font-bold text-orange-400">{analysisResults.personalBest}s</p>
+                    <p className="text-3xl font-bold text-orange-400">{analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                   </div>
                   {/* Readiness gauge */}
                   <div className="relative w-24 h-24">
@@ -2964,7 +3004,7 @@ export default function BnchMrkdApp() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Personal Best</p>
-                      <p className="text-xl sm:text-2xl font-bold text-orange-600">{analysisResults.personalBest}s</p>
+                      <p className="text-xl sm:text-2xl font-bold text-orange-600">{analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Trajectory</p>
@@ -3215,7 +3255,7 @@ export default function BnchMrkdApp() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                       <XAxis dataKey="age" label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                      <YAxis label={{ value: 'Time (seconds)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} reversed={true} domain={['auto', 'auto']} />
+                      <YAxis label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} reversed={!isThrowsDiscipline(analysisResults.discipline)} domain={['auto', 'auto']} />
                       <Tooltip content={<TrajectoryTooltip />} />
                       <Area type="monotone" dataKey="ci90Upper" stroke="none" fill="url(#ci90Gradient)" name="90% CI" connectNulls={false} isAnimationActive={false} />
                       <Area type="monotone" dataKey="ci90Lower" stroke="none" fill="#1e293b" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
@@ -3533,12 +3573,13 @@ export default function BnchMrkdApp() {
                 <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
-                  <YAxis reversed tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
+                  <YAxis reversed={!isThrowsDiscipline(analysisResults.discipline)} tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
                   <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }}
                     formatter={(v, dataKey) => {
                       if (v == null) return null;
                       const labels = { you: 'You', finalist: 'Finalist Median', semiFinalist: 'Semi-Finalist Median', qualifier: 'Qualifier Median' };
-                      return [`${parseFloat(v).toFixed(2)}s`, labels[dataKey] || dataKey];
+                      const unit = isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's';
+                      return [`${parseFloat(v).toFixed(2)}${unit}`, labels[dataKey] || dataKey];
                     }}
                     labelFormatter={(l) => `Age ${l}`} />
                   {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
@@ -3589,7 +3630,7 @@ export default function BnchMrkdApp() {
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
                           <p className="text-xs text-slate-400 mb-0.5">Personal Best</p>
-                          <p className="text-lg font-bold text-white">{athlete.pb}s</p>
+                          <p className="text-lg font-bold text-white">{athlete.pb}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                         </div>
                         <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
                           <p className="text-xs text-slate-400 mb-0.5">Peak Age</p>
