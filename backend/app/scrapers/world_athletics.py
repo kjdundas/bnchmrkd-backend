@@ -35,13 +35,26 @@ from app.models.schemas import ScrapedAthleteData, RaceInput
 # Regex patterns to identify supported disciplines from World Athletics event names.
 # WA uses variations like "100 Metres", "Men's 200 Metres", "Women's 100m Hurdles", etc.
 DISCIPLINE_PATTERNS = [
+    # Hurdles (check before sprints to avoid false matches)
     (re.compile(r"\b400\s*m(?:etres?)?\s+hurdles?\b", re.IGNORECASE), "400mH"),
     (re.compile(r"\b110\s*m(?:etres?)?\s+hurdles?\b", re.IGNORECASE), "110mH"),
     (re.compile(r"\b100\s*m(?:etres?)?\s+hurdles?\b", re.IGNORECASE), "100mH"),
+    # Sprints
     (re.compile(r"\b400\s*m(?:etres?)?\b(?!.*hurdle)", re.IGNORECASE), "400m"),
     (re.compile(r"\b200\s*m(?:etres?)?\b", re.IGNORECASE), "200m"),
     (re.compile(r"\b100\s*m(?:etres?)?\b(?!.*hurdle)", re.IGNORECASE), "100m"),
+    # Throws (match with or without weight suffix like "(5kg)", "(1,75kg)")
+    (re.compile(r"\bDiscus\s+Throw\b", re.IGNORECASE), "Discus Throw"),
+    (re.compile(r"\bJavelin\s+Throw\b", re.IGNORECASE), "Javelin Throw"),
+    (re.compile(r"\bHammer\s+Throw\b", re.IGNORECASE), "Hammer Throw"),
+    (re.compile(r"\bShot\s+Put\b", re.IGNORECASE), "Shot Put"),
 ]
+
+# Throws disciplines — used to detect whether a mark is distance (metres) vs time (seconds)
+THROWS_DISCIPLINE_CODES = {"Discus Throw", "Javelin Throw", "Hammer Throw", "Shot Put"}
+
+# Pattern to extract implement weight from WA discipline names like "Hammer Throw (5kg)"
+WEIGHT_SUFFIX_RE = re.compile(r"\((\d+(?:[.,]\d+)?)\s*(?:kg|gr)\)", re.IGNORECASE)
 
 DATE_FORMAT = "%d %b %Y"
 
@@ -54,25 +67,56 @@ def _parse_date(date_str: str) -> Optional[date]:
         return None
 
 
-def _parse_time(mark_str: str) -> Optional[float]:
+def _parse_mark(mark_str: str, is_throws: bool = False) -> Optional[float]:
     """
-    Parse a time/mark string into seconds.
-    Handles formats: '10.85', '10.85h' (hand-timed), '52.65', etc.
-    Returns None for field events, DNS, DNF, DQ, etc.
+    Parse a time or distance mark string into a numeric value.
+
+    For sprints/hurdles: time in seconds (e.g., '10.85', '10.85h' for hand-timed)
+    For throws: distance in metres (e.g., '73.44', '21.05')
+
+    Returns None for DNS, DNF, DQ, NM, etc.
     """
     if not mark_str:
         return None
     # Clean the string
     clean = mark_str.strip().lower()
-    # Remove hand-timing indicator
+    # Remove hand-timing indicator (sprints only, but harmless for throws)
     clean = clean.replace('h', '')
-    # Skip non-time results
+    # Skip non-result marks
     if any(x in clean for x in ['dns', 'dnf', 'dq', 'nm', 'nh', '-', 'x']):
         return None
+    # Handle throws foul mark ('x' already caught above, but 'X' standalone)
+    if clean == 'x' or clean == '':
+        return None
     try:
-        return float(clean)
+        val = float(clean)
+        # Basic sanity: throws distances > 0, sprint times > 0
+        return val if val > 0 else None
     except ValueError:
         return None
+
+
+def _parse_implement_weight(raw_discipline: str) -> Optional[float]:
+    """
+    Extract implement weight in kg from a WA discipline name.
+
+    Examples:
+        "Hammer Throw (5kg)" -> 5.0
+        "Shot Put (4kg)" -> 4.0
+        "Javelin Throw (700g)" -> 0.7  (converted from grams via 'gr'/'g' suffix)
+        "Discus Throw (1,75kg)" -> 1.75
+        "Shot Put" -> None (senior weight, no suffix)
+    """
+    match = WEIGHT_SUFFIX_RE.search(raw_discipline)
+    if not match:
+        return None
+    weight_str = match.group(1).replace(',', '.')
+    weight = float(weight_str)
+    # Check if original text said "gr" or "g" (grams) — convert to kg
+    suffix = raw_discipline[match.start():match.end()].lower()
+    if 'gr' in suffix or ('g' in suffix and 'kg' not in suffix):
+        weight = weight / 1000.0
+    return weight
 
 
 def _parse_wind(wind_str: str) -> Optional[float]:
@@ -88,7 +132,8 @@ def _parse_wind(wind_str: str) -> Optional[float]:
 def _normalize_discipline(raw: str) -> Optional[str]:
     """
     Map a raw discipline name from World Athletics to our internal code.
-    Uses regex to handle variations like "Men's 100 Metres", "200m", "100 Metres Hurdles", etc.
+    Uses regex to handle variations like "Men's 100 Metres", "200m", "Hammer Throw (5kg)", etc.
+    Returns the base discipline code (e.g., "Hammer Throw", not "Hammer Throw (5kg)").
     """
     if not raw:
         return None
@@ -500,9 +545,12 @@ class WorldAthleticsScraper(BaseScraper):
                 unmatched_events.add(raw_discipline)
                 continue
 
+            # Determine if this is a throws discipline for mark parsing
+            is_throws = disc_code in THROWS_DISCIPLINE_CODES
+
             mark_value = row.get(mark_col, "") if mark_col else ""
-            time_val = _parse_time(mark_value)
-            if time_val is None:
+            mark_val = _parse_mark(mark_value, is_throws=is_throws)
+            if mark_val is None:
                 continue
 
             date_value = row.get(date_col, "") if date_col else ""
@@ -516,12 +564,17 @@ class WorldAthleticsScraper(BaseScraper):
 
             race = {
                 "date": date_val.isoformat() if date_val else None,
-                "time": time_val,
+                "time": mark_val,  # time_seconds for sprints, distance_m for throws
                 "wind": wind_val,
                 "competition": competition,
                 "venue": venue,
                 "year": row.get("_year", ""),
             }
+
+            # Extract implement weight for throws (e.g., "Hammer Throw (5kg)" -> 5.0)
+            if is_throws:
+                weight = _parse_implement_weight(raw_discipline)
+                race["implement_weight_kg"] = weight  # None = senior weight
 
             if disc_code not in disciplines:
                 disciplines[disc_code] = []

@@ -911,6 +911,141 @@ MODEL_CALIBRATION: Dict[str, ModelCalibration] = {
 VALID_DISCIPLINES = ["100m", "200m", "400m", "100mH", "110mH", "400mH", "Discus Throw", "Javelin Throw", "Hammer Throw", "Shot Put"]
 VALID_GENDERS = ["M", "F"]
 
+# ==============================================================================
+# IMPLEMENT WEIGHT SPECIFICATIONS
+# ==============================================================================
+# Standard World Athletics implement weight progressions by age group.
+# Keys are (discipline_base, gender) -> list of (min_age, max_age, weight_kg, label)
+# Age ranges follow WA age group rules (U14=13, U16=14-15, U18=16-17, U20=18-19, Senior=20+)
+
+IMPLEMENT_WEIGHTS = {
+    ("Shot Put", "M"): [
+        (0, 13, 3.0, "3kg"),
+        (14, 15, 4.0, "4kg"),
+        (16, 17, 5.0, "5kg"),
+        (18, 19, 6.0, "6kg"),
+        (20, 99, 7.26, "7.26kg"),
+    ],
+    ("Shot Put", "F"): [
+        (0, 13, 2.0, "2kg"),
+        (14, 17, 3.0, "3kg"),
+        (18, 99, 4.0, "4kg"),
+    ],
+    ("Discus Throw", "M"): [
+        (0, 15, 1.0, "1kg"),
+        (16, 17, 1.5, "1.5kg"),
+        (18, 19, 1.75, "1.75kg"),
+        (20, 99, 2.0, "2kg"),
+    ],
+    ("Discus Throw", "F"): [
+        (0, 17, 0.75, "0.75kg"),
+        (18, 99, 1.0, "1kg"),
+    ],
+    ("Hammer Throw", "M"): [
+        (0, 13, 3.0, "3kg"),
+        (14, 15, 4.0, "4kg"),
+        (16, 17, 5.0, "5kg"),
+        (18, 19, 6.0, "6kg"),
+        (20, 99, 7.26, "7.26kg"),
+    ],
+    ("Hammer Throw", "F"): [
+        (0, 13, 2.0, "2kg"),
+        (14, 17, 3.0, "3kg"),
+        (18, 99, 4.0, "4kg"),
+    ],
+    ("Javelin Throw", "M"): [
+        (0, 15, 0.6, "600g"),
+        (16, 17, 0.7, "700g"),
+        (18, 99, 0.8, "800g"),
+    ],
+    ("Javelin Throw", "F"): [
+        (0, 15, 0.4, "400g"),
+        (16, 17, 0.5, "500g"),
+        (18, 99, 0.6, "600g"),
+    ],
+}
+
+# Senior (standard) implement weights per discipline + gender
+SENIOR_WEIGHTS = {
+    ("Shot Put", "M"): 7.26,
+    ("Shot Put", "F"): 4.0,
+    ("Discus Throw", "M"): 2.0,
+    ("Discus Throw", "F"): 1.0,
+    ("Hammer Throw", "M"): 7.26,
+    ("Hammer Throw", "F"): 4.0,
+    ("Javelin Throw", "M"): 0.8,
+    ("Javelin Throw", "F"): 0.6,
+}
+
+# Parse implement weight from WA discipline name (e.g., "Hammer Throw (5kg)" -> 5.0)
+DISCIPLINE_WEIGHT_PATTERN = {
+    "Shot Put (3kg)": ("Shot Put", 3.0),
+    "Shot Put (4kg)": ("Shot Put", 4.0),
+    "Shot Put (5kg)": ("Shot Put", 5.0),
+    "Shot Put (6kg)": ("Shot Put", 6.0),
+    "Discus Throw (1kg)": ("Discus Throw", 1.0),
+    "Discus Throw (1,5kg)": ("Discus Throw", 1.5),
+    "Discus Throw (1,75kg)": ("Discus Throw", 1.75),
+    "Hammer Throw (3kg)": ("Hammer Throw", 3.0),
+    "Hammer Throw (4kg)": ("Hammer Throw", 4.0),
+    "Hammer Throw (5kg)": ("Hammer Throw", 5.0),
+    "Hammer Throw (6kg)": ("Hammer Throw", 6.0),
+    "Javelin Throw (400gr)": ("Javelin Throw", 0.4),
+    "Javelin Throw (500g)": ("Javelin Throw", 0.5),
+    "Javelin Throw (600gr)": ("Javelin Throw", 0.6),
+    "Javelin Throw (700g)": ("Javelin Throw", 0.7),
+}
+
+
+def parse_implement_weight(discipline_raw: str, gender: str = None) -> tuple:
+    """
+    Parse implement weight from a WA discipline name.
+
+    Returns: (base_discipline, weight_kg)
+    e.g., "Hammer Throw (5kg)" -> ("Hammer Throw", 5.0)
+          "Shot Put" -> ("Shot Put", 7.26)  # assumes senior male if no gender
+    """
+    if discipline_raw in DISCIPLINE_WEIGHT_PATTERN:
+        return DISCIPLINE_WEIGHT_PATTERN[discipline_raw]
+
+    # Senior weight events have no parenthetical
+    base = discipline_raw
+    if (base, gender) in SENIOR_WEIGHTS:
+        return (base, SENIOR_WEIGHTS[(base, gender)])
+
+    return (base, None)
+
+
+def get_implement_weight_for_age(discipline: str, gender: str, age: int) -> float:
+    """Get the standard implement weight for a given discipline, gender, and age."""
+    key = (discipline, gender)
+    if key not in IMPLEMENT_WEIGHTS:
+        return None
+    for min_age, max_age, weight, label in IMPLEMENT_WEIGHTS[key]:
+        if min_age <= age <= max_age:
+            return weight
+    return None
+
+
+def get_implement_weight_label(discipline: str, gender: str, age: int) -> str:
+    """Get the human-readable weight label for a given discipline, gender, and age."""
+    key = (discipline, gender)
+    if key not in IMPLEMENT_WEIGHTS:
+        return None
+    for min_age, max_age, weight, label in IMPLEMENT_WEIGHTS[key]:
+        if min_age <= age <= max_age:
+            return label
+    return None
+
+
+def get_all_weight_classes(discipline: str, gender: str) -> list:
+    """Get all weight classes for a discipline+gender, ordered by weight."""
+    key = (discipline, gender)
+    if key not in IMPLEMENT_WEIGHTS:
+        return []
+    return [(w, label, min_a, max_a) for min_a, max_a, w, label in IMPLEMENT_WEIGHTS[key]]
+
+
 # Throws events use distance (meters) instead of time (seconds)
 # Higher values are better for throws (direction = 'descending')
 THROWS_EVENTS = {"MDT", "FDT", "MJT", "FJT", "MHT", "FHT", "MSP", "FSP"}

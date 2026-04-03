@@ -24,7 +24,7 @@ class RaceInput(BaseModel):
 
     race_date: date = Field(..., description="Date of the race")
     time_seconds: float = Field(
-        ..., gt=0, description="Time in seconds (must be positive)"
+        ..., gt=0, description="Time in seconds (sprints) or distance in metres (throws)"
     )
     wind_mps: Optional[float] = Field(
         None,
@@ -34,6 +34,12 @@ class RaceInput(BaseModel):
     )
     competition: Optional[str] = Field(None, description="Competition name (optional)")
     wind_legal: bool = Field(default=True, description="Whether wind is legal")
+    implement_weight_kg: Optional[float] = Field(
+        None,
+        gt=0,
+        le=10,
+        description="Implement weight in kg for throws (optional, e.g., 5.0 for 5kg hammer)",
+    )
 
     @field_validator("wind_mps")
     @classmethod
@@ -69,7 +75,7 @@ class ManualAnalysisRequest(BaseModel):
         ...,
         min_length=1,
         max_length=20,
-        description="Event code (e.g., '100m', '400m')",
+        description="Event code (e.g., '100m', '400m', 'Shot Put')",
     )
     gender: str = Field(
         ...,
@@ -88,6 +94,12 @@ class ManualAnalysisRequest(BaseModel):
         min_length=1,
         max_length=500,
         description="List of race results (minimum 1, maximum 500)",
+    )
+    implement_weight_kg: Optional[float] = Field(
+        None,
+        gt=0,
+        le=10,
+        description="Implement weight in kg for throws (optional, overrides per-race weights)",
     )
 
     @field_validator("date_of_birth")
@@ -146,7 +158,7 @@ class QuickAnalysisRequest(BaseModel):
         ...,
         min_length=1,
         max_length=20,
-        description="Event code (e.g., '100m', '400m')",
+        description="Event code (e.g., '100m', '400m', 'Shot Put')",
     )
     gender: str = Field(
         ...,
@@ -162,7 +174,13 @@ class QuickAnalysisRequest(BaseModel):
     personal_best: float = Field(
         ...,
         gt=0,
-        description="Personal best time in seconds (must be positive)",
+        description="Personal best time in seconds (sprints) or distance in metres (throws)",
+    )
+    implement_weight_kg: Optional[float] = Field(
+        None,
+        gt=0,
+        le=10,
+        description="Implement weight in kg for throws (optional, defaults based on age/gender per WA rules)",
     )
 
 

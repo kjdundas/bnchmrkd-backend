@@ -220,6 +220,7 @@ async def analyze_quick(request: QuickAnalysisRequest) -> dict[str, Any]:
             gender=request.gender,
             age=request.age,
             personal_best=request.personal_best,
+            implement_weight_kg=request.implement_weight_kg,
         )
 
         return {
@@ -228,6 +229,7 @@ async def analyze_quick(request: QuickAnalysisRequest) -> dict[str, Any]:
             "gender": request.gender,
             "age": request.age,
             "personal_best": request.personal_best,
+            "implement_weight_kg": request.implement_weight_kg,
             "analysis": result,
         }
 

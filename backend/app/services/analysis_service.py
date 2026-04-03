@@ -23,6 +23,9 @@ from app.core.benchmarks import (
     IMPROVEMENT_NORMS,
     get_event_code,
     VALID_DISCIPLINES,
+    THROWS_DISCIPLINES,
+    get_implement_weight_for_age,
+    SENIOR_WEIGHTS,
 )
 
 
@@ -102,6 +105,7 @@ class AnalysisService:
         gender: str,
         age: int,
         personal_best: float,
+        implement_weight_kg: Optional[float] = None,
     ) -> dict[str, Any]:
         """
         Quick analysis from personal best only.
@@ -112,7 +116,8 @@ class AnalysisService:
             discipline: Event code
             gender: Gender identifier
             age: Current age in years
-            personal_best: Personal best time in seconds
+            personal_best: Personal best time in seconds (sprints) or metres (throws)
+            implement_weight_kg: Implement weight in kg for throws (optional)
 
         Returns:
             Dictionary with percentile, projection, and outlook
@@ -121,6 +126,13 @@ class AnalysisService:
             raise ValueError("Personal best must be positive")
         if age < 10 or age > 120:
             raise ValueError("Age must be between 10 and 120")
+
+        # For throws, resolve implement weight if not provided
+        is_throws = discipline in THROWS_DISCIPLINES
+        resolved_weight = implement_weight_kg
+        if is_throws and resolved_weight is None:
+            # Default to WA standard weight for the athlete's age group
+            resolved_weight = get_implement_weight_for_age(discipline, gender, age)
 
         # Create a single race record for quick analysis
         core_races = [
@@ -142,7 +154,7 @@ class AnalysisService:
 
         result: CoreAnalysisResult = analyzer.analyze(core_races)
 
-        return {
+        response = {
             "percentile": result.percentile_analysis.current_percentile,
             "age_category": self._age_category(age),
             "projection_peak_time": result.peak_projection.projected_peak_time,
@@ -154,6 +166,16 @@ class AnalysisService:
             "trajectory": result.trajectory_classification.cluster_name,
             "recommendations": result.recommendations,
         }
+
+        # Include weight info for throws
+        if is_throws and resolved_weight:
+            senior_weight = SENIOR_WEIGHTS.get((discipline, gender))
+            response["implement_weight_kg"] = resolved_weight
+            response["is_senior_weight"] = (
+                senior_weight is not None and abs(resolved_weight - senior_weight) < 0.01
+            )
+
+        return response
 
     async def get_benchmarks(
         self, discipline: str, gender: str

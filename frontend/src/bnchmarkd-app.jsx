@@ -17,6 +17,28 @@ export default function BnchMrkdApp() {
   const isThrowsDiscipline = (disc) => THROWS_DISCIPLINES.includes(disc) || THROWS_CODES.includes(disc);
   const getUnitLabel = (disc) => isThrowsDiscipline(disc) ? 'Distance (m)' : 'Time (s)';
 
+  // Implement weight specifications per WA age group rules
+  const IMPLEMENT_WEIGHTS = {
+    'Shot Put_M': [{min:0,max:13,kg:3,label:'3kg'},{min:14,max:15,kg:4,label:'4kg'},{min:16,max:17,kg:5,label:'5kg'},{min:18,max:19,kg:6,label:'6kg'},{min:20,max:99,kg:7.26,label:'7.26kg (Senior)'}],
+    'Shot Put_F': [{min:0,max:13,kg:2,label:'2kg'},{min:14,max:17,kg:3,label:'3kg'},{min:18,max:99,kg:4,label:'4kg (Senior)'}],
+    'Discus Throw_M': [{min:0,max:15,kg:1,label:'1kg'},{min:16,max:17,kg:1.5,label:'1.5kg'},{min:18,max:19,kg:1.75,label:'1.75kg'},{min:20,max:99,kg:2,label:'2kg (Senior)'}],
+    'Discus Throw_F': [{min:0,max:17,kg:0.75,label:'0.75kg'},{min:18,max:99,kg:1,label:'1kg (Senior)'}],
+    'Hammer Throw_M': [{min:0,max:13,kg:3,label:'3kg'},{min:14,max:15,kg:4,label:'4kg'},{min:16,max:17,kg:5,label:'5kg'},{min:18,max:19,kg:6,label:'6kg'},{min:20,max:99,kg:7.26,label:'7.26kg (Senior)'}],
+    'Hammer Throw_F': [{min:0,max:13,kg:2,label:'2kg'},{min:14,max:17,kg:3,label:'3kg'},{min:18,max:99,kg:4,label:'4kg (Senior)'}],
+    'Javelin Throw_M': [{min:0,max:15,kg:0.6,label:'600g'},{min:16,max:17,kg:0.7,label:'700g'},{min:18,max:99,kg:0.8,label:'800g (Senior)'}],
+    'Javelin Throw_F': [{min:0,max:15,kg:0.4,label:'400g'},{min:16,max:17,kg:0.5,label:'500g'},{min:18,max:99,kg:0.6,label:'600g (Senior)'}],
+  };
+  const getWeightOptions = (discipline, gender) => {
+    const key = `${discipline}_${gender === 'Male' ? 'M' : 'F'}`;
+    return IMPLEMENT_WEIGHTS[key] || [];
+  };
+  const getDefaultWeight = (discipline, gender, age) => {
+    const opts = getWeightOptions(discipline, gender);
+    const ageNum = parseInt(age) || 20;
+    const match = opts.find(o => ageNum >= o.min && ageNum <= o.max);
+    return match ? match.kg : (opts.length ? opts[opts.length - 1].kg : null);
+  };
+
   const [currentView, setCurrentView] = useState('landing');
   const [activeTab, setActiveTab] = useState('manual');
   const [disciplineCategory, setDisciplineCategory] = useState('sprints'); // 'sprints' | 'throws'
@@ -26,6 +48,7 @@ export default function BnchMrkdApp() {
     dateOfBirth: '',
     discipline: '100m',
     gender: 'Male',
+    implementWeight: '',  // kg, for throws only
     races: [
       { date: '', time: '', wind: '', competition: '' },
       { date: '', time: '', wind: '', competition: '' },
@@ -36,7 +59,8 @@ export default function BnchMrkdApp() {
     discipline: '100m',
     gender: 'Male',
     age: '',
-    personalBest: ''
+    personalBest: '',
+    implementWeight: ''  // kg, for throws only
   });
   const [urlInput, setUrlInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1039,11 +1063,16 @@ export default function BnchMrkdApp() {
   // ═══════════════════════════════════════════════════════════════════
   // ENHANCED ANALYSIS ENGINE
   // ═══════════════════════════════════════════════════════════════════
-  const runAnalysis = async ({ name, discipline, gender, age, pb, raceHistory }) => {
+  const runAnalysis = async ({ name, discipline, gender, age, pb, raceHistory, implementWeight = null }) => {
     const eventCode = getEventCode(discipline, gender);
     const benchmarkData = BENCHMARKS[eventCode];
     if (!benchmarkData) throw new Error(`No benchmarks for ${eventCode}`);
     const isThrows = THROWS_CODES.includes(eventCode);
+    // Resolve implement weight for throws
+    const resolvedWeight = isThrows ? (implementWeight || getDefaultWeight(discipline, gender, age)) : null;
+    const genderCode = gender === 'Male' ? 'M' : 'F';
+    const seniorWeights = { 'Shot Put_M': 7.26, 'Shot Put_F': 4, 'Discus Throw_M': 2, 'Discus Throw_F': 1, 'Hammer Throw_M': 7.26, 'Hammer Throw_F': 4, 'Javelin Throw_M': 0.8, 'Javelin Throw_F': 0.6 };
+    const isSeniorWeight = isThrows && resolvedWeight && Math.abs(resolvedWeight - (seniorWeights[`${discipline}_${genderCode}`] || 0)) < 0.01;
 
     // ── Build annual best series with absolute times ──
     const annualSeries = raceHistory.map(race => {
@@ -1553,6 +1582,9 @@ export default function BnchMrkdApp() {
       })(),
       // Seasons best for gauge
       seasonsBest: annualSeries.length > 0 ? annualSeries[annualSeries.length - 1].time : pb,
+      // Implement weight info (throws only)
+      implementWeight: resolvedWeight,
+      isSeniorWeight,
       recommendations
     };
   };
@@ -1624,7 +1656,8 @@ export default function BnchMrkdApp() {
           name: athleteData.name || 'Unknown',
           discipline: athleteData.discipline,
           gender: athleteData.gender,
-          age, pb, raceHistory
+          age, pb, raceHistory,
+          implementWeight: isThrowsDisc ? (athleteData.implementWeight || getDefaultWeight(athleteData.discipline, athleteData.gender, age)) : null
         });
 
         setAnalysisResults(results);
@@ -1641,12 +1674,14 @@ export default function BnchMrkdApp() {
         const age = parseInt(quickAnalysisData.age);
         const pb = parseFloat(quickAnalysisData.personalBest);
 
+        const isThrowsQuick = isThrowsDiscipline(quickAnalysisData.discipline);
         const results = await runAnalysis({
           name: 'Quick Analysis',
           discipline: quickAnalysisData.discipline,
           gender: quickAnalysisData.gender,
           age, pb,
-          raceHistory: [{ age, time: pb, nRaces: 1 }]
+          raceHistory: [{ age, time: pb, nRaces: 1 }],
+          implementWeight: isThrowsQuick ? (quickAnalysisData.implementWeight || getDefaultWeight(quickAnalysisData.discipline, quickAnalysisData.gender, age)) : null
         });
 
         setAnalysisResults(results);
@@ -2851,7 +2886,7 @@ export default function BnchMrkdApp() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                <div className={`grid grid-cols-1 ${isThrowsMode ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-6 mb-8`}>
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">Athlete Name</label>
                     <input type="text" placeholder={isThrowsMode ? "e.g., Daniel Stahl" : "e.g., Shelly-Ann Fraser-Pryce"} value={athleteData.name}
@@ -2864,6 +2899,19 @@ export default function BnchMrkdApp() {
                       onChange={(e) => handleManualEntry('dateOfBirth', e.target.value)}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
+                  {isThrowsMode && (
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Implement Weight</label>
+                      <select value={athleteData.implementWeight}
+                        onChange={(e) => handleManualEntry('implementWeight', parseFloat(e.target.value))}
+                        className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
+                        {getWeightOptions(athleteData.discipline, athleteData.gender).map(opt => (
+                          <option key={opt.kg} value={opt.kg}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-slate-500 mt-1">Select the implement weight used in competitions.</p>
+                    </div>
+                  )}
                 </div>
 
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -2989,11 +3037,19 @@ export default function BnchMrkdApp() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                <div className={`grid grid-cols-1 ${isThrowsMode ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-6 mb-8`}>
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">Current Age</label>
                     <input type="number" placeholder="e.g., 22" value={quickAnalysisData.age}
-                      onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, age: e.target.value })}
+                      onChange={(e) => {
+                        const newAge = e.target.value;
+                        const updates = { ...quickAnalysisData, age: newAge };
+                        // Auto-update implement weight when age changes (if throws)
+                        if (isThrowsMode && newAge) {
+                          updates.implementWeight = getDefaultWeight(quickAnalysisData.discipline, quickAnalysisData.gender, newAge);
+                        }
+                        setQuickAnalysisData(updates);
+                      }}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
                   <div>
@@ -3002,6 +3058,19 @@ export default function BnchMrkdApp() {
                       onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, personalBest: e.target.value })}
                       className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500" />
                   </div>
+                  {isThrowsMode && (
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Implement Weight</label>
+                      <select value={quickAnalysisData.implementWeight}
+                        onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, implementWeight: parseFloat(e.target.value) })}
+                        className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-slate-500">
+                        {getWeightOptions(quickAnalysisData.discipline, quickAnalysisData.gender).map(opt => (
+                          <option key={opt.kg} value={opt.kg}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-slate-500 mt-1">Auto-set by age per WA rules. Override if needed.</p>
+                    </div>
+                  )}
                 </div>
                 {error && <div className="bg-red-900/30 border border-red-800 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>}
                 <button onClick={handleAnalyze} disabled={loading}
@@ -3045,6 +3114,12 @@ export default function BnchMrkdApp() {
                   <p className="text-xs sm:text-sm text-orange-400 font-semibold mb-1 uppercase tracking-wider">Quick Snapshot</p>
                   <h2 className="text-xl sm:text-3xl font-bold text-white mb-1">
                     {analysisResults.discipline} &bull; {analysisResults.gender} &bull; Age {analysisResults.age}
+                    {analysisResults.implementWeight && (
+                      <span className="ml-2 text-sm font-medium text-orange-300 bg-orange-500/20 px-2 py-0.5 rounded-full">
+                        {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}
+                        {analysisResults.isSeniorWeight ? '' : ' (Youth)'}
+                      </span>
+                    )}
                   </h2>
                   <p className="text-slate-400">{analysisResults.careerPhase}</p>
                 </div>
@@ -3070,6 +3145,25 @@ export default function BnchMrkdApp() {
                 </div>
               </div>
             </div>
+
+            {/* ── YOUTH WEIGHT NOTICE ── */}
+            {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
+              <div className="bg-purple-900/30 border border-purple-700/50 rounded-xl p-4 mb-6 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-purple-300">Youth Implement Weight Detected</p>
+                  <p className="text-xs text-purple-400/80 mt-1">
+                    You're using a {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`} implement.
+                    Benchmark curves are based on senior-weight Olympic data ({(() => {
+                      const g = analysisResults.gender === 'Male' ? 'M' : 'F';
+                      const sw = { 'Shot Put_M': '7.26kg', 'Shot Put_F': '4kg', 'Discus Throw_M': '2kg', 'Discus Throw_F': '1kg', 'Hammer Throw_M': '7.26kg', 'Hammer Throw_F': '4kg', 'Javelin Throw_M': '800g', 'Javelin Throw_F': '600g' };
+                      return sw[`${analysisResults.discipline}_${g}`] || 'senior weight';
+                    })()}).
+                    Direct distance comparisons should account for this difference. Weight transition ages are shown as purple markers on trajectory charts.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* ── PERCENTILE + COMPETITIVE OUTLOOK (side by side) ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -3425,6 +3519,12 @@ export default function BnchMrkdApp() {
                   <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">{analysisResults.name}</h2>
                   <p className="text-sm sm:text-base text-slate-400 mb-4">
                     {analysisResults.discipline} &bull; {analysisResults.gender} &bull; Age {analysisResults.age} &bull; {analysisResults.careerPhase}
+                    {analysisResults.implementWeight && (
+                      <span className="ml-2 text-xs font-medium text-orange-300 bg-orange-500/20 px-2 py-0.5 rounded-full inline-block">
+                        {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}
+                        {analysisResults.isSeniorWeight ? '' : ' (Youth)'}
+                      </span>
+                    )}
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
@@ -3689,6 +3789,18 @@ export default function BnchMrkdApp() {
                       <ReferenceLine y={analysisResults.thresholds.finalist} stroke="#dc2626" strokeDasharray="8 4" strokeWidth={2} label={{ value: `Finalist (${analysisResults.thresholds.finalist}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#dc2626', fontSize: 11 }} />
                       <ReferenceLine y={analysisResults.thresholds.semiFinalist} stroke="#f59e0b" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `Semi (${analysisResults.thresholds.semiFinalist}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#f59e0b', fontSize: 11 }} />
                       <ReferenceLine y={analysisResults.thresholds.qualifier} stroke="#6b7280" strokeDasharray="4 4" strokeWidth={1} label={{ value: `Qualifier (${analysisResults.thresholds.qualifier}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#6b7280', fontSize: 11 }} />
+                      {/* Weight transition markers for throws — vertical lines at ages where implement weight changes */}
+                      {analysisResults.isThrows && (() => {
+                        const weightOpts = getWeightOptions(analysisResults.discipline, analysisResults.gender);
+                        const transitions = [];
+                        for (let i = 0; i < weightOpts.length - 1; i++) {
+                          transitions.push({ age: weightOpts[i].max + 1, from: weightOpts[i].label, to: weightOpts[i + 1].label });
+                        }
+                        return transitions.map((t, idx) => (
+                          <ReferenceLine key={`wt-${idx}`} x={t.age} stroke="#a78bfa" strokeDasharray="4 2" strokeWidth={1.5}
+                            label={{ value: `${t.to}`, position: 'top', fill: '#a78bfa', fontSize: 10 }} />
+                        ));
+                      })()}
                       <Line type="monotone" dataKey="projectedTime" stroke="#3b82f6" strokeWidth={2.5} strokeDasharray="8 4" dot={{ fill: '#3b82f6', r: 3, strokeWidth: 0 }} name="Projected" connectNulls={false} />
                       <Line type="monotone" dataKey="actualTime" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Actual Performance" connectNulls={false} />
                     </ComposedChart>
@@ -3699,6 +3811,9 @@ export default function BnchMrkdApp() {
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-red-600 rounded" style={{borderBottom: '2px dashed #dc2626'}}></div><span className="text-slate-400">Finalist Threshold</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-amber-500 rounded" style={{borderBottom: '2px dashed #f59e0b'}}></div><span className="text-slate-400">Semi-Finalist</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-slate-800/500 rounded" style={{borderBottom: '2px dashed #6b7280'}}></div><span className="text-slate-400">Qualifier</span></div>
+                    {analysisResults.isThrows && (
+                      <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-purple-400 rounded" style={{borderBottom: '2px dashed #a78bfa'}}></div><span className="text-slate-400">Weight Change</span></div>
+                    )}
                   </div>
                 </>
               )}
