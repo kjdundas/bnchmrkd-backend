@@ -2024,10 +2024,10 @@ export default function BnchMrkdApp() {
 
             {/* Specific, value-driven tagline */}
             <p className="text-base sm:text-lg md:text-xl text-slate-400 text-center max-w-lg mb-3 leading-relaxed">
-              Benchmark any track athlete against 25 years of Olympic career data.
+              Track and field benchmarking against 25 years of Olympic career data.
             </p>
             <p className="text-sm text-slate-500 text-center max-w-md mb-8 sm:mb-10">
-              Trajectory analysis, peak projections, and percentile rankings — powered by statistical models, not opinion.
+              Trajectory analysis, peak projections, and percentile rankings — powered by statistical models.
             </p>
 
             {/* Primary CTA */}
@@ -2051,10 +2051,10 @@ export default function BnchMrkdApp() {
             {/* Data credibility strip */}
             <div className="flex items-center gap-6 sm:gap-10 mb-6">
               {[
-                { value: '311K+', label: 'Race Records' },
-                { value: '2,322', label: 'Olympic Athletes' },
+                { value: '496K+', label: 'Race Records' },
+                { value: '3,442', label: 'Olympic Athletes' },
                 { value: '7', label: 'Olympic Games' },
-                { value: '10', label: 'Disciplines' },
+                { value: '18', label: 'Disciplines' },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
                   <p className="text-lg sm:text-xl font-bold text-white tabular-nums">{stat.value}</p>
@@ -2117,9 +2117,9 @@ export default function BnchMrkdApp() {
             {/* Key stats row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               {[
-                { value: '2,322', label: 'Olympic Athletes', sub: 'Sydney 2000 – Paris 2024' },
-                { value: '311K+', label: 'Career Races', sub: 'Analysed and classified' },
-                { value: '14', label: 'Disciplines', sub: 'Sprints, hurdles & throws' },
+                { value: '3,442', label: 'Olympic Athletes', sub: 'Sydney 2000 – Paris 2024' },
+                { value: '496K+', label: 'Career Races', sub: 'Analysed and classified' },
+                { value: '18', label: 'Disciplines', sub: 'Sprints, hurdles & throws' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
                 <div key={i} className="bg-slate-800/80 backdrop-blur-sm rounded-xl border border-slate-700/50 p-5 text-center">
