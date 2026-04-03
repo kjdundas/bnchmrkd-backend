@@ -2041,81 +2041,292 @@ export default function BnchMrkdApp() {
       {/* LANDING PAGE                                                    */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'landing' && (
-        <div className="min-h-screen flex flex-col">
-          {/* Subtle ambient glow — single warm tone */}
+        <div className="min-h-screen" style={{background: 'linear-gradient(165deg, #0a0a0f 0%, #0d1117 30%, #111318 60%, #0a0a0f 100%)'}}>
+
+          {/* ── INJECT GOOGLE FONTS + KEYFRAMES ── */}
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+            @keyframes drawTrajectory { from { stroke-dashoffset: 800; } to { stroke-dashoffset: 0; } }
+            @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes fadeSlideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+            @keyframes pulseGlow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+            @keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+            @keyframes trackLines { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+            @keyframes dotPulse { 0%, 100% { r: 3; opacity: 0.6; } 50% { r: 5; opacity: 1; } }
+            .landing-font { font-family: 'Instrument Sans', system-ui, sans-serif; }
+            .mono-font { font-family: 'DM Mono', 'SF Mono', monospace; }
+            .stagger-1 { animation: fadeSlideUp 0.7s ease-out 0.1s both; }
+            .stagger-2 { animation: fadeSlideUp 0.7s ease-out 0.25s both; }
+            .stagger-3 { animation: fadeSlideUp 0.7s ease-out 0.4s both; }
+            .stagger-4 { animation: fadeSlideUp 0.7s ease-out 0.55s both; }
+            .stagger-5 { animation: fadeSlideUp 0.7s ease-out 0.7s both; }
+            .stagger-6 { animation: fadeSlideUp 0.7s ease-out 0.85s both; }
+            .bento-card { backdrop-filter: blur(12px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+            .bento-card:hover { transform: translateY(-2px); border-color: rgba(249,115,22,0.3); }
+            .cta-primary { background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%); transition: all 0.3s ease; }
+            .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(249,115,22,0.35); }
+            .noise-overlay { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); }
+          `}</style>
+
+          {/* ── ATMOSPHERIC BACKGROUND LAYERS ── */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-orange-500/6 rounded-full blur-[120px]"></div>
-          </div>
-
-          {/* Main hero */}
-          <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 sm:px-6">
-            {/* Compact logo + wordmark */}
-            <div className="flex items-center gap-3 mb-6">
-              <img src="/icon.svg" alt="bnchmrkd" className="w-10 h-10 sm:w-12 sm:h-12" />
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif"}}>
-                bnchmrkd<span className="text-orange-500">.</span>
-              </h1>
-            </div>
-
-            {/* Specific, value-driven tagline */}
-            <p className="text-base sm:text-lg md:text-xl text-slate-400 text-center max-w-lg mb-3 leading-relaxed">
-              Track and field benchmarking against 25 years of Olympic career data.
-            </p>
-            <p className="text-sm text-slate-500 text-center max-w-md mb-8 sm:mb-10">
-              Trajectory analysis, peak projections, and percentile rankings — powered by statistical models.
-            </p>
-
-            {/* Primary CTA */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mb-10">
-              <button
-                onClick={() => setCurrentView('categories')}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-400 transition-all text-base"
-              >
-                Benchmark an Athlete
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrentView('explorer')}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-700/80 hover:border-slate-600 hover:bg-slate-700/90 transition-all text-base"
-              >
-                <Search className="w-4 h-4" />
-                Explore Athletes
-              </button>
-            </div>
-
-            {/* Data credibility strip */}
-            <div className="flex items-center gap-6 sm:gap-10 mb-6">
-              {[
-                { value: '496K+', label: 'Race Records' },
-                { value: '3,442', label: 'Olympic Athletes' },
-                { value: '7', label: 'Olympic Games' },
-                { value: '18', label: 'Disciplines' },
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-white tabular-nums">{stat.value}</p>
-                  <p className="text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider font-medium">{stat.label}</p>
-                </div>
+            {/* Noise texture overlay */}
+            <div className="absolute inset-0 noise-overlay opacity-40"></div>
+            {/* Warm glow — asymmetric, off-centre */}
+            <div className="absolute top-[15%] left-[65%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)'}}></div>
+            <div className="absolute bottom-[10%] left-[20%] w-[400px] h-[400px] rounded-full blur-[120px]" style={{background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)'}}></div>
+            {/* Subtle track lane lines */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.03]" preserveAspectRatio="none">
+              {[...Array(8)].map((_, i) => (
+                <line key={i} x1="0" y1={`${12 + i * 11}%`} x2="100%" y2={`${12 + i * 11}%`} stroke="#f97316" strokeWidth="0.5" />
               ))}
-            </div>
-
-            {/* Divider */}
-            <div className="w-16 h-px bg-slate-700/60 mb-6"></div>
-
-            {/* Methodology link — subtle, not a primary button */}
-            <button
-              onClick={() => setCurrentView('about')}
-              className="text-sm text-slate-500 hover:text-orange-400 transition-colors flex items-center gap-1.5"
-            >
-              <Database className="w-3.5 h-3.5" />
-              How the data works
-            </button>
+            </svg>
           </div>
 
-          {/* Source line pinned to bottom */}
-          <div className="relative z-10 text-center pb-6 px-4">
-            <p className="text-xs text-slate-600">
-              Sydney 2000 – Paris 2024 · World Athletics competition records
+          {/* ── TOP NAV BAR ── */}
+          <nav className="relative z-20 stagger-1">
+            <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img src="/icon.svg" alt="bnchmrkd" className="w-8 h-8" />
+                <span className="text-xl font-bold text-white tracking-tight landing-font">
+                  bnchmrkd<span style={{color: '#f97316'}}>.</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <button onClick={() => setCurrentView('about')} className="text-sm text-slate-500 hover:text-slate-300 transition-colors landing-font font-medium">
+                  Methodology
+                </button>
+                <button
+                  onClick={() => setCurrentView('categories')}
+                  className="text-sm font-semibold text-white px-4 py-2 rounded-lg landing-font"
+                  style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)'}}
+                >
+                  Get Started
+                </button>
+              </div>
+            </div>
+          </nav>
+
+          {/* ── HERO SECTION ── */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-8 sm:pt-16 pb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+              {/* LEFT — Copy */}
+              <div>
+                <div className="stagger-2 mb-4">
+                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mono-font tracking-wide" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c'}}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" style={{animation: 'pulseGlow 2s ease-in-out infinite'}}></span>
+                    SYDNEY 2000 — PARIS 2024
+                  </span>
+                </div>
+
+                <h1 className="stagger-3 text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-6">
+                  Where does your<br />
+                  athlete sit against<br />
+                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+                    Olympic careers?
+                  </span>
+                </h1>
+
+                <p className="stagger-4 text-lg text-slate-400 leading-relaxed max-w-md mb-8 landing-font">
+                  Benchmark any track & field athlete against 25 years of Olympic career trajectories. Percentile rankings, peak projections, and finalist probability — all from real competition data.
+                </p>
+
+                {/* CTAs */}
+                <div className="stagger-5 flex flex-col sm:flex-row gap-3 mb-10">
+                  <button
+                    onClick={() => setCurrentView('categories')}
+                    className="cta-primary flex items-center justify-center gap-2.5 px-7 py-3.5 text-white font-semibold rounded-xl text-[15px] landing-font"
+                  >
+                    Benchmark an Athlete
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('explorer')}
+                    className="flex items-center justify-center gap-2.5 px-7 py-3.5 text-slate-300 font-medium rounded-xl text-[15px] landing-font transition-all hover:text-white hover:border-slate-500"
+                    style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}
+                  >
+                    <Search className="w-4 h-4" />
+                    Explore Athletes
+                  </button>
+                </div>
+
+                {/* Data credibility — horizontal, compact */}
+                <div className="stagger-6 flex items-center gap-8">
+                  {[
+                    { value: '496K+', label: 'Records' },
+                    { value: '3,442', label: 'Athletes' },
+                    { value: '18', label: 'Events' },
+                  ].map((stat, i) => (
+                    <div key={i} className="flex items-baseline gap-2">
+                      <span className="text-xl font-bold text-white tabular-nums mono-font">{stat.value}</span>
+                      <span className="text-xs text-slate-600 uppercase tracking-widest landing-font font-medium">{stat.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* RIGHT — Animated trajectory visualization + bento preview */}
+              <div className="stagger-4 relative">
+                {/* Main trajectory card */}
+                <div className="bento-card rounded-2xl p-6 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  {/* Card header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs text-slate-500 mono-font tracking-wide uppercase">Career Trajectory</p>
+                      <p className="text-sm font-semibold text-white landing-font mt-0.5">Men's 100m — Olympic Finalist</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md" style={{background: 'rgba(34,197,94,0.12)'}}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                      <span className="text-xs font-medium text-green-400 mono-font">92nd pctl</span>
+                    </div>
+                  </div>
+
+                  {/* Animated SVG trajectory chart */}
+                  <svg viewBox="0 0 440 200" className="w-full" style={{filter: 'drop-shadow(0 0 20px rgba(249,115,22,0.15))'}}>
+                    {/* Grid lines */}
+                    {[40, 80, 120, 160].map(y => (
+                      <line key={y} x1="40" y1={y} x2="420" y2={y} stroke="rgba(148,163,184,0.06)" strokeWidth="0.5" />
+                    ))}
+                    {/* Age labels */}
+                    {['18', '20', '22', '24', '26', '28', '30'].map((age, i) => (
+                      <text key={age} x={60 + i * 52} y="195" fill="#475569" fontSize="10" textAnchor="middle" style={{fontFamily: "'DM Mono', monospace"}}>{age}</text>
+                    ))}
+                    {/* Benchmark corridor (P25-P75) */}
+                    <path d="M60,145 L112,138 L164,128 L216,118 L268,112 L320,115 L372,125" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
+                    {/* Finalist threshold */}
+                    <line x1="40" y1="95" x2="420" y2="95" stroke="rgba(239,68,68,0.25)" strokeWidth="1" strokeDasharray="6 4" />
+                    <text x="425" y="98" fill="rgba(239,68,68,0.5)" fontSize="8" style={{fontFamily: "'DM Mono', monospace"}}>MQT</text>
+                    {/* Athlete trajectory — animated */}
+                    <path
+                      d="M60,155 C90,148 112,135 164,115 S240,78 268,70 S330,68 372,75"
+                      fill="none" stroke="url(#trajectoryGrad)" strokeWidth="2.5" strokeLinecap="round"
+                      strokeDasharray="800" style={{animation: 'drawTrajectory 2.5s ease-out 0.8s both'}}
+                    />
+                    {/* Projection extension — dashed */}
+                    <path
+                      d="M372,75 C390,78 408,82 420,86"
+                      fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="4 4" opacity="0.5"
+                      style={{animation: 'fadeSlideUp 0.5s ease-out 3s both'}}
+                    />
+                    {/* Data points */}
+                    {[[60,155],[112,135],[164,115],[216,90],[268,70],[320,68],[372,75]].map(([cx,cy], i) => (
+                      <g key={i} style={{animation: `fadeSlideUp 0.3s ease-out ${1.2 + i * 0.2}s both`}}>
+                        <circle cx={cx} cy={cy} r="3" fill="#f97316" />
+                        <circle cx={cx} cy={cy} r="6" fill="none" stroke="rgba(249,115,22,0.3)" strokeWidth="1" />
+                      </g>
+                    ))}
+                    {/* Peak marker */}
+                    <g style={{animation: 'fadeSlideUp 0.4s ease-out 2.6s both'}}>
+                      <circle cx="320" cy="68" r="4" fill="#f97316">
+                        <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite" />
+                      </circle>
+                      <circle cx="320" cy="68" r="10" fill="none" stroke="rgba(249,115,22,0.2)" strokeWidth="1">
+                        <animate attributeName="r" values="10;16;10" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite" />
+                      </circle>
+                      <text x="320" y="58" fill="#f97316" fontSize="9" textAnchor="middle" fontWeight="600" style={{fontFamily: "'DM Mono', monospace"}}>PEAK 10.02s</text>
+                    </g>
+                    {/* Gradient definition */}
+                    <defs>
+                      <linearGradient id="trajectoryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#ea580c" />
+                        <stop offset="50%" stopColor="#f97316" />
+                        <stop offset="100%" stopColor="#fb923c" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+
+                  {/* Mini stats row below chart */}
+                  <div className="flex items-center justify-between mt-4 pt-4" style={{borderTop: '1px solid rgba(255,255,255,0.05)'}}>
+                    {[
+                      { label: 'PB', value: '10.02s', color: '#f97316' },
+                      { label: 'Peak Age', value: '26', color: '#3b82f6' },
+                      { label: 'Trajectory', value: 'Late Developer', color: '#22c55e' },
+                    ].map((item, i) => (
+                      <div key={i} className="text-center">
+                        <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider">{item.label}</p>
+                        <p className="text-sm font-bold mono-font mt-0.5" style={{color: item.color}}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Floating mini bento cards */}
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  {/* Percentile gauge card */}
+                  <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Percentile</p>
+                    <div className="flex items-end gap-1">
+                      {[35, 52, 68, 78, 92, 88, 85].map((h, i) => (
+                        <div key={i} className="flex-1 rounded-sm" style={{
+                          height: `${h * 0.4}px`,
+                          background: i === 4 ? 'linear-gradient(to top, #ea580c, #f97316)' : 'rgba(148,163,184,0.1)',
+                          animation: `fadeSlideUp 0.3s ease-out ${1.5 + i * 0.1}s both`
+                        }}></div>
+                      ))}
+                    </div>
+                    <p className="text-right text-lg font-bold text-white mono-font mt-2">P92</p>
+                  </div>
+
+                  {/* Discipline coverage card */}
+                  <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Disciplines</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['100m', '200m', '400m', '110mH', 'SP', 'DT', 'HT', 'JT'].map((d, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{
+                          background: i >= 4 ? 'rgba(59,130,246,0.12)' : 'rgba(249,115,22,0.12)',
+                          color: i >= 4 ? '#60a5fa' : '#fb923c',
+                          animation: `fadeSlideUp 0.3s ease-out ${1.8 + i * 0.08}s both`
+                        }}>{d}</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 landing-font">Sprints, hurdles & throws</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── FEATURE STRIP — What you get ── */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-16">
+            <div className="stagger-6" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-12">
+                {[
+                  { icon: TrendingUp, title: 'Trajectory Classification', desc: 'K-means clustering identifies your career pattern — Early Peaker, Late Developer, or Consistent Performer.', accent: '#f97316' },
+                  { icon: Target, title: 'Finalist Probability', desc: 'ROC-optimised thresholds compute your statistical likelihood of reaching an Olympic final.', accent: '#3b82f6' },
+                  { icon: BarChart3, title: 'Percentile Corridors', desc: 'See where you rank at every age from 15 to 38 against the full Olympic population.', accent: '#22c55e' },
+                  { icon: Zap, title: 'Peak Projection', desc: 'Improvement rate modelling projects your ceiling performance and the age you\'ll reach it.', accent: '#f59e0b' },
+                ].map((feature, i) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div key={i} className="group" style={{animation: `fadeSlideUp 0.6s ease-out ${0.9 + i * 0.12}s both`}}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{background: `${feature.accent}12`}}>
+                        <Icon className="w-5 h-5" style={{color: feature.accent}} />
+                      </div>
+                      <h3 className="text-sm font-bold text-white landing-font mb-1.5">{feature.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed landing-font">{feature.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── BOTTOM SOURCE LINE ── */}
+          <div className="relative z-10 text-center pb-8 px-4">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div className="w-8 h-px" style={{background: 'rgba(255,255,255,0.08)'}}></div>
+              <span className="text-[10px] text-slate-600 mono-font uppercase tracking-[0.2em]">Data Source</span>
+              <div className="w-8 h-px" style={{background: 'rgba(255,255,255,0.08)'}}></div>
+            </div>
+            <p className="text-xs text-slate-600 landing-font">
+              World Athletics competition records · Sydney 2000 – Paris 2024
             </p>
+            <button onClick={() => setCurrentView('about')} className="text-xs text-slate-600 hover:text-orange-400 transition-colors mt-1 landing-font underline decoration-slate-700 underline-offset-2">
+              View methodology
+            </button>
           </div>
         </div>
       )}
