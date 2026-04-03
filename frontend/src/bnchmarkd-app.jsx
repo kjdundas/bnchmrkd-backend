@@ -1403,7 +1403,7 @@ export default function BnchMrkdApp() {
           timeDiff: parseFloat(a.time_diff),
           ageDiff: a.age_diff,
           similarity: parseFloat(a.similarity),
-          classification: parseFloat(a.pb_time) <= (thresholds.optimal || 999) ? 'F' : parseFloat(a.pb_time) <= (thresholds.s80 || 999) ? 'SF' : 'Q',
+          classification: isThrows ? (parseFloat(a.pb_time) >= (thresholds.optimal || 0) ? 'F' : parseFloat(a.pb_time) >= (thresholds.s80 || 0) ? 'SF' : 'Q') : (parseFloat(a.pb_time) <= (thresholds.optimal || 999) ? 'F' : parseFloat(a.pb_time) <= (thresholds.s80 || 999) ? 'SF' : 'Q'),
         }));
       }
     } catch (e) {
@@ -1981,13 +1981,13 @@ export default function BnchMrkdApp() {
       <div className="bg-slate-900/95 backdrop-blur-md border border-slate-600 rounded-lg shadow-xl shadow-black/30 p-3 text-sm">
         <p className="font-bold text-white mb-1">Age {label}</p>
         {data.actualTime && (
-          <p className="text-orange-400">Actual: {data.actualTime.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
+          <p className="text-orange-400">Actual: {data.actualTime.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
         )}
         {data.projectedTime && !data.actualTime && (
           <>
-            <p className="text-blue-400">Projected: {data.projectedTime.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-            <p className="text-slate-400 text-xs">50% CI: {data.ci50Lower?.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {data.ci50Upper?.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-            <p className="text-slate-400 text-xs">90% CI: {data.ci90Lower?.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {data.ci90Upper?.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
+            <p className="text-blue-400">Projected: {data.projectedTime.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
+            <p className="text-slate-400 text-xs">50% CI: {data.ci50Lower?.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {data.ci50Upper?.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
+            <p className="text-slate-400 text-xs">90% CI: {data.ci90Lower?.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {data.ci90Upper?.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
           </>
         )}
       </div>
@@ -2586,7 +2586,7 @@ export default function BnchMrkdApp() {
                           {athleteProfile.personal_bests.map((pb, i) => (
                             <div key={i} className="bg-slate-900/50 rounded-lg p-3 text-center">
                               <div className="text-xs text-slate-500 uppercase tracking-wider">{pb.discipline}</div>
-                              <div className="text-xl font-bold text-orange-400 mt-1">{typeof pb.time === 'number' ? pb.time.toFixed(2) : pb.time}${isThrowsDiscipline(pb.discipline || athleteProfile.primary_discipline) ? 'm' : 's'}</div>
+                              <div className="text-xl font-bold text-orange-400 mt-1">{typeof pb.time === 'number' ? pb.time.toFixed(2) : pb.time}{isThrowsDiscipline(pb.discipline || athleteProfile.primary_discipline) ? 'm' : 's'}</div>
                               {pb.year && <div className="text-xs text-slate-500 mt-1">{pb.year}</div>}
                             </div>
                           ))}
@@ -2609,7 +2609,7 @@ export default function BnchMrkdApp() {
                                   <span className="text-slate-400">{r.discipline}</span>
                                 </div>
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                  {r.time && <span className="text-orange-400 font-mono">{typeof r.time === 'number' ? r.time.toFixed(2) : r.time}${isThrowsDiscipline(r.discipline || athleteProfile.primary_discipline) ? 'm' : 's'}</span>}
+                                  {r.time && <span className="text-orange-400 font-mono">{typeof r.time === 'number' ? r.time.toFixed(2) : r.time}{isThrowsDiscipline(r.discipline || athleteProfile.primary_discipline) ? 'm' : 's'}</span>}
                                   {r.position && <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                                     r.position <= 3 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'
                                   }`}>{r.position}{r.position === 1 ? 'st' : r.position === 2 ? 'nd' : r.position === 3 ? 'rd' : 'th'}</span>}
@@ -3138,7 +3138,7 @@ export default function BnchMrkdApp() {
                   Performance Standards
                 </h3>
                 <p className="text-sm text-slate-400 mb-5">
-                  Where does {analysisResults.personalBest}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} sit against key competition benchmarks?
+                  Where does {analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} sit against key competition benchmarks?
                 </p>
                 <div className="space-y-2.5">
                   {analysisResults.standards.map((std, idx) => {
@@ -3174,11 +3174,11 @@ export default function BnchMrkdApp() {
                           </div>
                         </div>
                         <div className="flex-shrink-0 text-right">
-                          <span className="text-sm font-bold text-white">{std.time}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                          <span className="text-sm font-bold text-white">{std.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
                           <span className={`block text-xs font-semibold ${
                             std.met ? 'text-green-400' : isNext ? 'text-orange-400' : 'text-slate-500'
                           }`}>
-                            {isThrowsDiscipline(analysisResults.discipline) ? (std.met ? `${Math.abs(std.gap).toFixed(2)}m over` : `${std.gap.toFixed(2)}m to gain`) : (std.met ? `${Math.abs(std.gap).toFixed(2)}s under` : `${std.gap.toFixed(2)}s to go`)}
+                            {isThrowsDiscipline(analysisResults.discipline) ? (std.met ? `${Math.abs(std.gap).toFixed(2)}m over` : `${Math.abs(std.gap).toFixed(2)}m to gain`) : (std.met ? `${Math.abs(std.gap).toFixed(2)}s under` : `${Math.abs(std.gap).toFixed(2)}s to go`)}
                           </span>
                         </div>
                         {isNext && (
@@ -3225,7 +3225,7 @@ export default function BnchMrkdApp() {
                       <div className="grid grid-cols-2 gap-2 mb-3">
                         <div className="bg-slate-800/80 rounded-lg p-2 text-center">
                           <p className="text-[10px] text-slate-400">PB</p>
-                          <p className="text-base font-bold text-white">{athlete.pb}s</p>
+                          <p className="text-base font-bold text-white">{athlete.pb}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                         </div>
                         <div className="bg-slate-800/80 rounded-lg p-2 text-center">
                           <p className="text-[10px] text-slate-400">Peak Age</p>
@@ -3235,7 +3235,7 @@ export default function BnchMrkdApp() {
                       <div className={`rounded-lg p-2 text-center text-xs font-medium ${
                         Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-300' : 'bg-amber-900/30 text-amber-300'
                       }`}>
-                        Age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                        Age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
                         {' '}({Math.abs(athlete.timeDiff) < 0.05 ? 'identical' :
                           `${Math.abs(athlete.timeDiff).toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} ${isThrowsDiscipline(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
                       </div>
@@ -3266,9 +3266,9 @@ export default function BnchMrkdApp() {
                     return (
                       <div key={idx} className={`rounded-xl p-3 text-center border ${met ? 'bg-green-900/15 border-green-800/40' : 'bg-slate-700/30 border-slate-700/50'}`}>
                         <p className="text-xs text-slate-400 mb-1">{item.label}</p>
-                        <p className={`text-lg font-bold ${item.color}`}>{item.time}s</p>
+                        <p className={`text-lg font-bold ${item.color}`}>{item.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                         <p className={`text-xs font-semibold mt-0.5 ${met ? 'text-green-400' : 'text-slate-500'}`}>
-                          {isThrowsDiscipline(analysisResults.discipline) ? (met ? `${Math.abs(gap).toFixed(2)}m over` : `+${gap.toFixed(2)}m`) : (met ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`)}
+                          {isThrowsDiscipline(analysisResults.discipline) ? (met ? `${Math.abs(gap).toFixed(2)}m over` : `${Math.abs(gap).toFixed(2)}m to gain`) : (met ? `${Math.abs(gap).toFixed(2)}s under` : `${Math.abs(gap).toFixed(2)}s to go`)}
                         </p>
                       </div>
                     );
@@ -3285,7 +3285,7 @@ export default function BnchMrkdApp() {
                   What If? Improvement Scenarios
                 </h3>
                 <p className="text-sm text-slate-400 mb-5">
-                  Projected {isThrowsDiscipline(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {analysisResults.personalBest}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}
+                  Projected {isThrowsDiscipline(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -3306,8 +3306,8 @@ export default function BnchMrkdApp() {
                             {row.rate}
                           </td>
                           {Object.entries(row.times).map(([futAge, time]) => {
-                            const meetsFinalist = time <= analysisResults.thresholds.finalist;
-                            const meetsMQT = analysisResults.championshipData && time <= analysisResults.championshipData.mqt;
+                            const meetsFinalist = isThrowsDiscipline(analysisResults.discipline) ? time >= analysisResults.thresholds.finalist : time <= analysisResults.thresholds.finalist;
+                            const meetsMQT = analysisResults.championshipData && (isThrowsDiscipline(analysisResults.discipline) ? time >= analysisResults.championshipData.mqt : time <= analysisResults.championshipData.mqt);
                             return (
                               <td key={futAge} className={`py-2 px-2 text-center text-xs ${
                                 parseInt(futAge) === analysisResults.age ? 'font-bold text-orange-300' : ''
@@ -3446,7 +3446,7 @@ export default function BnchMrkdApp() {
                     </div>
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Projected Peak</p>
-                      <p className="text-2xl font-bold text-white">{analysisResults.peakProjection.time}s</p>
+                      <p className="text-2xl font-bold text-white">{analysisResults.peakProjection.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                       <p className="text-xs text-slate-400">at age {analysisResults.peakProjection.age}</p>
                     </div>
                   </div>
@@ -3523,7 +3523,7 @@ export default function BnchMrkdApp() {
                       <p className={`text-4xl font-bold ${
                         item.prob >= 60 ? `text-${item.color}-400` : item.prob >= 30 ? 'text-white' : 'text-slate-500'
                       }`}>{item.prob}%</p>
-                      <p className="text-xs text-slate-500 mt-1">Threshold: {item.threshold}s</p>
+                      <p className="text-xs text-slate-500 mt-1">Threshold: {item.threshold}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                     </div>
                   ))}
                 </div>
@@ -3568,10 +3568,10 @@ export default function BnchMrkdApp() {
                           <p className="text-xs text-slate-400">{std.source}</p>
                         </div>
                         <div className="flex-shrink-0 text-right">
-                          <p className="text-lg font-bold text-white">{std.time}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
+                          <p className="text-lg font-bold text-white">{std.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                           {std.met
-                            ? <p className="text-xs font-semibold text-green-600">{Math.abs(std.gap).toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm over' : 's under'}</p>
-                            : <p className={`text-xs font-semibold ${isNext ? 'text-orange-600' : 'text-slate-400'}`}>{std.gap.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm to gain' : 's to go'}</p>
+                            ? <p className="text-xs font-semibold text-green-600">{Math.abs(std.gap).toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm over' : 's under'}</p>
+                            : <p className={`text-xs font-semibold ${isNext ? 'text-orange-600' : 'text-slate-400'}`}>{Math.abs(std.gap).toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm to gain' : 's to go'}</p>
                           }
                         </div>
                         {isNext && (
@@ -3686,9 +3686,9 @@ export default function BnchMrkdApp() {
                       <Area type="monotone" dataKey="ci90Lower" stroke="none" fill="#1e293b" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
                       <Area type="monotone" dataKey="ci50Upper" stroke="none" fill="url(#ci50Gradient)" name="50% CI" connectNulls={false} isAnimationActive={false} />
                       <Area type="monotone" dataKey="ci50Lower" stroke="none" fill="#1e293b" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
-                      <ReferenceLine y={analysisResults.thresholds.finalist} stroke="#dc2626" strokeDasharray="8 4" strokeWidth={2} label={{ value: `Finalist (${analysisResults.thresholds.finalist}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#dc2626', fontSize: 11 }} />
-                      <ReferenceLine y={analysisResults.thresholds.semiFinalist} stroke="#f59e0b" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `Semi (${analysisResults.thresholds.semiFinalist}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#f59e0b', fontSize: 11 }} />
-                      <ReferenceLine y={analysisResults.thresholds.qualifier} stroke="#6b7280" strokeDasharray="4 4" strokeWidth={1} label={{ value: `Qualifier (${analysisResults.thresholds.qualifier}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#6b7280', fontSize: 11 }} />
+                      <ReferenceLine y={analysisResults.thresholds.finalist} stroke="#dc2626" strokeDasharray="8 4" strokeWidth={2} label={{ value: `Finalist (${analysisResults.thresholds.finalist}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#dc2626', fontSize: 11 }} />
+                      <ReferenceLine y={analysisResults.thresholds.semiFinalist} stroke="#f59e0b" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `Semi (${analysisResults.thresholds.semiFinalist}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#f59e0b', fontSize: 11 }} />
+                      <ReferenceLine y={analysisResults.thresholds.qualifier} stroke="#6b7280" strokeDasharray="4 4" strokeWidth={1} label={{ value: `Qualifier (${analysisResults.thresholds.qualifier}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#6b7280', fontSize: 11 }} />
                       <Line type="monotone" dataKey="projectedTime" stroke="#3b82f6" strokeWidth={2.5} strokeDasharray="8 4" dot={{ fill: '#3b82f6', r: 3, strokeWidth: 0 }} name="Projected" connectNulls={false} />
                       <Line type="monotone" dataKey="actualTime" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Actual Performance" connectNulls={false} />
                     </ComposedChart>
@@ -3889,11 +3889,11 @@ export default function BnchMrkdApp() {
                         <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700">
                           <td className="py-2.5 px-3 font-medium text-white">
                             {row.age}
-                            {row.time <= analysisResults.personalBest + 0.005 && (
+                            {(isThrowsDiscipline(analysisResults.discipline) ? row.time >= analysisResults.personalBest - 0.005 : row.time <= analysisResults.personalBest + 0.005) && (
                               <span className="ml-1.5 text-[10px] bg-orange-900/40 text-orange-700 px-1.5 py-0.5 rounded font-bold">PB</span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-bold text-white">{row.time.toFixed(2)}s</td>
+                          <td className="py-2.5 px-3 text-center font-bold text-white">{row.time.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
                           <td className={`py-2.5 px-3 text-center font-bold ${
                             idx === 0 ? 'text-slate-300' : row.rod > 0 ? 'text-green-600' : row.rod < 0 ? 'text-red-500' : 'text-slate-400'
                           }`}>
@@ -4066,7 +4066,7 @@ export default function BnchMrkdApp() {
                         Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-700 border border-green-900/50'
                         : 'bg-amber-900/30 text-amber-700 border border-amber-900/50'
                       }`}>
-                        At age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                        At age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
                         {' '}({athlete.timeDiff < 0.05 ? 'virtually identical' : `${Math.abs(athlete.timeDiff).toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} ${isThrowsDiscipline(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
                       </div>
                     </div>
@@ -4100,11 +4100,11 @@ export default function BnchMrkdApp() {
                           <span className="text-sm font-medium text-slate-300">{item.label}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-white">{item.time}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                          <span className="text-sm font-bold text-white">{item.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                             met ? 'bg-green-900/40 text-green-700' : 'bg-slate-700/60 text-slate-400'
                           }`}>
-                            {isThrowsDiscipline(analysisResults.discipline) ? (met ? `${Math.abs(gap).toFixed(2)}m over` : `+${gap.toFixed(2)}m`) : (met ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`)}
+                            {isThrowsDiscipline(analysisResults.discipline) ? (met ? `${Math.abs(gap).toFixed(2)}m over` : `${Math.abs(gap).toFixed(2)}m to gain`) : (met ? `${Math.abs(gap).toFixed(2)}s under` : `${Math.abs(gap).toFixed(2)}s to go`)}
                           </span>
                         </div>
                       </div>
@@ -4128,7 +4128,7 @@ export default function BnchMrkdApp() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="text-center p-4 bg-slate-700/50 rounded-lg">
                   <p className="text-sm text-slate-400 mb-1">Projected Peak Time</p>
-                  <p className="text-3xl font-bold text-orange-600">{analysisResults.peakProjection.time}s</p>
+                  <p className="text-3xl font-bold text-orange-600">{analysisResults.peakProjection.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                 </div>
                 <div className="text-center p-4 bg-slate-700/50 rounded-lg">
                   <p className="text-sm text-slate-400 mb-1">Projected Peak Age</p>
@@ -4194,11 +4194,11 @@ export default function BnchMrkdApp() {
                                 <span className="ml-2 text-xs text-orange-600 font-semibold">PEAK</span>
                               )}
                             </td>
-                            <td className="py-3 px-4 text-center font-bold text-white">{proj.projectedTime.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
-                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci50Lower.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {proj.ci50Upper.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
-                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci90Lower.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {proj.ci90Upper.toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
+                            <td className="py-3 px-4 text-center font-bold text-white">{proj.projectedTime.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
+                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci50Lower.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {proj.ci50Upper.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
+                            <td className="py-3 px-4 text-center text-slate-400">{proj.ci90Lower.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {proj.ci90Upper.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
                             <td className={`py-3 px-4 text-center font-semibold ${meetsFinalist ? 'text-green-600' : 'text-red-500'}`}>
-                              {isThrowsDiscipline(analysisResults.discipline) ? (meetsFinalist ? `${Math.abs(gap).toFixed(2)}m over` : `+${gap.toFixed(2)}m`) : (meetsFinalist ? `${Math.abs(gap).toFixed(2)}s under` : `+${gap.toFixed(2)}s`)}
+                              {isThrowsDiscipline(analysisResults.discipline) ? (meetsFinalist ? `${Math.abs(gap).toFixed(2)}m over` : `${Math.abs(gap).toFixed(2)}m to gain`) : (meetsFinalist ? `${Math.abs(gap).toFixed(2)}s under` : `${Math.abs(gap).toFixed(2)}s to go`)}
                             </td>
                             <td className="py-3 px-4 text-center">
                               {meetsFinalist ? (
@@ -4247,8 +4247,8 @@ export default function BnchMrkdApp() {
                             {row.rate}
                           </td>
                           {Object.entries(row.times).map(([futAge, time]) => {
-                            const meetsFinalist = time <= analysisResults.thresholds.finalist;
-                            const meetsMQT = analysisResults.championshipData && time <= analysisResults.championshipData.mqt;
+                            const meetsFinalist = isThrowsDiscipline(analysisResults.discipline) ? time >= analysisResults.thresholds.finalist : time <= analysisResults.thresholds.finalist;
+                            const meetsMQT = analysisResults.championshipData && (isThrowsDiscipline(analysisResults.discipline) ? time >= analysisResults.championshipData.mqt : time <= analysisResults.championshipData.mqt);
                             return (
                               <td key={futAge} className={`py-2 px-2 text-center text-xs ${
                                 parseInt(futAge) === analysisResults.age ? 'bg-blue-900/30 font-bold' : ''
