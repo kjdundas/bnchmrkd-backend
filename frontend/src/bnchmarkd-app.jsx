@@ -2115,13 +2115,6 @@ export default function BnchMrkdApp() {
 
               {/* LEFT — Copy */}
               <div>
-                <div className="stagger-2 mb-4">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mono-font tracking-wide" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c'}}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" style={{animation: 'pulseGlow 2s ease-in-out infinite'}}></span>
-                    SYDNEY 2000 — PARIS 2024
-                  </span>
-                </div>
-
                 <h1 className="stagger-3 text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-6">
                   Where does your{' '}
                   <span className="hidden sm:inline"><br /></span>
