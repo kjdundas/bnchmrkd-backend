@@ -2116,12 +2116,11 @@ export default function BnchMrkdApp() {
               {/* LEFT — Copy */}
               <div>
                 <h1 className="stagger-3 text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-6">
-                  Where does your{' '}
+                  Put your performance{' '}
                   <span className="hidden sm:inline"><br /></span>
-                  athlete sit against{' '}
-                  <span className="hidden sm:inline"><br /></span>
+                  in{' '}
                   <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                    Olympic careers?
+                    Olympic context.
                   </span>
                 </h1>
 
