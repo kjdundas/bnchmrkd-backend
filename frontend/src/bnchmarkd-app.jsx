@@ -3389,40 +3389,47 @@ export default function BnchMrkdApp() {
 
           <main className="relative z-10 flex-1 max-w-5xl mx-auto w-full px-6 sm:px-10 py-10">
 
-            {/* ── SNAPSHOT HEADER ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8 stagger-2" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6">
+            {/* ── HERO HEADER — PB as anchor (Quick Results) ── */}
+            <div className="bento-card rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6 stagger-2" style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(249,115,22,0.1)'}}>
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-8">
                 <div>
-                  <p className="text-xs sm:text-sm font-semibold mb-1 uppercase tracking-wider mono-font" style={{color: '#fb923c'}}>Quick Snapshot</p>
-                  <h2 className="text-xl sm:text-3xl font-bold text-white mb-1">
-                    {analysisResults.discipline} &bull; {analysisResults.gender} &bull; Age {analysisResults.age}
-                    {analysisResults.implementWeight && (
-                      <span className="ml-2 text-sm font-medium text-orange-300 bg-orange-500/20 px-2 py-0.5 rounded-full">
-                        {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}
-                        {analysisResults.isSeniorWeight ? '' : ' (Youth)'}
-                      </span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font" style={{color: '#fb923c'}}>Quick Snapshot</span>
+                    <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font text-slate-500">&middot; {analysisResults.discipline} &middot; {analysisResults.gender} &middot; Age {analysisResults.age}</span>
+                    {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
+                      <span className="text-[10px] font-medium text-purple-400 bg-purple-500/15 px-1.5 py-0.5 rounded mono-font">Youth</span>
                     )}
-                  </h2>
-                  <p className="text-slate-400">{analysisResults.careerPhase}</p>
-                </div>
-                <div className="flex items-center gap-4 sm:gap-6">
-                  {/* PB */}
-                  <div className="text-center">
-                    <p className="text-xs text-slate-400 mb-1">Personal Best</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-orange-400">{analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
                   </div>
-                  {/* Readiness gauge */}
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{analysisResults.personalBest}</span>
+                    <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
+                  {analysisResults.implementWeight && (
+                    <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 mono-font">
+                      {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`} implement
+                    </p>
+                  )}
+                </div>
+                {/* Readiness Ring */}
+                <div className="flex items-center gap-4 sm:gap-5">
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
                     <svg className="w-full h-full" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="42" fill="none" stroke="#334155" strokeWidth="6" />
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                       <circle cx="50" cy="50" r="42" fill="none"
-                        stroke={analysisResults.readinessScore >= 80 ? '#10b981' : analysisResults.readinessScore >= 60 ? '#3b82f6' : analysisResults.readinessScore >= 40 ? '#f59e0b' : '#6b7280'}
+                        stroke={getReadinessColor(analysisResults.readinessScore)}
                         strokeWidth="6"
                         strokeDasharray={`${(analysisResults.readinessScore / 100) * 263.9} 263.9`}
                         strokeLinecap="round" transform="rotate(-90 50 50)" />
-                      <text x="50" y="46" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#f1f5f9">{analysisResults.readinessScore}</text>
-                      <text x="50" y="62" textAnchor="middle" fontSize="9" fill="#94a3b8">Readiness</text>
+                      <text x="50" y="47" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#f1f5f9" style={{fontFamily: "'DM Mono', monospace"}}>{analysisResults.readinessScore}</text>
+                      <text x="50" y="63" textAnchor="middle" fontSize="9" fill="#64748b" style={{fontFamily: "'Instrument Sans', sans-serif"}}>Readiness</text>
                     </svg>
+                  </div>
+                  <div className="hidden sm:flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{background: getReadinessColor(analysisResults.readinessScore)}}></div>
+                      <span className="text-xs text-slate-400 landing-font">{analysisResults.readinessScore >= 80 ? 'Competition Ready' : analysisResults.readinessScore >= 60 ? 'On Track' : analysisResults.readinessScore >= 40 ? 'Developing' : 'Building'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3430,155 +3437,111 @@ export default function BnchMrkdApp() {
 
             {/* ── YOUTH WEIGHT NOTICE ── */}
             {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
-              <div className="bg-purple-900/30 border border-purple-700/50 rounded-xl p-4 mb-6 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-purple-300">Youth Implement Weight Detected</p>
-                  <p className="text-xs text-purple-400/80 mt-1">
-                    You're using a {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`} implement.
-                    Benchmark curves are based on senior-weight Olympic data ({(() => {
-                      const g = analysisResults.gender === 'Male' ? 'M' : 'F';
-                      const sw = { 'Shot Put_M': '7.26kg', 'Shot Put_F': '4kg', 'Discus Throw_M': '2kg', 'Discus Throw_F': '1kg', 'Hammer Throw_M': '7.26kg', 'Hammer Throw_F': '4kg', 'Javelin Throw_M': '800g', 'Javelin Throw_F': '600g' };
-                      return sw[`${analysisResults.discipline}_${g}`] || 'senior weight';
-                    })()}).
-                    Direct distance comparisons should account for this difference. Weight transition ages are shown as purple markers on trajectory charts.
-                  </p>
-                </div>
+              <div className="rounded-xl p-3 sm:p-4 mb-4 flex items-start gap-3" style={{background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)'}}>
+                <AlertTriangle className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-purple-400/80 leading-relaxed landing-font">
+                  Youth implement ({analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}). Benchmarks use senior-weight Olympic data. Comparisons are approximate.
+                </p>
               </div>
             )}
 
-            {/* ── PERCENTILE + COMPETITIVE OUTLOOK (side by side) ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Percentile */}
-              <div className="bento-card rounded-xl p-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 landing-font">
-                  <Target className="w-5 h-5" style={{color: '#f97316'}} />
-                  Percentile Ranking
-                </h3>
-                <div className="mb-4">
-                  <div className="w-full bg-slate-700 rounded-full h-5 overflow-hidden mb-2">
-                    <div className={`h-full rounded-full transition-all ${
-                      analysisResults.percentileAtCurrentAge >= 90 ? 'bg-green-500' : analysisResults.percentileAtCurrentAge >= 75 ? 'bg-blue-500' : analysisResults.percentileAtCurrentAge >= 50 ? 'bg-amber-500' : 'bg-slate-500'
-                    }`} style={{ width: `${analysisResults.percentileAtCurrentAge}%` }} />
-                  </div>
-                  <p className="text-center text-sm text-white font-semibold">
-                    Top {100 - analysisResults.percentileAtCurrentAge}% among Olympic-level athletes at age {analysisResults.age}
-                  </p>
+            {/* ── SNAPSHOT GRID — Ultrahuman-style status cards ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-6 sm:mb-8">
+              {[
+                {
+                  label: 'Percentile',
+                  value: `P${analysisResults.percentileAtCurrentAge}`,
+                  status: analysisResults.percentileAtCurrentAge >= 90 ? 'Elite' : analysisResults.percentileAtCurrentAge >= 75 ? 'National' : analysisResults.percentileAtCurrentAge >= 50 ? 'Competitive' : 'Developing',
+                  statusColor: analysisResults.percentileAtCurrentAge >= 90 ? '#10b981' : analysisResults.percentileAtCurrentAge >= 75 ? '#3b82f6' : analysisResults.percentileAtCurrentAge >= 50 ? '#f59e0b' : '#64748b',
+                },
+                {
+                  label: 'Finalist',
+                  value: `${analysisResults.finalistProbability}%`,
+                  status: analysisResults.finalistProbability >= 60 ? 'Likely' : analysisResults.finalistProbability >= 30 ? 'Possible' : 'Developing',
+                  statusColor: analysisResults.finalistProbability >= 60 ? '#10b981' : analysisResults.finalistProbability >= 30 ? '#f59e0b' : '#64748b',
+                },
+                {
+                  label: 'Semi-Final',
+                  value: `${analysisResults.semiFinalistProbability}%`,
+                  status: analysisResults.semiFinalistProbability >= 60 ? 'Likely' : analysisResults.semiFinalistProbability >= 30 ? 'Possible' : 'Developing',
+                  statusColor: analysisResults.semiFinalistProbability >= 60 ? '#10b981' : analysisResults.semiFinalistProbability >= 30 ? '#f59e0b' : '#64748b',
+                },
+                {
+                  label: 'Qualifier',
+                  value: `${analysisResults.qualifierProbability}%`,
+                  status: analysisResults.qualifierProbability >= 60 ? 'Likely' : analysisResults.qualifierProbability >= 30 ? 'Possible' : 'Developing',
+                  statusColor: analysisResults.qualifierProbability >= 60 ? '#10b981' : analysisResults.qualifierProbability >= 30 ? '#f59e0b' : '#64748b',
+                },
+                {
+                  label: 'Standards Met',
+                  value: analysisResults.standards ? `${analysisResults.standards.filter(s => s.met).length}/${analysisResults.standards.length}` : '—',
+                  status: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? 'All Clear' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? 'In Progress' : 'None Yet',
+                  statusColor: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? '#10b981' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? '#f59e0b' : '#64748b',
+                },
+              ].map((card, i) => (
+                <div key={i} className="bento-card rounded-xl p-3 sm:p-4" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font mb-2">{card.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1.5">{card.value}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold" style={{color: card.statusColor}}>{card.status}</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                  {[
-                    { label: 'Elite', range: 'Top 10%', active: analysisResults.percentileAtCurrentAge >= 90 },
-                    { label: 'National', range: 'Top 25%', active: analysisResults.percentileAtCurrentAge >= 75 && analysisResults.percentileAtCurrentAge < 90 },
-                    { label: 'Competitive', range: 'Top 50%', active: analysisResults.percentileAtCurrentAge >= 50 && analysisResults.percentileAtCurrentAge < 75 },
-                    { label: 'Developing', range: 'Below 50%', active: analysisResults.percentileAtCurrentAge < 50 },
-                  ].map((tier, i) => (
-                    <div key={i} className={`p-2 rounded-lg border ${tier.active ? 'bg-orange-500/20 border-orange-500/50 text-white' : 'bg-slate-700/30 border-slate-700/50 text-slate-400'}`}>
-                      <p className="font-semibold">{tier.label}</p>
-                      <p className="opacity-70">{tier.range}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Competitive Outlook */}
-              <div className="bento-card rounded-xl p-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 landing-font">
-                  <Award className="w-5 h-5" style={{color: '#f97316'}} />
-                  Competitive Outlook
-                </h3>
-                <div className="space-y-4">
-                  {[
-                    { label: 'Olympic Final', value: analysisResults.finalistProbability, color: '#ef4444' },
-                    { label: 'Olympic Semi-Final', value: analysisResults.semiFinalistProbability, color: '#f59e0b' },
-                    { label: 'Olympic Qualifier', value: analysisResults.qualifierProbability, color: '#3b82f6' },
-                  ].map((item, idx) => (
-                    <div key={idx}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm text-slate-300">{item.label}</span>
-                        <span className="text-sm font-bold text-white">{Math.min(100, item.value)}%</span>
-                      </div>
-                      <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, item.value)}%`, backgroundColor: item.color }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* ── PERFORMANCE STANDARDS CHECKLIST ── */}
-            {analysisResults.standards && analysisResults.standards.length > 0 && (
-              <div className="bento-card rounded-xl p-6 mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 landing-font">
-                  <CheckCircle2 className="w-5 h-5" style={{color: '#f97316'}} />
-                  Performance Standards
-                </h3>
-                <p className="text-sm text-slate-400 mb-5">
-                  Where does {analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} sit against key competition benchmarks?
-                </p>
-                <div className="space-y-2.5">
-                  {analysisResults.standards.map((std, idx) => {
-                    // Next target = the easiest unmet standard (last unmet one in the list, since ordered hard→easy)
-                    const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
-                    const isNext = idx === lastUnmetIdx;
-                    return (
-                      <div key={idx} className={`relative flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
-                        std.met
-                          ? 'bg-green-900/20 border-green-800/50'
-                          : isNext
-                          ? 'bg-orange-900/20 border-orange-700/50'
-                          : 'bg-slate-700/30 border-slate-700/50'
-                      }`}>
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                          std.met ? 'bg-green-500' : isNext ? 'bg-orange-500' : 'bg-slate-600'
-                        }`}>
-                          {std.met ? (
-                            <CheckCircle2 className="w-4 h-4 text-white" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                              std.tier === 'E1' ? 'bg-yellow-900/40 text-yellow-300'
-                              : std.tier === 'E2' ? 'bg-blue-900/40 text-blue-300'
-                              : std.tier === 'E3' ? 'bg-purple-900/40 text-purple-300'
-                              : 'bg-slate-700/60 text-slate-400'
+            {/* ── STANDARDS TRACKER — compact milestone view ── */}
+            {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
+              const metCount = analysisResults.standards.filter(s => s.met).length;
+              const total = analysisResults.standards.length;
+              const isThrows = isThrowsDiscipline(analysisResults.discipline);
+              const unit = isThrows ? 'm' : 's';
+              const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+              return (
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" style={{color: '#f97316'}} />
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Standards</h3>
+                    </div>
+                    <span className="text-xs font-semibold mono-font" style={{color: metCount === total ? '#10b981' : '#f59e0b'}}>{metCount}/{total} met</span>
+                  </div>
+                  <div className="h-1.5 rounded-full mb-4" style={{background: 'rgba(255,255,255,0.06)'}}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{width: `${(metCount / total) * 100}%`, background: metCount === total ? '#10b981' : 'linear-gradient(90deg, #10b981 0%, #f59e0b 100%)'}}></div>
+                  </div>
+                  <div className="space-y-1.5">
+                    {analysisResults.standards.map((std, idx) => {
+                      const isNext = idx === lastUnmetIdx;
+                      return (
+                        <div key={idx} className="flex items-center gap-2 sm:gap-3 py-2 px-3 rounded-lg" style={{background: isNext ? 'rgba(249,115,22,0.06)' : std.met ? 'rgba(16,185,129,0.04)' : 'transparent', border: isNext ? '1px solid rgba(249,115,22,0.15)' : '1px solid transparent'}}>
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${std.met ? 'bg-green-500/20' : isNext ? 'bg-orange-500/20' : 'bg-slate-700/50'}`}>
+                            {std.met ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Circle className="w-3 h-3 text-slate-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mono-font ${
+                              std.tier === 'E1' ? 'bg-yellow-900/30 text-yellow-400' : std.tier === 'E2' ? 'bg-blue-900/30 text-blue-400' : std.tier === 'E3' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700/40 text-slate-500'
                             }`}>{std.tier}</span>
-                            <span className={`text-sm font-semibold ${std.met ? 'text-green-300' : 'text-white'}`}>{std.label}</span>
+                            <span className={`text-xs sm:text-sm truncate landing-font ${std.met ? 'text-slate-300' : 'text-slate-400'}`}>{std.label}</span>
                           </div>
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                          <span className="text-sm font-bold text-white">{std.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
-                          <span className={`block text-xs font-semibold ${
-                            std.met ? 'text-green-400' : isNext ? 'text-orange-400' : 'text-slate-500'
-                          }`}>
-                            {isThrowsDiscipline(analysisResults.discipline) ? (std.met ? `${Math.abs(std.gap).toFixed(2)}m over` : `${Math.abs(std.gap).toFixed(2)}m to gain`) : (std.met ? `${Math.abs(std.gap).toFixed(2)}s under` : `${Math.abs(std.gap).toFixed(2)}s to go`)}
-                          </span>
-                        </div>
-                        {isNext && (
-                          <div className="absolute -right-1 -top-1 px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-full shadow">
-                            NEXT
+                          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                            <span className="text-xs sm:text-sm font-semibold text-white mono-font">{std.time}{unit}</span>
+                            <span className={`text-[10px] sm:text-xs font-semibold mono-font ${std.met ? 'text-green-400' : isNext ? 'text-orange-400' : 'text-slate-500'}`}>
+                              {std.met ? `${isThrows ? '+' : '-'}${Math.abs(std.gap).toFixed(2)}` : `${Math.abs(std.gap).toFixed(2)} to go`}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          {isNext && <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider hidden sm:block">Next</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* ── SIMILAR ATHLETES ── */}
             {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
-              <div className="bento-card rounded-xl p-6 mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 landing-font">
-                  <Users className="w-5 h-5" style={{color: '#f97316'}} />
-                  Similar Athletes
-                </h3>
-                <p className="text-sm text-slate-400 mb-5">
-                  Olympic athletes who recorded a similar time at a comparable age
-                </p>
+              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-4 h-4" style={{color: '#f97316'}} />
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Similar Athletes</h3>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {analysisResults.similarAthletes.map((athlete, idx) => (
                     <div key={idx} className="relative bg-slate-700/40 rounded-xl border border-slate-700/50 p-3 sm:p-4">
@@ -3623,11 +3586,11 @@ export default function BnchMrkdApp() {
 
             {/* ── CHAMPIONSHIP DATA ── */}
             {analysisResults.championshipData && (
-              <div className="bento-card rounded-xl p-6 mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 landing-font">
-                  <Award className="w-5 h-5" style={{color: '#f97316'}} />
-                  Championship Benchmarks
-                </h3>
+              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Award className="w-4 h-4" style={{color: '#f97316'}} />
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Championship Benchmarks</h3>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
                     { label: 'Olympic Gold', time: analysisResults.championshipData.gold, color: 'text-yellow-400', ring: 'ring-yellow-500/30' },
@@ -3655,11 +3618,11 @@ export default function BnchMrkdApp() {
 
             {/* ── IMPROVEMENT SCENARIOS ── */}
             {analysisResults.improvementScenarios && (
-              <div className="bento-card rounded-xl p-6 mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 landing-font">
-                  <TrendingUp className="w-5 h-5" style={{color: '#f97316'}} />
-                  What If? Improvement Scenarios
-                </h3>
+              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4" style={{color: '#f97316'}} />
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Improvement Scenarios</h3>
+                </div>
                 <p className="text-sm text-slate-400 mb-5">
                   Projected {isThrowsDiscipline(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}
                 </p>
@@ -3796,67 +3759,97 @@ export default function BnchMrkdApp() {
               </div>
             )}
 
-            {/* ── SUMMARY HEADER ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
-                <div className="md:col-span-2">
-                  <h2 className="text-xl sm:text-4xl font-bold text-white mb-2">{analysisResults.name}</h2>
-                  <p className="text-sm sm:text-base text-slate-400 mb-4">
-                    {analysisResults.discipline} &bull; {analysisResults.gender} &bull; Age {analysisResults.age} &bull; {analysisResults.careerPhase}
-                    {analysisResults.implementWeight && (
-                      <span className="ml-2 text-xs font-medium text-orange-300 bg-orange-500/20 px-2 py-0.5 rounded-full inline-block">
-                        {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}
-                        {analysisResults.isSeniorWeight ? '' : ' (Youth)'}
-                      </span>
+            {/* ── HERO HEADER — PB as anchor ── */}
+            <div className="bento-card rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(249,115,22,0.1)'}}>
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-8">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font text-slate-500">{analysisResults.discipline} &middot; {analysisResults.gender} &middot; Age {analysisResults.age}</span>
+                    {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
+                      <span className="text-[10px] font-medium text-purple-400 bg-purple-500/15 px-1.5 py-0.5 rounded mono-font">Youth</span>
                     )}
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                    <div>
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">Personal Best</p>
-                      <p className="text-lg sm:text-2xl font-bold text-orange-600">{analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Trajectory</p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white ${
-                        analysisResults.trajectoryType === 'Late Developer' ? 'bg-blue-500'
-                        : analysisResults.trajectoryType === 'Early Peaker' ? 'bg-amber-500'
-                        : 'bg-purple-500'
-                      }`}>{analysisResults.trajectoryType}</span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Percentile</p>
-                      <p className="text-2xl font-bold text-white">P{analysisResults.percentileAtCurrentAge}</p>
-                      <p className="text-xs text-slate-400">{getPercentileLabel(analysisResults.percentileAtCurrentAge)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Projected Peak</p>
-                      <p className="text-2xl font-bold text-white">{analysisResults.peakProjection.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-                      <p className="text-xs text-slate-400">at age {analysisResults.peakProjection.age}</p>
-                    </div>
                   </div>
+                  <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">{analysisResults.name}</h2>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{analysisResults.personalBest}</span>
+                    <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
                 </div>
-
-                {/* Readiness Gauge */}
-                <div className="flex flex-col items-center justify-center">
-                  <div className="relative w-28 h-28 sm:w-36 sm:h-36 mb-3">
+                {/* Readiness Ring — compact */}
+                <div className="flex items-center gap-4 sm:gap-5">
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
                     <svg className="w-full h-full" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="#334155" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="45" fill="none"
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                      <circle cx="50" cy="50" r="42" fill="none"
                         stroke={getReadinessColor(analysisResults.readinessScore)}
-                        strokeWidth="8"
-                        strokeDasharray={`${(analysisResults.readinessScore / 100) * 282.7} 282.7`}
+                        strokeWidth="6"
+                        strokeDasharray={`${(analysisResults.readinessScore / 100) * 263.9} 263.9`}
                         strokeLinecap="round" transform="rotate(-90 50 50)" />
-                      <text x="50" y="46" textAnchor="middle" className="text-2xl font-bold" fill="#f1f5f9">
-                        {analysisResults.readinessScore}
-                      </text>
-                      <text x="50" y="60" textAnchor="middle" className="text-xs" fill="#94a3b8">
-                        Readiness
-                      </text>
+                      <text x="50" y="47" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#f1f5f9" style={{fontFamily: "'DM Mono', monospace"}}>{analysisResults.readinessScore}</text>
+                      <text x="50" y="63" textAnchor="middle" fontSize="9" fill="#64748b" style={{fontFamily: "'Instrument Sans', sans-serif"}}>Readiness</text>
                     </svg>
                   </div>
-                  <p className="text-xs text-slate-400 text-center">Competition Readiness Score</p>
+                  <div className="hidden sm:flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{background: getReadinessColor(analysisResults.readinessScore)}}></div>
+                      <span className="text-xs text-slate-400 landing-font">{analysisResults.readinessScore >= 80 ? 'Competition Ready' : analysisResults.readinessScore >= 60 ? 'On Track' : analysisResults.readinessScore >= 40 ? 'Developing' : 'Building'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="text-xs text-slate-400 landing-font">Peak: Age {analysisResults.peakProjection.age}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            {/* ── SNAPSHOT GRID — Ultrahuman-style status cards ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-6 sm:mb-8">
+              {[
+                {
+                  label: 'Percentile',
+                  value: `P${analysisResults.percentileAtCurrentAge}`,
+                  status: analysisResults.percentileAtCurrentAge >= 90 ? 'Elite' : analysisResults.percentileAtCurrentAge >= 75 ? 'National' : analysisResults.percentileAtCurrentAge >= 50 ? 'Competitive' : 'Developing',
+                  statusColor: analysisResults.percentileAtCurrentAge >= 90 ? '#10b981' : analysisResults.percentileAtCurrentAge >= 75 ? '#3b82f6' : analysisResults.percentileAtCurrentAge >= 50 ? '#f59e0b' : '#64748b',
+                },
+                {
+                  label: 'Trajectory',
+                  value: analysisResults.trajectoryType === 'Late Developer' ? 'Late Dev' : analysisResults.trajectoryType === 'Early Peaker' ? 'Early Peak' : 'Plateau',
+                  status: analysisResults.trajectoryType === 'Late Developer' ? '↑ Upward' : analysisResults.trajectoryType === 'Early Peaker' ? '→ Maintain' : '— Steady',
+                  statusColor: analysisResults.trajectoryType === 'Late Developer' ? '#3b82f6' : analysisResults.trajectoryType === 'Early Peaker' ? '#f59e0b' : '#a855f7',
+                },
+                {
+                  label: 'Projected Peak',
+                  value: `${analysisResults.peakProjection.time}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}`,
+                  status: `Age ${analysisResults.peakProjection.age}`,
+                  statusColor: analysisResults.peakProjection.yearsToPeak > 0 ? '#10b981' : '#f59e0b',
+                },
+                {
+                  label: 'Finalist',
+                  value: `${analysisResults.finalistProbability}%`,
+                  status: analysisResults.finalistProbability >= 60 ? 'Likely' : analysisResults.finalistProbability >= 30 ? 'Possible' : 'Developing',
+                  statusColor: analysisResults.finalistProbability >= 60 ? '#10b981' : analysisResults.finalistProbability >= 30 ? '#f59e0b' : '#64748b',
+                },
+                {
+                  label: 'Improvement',
+                  value: `${analysisResults.improvementRate}%`,
+                  status: analysisResults.improvementRate >= analysisResults.finalistNorm ? 'Elite Rate' : analysisResults.improvementRate >= analysisResults.nonFinalistNorm ? 'On Track' : 'Below Avg',
+                  statusColor: analysisResults.improvementRate >= analysisResults.finalistNorm ? '#10b981' : analysisResults.improvementRate >= analysisResults.nonFinalistNorm ? '#f59e0b' : '#ef4444',
+                },
+                {
+                  label: 'Standards Met',
+                  value: analysisResults.standards ? `${analysisResults.standards.filter(s => s.met).length}/${analysisResults.standards.length}` : '—',
+                  status: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? 'All Clear' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? 'In Progress' : 'None Yet',
+                  statusColor: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? '#10b981' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? '#f59e0b' : '#64748b',
+                },
+              ].map((card, i) => (
+                <div key={i} className="bento-card rounded-xl p-3 sm:p-4" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font mb-2">{card.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1.5">{card.value}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold" style={{color: card.statusColor}}>{card.status}</p>
+                </div>
+              ))}
             </div>
 
             {/* ── DASHBOARD TAB NAVIGATION ── */}
@@ -3886,122 +3879,157 @@ export default function BnchMrkdApp() {
             {/* ══════════ OVERVIEW TAB ══════════ */}
             {dashTab === 'overview' && (<>
 
-            {/* ── COMPETITIVE OUTLOOK ── */}
-            {analysisResults.benchmarks && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Award className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Competitive Outlook
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  {[
-                    { label: 'Finalist', prob: analysisResults.finalistProbability, color: 'green', threshold: analysisResults.thresholds.finalist },
-                    { label: 'Semi-Finalist', prob: analysisResults.semiFinalistProbability, color: 'amber', threshold: analysisResults.thresholds.semiFinalist },
-                    { label: 'Qualifier', prob: analysisResults.qualifierProbability, color: 'blue', threshold: analysisResults.thresholds.qualifier },
-                  ].map((item, idx) => (
-                    <div key={idx} className={`text-center p-5 rounded-xl border-2 ${
-                      item.prob >= 60 ? `bg-${item.color}-900/30 border-${item.color}-700`
-                      : item.prob >= 30 ? 'bg-slate-700/50 border-slate-600'
-                      : 'bg-slate-800/50 border-slate-700/30'
-                    }`}>
-                      <p className="text-sm text-slate-400 mb-2">{item.label} Probability</p>
-                      <p className={`text-4xl font-bold ${
-                        item.prob >= 60 ? `text-${item.color}-400` : item.prob >= 30 ? 'text-white' : 'text-slate-500'
-                      }`}>{item.prob}%</p>
-                      <p className="text-xs text-slate-500 mt-1">Threshold: {item.threshold}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── PERFORMANCE STANDARDS (in Overview) ── */}
-            {analysisResults.standards && analysisResults.standards.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Performance Standards
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Competition qualification standards and benchmark targets for {analysisResults.discipline} ({analysisResults.gender})
-                </p>
-                <div className="space-y-3">
-                  {analysisResults.standards.map((std, idx) => {
-                    const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
-                    const isNext = idx === lastUnmetIdx;
-                    return (
-                      <div key={idx} className={`relative flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                        std.met ? 'bg-green-900/30 border-green-800'
-                        : isNext ? 'bg-orange-900/30 border-orange-300 shadow-sm'
-                        : 'bg-slate-700/50 border-slate-700'
-                      }`}>
-                        <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
-                          std.met ? 'bg-green-500' : isNext ? 'bg-orange-400' : 'bg-slate-600'
-                        }`}>
-                          {std.met ? <CheckCircle2 className="w-5 h-5 text-white" /> : <Circle className="w-5 h-5 text-white" />}
+            {/* ── COMPETITION PATH — visual threshold tracker ── */}
+            {analysisResults.benchmarks && (() => {
+              const thresholds = [
+                { label: 'Qualifier', value: analysisResults.thresholds.qualifier, prob: analysisResults.qualifierProbability },
+                { label: 'Semi-Finalist', value: analysisResults.thresholds.semiFinalist, prob: analysisResults.semiFinalistProbability },
+                { label: 'Finalist', value: analysisResults.thresholds.finalist, prob: analysisResults.finalistProbability },
+              ];
+              const isThrows = isThrowsDiscipline(analysisResults.discipline);
+              const unit = isThrows ? 'm' : 's';
+              const pb = parseFloat(analysisResults.personalBest);
+              // For the visual track: compute position of PB relative to thresholds
+              const allValues = [...thresholds.map(t => t.value), pb];
+              const minVal = Math.min(...allValues);
+              const maxVal = Math.max(...allValues);
+              const range = maxVal - minVal || 1;
+              const getPos = (v) => {
+                if (isThrows) return ((v - minVal) / range) * 100;
+                return ((maxVal - v) / range) * 100; // inverted for time
+              };
+              return (
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <div className="flex items-center gap-2 mb-5">
+                    <Award className="w-4 h-4" style={{color: '#f97316'}} />
+                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Competition Path</h3>
+                  </div>
+                  {/* Visual threshold track */}
+                  <div className="relative h-3 rounded-full mb-8 sm:mb-10" style={{background: 'rgba(255,255,255,0.06)'}}>
+                    {/* Filled portion up to PB */}
+                    <div className="absolute top-0 left-0 h-full rounded-full" style={{width: `${Math.min(100, Math.max(2, getPos(pb)))}%`, background: 'linear-gradient(90deg, #f97316 0%, #fb923c 100%)', transition: 'width 0.6s ease'}}></div>
+                    {/* Threshold markers */}
+                    {thresholds.map((t, i) => (
+                      <div key={i} className="absolute top-0 flex flex-col items-center" style={{left: `${getPos(t.value)}%`, transform: 'translateX(-50%)'}}>
+                        <div className="w-0.5 h-3 rounded-full" style={{background: t.prob >= 60 ? '#10b981' : t.prob >= 30 ? '#f59e0b' : 'rgba(255,255,255,0.2)'}}></div>
+                        <div className="mt-2 text-center">
+                          <p className="text-[10px] sm:text-xs font-semibold mono-font" style={{color: t.prob >= 60 ? '#10b981' : t.prob >= 30 ? '#f59e0b' : '#64748b'}}>{t.value}{unit}</p>
+                          <p className="text-[9px] sm:text-[10px] text-slate-500 landing-font">{t.label}</p>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                              std.tier === 'E1' ? 'bg-yellow-900/40 text-yellow-300'
-                              : std.tier === 'E2' ? 'bg-blue-900/40 text-blue-300'
-                              : std.tier === 'E3' ? 'bg-purple-900/40 text-purple-300'
-                              : 'bg-slate-700/60 text-slate-400'
-                            }`}>{std.tier}</span>
-                            <h4 className={`font-semibold truncate ${std.met ? 'text-green-300' : 'text-white'}`}>{std.label}</h4>
-                          </div>
-                          <p className="text-xs text-slate-400">{std.source}</p>
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                          <p className="text-lg font-bold text-white">{std.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-                          {std.met
-                            ? <p className="text-xs font-semibold text-green-600">{Math.abs(std.gap).toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm over' : 's under'}</p>
-                            : <p className={`text-xs font-semibold ${isNext ? 'text-orange-600' : 'text-slate-400'}`}>{Math.abs(std.gap).toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm to gain' : 's to go'}</p>
-                          }
-                        </div>
-                        {isNext && (
-                          <div className="absolute -right-1 -top-1 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full shadow">NEXT TARGET</div>
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-6 p-4 rounded-lg" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)'}}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-300">Standards Met: {analysisResults.standards.filter(s => s.met).length} / {analysisResults.standards.length}</span>
-                    <div className="flex gap-1">
-                      {analysisResults.standards.map((s, i) => (
-                        <div key={i} className={`w-3 h-3 rounded-full ${s.met ? 'bg-green-500' : 'bg-slate-600'}`} />
-                      ))}
+                    ))}
+                    {/* PB marker */}
+                    <div className="absolute flex flex-col items-center" style={{left: `${getPos(pb)}%`, top: '-6px', transform: 'translateX(-50%)'}}>
+                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg" style={{background: '#f97316'}}></div>
+                      <p className="text-[10px] font-bold text-orange-400 mono-font mt-1.5">PB</p>
                     </div>
                   </div>
+                  {/* Probability cards — compact row */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {thresholds.map((t, i) => (
+                      <div key={i} className="text-center p-3 sm:p-4 rounded-xl" style={{background: t.prob >= 60 ? 'rgba(16,185,129,0.08)' : t.prob >= 30 ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${t.prob >= 60 ? 'rgba(16,185,129,0.2)' : t.prob >= 30 ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.06)'}`}}>
+                        <p className="text-2xl sm:text-3xl font-bold mono-font" style={{color: t.prob >= 60 ? '#10b981' : t.prob >= 30 ? '#f59e0b' : '#64748b'}}>{t.prob}%</p>
+                        <p className="text-[10px] sm:text-xs text-slate-500 mt-1 landing-font">{t.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── STANDARDS TRACKER — compact milestone view ── */}
+            {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
+              const metCount = analysisResults.standards.filter(s => s.met).length;
+              const total = analysisResults.standards.length;
+              const isThrows = isThrowsDiscipline(analysisResults.discipline);
+              const unit = isThrows ? 'm' : 's';
+              const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+              return (
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" style={{color: '#f97316'}} />
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Standards</h3>
+                    </div>
+                    <span className="text-xs font-semibold mono-font" style={{color: metCount === total ? '#10b981' : '#f59e0b'}}>{metCount}/{total} met</span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="h-1.5 rounded-full mb-4" style={{background: 'rgba(255,255,255,0.06)'}}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{width: `${(metCount / total) * 100}%`, background: metCount === total ? '#10b981' : 'linear-gradient(90deg, #10b981 0%, #f59e0b 100%)'}}></div>
+                  </div>
+                  {/* Compact standard rows */}
+                  <div className="space-y-1.5">
+                    {analysisResults.standards.map((std, idx) => {
+                      const isNext = idx === lastUnmetIdx;
+                      return (
+                        <div key={idx} className="flex items-center gap-2 sm:gap-3 py-2 px-3 rounded-lg" style={{background: isNext ? 'rgba(249,115,22,0.06)' : std.met ? 'rgba(16,185,129,0.04)' : 'transparent', border: isNext ? '1px solid rgba(249,115,22,0.15)' : '1px solid transparent'}}>
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${std.met ? 'bg-green-500/20' : isNext ? 'bg-orange-500/20' : 'bg-slate-700/50'}`}>
+                            {std.met ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Circle className="w-3 h-3 text-slate-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mono-font ${
+                              std.tier === 'E1' ? 'bg-yellow-900/30 text-yellow-400' : std.tier === 'E2' ? 'bg-blue-900/30 text-blue-400' : std.tier === 'E3' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700/40 text-slate-500'
+                            }`}>{std.tier}</span>
+                            <span className={`text-xs sm:text-sm truncate landing-font ${std.met ? 'text-slate-300' : 'text-slate-400'}`}>{std.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                            <span className="text-xs sm:text-sm font-semibold text-white mono-font">{std.time}{unit}</span>
+                            <span className={`text-[10px] sm:text-xs font-semibold mono-font ${std.met ? 'text-green-400' : isNext ? 'text-orange-400' : 'text-slate-500'}`}>
+                              {std.met ? `${isThrows ? '+' : '-'}${Math.abs(std.gap).toFixed(2)}` : `${Math.abs(std.gap).toFixed(2)} ${isThrows ? 'to go' : 'to go'}`}
+                            </span>
+                          </div>
+                          {isNext && <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider hidden sm:block">Next</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── PEAK PROJECTION — where you're heading ── */}
+            <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-4 h-4" style={{color: '#f97316'}} />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Peak Projection</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Projected Peak</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mono-font">{analysisResults.peakProjection.time}<span className="text-sm text-slate-500">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span></p>
+                </div>
+                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Peak Age</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mono-font">{analysisResults.peakProjection.age}</p>
+                </div>
+                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Years to Peak</p>
+                  <p className="text-xl sm:text-2xl font-bold mono-font" style={{color: analysisResults.peakProjection.yearsToPeak > 0 ? '#10b981' : '#f59e0b'}}>{analysisResults.peakProjection.yearsToPeak > 0 ? analysisResults.peakProjection.yearsToPeak : 'Now'}</p>
+                </div>
+                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Confidence</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mono-font">{analysisResults.peakProjection.ci50 ? `${analysisResults.peakProjection.ci50[0]}–${analysisResults.peakProjection.ci50[1]}` : '—'}<span className="text-xs text-slate-500">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span></p>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* ── RECOMMENDATIONS (in Overview) ── */}
+            {/* ── INSIGHTS — clean recommendation cards ── */}
             {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Zap className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Recommendations
-                </h3>
-                <div className="space-y-4">
+              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-4 h-4" style={{color: '#f97316'}} />
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Insights</h3>
+                </div>
+                <div className="space-y-2">
                   {analysisResults.recommendations.map((rec, idx) => (
-                    <div key={idx} className={`p-4 rounded-xl border-l-4 ${
-                      rec.priority === 'high' ? 'border-l-red-500 bg-red-900/20' :
-                      rec.priority === 'medium' ? 'border-l-amber-500 bg-amber-900/20' :
-                      'border-l-blue-500 bg-blue-900/20'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
-                          rec.priority === 'high' ? 'bg-red-900/40 text-red-300' :
-                          rec.priority === 'medium' ? 'bg-amber-900/40 text-amber-300' :
-                          'bg-blue-900/40 text-blue-300'
-                        }`}>{rec.priority}</span>
-                        <h4 className="font-semibold text-white">{rec.title}</h4>
+                    <div key={idx} className="flex gap-3 p-3 sm:p-4 rounded-xl" style={{background: rec.priority === 'high' ? 'rgba(239,68,68,0.05)' : rec.priority === 'medium' ? 'rgba(245,158,11,0.05)' : 'rgba(59,130,246,0.05)', border: `1px solid ${rec.priority === 'high' ? 'rgba(239,68,68,0.12)' : rec.priority === 'medium' ? 'rgba(245,158,11,0.12)' : 'rgba(59,130,246,0.12)'}`}}>
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="w-2 h-2 rounded-full" style={{background: rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#3b82f6'}}></div>
                       </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">{rec.text}</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-white landing-font mb-0.5">{rec.title}</h4>
+                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed landing-font">{rec.text}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
