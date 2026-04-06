@@ -146,12 +146,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     setUrlError('')
 
     try {
-      // Use the /analyze/url endpoint which is proven to work (non-SSE, returns JSON)
+      // Use the /analyze/url endpoint (non-SSE, returns JSON)
+      // Add 120s timeout — scraping can take a while but shouldn't exceed 2 min
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 120000)
+
       const response = await fetch(`${API_BASE}/api/v1/analyze/url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
-      })
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeout))
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}))
@@ -244,7 +249,10 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setActiveSection('roster')
     } catch (err) {
       console.error('URL import failed:', err)
-      setUrlError(err.message || 'Import failed — check the URL and try again')
+      const msg = err.name === 'AbortError'
+        ? 'Request timed out after 2 minutes — the scraper may be overloaded. Try again.'
+        : (err.message || 'Import failed — check the URL and try again')
+      setUrlError(msg)
       setUrlLoading(false)
       setUrlProgress('')
     }
