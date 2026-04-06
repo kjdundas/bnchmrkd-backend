@@ -222,9 +222,16 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       setUrlProgress(`Saving ${athleteName} to roster...`)
 
-      // Insert into Supabase — use insert without .single() to avoid hang on RLS issues
+      // Refresh auth session before insert (may have expired during long scrape)
+      const { data: sessionData } = await supabase.auth.getSession()
+      const session = sessionData?.session
+      if (!session?.user) {
+        throw new Error('Your session expired. Please sign in again and retry.')
+      }
+      console.log('[roster] Auth OK, user:', session.user.id, 'token length:', session.access_token?.length)
+
       const newAthlete = {
-        coach_id: user.id,
+        coach_id: session.user.id,
         name: athleteName,
         dob: dob || null,
         gender: gender,
@@ -241,26 +248,47 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         races: races,
       }
 
-      const { data: insertedArr, error: insertErr } = await supabase
-        .from('coach_roster')
-        .insert(newAthlete)
-        .select()
+      console.log('[roster] Inserting athlete:', athleteName)
 
-      if (insertErr) throw new Error(`Supabase error: ${insertErr.message}`)
+      // Use raw fetch to Supabase REST API — bypasses supabase-js which can hang
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const insertController = new AbortController()
+      const insertTimeout = setTimeout(() => insertController.abort(), 15000)
 
-      const inserted = insertedArr?.[0]
-      if (!inserted) {
-        // RLS might be blocking — try without RLS by just inserting (no select)
-        const { error: insertErr2 } = await supabase
-          .from('coach_roster')
-          .insert(newAthlete)
+      let insertRes
+      try {
+        insertRes = await fetch(`${supabaseUrl}/rest/v1/coach_roster`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${session.access_token}`,
+            'Prefer': 'return=representation',
+          },
+          body: JSON.stringify(newAthlete),
+          signal: insertController.signal,
+        })
+      } finally {
+        clearTimeout(insertTimeout)
+      }
 
-        if (insertErr2) throw new Error(`Save failed: ${insertErr2.message}`)
+      console.log('[roster] Insert response:', insertRes.status, insertRes.statusText)
 
-        // Add locally even without the DB returning the row
-        setRoster(prev => [{ ...newAthlete, id: crypto.randomUUID(), created_at: new Date().toISOString() }, ...prev])
-      } else {
+      if (!insertRes.ok) {
+        const errBody = await insertRes.text()
+        console.error('[roster] Insert error body:', errBody)
+        throw new Error(`Supabase insert failed (${insertRes.status}): ${errBody}`)
+      }
+
+      const insertedArr = await insertRes.json()
+      const inserted = Array.isArray(insertedArr) ? insertedArr[0] : insertedArr
+
+      if (inserted?.id) {
         setRoster(prev => [inserted, ...prev])
+      } else {
+        // Fallback: add locally
+        setRoster(prev => [{ ...newAthlete, id: crypto.randomUUID(), created_at: new Date().toISOString() }, ...prev])
       }
 
       setUrlInput('')
