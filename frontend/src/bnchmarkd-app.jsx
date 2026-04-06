@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine
+  ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine, ReferenceDot
 } from 'recharts';
 import {
   Activity, Timer, TrendingUp, Target, Award, ChevronRight, Plus, Trash2,
   Link, Upload, BarChart3, Zap, Calendar, ArrowUpRight, AlertTriangle, Users,
   Percent, Layers, BarChart2, CheckCircle2, Circle, Flag, Database, Info, ArrowRight, ChevronLeft,
-  Search, User, Globe, Medal
+  Search, User, Globe, Medal, Lock
 } from 'lucide-react';
 
-export default function BnchMrkdApp() {
+export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard }) {
   // Throws discipline detection helpers
   const THROWS_DISCIPLINES = ['Discus Throw', 'Javelin Throw', 'Hammer Throw', 'Shot Put'];
   const THROWS_CODES = ['MDT', 'FDT', 'MJT', 'FJT', 'MHT', 'FHT', 'MSP', 'FSP'];
@@ -70,6 +70,7 @@ export default function BnchMrkdApp() {
   // Scraping state
   const [scraping, setScraping] = useState(false);
   const [chartView, setChartView] = useState('time'); // 'time' | 'pctOff' | 'percentileBand' | 'improvementRate'
+  const [benchmarkLines, setBenchmarkLines] = useState({ medalist: true, finalist: true, semiFinalist: true, qualifier: true });
   const [trajToggles, setTrajToggles] = useState({ finalist: true, semiFinalist: true, qualifier: false });
   const [dashTab, setDashTab] = useState('overview'); // 'overview' | 'trajectory' | 'benchmarks' | 'insights'
   const [scrapeProgress, setScrapeProgress] = useState({ step: '', message: '', progress: 0 });
@@ -87,6 +88,13 @@ export default function BnchMrkdApp() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [explorerDisciplineFilter, setExplorerDisciplineFilter] = useState('all');
   const searchTimeoutRef = useRef(null);
+
+  // Landing page role toggle + active pillar
+  const [landingRole, setLandingRole] = useState('athlete');
+  const [activePillar, setActivePillar] = useState(0);
+
+  // Standards tracker tier filter in results view
+  const [standardsTier, setStandardsTier] = useState('all'); // 'all' | 'world' | 'regional' | 'development'
 
   // Backend URL — configurable for deployment
   const API_BASE = 'https://web-production-295f1.up.railway.app';
@@ -846,153 +854,216 @@ export default function BnchMrkdApp() {
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // PERFORMANCE STANDARDS (from S&H Performance Benchmarks)
+  // COMPETITION STANDARDS — Per-competition data with tier grouping
+  // Sources: Paris 2024 Olympics, World Champs Tokyo 2025, Asian Champs Gumi 2025,
+  //          World U20 Lima 2024, NCAA Outdoor 2025, World Records as of Apr 2026
+  // Tiers: world (Olympics/Worlds), regional (Asian), development (U20/NCAA)
+  // Age groups: senior, u20
   // ═══════════════════════════════════════════════════════════════════
-  const PERFORMANCE_STANDARDS = {
-    M100: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 9.87, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 10.07, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 10.26, source: 'Avg medal from 18/21/24 U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 10.42, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 10.56, source: 'Entry standard 18/21/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 11.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    F100: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 10.84, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 11.18, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 11.30, source: 'Avg medal from 18/21/24 U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 11.74, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 11.83, source: 'Entry standard 18/21/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 12.40, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    M200: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 19.85, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 20.30, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 20.59, source: 'Avg medal from 18/21/24 U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 21.10, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 21.36, source: 'Entry standard 18/21/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 22.20, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    F200: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 22.07, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 22.86, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 23.03, source: 'Avg medal from 18/21/24 U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 23.82, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 24.32, source: 'Entry standard 18/21/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 25.90, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    M400: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 43.92, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 45.10, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 46.04, source: 'Avg medal from 18/21/24 U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 46.42, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 47.56, source: 'Entry standard 18/21/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 50.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    F400: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 49.43, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 51.43, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 52.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E3', label: 'Asian Finalist', time: 54.58, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 54.62, source: 'Entry standard 21/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 57.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    F100H: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 12.50, source: 'Estimated from Olympic data', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 12.92, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 13.10, source: 'Estimated from U20 WC data', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 13.40, source: 'Estimated from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 13.60, source: 'Estimated entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 14.50, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    M110H: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 13.10, source: 'Estimated from Olympic data', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 13.47, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 13.60, source: 'Estimated from U20 WC data', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 13.85, source: 'Estimated from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 14.00, source: 'Estimated entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 14.80, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    M400H: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 47.30, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 49.00, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 49.67, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 50.74, source: 'Avg finalist from 23/25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 53.10, source: 'Entry standard 18/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 56.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    F400H: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 52.63, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 55.48, source: '2024 minimum qualifying time', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 57.03, source: 'Avg medal from 21/22/24 U20 WC', color: '#8b5cf6' },
-      { tier: 'E3', label: 'Asian Finalist', time: 57.66, source: 'Avg finalist from 25 Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 60.80, source: 'Entry standard 18/24', color: '#6366f1' },
-      { tier: 'T1', label: 'Level 9 (U20)', time: 65.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    MDT: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 68.50, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 66.00, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 61.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 59.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 57.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 52.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    FDT: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 66.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 63.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 58.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 56.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 53.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 48.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    MJT: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 89.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 85.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 80.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 77.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 74.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 68.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    FJT: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 66.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 63.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 58.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 56.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 53.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 48.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    MHT: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 80.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 77.00, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 71.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 68.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 65.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 58.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    FHT: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 76.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 72.50, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 66.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 63.00, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 60.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 54.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    MSP: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 22.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 21.10, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 19.50, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 18.80, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 18.00, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 16.50, source: 'Development benchmark', color: '#94a3b8' },
-    ],
-    FSP: [
-      { tier: 'E1', label: 'Olympic Medal Zone', time: 20.00, source: 'Avg medal from Rio/Tokyo/Paris', color: '#fbbf24' },
-      { tier: 'E1', label: 'Olympic MQT', time: 18.80, source: '2024 minimum qualifying distance', color: '#dc2626' },
-      { tier: 'E1', label: 'U20 WC Medal Zone', time: 17.00, source: 'Avg medal from U20 WC', color: '#8b5cf6' },
-      { tier: 'E2', label: 'Asian Finalist', time: 16.50, source: 'Avg finalist from Asian Champs', color: '#3b82f6' },
-      { tier: 'E3', label: 'U20 Worlds Qualifying', time: 15.50, source: 'Entry standard', color: '#6366f1' },
-      { tier: 'T1', label: 'Development Standard', time: 14.00, source: 'Development benchmark', color: '#94a3b8' },
-    ],
+  const COMPETITION_STANDARDS = {
+    M100: {
+      wr: { mark: 9.58, holder: 'Usain Bolt', year: 2009 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 10.00, gold: 9.784, bronze: 9.81, p8: 9.91, semi: 9.95 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 10.00, gold: 9.77, bronze: 9.89, p8: 10.04, semi: 10.12 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 10.07, bronze: 10.22, p8: 10.45, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 10.19, bronze: 10.26, p8: 10.51, semi: 10.58 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 10.07, bronze: 10.10, p8: 10.24, semi: 10.38 },
+      ],
+    },
+    F100: {
+      wr: { mark: 10.49, holder: 'Florence Griffith-Joyner', year: 1988 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 11.07, gold: 10.72, bronze: 10.87, p8: 11.07, semi: 11.10 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 11.07, gold: 10.61, bronze: 10.84, p8: 11.06, semi: 11.08 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 11.37, bronze: 11.54, p8: 11.85, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 11.08, bronze: 11.17, p8: 11.45, semi: 11.55 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 10.87, bronze: 11.02, p8: 11.25, semi: 11.35 },
+      ],
+    },
+    M200: {
+      wr: { mark: 19.19, holder: 'Usain Bolt', year: 2009 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 20.16, gold: 19.46, bronze: 19.70, p8: 20.28, semi: 20.42 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 20.16, gold: 19.52, bronze: 19.64, p8: 20.23, semi: 20.55 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 20.12, bronze: 20.40, p8: 20.90, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 20.52, bronze: 20.81, p8: 21.30, semi: 21.55 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 19.84, bronze: 19.96, p8: 20.55, semi: 20.75 },
+      ],
+    },
+    F200: {
+      wr: { mark: 21.34, holder: 'Florence Griffith-Joyner', year: 1988 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 22.57, gold: 21.83, bronze: 22.20, p8: 22.72, semi: 22.85 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 22.57, gold: 21.68, bronze: 22.18, p8: 22.78, semi: 22.95 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 22.97, bronze: 23.00, p8: 23.60, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 22.55, bronze: 22.80, p8: 23.40, semi: 23.65 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 21.98, bronze: 22.25, p8: 22.80, semi: 23.00 },
+      ],
+    },
+    M400: {
+      wr: { mark: 43.03, holder: 'Wayde van Niekerk', year: 2016 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 45.00, gold: 43.40, bronze: 44.15, p8: 44.77, semi: 44.95 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 45.00, gold: 43.53, bronze: 44.20, p8: 44.77, semi: 44.95 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 45.33, bronze: 45.55, p8: 46.50, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 45.69, bronze: 46.30, p8: 47.10, semi: 47.40 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 44.84, bronze: 45.75, p8: 46.17, semi: 46.50 },
+      ],
+    },
+    F400: {
+      wr: { mark: 47.60, holder: 'Marita Koch', year: 1985 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 50.95, gold: 48.17, bronze: 49.15, p8: 50.40, semi: 50.60 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 50.75, gold: 47.78, bronze: 48.19, p8: 49.97, semi: 50.30 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 52.17, bronze: 52.79, p8: 54.20, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 50.55, bronze: 51.85, p8: 52.80, semi: 53.10 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 49.62, bronze: 50.15, p8: 51.20, semi: 51.50 },
+      ],
+    },
+    M110H: {
+      wr: { mark: 12.80, holder: 'Aries Merritt', year: 2012 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 13.27, gold: 12.99, bronze: 13.16, p8: 13.50, semi: 13.55 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 13.27, gold: 12.99, bronze: 13.12, p8: 13.42, semi: 13.40 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 13.22, bronze: 13.45, p8: 13.85, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 13.12, bronze: 13.32, p8: 13.68, semi: 13.80 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 13.05, bronze: 13.28, p8: 13.65, semi: 13.80 },
+      ],
+    },
+    F100H: {
+      wr: { mark: 12.12, holder: 'Tobi Amusan', year: 2022 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 12.77, gold: 12.33, bronze: 12.43, p8: 12.75, semi: 12.80 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 12.73, gold: 12.24, bronze: 12.34, p8: 12.56, semi: 12.62 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 12.96, bronze: 13.07, p8: 13.40, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 12.82, bronze: 12.96, p8: 13.25, semi: 13.35 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 12.81, bronze: 12.98, p8: 13.20, semi: 13.35 },
+      ],
+    },
+    M400H: {
+      wr: { mark: 45.94, holder: 'Karsten Warholm', year: 2021 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 48.70, gold: 46.46, bronze: 47.26, p8: 48.50, semi: 48.70 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 48.70, gold: 46.52, bronze: 47.06, p8: 48.30, semi: 48.60 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 48.00, bronze: 48.80, p8: 50.30, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 49.26, bronze: 49.80, p8: 51.20, semi: 51.60 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 47.49, bronze: 48.66, p8: 50.83, semi: 51.20 },
+      ],
+    },
+    F400H: {
+      wr: { mark: 50.37, holder: 'Sydney McLaughlin-Levrone', year: 2024 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 54.85, gold: 50.37, bronze: 52.71, p8: 54.60, semi: 54.90 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 54.65, gold: 51.54, bronze: 53.00, p8: 56.27, semi: 56.80 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 55.31, bronze: 56.46, p8: 58.50, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 55.59, bronze: 56.50, p8: 58.20, semi: 58.80 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 52.46, bronze: 53.50, p8: 55.20, semi: 55.80 },
+      ],
+    },
+    MSP: {
+      wr: { mark: 23.56, holder: 'Ryan Crouser', year: 2023 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 21.50, gold: 22.90, bronze: 22.36, p8: 21.70, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 21.50, gold: 22.34, bronze: 21.94, p8: 21.30, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 19.25, bronze: 18.90, p8: 18.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 21.56, bronze: 20.80, p8: 19.80, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 21.95, bronze: 21.50, p8: 20.80, semi: null },
+      ],
+    },
+    FSP: {
+      wr: { mark: 22.63, holder: 'Natalya Lisovskaya', year: 1987 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 18.80, gold: 20.28, bronze: 19.72, p8: 18.85, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 18.80, gold: 20.29, bronze: 20.06, p8: 19.40, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 18.26, bronze: 17.90, p8: 17.20, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 18.35, bronze: 17.80, p8: 16.90, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 19.60, bronze: 19.00, p8: 18.30, semi: null },
+      ],
+    },
+    MDT: {
+      wr: { mark: 74.08, holder: 'Jürgen Schult', year: 1986 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 66.00, gold: 70.00, bronze: 67.56, p8: 63.90, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 67.50, gold: 70.47, bronze: 66.96, p8: 63.07, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 63.47, bronze: 61.50, p8: 57.80, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 68.50, bronze: 65.20, p8: 61.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 68.80, bronze: 66.50, p8: 63.00, semi: null },
+      ],
+    },
+    FDT: {
+      wr: { mark: 76.80, holder: 'Gabriele Reinsch', year: 1988 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 62.00, gold: 69.50, bronze: 65.37, p8: 62.20, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 64.50, gold: 69.48, bronze: 67.20, p8: 63.90, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 61.50, bronze: 59.00, p8: 55.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 64.20, bronze: 61.00, p8: 57.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 65.82, bronze: 63.50, p8: 60.80, semi: null },
+      ],
+    },
+    MJT: {
+      wr: { mark: 98.48, holder: 'Jan Železný', year: 1996 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 85.50, gold: 92.97, bronze: 87.17, p8: 82.30, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 85.50, gold: 88.16, bronze: 86.20, p8: 81.00, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 86.40, bronze: 83.75, p8: 79.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 81.50, bronze: 78.00, p8: 73.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 82.00, bronze: 79.00, p8: 74.00, semi: null },
+      ],
+    },
+    FJT: {
+      wr: { mark: 72.28, holder: 'Barbora Špotáková', year: 2008 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 62.00, gold: 67.38, bronze: 64.73, p8: 61.50, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 64.00, gold: 65.12, bronze: 63.58, p8: 60.50, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 63.29, bronze: 58.94, p8: 55.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 62.50, bronze: 60.00, p8: 56.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 63.50, bronze: 61.50, p8: 58.00, semi: null },
+      ],
+    },
+    MHT: {
+      wr: { mark: 86.74, holder: 'Yuriy Sedykh', year: 1986 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 78.20, gold: 84.12, bronze: 81.79, p8: 78.40, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 78.20, gold: 84.70, bronze: 82.69, p8: 77.15, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 74.50, bronze: 71.50, p8: 67.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 79.50, bronze: 76.00, p8: 72.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 76.50, bronze: 74.00, p8: 70.00, semi: null },
+      ],
+    },
+    FHT: {
+      wr: { mark: 82.98, holder: 'Anita Włodarczyk', year: 2016 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 72.50, gold: 76.97, bronze: 74.35, p8: 72.60, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 74.00, gold: 80.51, bronze: 77.10, p8: 71.59, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 72.98, bronze: 64.25, p8: 60.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 72.00, bronze: 68.00, p8: 63.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 74.50, bronze: 72.00, p8: 68.50, semi: null },
+      ],
+    },
+  };
+
+  // Helper: flatten competition standards into legacy format for backward compat
+  const getStandardsFlat = (eventCode) => {
+    const data = COMPETITION_STANDARDS[eventCode];
+    if (!data) return [];
+    const isThrows = THROWS_CODES.includes(eventCode);
+    // Build a flat list sorted hardest → easiest
+    const flat = [];
+    const comps = data.competitions.sort((a, b) => {
+      // Sort by tier priority: world > regional > development
+      const tierOrder = { world: 0, regional: 1, development: 2 };
+      return (tierOrder[a.tier] || 3) - (tierOrder[b.tier] || 3);
+    });
+    for (const comp of comps) {
+      if (comp.qual !== null) flat.push({ tier: 'QUAL', label: `${comp.label} Entry Std`, time: comp.qual, source: comp.label, color: comp.color, compId: comp.id, compTier: comp.tier, ageGroup: comp.ageGroup });
+      flat.push({ tier: 'GOLD', label: `${comp.label} Gold`, time: comp.gold, source: comp.label, color: comp.color, compId: comp.id, compTier: comp.tier, ageGroup: comp.ageGroup });
+      flat.push({ tier: 'MEDAL', label: `${comp.label} Bronze`, time: comp.bronze, source: comp.label, color: comp.color, compId: comp.id, compTier: comp.tier, ageGroup: comp.ageGroup });
+      flat.push({ tier: 'FINAL', label: `${comp.label} 8th`, time: comp.p8, source: comp.label, color: comp.color, compId: comp.id, compTier: comp.tier, ageGroup: comp.ageGroup });
+    }
+    // Sort: for track (lower is better), hardest first ascending; for throws, hardest first descending
+    flat.sort((a, b) => isThrows ? b.time - a.time : a.time - b.time);
+    return flat;
   };
 
 
@@ -1439,12 +1510,32 @@ export default function BnchMrkdApp() {
       console.warn('Similar athletes API unavailable, skipping:', e.message);
     }
 
-    // ── Build performance standards with met/not-met ──
-    const standards = (PERFORMANCE_STANDARDS[eventCode] || []).map(std => ({
-      ...std,
-      met: isThrows ? pb >= std.time : pb <= std.time,
-      gap: isThrows ? parseFloat((std.time - pb).toFixed(2)) : parseFloat((pb - std.time).toFixed(2)),
-    }));
+    // ── Build performance standards with met/not-met (from new competition data) ──
+    const compData = COMPETITION_STANDARDS[eventCode];
+    const standards = compData ? compData.competitions.map(comp => {
+      // For backward compat, pick the most meaningful "target" mark: entry standard if available, else p8
+      const targetMark = comp.qual || comp.p8;
+      return {
+        tier: comp.tier === 'world' ? 'E1' : comp.tier === 'regional' ? 'E2' : 'E3',
+        label: comp.label,
+        time: targetMark,
+        source: comp.label,
+        color: comp.color,
+        met: isThrows ? pb >= targetMark : pb <= targetMark,
+        gap: isThrows ? parseFloat((targetMark - pb).toFixed(2)) : parseFloat((pb - targetMark).toFixed(2)),
+        compId: comp.id,
+        compTier: comp.tier,
+        ageGroup: comp.ageGroup,
+        gold: comp.gold,
+        bronze: comp.bronze,
+        p8: comp.p8,
+        qual: comp.qual,
+        semi: comp.semi,
+      };
+    }).sort((a, b) => {
+      const tierOrder = { world: 0, regional: 1, development: 2 };
+      return (tierOrder[a.compTier] || 3) - (tierOrder[b.compTier] || 3);
+    }) : [];
 
     // ── Build chart data for additional views ──
     // % Off PB chart data
@@ -1522,7 +1613,13 @@ export default function BnchMrkdApp() {
       pctOffPBChartData,
       percentileBandData,
       improvementChartData,
-      thresholds: {
+      thresholds: isThrows ? {
+        medalist: thresholds.s90,
+        finalist: thresholds.s80,
+        semiFinalist: thresholds.optimal,
+        qualifier: thresholds.s70,
+      } : {
+        medalist: thresholds.s70,
         finalist: thresholds.optimal,
         semiFinalist: thresholds.s80,
         qualifier: thresholds.s90,
@@ -1563,9 +1660,10 @@ export default function BnchMrkdApp() {
           age: a,
           you: userEntry ? parseFloat(userEntry.time.toFixed(2)) : null,
           projected: projEntry ? parseFloat(projEntry.projectedTime.toFixed(2)) : null,
-          finalist: parseFloat((thresholds.optimal * (isThrowsDiscipline(discipline) ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
-          semiFinalist: parseFloat((thresholds.s80 * (isThrowsDiscipline(discipline) ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
-          qualifier: parseFloat((thresholds.s90 * (isThrowsDiscipline(discipline) ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
+          medalist: parseFloat(((isThrows ? thresholds.s90 : thresholds.s70) * (isThrows ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
+          finalist: parseFloat(((isThrows ? thresholds.s80 : thresholds.optimal) * (isThrows ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
+          semiFinalist: parseFloat(((isThrows ? thresholds.optimal : thresholds.s80) * (isThrows ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
+          qualifier: parseFloat(((isThrows ? thresholds.s70 : thresholds.s90) * (isThrows ? (1 - benchmarkData.percentiles[a].p50 / 100) : (1 + benchmarkData.percentiles[a].p50 / 100))).toFixed(2)),
         };
       }),
       // ROD per season (Rate of Development)
@@ -2055,6 +2153,19 @@ export default function BnchMrkdApp() {
             @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
             @keyframes trackLines { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
             @keyframes dotPulse { 0%, 100% { r: 3; opacity: 0.6; } 50% { r: 5; opacity: 1; } }
+            @keyframes morphIn { from { opacity: 0; transform: scale(0.92) translateY(12px); filter: blur(4px); } to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
+            @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+            @keyframes orbitDot { 0% { transform: rotate(0deg) translateX(28px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(28px) rotate(-360deg); } }
+            @keyframes ringPulse { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.15); opacity: 0.6; } }
+            @keyframes lineReveal { from { stroke-dashoffset: 200; } to { stroke-dashoffset: 0; } }
+            @keyframes streakFill { from { width: 0%; } to { width: 100%; } }
+            @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+            .pillar-card { position: relative; cursor: pointer; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+            .pillar-card::before { content: ''; position: absolute; inset: 0; border-radius: 1rem; opacity: 0; transition: opacity 0.5s ease; }
+            .pillar-card:hover::before { opacity: 1; }
+            .pillar-card-active { transform: translateY(-4px); }
+            .pillar-viz { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+            .role-transition { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
             .landing-font { font-family: 'Instrument Sans', system-ui, sans-serif; }
             .mono-font { font-family: 'DM Mono', 'SF Mono', monospace; }
             .stagger-1 { animation: fadeSlideUp 0.7s ease-out 0.1s both; }
@@ -2105,6 +2216,34 @@ export default function BnchMrkdApp() {
                 >
                   Get Started
                 </button>
+                {user ? (
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <button
+                      onClick={onOpenDashboard}
+                      className="text-sm font-semibold text-black px-3 py-1.5 rounded-lg landing-font"
+                      style={{background: '#f97316'}}
+                    >
+                      Dashboard
+                    </button>
+                    <span className="hidden sm:block text-sm text-slate-400 landing-font">
+                      {profile?.full_name || user.email}
+                    </span>
+                    <button
+                      onClick={onSignOut}
+                      className="text-sm text-slate-500 hover:text-white transition-colors landing-font font-medium"
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={onSignUp}
+                    className="text-sm font-semibold text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg landing-font"
+                    style={{background: '#22c55e'}}
+                  >
+                    Sign Up
+                  </button>
+                )}
               </div>
             </div>
           </nav>
@@ -2284,10 +2423,396 @@ export default function BnchMrkdApp() {
             </div>
           </div>
 
-          {/* ── FEATURE STRIP — What you get ── */}
+          {/* ── WHO ARE YOU? — Interactive Role Selector + Pillars ── */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-20">
+            {/* Animated background glow that shifts with role */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="role-transition absolute top-[20%] left-[50%] -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-[180px]" style={{
+                background: landingRole === 'coach'
+                  ? 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)',
+              }}></div>
+            </div>
+
+            <div style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+
+              {/* Section header */}
+              <div className="text-center pt-16 mb-6">
+                <p className="text-xs mono-font uppercase tracking-[0.25em] mb-4 role-transition" style={{color: landingRole === 'coach' ? '#3b82f6' : '#22c55e'}}>Four pillars. One platform.</p>
+                <h2 className="text-2xl sm:text-4xl font-bold text-white landing-font tracking-tight mb-4">
+                  How will you use{' '}
+                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+                    bnchmrkd?
+                  </span>
+                </h2>
+              </div>
+
+              {/* Role Toggle — pill style with sliding indicator */}
+              <div className="flex justify-center mb-14">
+                <div className="relative inline-flex rounded-full p-1" style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  {/* Sliding pill background */}
+                  <div className="absolute top-1 bottom-1 rounded-full role-transition" style={{
+                    width: 'calc(50% - 4px)',
+                    left: landingRole === 'athlete' ? '4px' : 'calc(50% + 0px)',
+                    background: landingRole === 'athlete'
+                      ? 'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))'
+                      : 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(59,130,246,0.1))',
+                    border: `1px solid ${landingRole === 'athlete' ? 'rgba(34,197,94,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                    boxShadow: landingRole === 'athlete'
+                      ? '0 0 20px rgba(34,197,94,0.15)'
+                      : '0 0 20px rgba(59,130,246,0.15)',
+                  }}></div>
+                  <button
+                    onClick={() => setLandingRole('athlete')}
+                    className="relative z-10 px-8 py-2.5 rounded-full text-sm font-semibold landing-font transition-colors duration-300"
+                    style={{color: landingRole === 'athlete' ? '#4ade80' : '#64748b'}}
+                  >
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      I'm an Athlete
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setLandingRole('coach')}
+                    className="relative z-10 px-8 py-2.5 rounded-full text-sm font-semibold landing-font transition-colors duration-300"
+                    style={{color: landingRole === 'coach' ? '#60a5fa' : '#64748b'}}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      I'm a Coach
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Pillars — 2-row layout: cards on top, expanded detail below */}
+              {(() => {
+                const pillars = [
+                  {
+                    word: 'Benchmark',
+                    icon: Target,
+                    accent: '#f97316',
+                    athlete: {
+                      headline: 'Know where you stand',
+                      desc: 'Enter your PB and instantly see how you compare to Olympic athletes at the same age. Based on 496K+ real competition records.',
+                      stat: '496K+',
+                      statLabel: 'data points',
+                    },
+                    coach: {
+                      headline: 'See who\'s on track',
+                      desc: 'View each athlete\'s percentile ranking against elite trajectories. Spot who\'s tracking toward elite and who needs a new approach.',
+                      stat: '18',
+                      statLabel: 'events covered',
+                    },
+                  },
+                  {
+                    word: 'Track',
+                    icon: Activity,
+                    accent: '#3b82f6',
+                    athlete: {
+                      headline: 'See your progression',
+                      desc: 'Log competitions, training sessions, and physical metrics. Every entry builds your personal trajectory curve — a living picture of your development.',
+                      stat: '<15s',
+                      statLabel: 'to log a session',
+                    },
+                    coach: {
+                      headline: 'Manage your squad',
+                      desc: 'Build your roster, log results after meets, and track every metric on one dashboard. Bulk-log an entire competition in minutes.',
+                      stat: '3 min',
+                      statLabel: 'to log a meet',
+                    },
+                  },
+                  {
+                    word: 'Project',
+                    icon: TrendingUp,
+                    accent: '#22c55e',
+                    athlete: {
+                      headline: 'See where you could go',
+                      desc: 'Overlay your trajectory against elite athletes who were at your level at your age. See the paths they took and where you\'re heading.',
+                      stat: '25 yrs',
+                      statLabel: 'of Olympic data',
+                    },
+                    coach: {
+                      headline: 'Plan with data',
+                      desc: 'Compare any athlete\'s trajectory against historical elites. Use real progression data to set targets and adjust training plans with confidence.',
+                      stat: '3,442',
+                      statLabel: 'elite careers mapped',
+                    },
+                  },
+                  {
+                    word: 'Commit',
+                    icon: Award,
+                    accent: '#f59e0b',
+                    athlete: {
+                      headline: 'Build the habit',
+                      desc: 'Training streaks, consistency tracking, milestone badges, and session ratings. The app rewards showing up — not just on competition day.',
+                      stat: '47',
+                      statLabel: 'avg sessions logged',
+                    },
+                    coach: {
+                      headline: 'Keep athletes engaged',
+                      desc: 'See who\'s logging consistently and who\'s gone quiet. Assign workouts, track completion, and know who needs a check-in before you ask.',
+                      stat: '85%',
+                      statLabel: 'logging consistency',
+                    },
+                  },
+                ];
+
+                const ap = pillars[activePillar];
+                const apContent = landingRole === 'coach' ? ap.coach : ap.athlete;
+                const ApIcon = ap.icon;
+
+                // Mini SVG visualizations for each pillar
+                const PillarViz = ({ index, isActive }) => {
+                  const w = isActive ? 280 : 64;
+                  const h = isActive ? 100 : 48;
+
+                  if (index === 0) {
+                    // Benchmark — animated bar chart (percentile bars)
+                    const bars = [35, 52, 68, 78, 92, 88, 85];
+                    return (
+                      <svg width={w} height={h} viewBox={isActive ? "0 0 280 100" : "0 0 64 48"}>
+                        {bars.map((val, i) => {
+                          const barH = isActive ? val * 0.8 : val * 0.35;
+                          const barW = isActive ? 28 : 6;
+                          const gap = isActive ? 12 : 3;
+                          const x = isActive ? 10 + i * (barW + gap) : 2 + i * (barW + gap);
+                          const y = (isActive ? 95 : 45) - barH;
+                          return (
+                            <rect key={i} x={x} y={y} width={barW} height={barH} rx={isActive ? 4 : 1.5}
+                              fill={i === 4 ? ap.accent : 'rgba(148,163,184,0.15)'}
+                              style={{transformOrigin: `${x + barW/2}px ${isActive ? 95 : 45}px`, animation: isActive ? `barGrow 0.6s ease-out ${i * 0.06}s both` : 'none'}}
+                            />
+                          );
+                        })}
+                        {isActive && <text x="268" y="18" fill={ap.accent} fontSize="14" fontWeight="700" style={{fontFamily: "'DM Mono', monospace"}}>P92</text>}
+                      </svg>
+                    );
+                  }
+                  if (index === 1) {
+                    // Track — animated line chart (progression)
+                    const points = isActive
+                      ? [[10,75],[50,65],[95,55],[140,40],[185,32],[230,28],[270,24]]
+                      : [[2,38],[12,32],[22,26],[32,20],[42,16],[52,13],[62,11]];
+                    const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
+                    return (
+                      <svg width={w} height={h} viewBox={isActive ? "0 0 280 100" : "0 0 64 48"}>
+                        {isActive && [25,50,75].map(y => <line key={y} x1="10" y1={y} x2="270" y2={y} stroke="rgba(148,163,184,0.06)" strokeWidth="0.5" />)}
+                        <path d={path} fill="none" stroke={pillars[1].accent} strokeWidth={isActive ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round"
+                          strokeDasharray="400" style={{animation: isActive ? 'lineReveal 1.2s ease-out 0.2s both' : 'none'}} />
+                        {isActive && points.map((p, i) => (
+                          <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill={pillars[1].accent} style={{animation: `fadeSlideUp 0.3s ease-out ${0.4 + i * 0.08}s both`}} />
+                        ))}
+                        {!isActive && <circle cx={points[points.length-1][0]} cy={points[points.length-1][1]} r="2" fill={pillars[1].accent} />}
+                      </svg>
+                    );
+                  }
+                  if (index === 2) {
+                    // Project — trajectory overlay (two paths converging)
+                    return (
+                      <svg width={w} height={h} viewBox={isActive ? "0 0 280 100" : "0 0 64 48"}>
+                        {isActive ? (
+                          <>
+                            <path d="M10,80 C60,70 110,55 160,40 S230,20 270,15" fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="8" strokeLinecap="round" />
+                            <path d="M10,85 C70,75 120,60 170,42 S240,22 270,18" fill="none" stroke={pillars[2].accent} strokeWidth="2.5" strokeLinecap="round"
+                              strokeDasharray="400" style={{animation: 'lineReveal 1.5s ease-out 0.2s both'}} />
+                            <path d="M10,90 C80,82 130,68 180,55 S240,35 270,28" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 4"
+                              style={{opacity: 0.6, animation: 'lineReveal 1.5s ease-out 0.5s both'}} />
+                            <text x="270" y="12" fill={pillars[2].accent} fontSize="9" fontWeight="600" textAnchor="end" style={{fontFamily: "'DM Mono', monospace", animation: 'fadeSlideUp 0.4s ease-out 1.5s both'}}>ELITE PATH</text>
+                            <text x="270" y="38" fill="#f97316" fontSize="9" fontWeight="600" textAnchor="end" style={{fontFamily: "'DM Mono', monospace", opacity: 0.7, animation: 'fadeSlideUp 0.4s ease-out 1.7s both'}}>YOUR PATH</text>
+                          </>
+                        ) : (
+                          <>
+                            <path d="M2,40 C15,35 28,25 42,18 S55,10 62,8" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="4" strokeLinecap="round" />
+                            <path d="M2,42 C18,36 30,28 45,20 S56,12 62,10" fill="none" stroke={pillars[2].accent} strokeWidth="1.5" strokeLinecap="round" />
+                          </>
+                        )}
+                      </svg>
+                    );
+                  }
+                  // Commit — streak/calendar visualization
+                  const days = [1,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1];
+                  if (isActive) {
+                    return (
+                      <svg width={280} height={100} viewBox="0 0 280 100">
+                        <text x="10" y="18" fill="rgba(148,163,184,0.4)" fontSize="9" style={{fontFamily: "'DM Mono', monospace"}}>TRAINING STREAK</text>
+                        {days.map((d, i) => {
+                          const row = Math.floor(i / 7);
+                          const col = i % 7;
+                          return (
+                            <rect key={i} x={10 + col * 20} y={28 + row * 20} width={14} height={14} rx={3}
+                              fill={d ? pillars[3].accent : 'rgba(148,163,184,0.08)'}
+                              opacity={d ? 0.15 + (i / days.length) * 0.85 : 1}
+                              style={{animation: `fadeSlideUp 0.2s ease-out ${i * 0.03}s both`}}
+                            />
+                          );
+                        })}
+                        <text x="170" y="42" fill={pillars[3].accent} fontSize="28" fontWeight="700" style={{fontFamily: "'DM Mono', monospace", animation: 'fadeSlideUp 0.4s ease-out 0.5s both'}}>18</text>
+                        <text x="170" y="58" fill="rgba(148,163,184,0.5)" fontSize="10" style={{fontFamily: "'DM Mono', monospace", animation: 'fadeSlideUp 0.4s ease-out 0.6s both'}}>day streak</text>
+                        <rect x="170" y="70" width="100" height="6" rx="3" fill="rgba(148,163,184,0.08)" />
+                        <rect x="170" y="70" width="0" height="6" rx="3" fill={pillars[3].accent} style={{animation: 'streakFill 1.2s ease-out 0.7s forwards', width: '85%'}} />
+                      </svg>
+                    );
+                  }
+                  return (
+                    <svg width={64} height={48} viewBox="0 0 64 48">
+                      {days.slice(0, 14).map((d, i) => {
+                        const row = Math.floor(i / 7);
+                        const col = i % 7;
+                        return (
+                          <rect key={i} x={2 + col * 8.5} y={6 + row * 10} width={6} height={6} rx={1.5}
+                            fill={d ? pillars[3].accent : 'rgba(148,163,184,0.08)'}
+                            opacity={d ? 0.3 + (i / 14) * 0.7 : 1}
+                          />
+                        );
+                      })}
+                      <text x="32" y="42" fill={pillars[3].accent} fontSize="10" fontWeight="700" textAnchor="center" style={{fontFamily: "'DM Mono', monospace"}}>18d</text>
+                    </svg>
+                  );
+                };
+
+                return (
+                  <>
+                    {/* Pillar selector tabs */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                      {pillars.map((pillar, i) => {
+                        const Icon = pillar.icon;
+                        const isActive = activePillar === i;
+                        const content = landingRole === 'coach' ? pillar.coach : pillar.athlete;
+                        return (
+                          <button
+                            key={pillar.word}
+                            onClick={() => setActivePillar(i)}
+                            className={`pillar-card group relative rounded-2xl text-left overflow-hidden ${isActive ? 'pillar-card-active' : ''}`}
+                            style={{
+                              background: isActive
+                                ? `linear-gradient(145deg, ${pillar.accent}12 0%, ${pillar.accent}06 50%, rgba(255,255,255,0.02) 100%)`
+                                : 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                              border: isActive ? `1px solid ${pillar.accent}40` : '1px solid rgba(255,255,255,0.06)',
+                              boxShadow: isActive ? `0 8px 40px ${pillar.accent}15, 0 0 0 1px ${pillar.accent}10` : 'none',
+                              padding: '1.25rem',
+                            }}
+                          >
+                            {/* Active glow effect */}
+                            {isActive && (
+                              <div className="absolute top-0 left-0 right-0 h-px" style={{background: `linear-gradient(90deg, transparent, ${pillar.accent}60, transparent)`}}></div>
+                            )}
+
+                            {/* Header row: icon + mini viz */}
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center role-transition" style={{
+                                background: isActive ? `${pillar.accent}20` : `${pillar.accent}10`,
+                                boxShadow: isActive ? `0 0 20px ${pillar.accent}20` : 'none',
+                              }}>
+                                <Icon className="w-5 h-5 role-transition" style={{color: isActive ? pillar.accent : `${pillar.accent}90`}} />
+                              </div>
+                              {/* Mini visualization (hidden on mobile when not active) */}
+                              <div className="hidden sm:block opacity-60">
+                                <PillarViz index={i} isActive={false} />
+                              </div>
+                            </div>
+
+                            {/* Pillar name + headline */}
+                            <h3 className="text-lg font-bold text-white landing-font tracking-tight mb-0.5">{pillar.word}</h3>
+                            <p className="text-xs font-medium landing-font role-transition" style={{color: isActive ? pillar.accent : 'rgba(148,163,184,0.6)'}}>
+                              {content.headline}
+                            </p>
+
+                            {/* Stat line */}
+                            <div className="flex items-baseline gap-1.5 mt-3">
+                              <span className="text-base font-bold mono-font role-transition" style={{color: isActive ? pillar.accent : 'rgba(148,163,184,0.4)'}}>{content.stat}</span>
+                              <span className="text-[9px] text-slate-600 mono-font uppercase tracking-wider">{content.statLabel}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Expanded detail panel for active pillar */}
+                    <div
+                      key={`${activePillar}-${landingRole}`}
+                      className="rounded-2xl overflow-hidden"
+                      style={{
+                        background: `linear-gradient(135deg, ${ap.accent}08 0%, rgba(255,255,255,0.02) 40%, ${ap.accent}04 100%)`,
+                        border: `1px solid ${ap.accent}25`,
+                        animation: 'morphIn 0.45s ease-out both',
+                      }}
+                    >
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                        {/* Left: content */}
+                        <div className="p-8 sm:p-10 flex flex-col justify-center">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background: `${ap.accent}18`, boxShadow: `0 0 30px ${ap.accent}15`}}>
+                              <ApIcon className="w-6 h-6" style={{color: ap.accent}} />
+                            </div>
+                            <div>
+                              <h3 className="text-xl sm:text-2xl font-bold text-white landing-font tracking-tight">{ap.word}</h3>
+                              <p className="text-sm font-medium landing-font" style={{color: ap.accent}}>{apContent.headline}</p>
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-400 leading-relaxed landing-font mb-6 max-w-md">{apContent.desc}</p>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold mono-font" style={{color: ap.accent}}>{apContent.stat}</span>
+                            <span className="text-xs text-slate-500 mono-font uppercase tracking-wider">{apContent.statLabel}</span>
+                          </div>
+                        </div>
+                        {/* Right: visualization */}
+                        <div className="flex items-center justify-center p-8 sm:p-10" style={{background: `${ap.accent}04`, borderLeft: `1px solid ${ap.accent}10`}}>
+                          <div className="pillar-viz">
+                            <PillarViz index={activePillar} isActive={true} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* CTA below pillars */}
+              <div className="text-center mt-12">
+                {user ? (
+                  <button
+                    onClick={() => setCurrentView('categories')}
+                    className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-[15px] font-semibold text-white landing-font transition-all"
+                    style={{background: landingRole === 'coach' ? 'rgba(59,130,246,0.2)' : 'rgba(34,197,94,0.2)', border: landingRole === 'coach' ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(34,197,94,0.3)'}}
+                  >
+                    {landingRole === 'coach' ? 'Go to Dashboard' : 'Start Tracking'}
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                    <button
+                      onClick={onSignUp}
+                      className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-[15px] font-semibold landing-font transition-all"
+                      style={{
+                        background: landingRole === 'coach' ? '#3b82f6' : '#22c55e',
+                        color: landingRole === 'coach' ? '#fff' : '#000',
+                        boxShadow: landingRole === 'coach' ? '0 8px 30px rgba(59,130,246,0.3)' : '0 8px 30px rgba(34,197,94,0.3)',
+                      }}
+                    >
+                      {landingRole === 'coach' ? 'Create Coach Account' : 'Create Athlete Account'}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('categories')}
+                      className="inline-flex items-center gap-2 px-6 py-3 text-sm text-slate-400 hover:text-white landing-font font-medium transition-colors"
+                    >
+                      Or try the free tools first
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── FEATURE STRIP — Analysis capabilities ── */}
           <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-16">
-            <div className="stagger-6" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-12">
+            <div style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+              <div className="text-center pt-12 mb-8">
+                <p className="text-xs mono-font uppercase tracking-[0.25em] mb-3" style={{color: '#64748b'}}>Under the hood</p>
+                <h3 className="text-lg sm:text-xl font-bold text-white landing-font">Built on real statistical analysis</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   { icon: TrendingUp, title: 'Trajectory Classification', desc: 'K-means clustering identifies your career pattern — Early Peaker, Late Developer, or Consistent Performer.', accent: '#f97316' },
                   { icon: Target, title: 'Finalist Probability', desc: 'ROC-optimised thresholds compute your statistical likelihood of reaching an Olympic final.', accent: '#3b82f6' },
@@ -2554,7 +3079,7 @@ export default function BnchMrkdApp() {
 
               {/* ── SPRINTS & HURDLES (ACTIVE) ── */}
               <button
-                onClick={() => { setDisciplineCategory('sprints'); setAthleteData(d => ({...d, discipline: '100m'})); setQuickAnalysisData(d => ({...d, discipline: '100m'})); setCurrentView('input'); }}
+                onClick={() => { setDisciplineCategory('sprints'); setAthleteData(d => ({...d, discipline: '100m'})); setQuickAnalysisData(d => ({...d, discipline: '100m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
@@ -2588,7 +3113,7 @@ export default function BnchMrkdApp() {
 
               {/* ── THROWS (ACTIVE) ── */}
               <button
-                onClick={() => { setDisciplineCategory('throws'); setAthleteData(d => ({...d, discipline: 'Discus Throw'})); setQuickAnalysisData(d => ({...d, discipline: 'Discus Throw'})); setCurrentView('input'); }}
+                onClick={() => { setDisciplineCategory('throws'); setAthleteData(d => ({...d, discipline: 'Discus Throw'})); setQuickAnalysisData(d => ({...d, discipline: 'Discus Throw'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
@@ -3090,13 +3615,19 @@ export default function BnchMrkdApp() {
           <main className="relative z-10 flex-1 max-w-4xl mx-auto w-full px-6 sm:px-10 py-10">
             <div className="flex gap-1 sm:gap-2 mb-6 sm:mb-8 stagger-2 overflow-x-auto" style={{borderBottom: '1px solid rgba(255,255,255,0.06)'}}>
               {[
-                { key: 'manual', icon: Upload, label: 'Manual Entry', shortLabel: 'Manual' },
-                { key: 'url', icon: Link, label: 'Import from URL', shortLabel: 'URL' },
-                { key: 'quick', icon: Zap, label: 'Quick Analysis', shortLabel: 'Quick' },
+                { key: 'manual', icon: Upload, label: 'Manual Entry', shortLabel: 'Manual', requiresAuth: true },
+                { key: 'url', icon: Link, label: 'Import from URL', shortLabel: 'URL', requiresAuth: true },
+                { key: 'quick', icon: Zap, label: 'Quick Analysis', shortLabel: 'Quick', requiresAuth: false },
               ].map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => {
+                    if (tab.requiresAuth && !user) {
+                      onSignUp();
+                    } else {
+                      setActiveTab(tab.key);
+                    }
+                  }}
                   className={`px-3 py-2 sm:px-6 sm:py-3 font-medium border-b-2 transition-colors landing-font whitespace-nowrap text-sm sm:text-base ${
                     activeTab === tab.key
                       ? 'border-orange-500 text-orange-400'
@@ -3107,13 +3638,32 @@ export default function BnchMrkdApp() {
                     <tab.icon className="w-4 h-4" />
                     <span className="sm:hidden">{tab.shortLabel}</span>
                     <span className="hidden sm:inline">{tab.label}</span>
+                    {tab.requiresAuth && !user && (
+                      <Lock className="w-3 h-3 text-slate-600" />
+                    )}
                   </div>
                 </button>
               ))}
             </div>
 
             {/* Manual Entry Tab */}
-            {activeTab === 'manual' && (
+            {activeTab === 'manual' && !user && (
+              <div className="bento-card rounded-xl p-8 sm:p-12 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <Lock className="w-10 h-10 text-slate-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2 landing-font">Sign up to unlock Manual Entry</h3>
+                <p className="text-slate-400 text-sm mb-6 landing-font max-w-md mx-auto">Create a free account to enter your full race history, get trajectory modelling, and rate of development analysis.</p>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={onSignUp} className="px-6 py-3 rounded-lg font-semibold text-black landing-font" style={{background: '#22c55e'}}>
+                    Sign Up Free
+                  </button>
+                  <button onClick={() => setActiveTab('quick')} className="px-6 py-3 rounded-lg font-medium text-slate-400 hover:text-white landing-font" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                    Try Quick Analysis
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'manual' && user && (
               <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
@@ -3225,7 +3775,23 @@ export default function BnchMrkdApp() {
             )}
 
             {/* URL Import Tab */}
-            {activeTab === 'url' && (
+            {activeTab === 'url' && !user && (
+              <div className="bento-card rounded-xl p-8 sm:p-12 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <Lock className="w-10 h-10 text-slate-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2 landing-font">Sign up to unlock URL Import</h3>
+                <p className="text-slate-400 text-sm mb-6 landing-font max-w-md mx-auto">Create a free account to import your full career data directly from World Athletics and get detailed trajectory analysis.</p>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={onSignUp} className="px-6 py-3 rounded-lg font-semibold text-black landing-font" style={{background: '#22c55e'}}>
+                    Sign Up Free
+                  </button>
+                  <button onClick={() => setActiveTab('quick')} className="px-6 py-3 rounded-lg font-medium text-slate-400 hover:text-white landing-font" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                    Try Quick Analysis
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'url' && user && (
               <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">World Athletics Profile URL</label>
@@ -3479,49 +4045,350 @@ export default function BnchMrkdApp() {
               ))}
             </div>
 
-            {/* ── STANDARDS TRACKER — compact milestone view ── */}
+            {/* ── COMPETITION STANDARDS — Where You Stand ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
-              const metCount = analysisResults.standards.filter(s => s.met).length;
-              const total = analysisResults.standards.length;
               const isThrows = isThrowsDiscipline(analysisResults.discipline);
               const unit = isThrows ? 'm' : 's';
-              const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+              const pb = parseFloat(analysisResults.personalBest);
+              const eventCode = getEventCode(analysisResults.discipline, analysisResults.gender);
+              const compData = COMPETITION_STANDARDS[eventCode];
+              const filteredStandards = standardsTier === 'all'
+                ? analysisResults.standards
+                : analysisResults.standards.filter(s => s.compTier === standardsTier);
+              const metCount = filteredStandards.filter(s => s.met).length;
+              const total = filteredStandards.length;
+
+              const tierCounts = {
+                all: analysisResults.standards.length,
+                world: analysisResults.standards.filter(s => s.compTier === 'world').length,
+                regional: analysisResults.standards.filter(s => s.compTier === 'regional').length,
+                development: analysisResults.standards.filter(s => s.compTier === 'development').length,
+              };
+
+              const fmtMark = (v) => {
+                if (v === null || v === undefined) return '—';
+                return isThrows ? v.toFixed(2) + 'm' : v.toFixed(2) + 's';
+              };
+
+              return (
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+
+                  {/* Header + WR */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Flag className="w-4 h-4" style={{color: '#f97316'}} />
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Competition Standards</h3>
+                    </div>
+                    {compData?.wr && (
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.15)'}}>
+                        <span className="text-[9px] font-bold text-red-400 mono-font">WR</span>
+                        <span className="text-xs font-bold text-red-300 mono-font">{fmtMark(compData.wr.mark)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-600 mb-4 landing-font">Your PB vs gold, bronze, 8th place, and entry standards across competitions</p>
+
+                  {/* Tier filter tabs */}
+                  <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
+                    {[
+                      { key: 'all', label: 'All', color: '#f97316' },
+                      { key: 'world', label: 'World', color: '#FFD700', icon: '🏅' },
+                      { key: 'regional', label: 'Regional', color: '#E84545', icon: '🌏' },
+                      { key: 'development', label: 'Development', color: '#A259FF', icon: '🎓' },
+                    ].filter(t => t.key === 'all' || tierCounts[t.key] > 0).map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => setStandardsTier(t.key)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold mono-font transition-all flex-shrink-0"
+                        style={{
+                          background: standardsTier === t.key ? `${t.color}18` : 'rgba(255,255,255,0.03)',
+                          border: standardsTier === t.key ? `1px solid ${t.color}40` : '1px solid rgba(255,255,255,0.06)',
+                          color: standardsTier === t.key ? t.color : '#64748b',
+                        }}
+                      >
+                        {t.icon && <span className="text-[10px]">{t.icon}</span>}
+                        {t.label}
+                        <span className="text-[9px] opacity-60">({tierCounts[t.key]})</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Competition cards */}
+                  <div className="space-y-3">
+                    {filteredStandards.map((std, idx) => {
+                      // Build marks array for the visual gauge
+                      const marks = [];
+                      if (std.qual) marks.push({ label: 'ENTRY', value: std.qual, color: '#64B5F6' });
+                      marks.push({ label: 'GOLD', value: std.gold, color: '#FFD700' });
+                      marks.push({ label: 'BRONZE', value: std.bronze, color: '#CD7F32' });
+                      marks.push({ label: '8TH', value: std.p8, color: '#78909C' });
+                      if (std.semi) marks.push({ label: 'SEMI', value: std.semi, color: '#546E7A' });
+
+                      // Sort marks from hardest to easiest
+                      marks.sort((a, b) => isThrows ? b.value - a.value : a.value - b.value);
+
+                      // Calculate gauge range
+                      const allVals = marks.map(m => m.value);
+                      const minVal = Math.min(...allVals, pb);
+                      const maxVal = Math.max(...allVals, pb);
+                      const range = maxVal - minVal || 1;
+                      const padding = range * 0.1;
+                      const gaugeMin = minVal - padding;
+                      const gaugeMax = maxVal + padding;
+                      const gaugeRange = gaugeMax - gaugeMin;
+                      const pbPct = isThrows
+                        ? ((pb - gaugeMin) / gaugeRange) * 100
+                        : ((gaugeMax - pb) / gaugeRange) * 100;
+
+                      // Determine athlete's position label
+                      const beatsMark = (mark) => isThrows ? pb >= mark : pb <= mark;
+                      const positionLabel = beatsMark(std.gold) ? 'Gold Level' : beatsMark(std.bronze) ? 'Medal Zone' : beatsMark(std.p8) ? 'Finalist' : std.semi && beatsMark(std.semi) ? 'Semi-Finalist' : std.qual && beatsMark(std.qual) ? 'Qualifier' : 'Below Entry';
+                      const positionColor = beatsMark(std.gold) ? '#FFD700' : beatsMark(std.bronze) ? '#CD7F32' : beatsMark(std.p8) ? '#10b981' : '#64748b';
+
+                      return (
+                        <div key={idx} className="rounded-xl overflow-hidden" style={{
+                          background: 'rgba(255,255,255,0.02)',
+                          border: `1px solid ${std.color}25`,
+                          borderLeft: `3px solid ${std.color}`,
+                        }}>
+                          {/* Competition header */}
+                          <div className="flex items-center justify-between px-4 py-3" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background: std.color}}></div>
+                              <span className="text-xs sm:text-sm font-semibold text-white landing-font">{std.label}</span>
+                              {std.ageGroup === 'u20' && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded mono-font bg-purple-500/15 text-purple-400">U20</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded mono-font" style={{background: `${positionColor}18`, color: positionColor, border: `1px solid ${positionColor}30`}}>
+                                {positionLabel}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Visual gauge bar */}
+                          <div className="px-4 py-3">
+                            <div className="relative h-8 rounded-full mb-2" style={{background: 'rgba(255,255,255,0.04)'}}>
+                              {/* Mark indicators */}
+                              {marks.map((mark, mi) => {
+                                const pct = isThrows
+                                  ? ((mark.value - gaugeMin) / gaugeRange) * 100
+                                  : ((gaugeMax - mark.value) / gaugeRange) * 100;
+                                return (
+                                  <div key={mi} className="absolute top-0 bottom-0 flex flex-col items-center" style={{left: `${Math.min(Math.max(pct, 3), 97)}%`, transform: 'translateX(-50%)'}}>
+                                    <div className="w-px h-full" style={{background: `${mark.color}50`}}></div>
+                                  </div>
+                                );
+                              })}
+                              {/* PB indicator */}
+                              <div className="absolute top-0 bottom-0 flex items-center" style={{left: `${Math.min(Math.max(pbPct, 2), 98)}%`, transform: 'translateX(-50%)', zIndex: 10}}>
+                                <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff', boxShadow: '0 0 8px rgba(249,115,22,0.5)'}}></div>
+                              </div>
+                            </div>
+
+                            {/* Mark labels below gauge */}
+                            <div className="grid gap-1.5" style={{gridTemplateColumns: `repeat(${marks.length}, 1fr)`}}>
+                              {marks.map((mark, mi) => (
+                                <div key={mi} className="text-center">
+                                  <div className="text-[8px] sm:text-[9px] font-bold mono-font mb-0.5" style={{color: mark.color}}>{mark.label}</div>
+                                  <div className={`text-[10px] sm:text-xs mono-font ${beatsMark(mark.value) ? 'text-green-400 font-bold' : 'text-slate-500'}`}>
+                                    {fmtMark(mark.value)}
+                                  </div>
+                                  {beatsMark(mark.value) && <span className="text-[8px] text-green-500">✓</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Summary footer */}
+                  <div className="flex items-center justify-between mt-4 pt-3" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+                    <span className="text-[10px] text-slate-600 mono-font">
+                      {standardsTier === 'all' ? 'All competitions' : standardsTier === 'world' ? 'Olympics & World Champs' : standardsTier === 'regional' ? 'Continental Championships' : 'U20 & Collegiate'} · {metCount}/{total} entry standards met
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff'}}></div>
+                      <span className="text-[10px] text-slate-500 mono-font">= Your PB ({analysisResults.personalBest}{unit})</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── CAREER BENCHMARK CHART — population curves with athlete dot ── */}
+            {analysisResults.trajectoryComparison && analysisResults.trajectoryComparison.length > 0 && (() => {
+              const isThrows = isThrowsDiscipline(analysisResults.discipline);
+              const unit = isThrows ? 'm' : 's';
+              const rawData = analysisResults.trajectoryComparison;
+              const weightOpts = isThrows ? getWeightOptions(analysisResults.discipline, analysisResults.gender) : [];
+              const userAge = analysisResults.age;
+              const userPB = parseFloat(analysisResults.personalBest);
+
+              // Resolve weight category for a given age
+              const getWeightAtAge = (age) => {
+                const match = weightOpts.find(o => age >= o.min && age <= o.max);
+                return match ? match.label : null;
+              };
+
+              // Line config — colors and labels
+              const lineConfig = {
+                medalist: { color: '#fbbf24', label: 'Medalist', dash: '' },
+                finalist: { color: '#10b981', label: 'Finalist', dash: '' },
+                semiFinalist: { color: '#3b82f6', label: 'Semi-Finalist', dash: '6 3' },
+                qualifier: { color: '#8b5cf6', label: 'Qualifier', dash: '4 2' },
+              };
+
+              const classKeys = ['medalist', 'finalist', 'semiFinalist', 'qualifier'];
+
+              // For throws, compute weight transition points
+              const weightTransitions = isThrows ? weightOpts.filter((_, i) => i > 0).map((w, i) => ({
+                age: w.min, from: weightOpts[i].label, to: w.label,
+              })) : [];
+
+              // ── Build chart data with weight-segmented keys for throws ──
+              // For throws: each data point gets keys like "medalist_3kg", "medalist_4kg" etc.
+              // Only the key matching the age's weight category gets a value; others are null.
+              // This creates natural line breaks at weight transitions.
+              // For sprints/hurdles: use the original flat keys.
+              const weightLabels = isThrows ? [...new Set(weightOpts.map(o => o.label))] : [];
+
+              const data = rawData.map(pt => {
+                const row = { age: pt.age, you: pt.you, projected: pt.projected };
+                if (isThrows) {
+                  const wt = getWeightAtAge(pt.age);
+                  classKeys.forEach(ck => {
+                    weightLabels.forEach(wl => {
+                      row[`${ck}_${wl}`] = wl === wt ? pt[ck] : null;
+                    });
+                  });
+                } else {
+                  classKeys.forEach(ck => { row[ck] = pt[ck]; });
+                }
+                return row;
+              });
+
+              // Build the Line components to render
+              const renderLines = () => {
+                if (!isThrows) {
+                  // Sprint / hurdles: one Line per classification
+                  return classKeys.filter(ck => benchmarkLines[ck]).map(ck => (
+                    <Line key={ck} type="monotone" dataKey={ck}
+                      stroke={lineConfig[ck].color} strokeWidth={ck === 'medalist' || ck === 'finalist' ? 2.5 : 2}
+                      strokeDasharray={lineConfig[ck].dash} dot={false} name={lineConfig[ck].label} connectNulls />
+                  ));
+                }
+                // Throws: one Line per classification × weight segment
+                const lines = [];
+                classKeys.filter(ck => benchmarkLines[ck]).forEach(ck => {
+                  weightLabels.forEach((wl, wi) => {
+                    const key = `${ck}_${wl}`;
+                    lines.push(
+                      <Line key={key} type="monotone" dataKey={key}
+                        stroke={lineConfig[ck].color}
+                        strokeWidth={ck === 'medalist' || ck === 'finalist' ? 2.5 : 2}
+                        strokeDasharray={lineConfig[ck].dash} dot={false}
+                        name={wi === 0 ? lineConfig[ck].label : `${lineConfig[ck].label} (${wl})`}
+                        connectNulls={false} />
+                    );
+                  });
+                });
+                return lines;
+              };
+
+              // Custom tooltip formatter that cleans up segmented key names
+              const tooltipFormatter = (v, name) => {
+                if (v === null || v === undefined) return ['—', name];
+                // Strip weight suffix for cleaner tooltip display
+                const cleanName = name.replace(/ \(.*?\)$/, '');
+                return [`${v}${unit}`, cleanName];
+              };
+
               return (
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" style={{color: '#f97316'}} />
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Standards</h3>
+                      <TrendingUp className="w-4 h-4" style={{color: '#f97316'}} />
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Career Benchmarks</h3>
                     </div>
-                    <span className="text-xs font-semibold mono-font" style={{color: metCount === total ? '#10b981' : '#f59e0b'}}>{metCount}/{total} met</span>
                   </div>
-                  <div className="h-1.5 rounded-full mb-4" style={{background: 'rgba(255,255,255,0.06)'}}>
-                    <div className="h-full rounded-full transition-all duration-500" style={{width: `${(metCount / total) * 100}%`, background: metCount === total ? '#10b981' : 'linear-gradient(90deg, #10b981 0%, #f59e0b 100%)'}}></div>
+                  <p className="text-xs text-slate-500 mb-4 landing-font">
+                    Median {isThrows ? 'distances' : 'times'} by Olympic classification at each age. Toggle lines to compare.
+                    {isThrows && ' Lines break at implement weight changes — vertical markers show transitions.'}
+                  </p>
+
+                  {/* Toggle buttons */}
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
+                    {Object.entries(lineConfig).map(([key, cfg]) => (
+                      <button key={key}
+                        onClick={() => setBenchmarkLines(prev => ({...prev, [key]: !prev[key]}))}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold transition-all mono-font"
+                        style={{
+                          background: benchmarkLines[key] ? `${cfg.color}15` : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${benchmarkLines[key] ? `${cfg.color}40` : 'rgba(255,255,255,0.08)'}`,
+                          color: benchmarkLines[key] ? cfg.color : '#475569',
+                          opacity: benchmarkLines[key] ? 1 : 0.6,
+                        }}>
+                        <div className="w-2 h-2 rounded-full" style={{background: benchmarkLines[key] ? cfg.color : '#475569'}}></div>
+                        {cfg.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-1.5">
-                    {analysisResults.standards.map((std, idx) => {
-                      const isNext = idx === lastUnmetIdx;
-                      return (
-                        <div key={idx} className="flex items-center gap-2 sm:gap-3 py-2 px-3 rounded-lg" style={{background: isNext ? 'rgba(249,115,22,0.06)' : std.met ? 'rgba(16,185,129,0.04)' : 'transparent', border: isNext ? '1px solid rgba(249,115,22,0.15)' : '1px solid transparent'}}>
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${std.met ? 'bg-green-500/20' : isNext ? 'bg-orange-500/20' : 'bg-slate-700/50'}`}>
-                            {std.met ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Circle className="w-3 h-3 text-slate-500" />}
-                          </div>
-                          <div className="flex-1 min-w-0 flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mono-font ${
-                              std.tier === 'E1' ? 'bg-yellow-900/30 text-yellow-400' : std.tier === 'E2' ? 'bg-blue-900/30 text-blue-400' : std.tier === 'E3' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700/40 text-slate-500'
-                            }`}>{std.tier}</span>
-                            <span className={`text-xs sm:text-sm truncate landing-font ${std.met ? 'text-slate-300' : 'text-slate-400'}`}>{std.label}</span>
-                          </div>
-                          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                            <span className="text-xs sm:text-sm font-semibold text-white mono-font">{std.time}{unit}</span>
-                            <span className={`text-[10px] sm:text-xs font-semibold mono-font ${std.met ? 'text-green-400' : isNext ? 'text-orange-400' : 'text-slate-500'}`}>
-                              {std.met ? `${isThrows ? '+' : '-'}${Math.abs(std.gap).toFixed(2)}` : `${Math.abs(std.gap).toFixed(2)} to go`}
-                            </span>
-                          </div>
-                          {isNext && <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider hidden sm:block">Next</span>}
-                        </div>
-                      );
-                    })}
+
+                  {/* Chart */}
+                  <ResponsiveContainer width="100%" height={320}>
+                    <ComposedChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis
+                        dataKey="age"
+                        label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#64748b', fontSize: 11 }}
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                      />
+                      <YAxis
+                        label={{ value: isThrows ? 'Distance (m)' : 'Time (s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#64748b', fontSize: 11 }}
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                        reversed={!isThrows}
+                        domain={['auto', 'auto']}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e2e8f0', fontSize: '12px' }}
+                        formatter={tooltipFormatter}
+                        labelFormatter={(age) => {
+                          const w = isThrows ? getWeightAtAge(age) : null;
+                          return `Age ${age}${w ? ` (${w})` : ''}`;
+                        }}
+                        itemSorter={(item) => -item.value}
+                      />
+
+                      {/* Weight transition markers for throws */}
+                      {isThrows && weightTransitions.map((t, i) => (
+                        <ReferenceLine key={`wt-${i}`} x={t.age} stroke="#a78bfa" strokeDasharray="4 2" strokeWidth={1}
+                          label={{ value: t.to, position: 'top', fill: '#a78bfa', fontSize: 9 }} />
+                      ))}
+
+                      {/* Classification lines (segmented by weight for throws) */}
+                      {renderLines()}
+
+                      {/* Athlete dot */}
+                      <ReferenceDot x={userAge} y={userPB} r={7} fill="#f97316" stroke="#fff" strokeWidth={2} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 pt-3" style={{borderTop: '1px solid rgba(255,255,255,0.06)'}}>
+                    {Object.entries(lineConfig).filter(([key]) => benchmarkLines[key]).map(([key, cfg]) => (
+                      <div key={key} className="flex items-center gap-1.5">
+                        <div className="w-4 h-0.5 rounded" style={{background: cfg.color, borderBottom: cfg.dash ? `2px dashed ${cfg.color}` : 'none'}}></div>
+                        <span className="text-[10px] text-slate-500 mono-font">{cfg.label}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff'}}></div>
+                      <span className="text-[10px] text-slate-500 mono-font">You ({analysisResults.personalBest}{unit})</span>
+                    </div>
                   </div>
                 </div>
               );
@@ -3572,38 +4439,6 @@ export default function BnchMrkdApp() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── CHAMPIONSHIP DATA ── */}
-            {analysisResults.championshipData && (
-              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Award className="w-4 h-4" style={{color: '#f97316'}} />
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Championship Benchmarks</h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    { label: 'Olympic Gold', time: analysisResults.championshipData.gold, color: 'text-yellow-400', ring: 'ring-yellow-500/30' },
-                    { label: 'Olympic Silver', time: analysisResults.championshipData.silver, color: 'text-gray-300', ring: 'ring-gray-400/30' },
-                    { label: 'Olympic Bronze', time: analysisResults.championshipData.bronze, color: 'text-amber-500', ring: 'ring-amber-500/30' },
-                    { label: 'Olympic MQT', time: analysisResults.championshipData.mqt, color: 'text-red-400', ring: 'ring-red-500/30' },
-                    { label: 'Asian Champs Gold', time: analysisResults.championshipData.asianGold, color: 'text-blue-400', ring: 'ring-blue-500/30' },
-                    { label: 'World U20 Gold', time: analysisResults.championshipData.u20Gold, color: 'text-purple-400', ring: 'ring-purple-500/30' },
-                  ].map((item, idx) => {
-                    const gap = isThrowsDiscipline(analysisResults.discipline) ? (item.time - analysisResults.personalBest) : (analysisResults.personalBest - item.time);
-                    const met = isThrowsDiscipline(analysisResults.discipline) ? (gap >= 0) : (gap <= 0);
-                    return (
-                      <div key={idx} className={`rounded-xl p-3 text-center border ${met ? 'bg-green-900/15 border-green-800/40' : 'bg-slate-700/30 border-slate-700/50'}`}>
-                        <p className="text-xs text-slate-400 mb-1">{item.label}</p>
-                        <p className={`text-lg font-bold ${item.color}`}>{item.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-                        <p className={`text-xs font-semibold mt-0.5 ${met ? 'text-green-400' : 'text-slate-500'}`}>
-                          {isThrowsDiscipline(analysisResults.discipline) ? (met ? `${Math.abs(gap).toFixed(2)}m over` : `${Math.abs(gap).toFixed(2)}m to gain`) : (met ? `${Math.abs(gap).toFixed(2)}s under` : `${Math.abs(gap).toFixed(2)}s to go`)}
-                        </p>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
             )}
@@ -3664,7 +4499,11 @@ export default function BnchMrkdApp() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{color: '#f59e0b'}} />
                 <p className="text-xs text-slate-500 leading-relaxed landing-font">
-                  Quick Analysis is based on a single time at a single age. For trajectory modelling, rate of development tracking, and full career analysis, use the <button onClick={() => setCurrentView('input')} className="text-orange-400 hover:underline font-medium">Manual Entry</button> or <button onClick={() => setCurrentView('input')} className="text-orange-400 hover:underline font-medium">URL Import</button> methods with full race history.
+                  Quick Analysis is based on a single time at a single age. For trajectory modelling, rate of development tracking, and full career analysis, {user ? (
+                    <>use the <button onClick={() => { setActiveTab('manual'); setCurrentView('input'); }} className="text-orange-400 hover:underline font-medium">Manual Entry</button> or <button onClick={() => { setActiveTab('url'); setCurrentView('input'); }} className="text-orange-400 hover:underline font-medium">URL Import</button> methods with full race history.</>
+                  ) : (
+                    <><button onClick={onSignUp} className="text-emerald-400 hover:underline font-medium">sign up for free</button> to access Manual Entry and URL Import with full race history.</>
+                  )}
                 </p>
               </div>
             </div>
@@ -3929,48 +4768,73 @@ export default function BnchMrkdApp() {
               );
             })()}
 
-            {/* ── STANDARDS TRACKER — compact milestone view ── */}
+            {/* ── COMPETITION STANDARDS (full dashboard version uses same component as quickResults) ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
-              const metCount = analysisResults.standards.filter(s => s.met).length;
-              const total = analysisResults.standards.length;
               const isThrows = isThrowsDiscipline(analysisResults.discipline);
               const unit = isThrows ? 'm' : 's';
-              const lastUnmetIdx = analysisResults.standards.map((s, i) => !s.met ? i : -1).filter(i => i >= 0).pop();
+              const pb = parseFloat(analysisResults.personalBest);
+              const eventCode = getEventCode(analysisResults.discipline, analysisResults.gender);
+              const compData = COMPETITION_STANDARDS[eventCode];
+              const filteredStandards = standardsTier === 'all'
+                ? analysisResults.standards
+                : analysisResults.standards.filter(s => s.compTier === standardsTier);
+              const metCount = filteredStandards.filter(s => s.met).length;
+              const total = filteredStandards.length;
+              const fmtMark = (v) => v === null || v === undefined ? '—' : isThrows ? v.toFixed(2) + 'm' : v.toFixed(2) + 's';
+              const beatsMark = (mark) => isThrows ? pb >= mark : pb <= mark;
+              const tierCounts = { all: analysisResults.standards.length, world: analysisResults.standards.filter(s => s.compTier === 'world').length, regional: analysisResults.standards.filter(s => s.compTier === 'regional').length, development: analysisResults.standards.filter(s => s.compTier === 'development').length };
               return (
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" style={{color: '#f97316'}} />
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Standards</h3>
+                      <Flag className="w-4 h-4" style={{color: '#f97316'}} />
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Competition Standards</h3>
                     </div>
-                    <span className="text-xs font-semibold mono-font" style={{color: metCount === total ? '#10b981' : '#f59e0b'}}>{metCount}/{total} met</span>
+                    {compData?.wr && (
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.15)'}}>
+                        <span className="text-[9px] font-bold text-red-400 mono-font">WR</span>
+                        <span className="text-xs font-bold text-red-300 mono-font">{fmtMark(compData.wr.mark)}</span>
+                      </div>
+                    )}
                   </div>
-                  {/* Progress bar */}
-                  <div className="h-1.5 rounded-full mb-4" style={{background: 'rgba(255,255,255,0.06)'}}>
-                    <div className="h-full rounded-full transition-all duration-500" style={{width: `${(metCount / total) * 100}%`, background: metCount === total ? '#10b981' : 'linear-gradient(90deg, #10b981 0%, #f59e0b 100%)'}}></div>
+                  <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+                    {[
+                      { key: 'all', label: 'All', color: '#f97316' },
+                      { key: 'world', label: 'World', color: '#FFD700', icon: '🏅' },
+                      { key: 'regional', label: 'Regional', color: '#E84545', icon: '🌏' },
+                      { key: 'development', label: 'Development', color: '#A259FF', icon: '🎓' },
+                    ].filter(t => t.key === 'all' || tierCounts[t.key] > 0).map(t => (
+                      <button key={t.key} onClick={() => setStandardsTier(t.key)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold mono-font transition-all flex-shrink-0"
+                        style={{
+                          background: standardsTier === t.key ? `${t.color}18` : 'rgba(255,255,255,0.03)',
+                          border: standardsTier === t.key ? `1px solid ${t.color}40` : '1px solid rgba(255,255,255,0.06)',
+                          color: standardsTier === t.key ? t.color : '#64748b',
+                        }}
+                      >
+                        {t.icon && <span className="text-[10px]">{t.icon}</span>}
+                        {t.label}
+                      </button>
+                    ))}
                   </div>
-                  {/* Compact standard rows */}
-                  <div className="space-y-1.5">
-                    {analysisResults.standards.map((std, idx) => {
-                      const isNext = idx === lastUnmetIdx;
+                  <div className="space-y-2">
+                    {filteredStandards.map((std, idx) => {
+                      const positionLabel = beatsMark(std.gold) ? 'Gold Level' : beatsMark(std.bronze) ? 'Medal Zone' : beatsMark(std.p8) ? 'Finalist' : 'Below';
+                      const positionColor = beatsMark(std.gold) ? '#FFD700' : beatsMark(std.bronze) ? '#CD7F32' : beatsMark(std.p8) ? '#10b981' : '#64748b';
                       return (
-                        <div key={idx} className="flex items-center gap-2 sm:gap-3 py-2 px-3 rounded-lg" style={{background: isNext ? 'rgba(249,115,22,0.06)' : std.met ? 'rgba(16,185,129,0.04)' : 'transparent', border: isNext ? '1px solid rgba(249,115,22,0.15)' : '1px solid transparent'}}>
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${std.met ? 'bg-green-500/20' : isNext ? 'bg-orange-500/20' : 'bg-slate-700/50'}`}>
-                            {std.met ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Circle className="w-3 h-3 text-slate-500" />}
+                        <div key={idx} className="flex items-center gap-3 py-2 px-3 rounded-lg" style={{background: 'rgba(255,255,255,0.02)', borderLeft: `3px solid ${std.color}`}}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-semibold text-white landing-font">{std.label}</span>
+                              {std.ageGroup === 'u20' && <span className="text-[9px] font-bold px-1 py-0.5 rounded mono-font bg-purple-500/15 text-purple-400">U20</span>}
+                            </div>
+                            <div className="flex items-center gap-3 text-[10px] mono-font text-slate-500">
+                              <span><span style={{color: '#FFD700'}}>G</span> {fmtMark(std.gold)}</span>
+                              <span><span style={{color: '#CD7F32'}}>B</span> {fmtMark(std.bronze)}</span>
+                              <span><span style={{color: '#78909C'}}>8</span> {fmtMark(std.p8)}</span>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0 flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mono-font ${
-                              std.tier === 'E1' ? 'bg-yellow-900/30 text-yellow-400' : std.tier === 'E2' ? 'bg-blue-900/30 text-blue-400' : std.tier === 'E3' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700/40 text-slate-500'
-                            }`}>{std.tier}</span>
-                            <span className={`text-xs sm:text-sm truncate landing-font ${std.met ? 'text-slate-300' : 'text-slate-400'}`}>{std.label}</span>
-                          </div>
-                          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                            <span className="text-xs sm:text-sm font-semibold text-white mono-font">{std.time}{unit}</span>
-                            <span className={`text-[10px] sm:text-xs font-semibold mono-font ${std.met ? 'text-green-400' : isNext ? 'text-orange-400' : 'text-slate-500'}`}>
-                              {std.met ? `${isThrows ? '+' : '-'}${Math.abs(std.gap).toFixed(2)}` : `${Math.abs(std.gap).toFixed(2)} ${isThrows ? 'to go' : 'to go'}`}
-                            </span>
-                          </div>
-                          {isNext && <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider hidden sm:block">Next</span>}
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded mono-font" style={{background: `${positionColor}18`, color: positionColor}}>{positionLabel}</span>
                         </div>
                       );
                     })}
@@ -4492,45 +5356,6 @@ export default function BnchMrkdApp() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── CHAMPIONSHIP DATA (in Benchmarks tab) ── */}
-            {analysisResults.championshipData && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Award className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Championship Data
-                </h3>
-                <div className="space-y-2">
-                  {[
-                    { label: 'Olympic Gold', time: analysisResults.championshipData.gold, color: 'bg-yellow-400' },
-                    { label: 'Olympic Silver', time: analysisResults.championshipData.silver, color: 'bg-gray-400' },
-                    { label: 'Olympic Bronze', time: analysisResults.championshipData.bronze, color: 'bg-amber-600' },
-                    { label: 'Olympic MQT', time: analysisResults.championshipData.mqt, color: 'bg-red-500' },
-                    { label: 'Asian Champs Gold', time: analysisResults.championshipData.asianGold, color: 'bg-blue-500' },
-                    { label: 'World U20 Gold', time: analysisResults.championshipData.u20Gold, color: 'bg-purple-500' },
-                  ].map((item, idx) => {
-                    const gap = isThrowsDiscipline(analysisResults.discipline) ? (item.time - analysisResults.personalBest) : (analysisResults.personalBest - item.time);
-                    const met = isThrowsDiscipline(analysisResults.discipline) ? (gap >= 0) : (gap <= 0);
-                    return (
-                      <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-700">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-2.5 h-2.5 rounded-full ${item.color}`}></div>
-                          <span className="text-sm font-medium text-slate-300">{item.label}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-white">{item.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            met ? 'bg-green-900/40 text-green-700' : 'bg-slate-700/60 text-slate-400'
-                          }`}>
-                            {isThrowsDiscipline(analysisResults.discipline) ? (met ? `${Math.abs(gap).toFixed(2)}m over` : `${Math.abs(gap).toFixed(2)}m to gain`) : (met ? `${Math.abs(gap).toFixed(2)}s under` : `${Math.abs(gap).toFixed(2)}s to go`)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
             )}
