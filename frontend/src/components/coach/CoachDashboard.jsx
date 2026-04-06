@@ -142,29 +142,36 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     }
 
     setUrlLoading(true)
-    setUrlProgress('Scraping athlete profile — this can take up to 60 seconds...')
+    setUrlProgress('Connecting to scraper...')
     setUrlError('')
 
     try {
-      // Use the /analyze/url endpoint (non-SSE, returns JSON)
-      // Add 120s timeout — scraping can take a while but shouldn't exceed 2 min
+      // 90s timeout for the scrape+analysis
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 120000)
+      const timeout = setTimeout(() => controller.abort(), 90000)
 
-      const response = await fetch(`${API_BASE}/api/v1/analyze/url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeout))
+      let response
+      try {
+        setUrlProgress('Scraping athlete profile — this can take up to 60 seconds...')
+        response = await fetch(`${API_BASE}/api/v1/analyze/url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timeout)
+      }
+
+      setUrlProgress('Got response, reading data...')
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}))
         throw new Error(errData.detail || `Server error ${response.status}`)
       }
 
-      setUrlProgress('Processing athlete data...')
       const result = await response.json()
+      setUrlProgress('Parsing athlete info...')
 
       if (!result.success) throw new Error('Analysis returned unsuccessful')
 
@@ -201,7 +208,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       const lastRace = sortedRaces[0]
       const lastVal = lastRace?.value || null
 
-      // Compute trend from trajectory if available
+      // Compute trend
       let trend = 'stable'
       if (sortedRaces.length >= 3) {
         const recent = sortedRaces.slice(0, 3).map(r => r.value).filter(Boolean)
@@ -213,7 +220,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         }
       }
 
-      // Insert into Supabase
+      setUrlProgress(`Saving ${athleteName} to roster...`)
+
+      // Insert into Supabase — use insert without .single() to avoid hang on RLS issues
       const newAthlete = {
         coach_id: user.id,
         name: athleteName,
@@ -232,16 +241,28 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         races: races,
       }
 
-      setUrlProgress('Saving to roster...')
-      const { data: inserted, error: insertErr } = await supabase
+      const { data: insertedArr, error: insertErr } = await supabase
         .from('coach_roster')
         .insert(newAthlete)
         .select()
-        .single()
 
-      if (insertErr) throw insertErr
+      if (insertErr) throw new Error(`Supabase error: ${insertErr.message}`)
 
-      setRoster(prev => [inserted, ...prev])
+      const inserted = insertedArr?.[0]
+      if (!inserted) {
+        // RLS might be blocking — try without RLS by just inserting (no select)
+        const { error: insertErr2 } = await supabase
+          .from('coach_roster')
+          .insert(newAthlete)
+
+        if (insertErr2) throw new Error(`Save failed: ${insertErr2.message}`)
+
+        // Add locally even without the DB returning the row
+        setRoster(prev => [{ ...newAthlete, id: crypto.randomUUID(), created_at: new Date().toISOString() }, ...prev])
+      } else {
+        setRoster(prev => [inserted, ...prev])
+      }
+
       setUrlInput('')
       setUrlProgress('')
       setUrlLoading(false)
@@ -250,7 +271,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     } catch (err) {
       console.error('URL import failed:', err)
       const msg = err.name === 'AbortError'
-        ? 'Request timed out after 2 minutes — the scraper may be overloaded. Try again.'
+        ? 'Request timed out — the scraper may be overloaded. Try again.'
         : (err.message || 'Import failed — check the URL and try again')
       setUrlError(msg)
       setUrlLoading(false)
