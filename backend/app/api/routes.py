@@ -19,6 +19,8 @@ from app.models.schemas import (
     DisciplineInfo,
     ManualAnalysisRequest,
     QuickAnalysisRequest,
+    RaceInput,
+    ScrapedAthleteData,
     URLAnalysisRequest,
 )
 from app.services.analysis_service import AnalysisService
@@ -142,20 +144,87 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
                 detail="URL must be a World Athletics profile (worldathletics.org/athlete/...)",
             )
 
-        scraped_data = await world_athletics_scraper.scrape(request.url)
+        raw = await world_athletics_scraper.scrape(request.url)
 
-        discipline = request.discipline or scraped_data.discipline
-        if not discipline:
+        # Scraper returns a dict with "disciplines": { "100m": [...], "200m": [...] }
+        # Pick the requested discipline or the one with the most races
+        disciplines_dict = raw.get("disciplines", {})
+        if not disciplines_dict:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Could not determine discipline from URL. Please provide discipline parameter.",
+                detail="No competition results found for this athlete",
             )
+
+        discipline = request.discipline
+        if not discipline:
+            # Auto-pick: prefer supported disciplines, then most races
+            supported_discs = {d: races for d, races in disciplines_dict.items() if d in SUPPORTED_DISCIPLINES}
+            if supported_discs:
+                discipline = max(supported_discs, key=lambda d: len(supported_discs[d]))
+            else:
+                discipline = max(disciplines_dict, key=lambda d: len(disciplines_dict[d]))
 
         if discipline not in SUPPORTED_DISCIPLINES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported discipline: {discipline}",
+                detail=f"Unsupported discipline: {discipline}. Found: {', '.join(disciplines_dict.keys())}",
             )
+
+        raw_races = disciplines_dict.get(discipline, [])
+        if not raw_races:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"No races found for {discipline}. Available: {', '.join(disciplines_dict.keys())}",
+            )
+
+        # Convert raw race dicts to RaceInput objects
+        from datetime import date as date_type
+        race_inputs = []
+        for r in raw_races:
+            race_date = r.get("date")
+            if isinstance(race_date, str):
+                try:
+                    race_date = date_type.fromisoformat(race_date)
+                except ValueError:
+                    continue
+            elif not isinstance(race_date, date_type):
+                continue
+
+            time_val = r.get("time") or r.get("mark") or r.get("distance")
+            if not time_val or not isinstance(time_val, (int, float)) or time_val <= 0:
+                continue
+
+            race_inputs.append(RaceInput(
+                race_date=race_date,
+                time_seconds=float(time_val),
+                wind_mps=r.get("wind"),
+                competition=r.get("competition"),
+                wind_legal=r.get("wind_legal", True),
+                implement_weight_kg=r.get("implement_weight_kg"),
+            ))
+
+        if not race_inputs:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Could not parse any valid races for {discipline}",
+            )
+
+        # Build ScrapedAthleteData
+        dob_str = raw.get("dob")
+        dob = None
+        if dob_str:
+            try:
+                dob = date_type.fromisoformat(dob_str) if isinstance(dob_str, str) else dob_str
+            except ValueError:
+                pass
+
+        scraped_data = ScrapedAthleteData(
+            athlete_name=raw.get("athlete_name", "Unknown"),
+            discipline=discipline,
+            gender=raw.get("gender", "M"),
+            date_of_birth=dob,
+            races=race_inputs,
+        )
 
         result = await analysis_service.analyze(
             scraped_data=scraped_data,
@@ -163,12 +232,24 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
             gender=scraped_data.gender,
         )
 
+        # Include raw scraped info in response for the dashboard
+        result["_scraped"] = {
+            "athlete_name": raw.get("athlete_name"),
+            "gender": raw.get("gender"),
+            "dob": raw.get("dob"),
+            "nationality": raw.get("nationality"),
+            "discipline": discipline,
+            "total_races": len(race_inputs),
+            "all_disciplines": list(disciplines_dict.keys()),
+            "races": [{"date": str(r.race_date), "value": r.time_seconds, "wind": r.wind_mps, "competition": r.competition, "implement_weight_kg": r.implement_weight_kg} for r in race_inputs],
+        }
+
         return AnalysisResponse(
             success=True,
             data=result,
             source="world_athletics",
             athlete_name=scraped_data.athlete_name,
-            scraped_races=len(scraped_data.races),
+            scraped_races=len(race_inputs),
         )
 
     except HTTPException:

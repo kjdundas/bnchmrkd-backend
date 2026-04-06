@@ -165,31 +165,31 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       const analysisData = result.data || {}
       const athleteName = result.athlete_name || 'Unknown Athlete'
-      const totalRaces = result.scraped_races || 0
 
-      // Extract data from the analysis response
-      const discipline = analysisData.discipline || analysisData.event || null
-      const gender = analysisData.gender || null
+      // Use the _scraped data embedded in the response (raw scraped info)
+      const scraped = analysisData._scraped || {}
+      const discipline = scraped.discipline || analysisData.discipline || null
+      const gender = scraped.gender || analysisData.gender || null
       const isThrows = isThrowsDiscipline(discipline)
+      const dob = scraped.dob || null
 
-      // Extract PB from analysis data
-      const pbValue = analysisData.personal_best?.time || analysisData.personal_best?.mark || analysisData.personal_best || null
-      const pbNumeric = typeof pbValue === 'number' ? pbValue : parseFloat(pbValue) || null
+      // Get races from the scraped data
+      const races = (scraped.races || []).map(r => ({
+        date: r.date || null,
+        value: r.value || null,
+        competition: r.competition || null,
+        wind: r.wind || null,
+        implement_weight_kg: r.implement_weight_kg || null,
+      }))
 
-      // Extract DOB / age
-      const dob = analysisData.date_of_birth || analysisData.dob || null
-      const currentAge = analysisData.current_age || analysisData.age || (dob ? calcAge(dob) : null)
-
-      // Extract race history from analysis if available
-      const raceHistory = analysisData.race_history || analysisData.races || analysisData.career_data || []
-      const races = Array.isArray(raceHistory) ? raceHistory.map(r => ({
-        date: r.date || r.race_date || null,
-        value: r.time || r.time_seconds || r.mark || r.distance || r.value || null,
-        competition: r.competition || r.event || null,
-        venue: r.venue || null,
-        wind: r.wind || r.wind_mps || null,
-        age: r.age || r.age_years || null,
-      })) : []
+      // Compute PB from races
+      let pbNumeric = null
+      for (const race of races) {
+        if (race.value == null) continue
+        if (pbNumeric == null || (isThrows ? race.value > pbNumeric : race.value < pbNumeric)) {
+          pbNumeric = race.value
+        }
+      }
 
       // Get last result
       const sortedRaces = races.filter(r => r.date && r.value).sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -215,7 +215,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         dob: dob || null,
         gender: gender,
         discipline: discipline,
-        nationality: analysisData.nationality || null,
+        nationality: scraped.nationality || null,
         pb: pbNumeric ? formatMark(pbNumeric, discipline) : null,
         pb_value: pbNumeric,
         last_result: lastVal ? formatMark(lastVal, discipline) : null,
