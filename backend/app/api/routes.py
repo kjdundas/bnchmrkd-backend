@@ -218,6 +218,21 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
             except ValueError:
                 pass
 
+        # Fallback: if WA didn't expose birthDate, estimate from earliest race
+        # (assume athlete was ~20 at their first recorded senior competition).
+        # The frontend should surface this as "estimated DOB" so the coach can correct.
+        dob_estimated = False
+        if dob is None and race_inputs:
+            earliest = min(r.race_date for r in race_inputs)
+            try:
+                dob = earliest.replace(year=earliest.year - 20)
+                dob_estimated = True
+                print(f"  [scraper] DOB missing from WA — estimated as {dob} (earliest race - 20y)")
+            except ValueError:
+                # Handles Feb 29 edge case
+                dob = date_type(earliest.year - 20, earliest.month, 1)
+                dob_estimated = True
+
         scraped_data = ScrapedAthleteData(
             athlete_name=raw.get("athlete_name", "Unknown"),
             discipline=discipline,
@@ -267,7 +282,9 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
         result["_scraped"] = {
             "athlete_name": raw.get("athlete_name"),
             "gender": raw.get("gender"),
-            "dob": raw.get("dob"),
+            "gender_estimated": raw.get("gender") is None,
+            "dob": dob.isoformat() if dob else raw.get("dob"),
+            "dob_estimated": dob_estimated,
             "nationality": raw.get("nationality"),
             "discipline": discipline,
             "total_races": len(race_inputs),
