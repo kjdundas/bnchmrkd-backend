@@ -277,7 +277,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       const discipline = scraped.discipline || analysisData.discipline || null
       const gender = scraped.gender || analysisData.gender || null
       const isThrows = isThrowsDiscipline(discipline)
-      const dob = scraped.dob || null
+      let dob = scraped.dob || null
+      const dobEstimated = scraped.dob_estimated === true
+      const genderEstimated = scraped.gender_estimated === true
 
       // Get races from the scraped data
       const races = (scraped.races || []).map(r => ({
@@ -314,15 +316,30 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         }
       }
 
-      // ── Confirm gender with the user (scraper can misdetect) ──
-      const detectedLabel = gender === 'F' ? 'Female' : gender === 'M' ? 'Male' : 'Unknown'
-      const confirmMsg =
-        `Scraper detected gender: ${detectedLabel}\n\n` +
-        `Click OK if this is correct.\n` +
-        `Click Cancel to switch to ${gender === 'F' ? 'Male' : 'Female'}.`
-      const confirmedGender = window.confirm(confirmMsg)
-        ? (gender === 'F' ? 'F' : 'M')
-        : (gender === 'F' ? 'M' : 'F')
+      // ── Confirm gender with the user ──
+      // If the scraper could NOT read gender from WA (genderEstimated=true),
+      // prompt the coach explicitly. Otherwise trust the scraper silently.
+      let confirmedGender = gender
+      if (genderEstimated || !gender) {
+        const msg =
+          `⚠ World Athletics didn't expose this athlete's gender.\n\n` +
+          `Click OK for Male, Cancel for Female.`
+        confirmedGender = window.confirm(msg) ? 'M' : 'F'
+      }
+
+      // ── Confirm DOB with the user if it was estimated ──
+      // If the scraper couldn't read birthDate from WA, backend estimated
+      // (earliest race year - 20). Give coach a chance to correct it.
+      if (dobEstimated && dob) {
+        const estMsg =
+          `⚠ World Athletics didn't expose this athlete's date of birth.\n\n` +
+          `We've estimated it as ${dob} (assuming they were ~20 at their first recorded race).\n\n` +
+          `Enter the correct DOB in YYYY-MM-DD format, or leave as-is to keep the estimate:`
+        const entered = window.prompt(estMsg, dob)
+        if (entered && /^\d{4}-\d{2}-\d{2}$/.test(entered.trim())) {
+          dob = entered.trim()
+        }
+      }
 
       setUrlProgress(`Saving ${athleteName} to roster...`)
 
