@@ -48,6 +48,22 @@ export default function Onboarding({ onSkip }) {
   const [heightCm, setHeightCm] = useState('')
   const [weightKg, setWeightKg] = useState('')
 
+  // Consent
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [parentalConsent, setParentalConsent] = useState(false)
+
+  // Age helper for minor detection
+  const getAge = (dobStr) => {
+    if (!dobStr) return null
+    const dob = new Date(dobStr)
+    if (isNaN(dob.getTime())) return null
+    const diffMs = Date.now() - dob.getTime()
+    return Math.floor(diffMs / (365.25 * 24 * 3600 * 1000))
+  }
+  const athleteAge = accountType === 'athlete' ? getAge(dateOfBirth) : null
+  const isMinor = athleteAge !== null && athleteAge < 18
+  const isUnder13 = athleteAge !== null && athleteAge < 13
+
   const filteredDisciplines = gender
     ? DISCIPLINE_OPTIONS.filter(d => d.gender === gender)
     : DISCIPLINE_OPTIONS
@@ -327,6 +343,55 @@ export default function Onboarding({ onSkip }) {
             </div>
           )}
 
+          {/* Under-13 block */}
+          {isUnder13 && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <p className="text-red-400 text-sm font-semibold">We cannot create accounts for users under 13.</p>
+              <p className="text-red-400/80 text-xs mt-1">
+                bnchmrkd. is not directed at children under 13. Please have a parent or coach create an account instead.
+              </p>
+            </div>
+          )}
+
+          {/* Minor (13–17) parental consent notice */}
+          {isMinor && !isUnder13 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 space-y-2">
+              <p className="text-amber-400 text-sm font-semibold">You are under 18.</p>
+              <p className="text-amber-400/90 text-xs">
+                To use bnchmrkd., a parent or legal guardian must review and accept the Terms of Service and Privacy
+                Policy on your behalf.
+              </p>
+              <label className="flex items-start gap-2 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={parentalConsent}
+                  onChange={(e) => setParentalConsent(e.target.checked)}
+                  className="mt-0.5 accent-emerald-500"
+                />
+                <span className="text-[11px] text-amber-300 leading-relaxed">
+                  I confirm that I am the parent or legal guardian of this athlete and I consent to their use of
+                  bnchmrkd. on the terms described in the Privacy Policy and Terms of Service.
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* Terms & Privacy consent (required for everyone) */}
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 accent-emerald-500"
+            />
+            <span className="text-[11px] text-gray-400 leading-relaxed">
+              I have read and agree to the{' '}
+              <a href="/?view=terms" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/?view=privacy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">Privacy Policy</a>.
+            </span>
+          </label>
+
           {/* Error */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
@@ -337,7 +402,15 @@ export default function Onboarding({ onSkip }) {
           {/* Submit */}
           <button
             onClick={handleComplete}
-            disabled={loading || !fullName || !gender || (accountType === 'athlete' && primaryEvents.length === 0)}
+            disabled={
+              loading ||
+              !fullName ||
+              !gender ||
+              (accountType === 'athlete' && primaryEvents.length === 0) ||
+              !acceptedTerms ||
+              isUnder13 ||
+              (isMinor && !parentalConsent)
+            }
             className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg font-medium transition-colors"
           >
             {loading ? (

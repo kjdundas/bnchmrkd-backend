@@ -222,6 +222,14 @@ export default function AuthPage({ onBack }) {
               )}
             </button>
           </form>
+
+          {/* Legal footer */}
+          <div className="mt-6 text-center text-[10px] text-gray-600">
+            By creating an account you agree to our{' '}
+            <a href="/?view=terms" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">Terms</a>
+            {' '}and{' '}
+            <a href="/?view=privacy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">Privacy Policy</a>.
+          </div>
         </div>
       </div>
     </div>

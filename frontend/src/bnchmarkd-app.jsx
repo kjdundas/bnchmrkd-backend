@@ -10,6 +10,8 @@ import {
   Percent, Layers, BarChart2, CheckCircle2, Circle, Flag, Database, Info, ArrowRight, ChevronLeft,
   Search, User, Globe, Medal, Lock
 } from 'lucide-react';
+import PrivacyPolicy from './components/legal/PrivacyPolicy';
+import TermsOfService from './components/legal/TermsOfService';
 
 export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
@@ -40,7 +42,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     return match ? match.kg : (opts.length ? opts[opts.length - 1].kg : null);
   };
 
-  const [currentView, setCurrentView] = useState('landing');
+  const [currentView, setCurrentView] = useState(() => {
+    // Deep-link support: ?view=privacy or ?view=terms
+    if (typeof window !== 'undefined') {
+      const v = new URLSearchParams(window.location.search).get('view');
+      if (v === 'privacy' || v === 'terms' || v === 'about') return v;
+    }
+    return 'landing';
+  });
   const [activeTab, setActiveTab] = useState('manual');
   const [disciplineCategory, setDisciplineCategory] = useState('sprints'); // 'sprints' | 'throws'
   const isThrowsMode = disciplineCategory === 'throws';
@@ -2945,8 +2954,27 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             <button onClick={() => setCurrentView('about')} className="text-xs text-slate-600 hover:text-orange-400 transition-colors mt-1 landing-font underline decoration-slate-700 underline-offset-2">
               View methodology
             </button>
+            <div className="flex items-center justify-center gap-4 mt-4 text-[10px] text-slate-700 landing-font">
+              <button onClick={() => setCurrentView('privacy')} className="hover:text-orange-400 transition-colors">Privacy Policy</button>
+              <span className="text-slate-800">·</span>
+              <button onClick={() => setCurrentView('terms')} className="hover:text-orange-400 transition-colors">Terms of Service</button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* PRIVACY POLICY                                                  */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {currentView === 'privacy' && (
+        <PrivacyPolicy onBack={() => setCurrentView('landing')} />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* TERMS OF SERVICE                                                */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {currentView === 'terms' && (
+        <TermsOfService onBack={() => setCurrentView('landing')} />
       )}
 
       {/* ═══════════════════════════════════════════════════════════════ */}

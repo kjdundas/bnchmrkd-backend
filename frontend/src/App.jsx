@@ -14,8 +14,13 @@ export default function App() {
   const [autoRouted, setAutoRouted] = useState(false)
 
   // Auto-route coaches directly to their dashboard after login
+  // — but not if they've deep-linked to a legal page (?view=privacy/terms/about)
   useEffect(() => {
-    if (!autoRouted && user && profile?.account_type === 'coach') {
+    const deepLink = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('view')
+      : null
+    const isLegalDeepLink = deepLink === 'privacy' || deepLink === 'terms' || deepLink === 'about'
+    if (!autoRouted && user && profile?.account_type === 'coach' && !isLegalDeepLink) {
       setShowDashboard(true)
       setAutoRouted(true)
     }
