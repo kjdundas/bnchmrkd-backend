@@ -220,6 +220,16 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         }
       }
 
+      // ── Confirm gender with the user (scraper can misdetect) ──
+      const detectedLabel = gender === 'F' ? 'Female' : gender === 'M' ? 'Male' : 'Unknown'
+      const confirmMsg =
+        `Scraper detected gender: ${detectedLabel}\n\n` +
+        `Click OK if this is correct.\n` +
+        `Click Cancel to switch to ${gender === 'F' ? 'Male' : 'Female'}.`
+      const confirmedGender = window.confirm(confirmMsg)
+        ? (gender === 'F' ? 'F' : 'M')
+        : (gender === 'F' ? 'M' : 'F')
+
       setUrlProgress(`Saving ${athleteName} to roster...`)
 
       const disciplinesData = scraped.disciplines_data || { [discipline]: races }
@@ -229,7 +239,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         coach_id: user.id,
         name: athleteName,
         dob: dob || null,
-        gender: gender,
+        gender: confirmedGender,
         discipline: discipline,
         disciplines: supportedDisciplines,
         disciplines_data: disciplinesData,
