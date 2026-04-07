@@ -255,6 +255,6 @@ class ScrapedAthleteData(BaseModel):
 
     athlete_name: str = Field(..., description="Full name of the athlete")
     discipline: Optional[str] = Field(None, description="Event code")
-    gender: str = Field(..., description="Gender identifier")
+    gender: Optional[str] = Field(None, description="Gender identifier ('M'/'F'), None if unknown")
     date_of_birth: Optional[date] = Field(None, description="Date of birth")
     races: list[RaceInput] = Field(..., description="List of race results")

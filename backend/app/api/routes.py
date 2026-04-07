@@ -221,7 +221,7 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
         scraped_data = ScrapedAthleteData(
             athlete_name=raw.get("athlete_name", "Unknown"),
             discipline=discipline,
-            gender=raw.get("gender", "M"),
+            gender=(raw.get("gender") or "M"),  # fall back to 'M' when scraper returns None
             date_of_birth=dob,
             races=race_inputs,
         )
