@@ -22,21 +22,30 @@ export default function App() {
       ? new URLSearchParams(window.location.search).get('view')
       : null
     const isLegalDeepLink = deepLink === 'privacy' || deepLink === 'terms' || deepLink === 'about'
-    if (!autoRouted && user && !isLegalDeepLink) {
-      if (!profile) {
-        // Brand new user (or profile row missing) → force onboarding
-        setShowOnboarding(true)
+    if (user && !isLegalDeepLink) {
+      // Onboarding just completed → profile now exists, route to dashboard
+      if (showOnboarding && profile) {
+        setShowOnboarding(false)
+        if (profile.account_type === 'coach') setShowDashboard(true)
+        else if (profile.account_type === 'athlete') setShowAthleteDashboard(true)
         setAutoRouted(true)
-      } else if (profile.account_type === 'coach') {
-        setShowDashboard(true)
-        setAutoRouted(true)
-      } else if (profile.account_type === 'athlete') {
-        setShowAthleteDashboard(true)
-        setAutoRouted(true)
+        return
+      }
+      if (!autoRouted) {
+        if (!profile) {
+          setShowOnboarding(true)
+          setAutoRouted(true)
+        } else if (profile.account_type === 'coach') {
+          setShowDashboard(true)
+          setAutoRouted(true)
+        } else if (profile.account_type === 'athlete') {
+          setShowAthleteDashboard(true)
+          setAutoRouted(true)
+        }
       }
     }
     if (!user) { setAutoRouted(false); setShowOnboarding(false) }
-  }, [user, profile, autoRouted])
+  }, [user, profile, autoRouted, showOnboarding])
 
   // Show loading spinner while checking auth state
   if (loading) {
