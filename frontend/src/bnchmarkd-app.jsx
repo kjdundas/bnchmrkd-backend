@@ -2314,13 +2314,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </button>
                 {user ? (
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <button
-                      onClick={onOpenDashboard}
-                      className="text-sm font-semibold text-black px-3 py-1.5 rounded-lg landing-font"
-                      style={{background: '#f97316'}}
-                    >
-                      Dashboard
-                    </button>
+                    {profile?.account_type === 'coach' && (
+                      <button
+                        onClick={onOpenDashboard}
+                        className="text-sm font-semibold text-black px-3 py-1.5 rounded-lg landing-font"
+                        style={{background: '#f97316'}}
+                      >
+                        Dashboard
+                      </button>
+                    )}
                     <span className="hidden sm:block text-sm text-slate-400 landing-font">
                       {profile?.full_name || user.email}
                     </span>

@@ -34,8 +34,8 @@ export default function App() {
     return <Onboarding onSkip={() => setShowOnboarding(false)} />
   }
 
-  // Coach dashboard — auth-gated, separate section
-  if (showDashboard && user) {
+  // Coach dashboard — gated to coach accounts only
+  if (showDashboard && user && profile?.account_type === 'coach') {
     return (
       <CoachDashboard
         user={user}
