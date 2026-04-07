@@ -1974,9 +1974,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     onIncomingAthleteConsumed?.();
 
     try {
-      const races = Array.isArray(athlete.races) ? athlete.races : [];
-      const discKey = athlete.discipline || '100m';
-      const mappedRaces = races
+      const mapRaces = (rs) => (Array.isArray(rs) ? rs : [])
         .filter(r => r && r.value != null && r.date)
         .map(r => ({
           date: r.date,
@@ -1986,7 +1984,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           implement_weight_kg: r.implement_weight_kg || null,
         }));
 
-      if (mappedRaces.length === 0) {
+      let disciplinesMap = {};
+      if (athlete.disciplines_data && typeof athlete.disciplines_data === 'object') {
+        for (const [code, rs] of Object.entries(athlete.disciplines_data)) {
+          const mapped = mapRaces(rs);
+          if (mapped.length > 0) disciplinesMap[code] = mapped;
+        }
+      }
+      if (Object.keys(disciplinesMap).length === 0) {
+        const discKey = athlete.discipline || '100m';
+        const mapped = mapRaces(athlete.races);
+        if (mapped.length > 0) disciplinesMap[discKey] = mapped;
+      }
+
+      if (Object.keys(disciplinesMap).length === 0) {
         setError(`No race data found for ${athlete.name}`);
         return;
       }
@@ -1995,13 +2006,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         athlete_name: athlete.name,
         gender: athlete.gender,
         dob: athlete.dob,
-        disciplines: { [discKey]: mappedRaces },
+        disciplines: disciplinesMap,
       };
 
       setScraping(true);
       setError(null);
       setScrapeProgress({ step: 'analyzing', message: `Loading ${athlete.name}...`, progress: 0.5 });
-      processScrapedData(scrapedShape).finally(() => setScraping(false));
+      processScrapedData(scrapedShape).then(() => {
+        if (athlete.discipline && disciplinesMap[athlete.discipline]) {
+          setActiveDiscipline(athlete.discipline);
+        }
+      }).finally(() => setScraping(false));
     } catch (err) {
       console.error('[athlete] Failed to load roster athlete:', err);
       setError(`Failed to load ${athlete.name}: ${err.message}`);

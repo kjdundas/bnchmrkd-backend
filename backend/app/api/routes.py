@@ -232,6 +232,37 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
             gender=scraped_data.gender,
         )
 
+        # Build raw disciplines_data for ALL supported disciplines so the
+        # frontend can analyze and toggle between them.
+        disciplines_data: dict[str, list[dict]] = {}
+        for disc_code, disc_races in disciplines_dict.items():
+            if disc_code not in SUPPORTED_DISCIPLINES:
+                continue
+            cleaned = []
+            for r in disc_races:
+                rd = r.get("date")
+                if isinstance(rd, str):
+                    try:
+                        rd_iso = date_type.fromisoformat(rd).isoformat()
+                    except ValueError:
+                        continue
+                elif isinstance(rd, date_type):
+                    rd_iso = rd.isoformat()
+                else:
+                    continue
+                tv = r.get("time") or r.get("mark") or r.get("distance")
+                if not tv or not isinstance(tv, (int, float)) or tv <= 0:
+                    continue
+                cleaned.append({
+                    "date": rd_iso,
+                    "value": float(tv),
+                    "wind": r.get("wind"),
+                    "competition": r.get("competition"),
+                    "implement_weight_kg": r.get("implement_weight_kg"),
+                })
+            if cleaned:
+                disciplines_data[disc_code] = cleaned
+
         # Include raw scraped info in response for the dashboard
         result["_scraped"] = {
             "athlete_name": raw.get("athlete_name"),
@@ -241,6 +272,8 @@ async def analyze_url(request: URLAnalysisRequest) -> AnalysisResponse:
             "discipline": discipline,
             "total_races": len(race_inputs),
             "all_disciplines": list(disciplines_dict.keys()),
+            "supported_disciplines": list(disciplines_data.keys()),
+            "disciplines_data": disciplines_data,
             "races": [{"date": str(r.race_date), "value": r.time_seconds, "wind": r.wind_mps, "competition": r.competition, "implement_weight_kg": r.implement_weight_kg} for r in race_inputs],
         }
 

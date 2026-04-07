@@ -222,12 +222,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       setUrlProgress(`Saving ${athleteName} to roster...`)
 
+      const disciplinesData = scraped.disciplines_data || { [discipline]: races }
+      const supportedDisciplines = scraped.supported_disciplines || Object.keys(disciplinesData)
+
       const newAthlete = {
         coach_id: user.id,
         name: athleteName,
         dob: dob || null,
         gender: gender,
         discipline: discipline,
+        disciplines: supportedDisciplines,
+        disciplines_data: disciplinesData,
         nationality: scraped.nationality || null,
         pb: pbNumeric ? formatMark(pbNumeric, discipline) : null,
         pb_value: pbNumeric,
@@ -517,10 +522,27 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                           </div>
                           <div>
                             <p className="text-[13px] font-semibold text-white landing-font group-hover:text-orange-400 transition-colors">{a.name}</p>
-                            <p className="text-[10px] text-slate-600 landing-font">{a.discipline || '—'} · {a.gender || '?'} · {a.age != null ? `${a.age}y` : '—'}</p>
+                            <p className="text-[10px] text-slate-600 landing-font">{a.gender || '?'} · {a.age != null ? `${a.age}y` : '—'}</p>
                           </div>
                         </div>
                       </div>
+                      {/* Discipline chips */}
+                      {Array.isArray(a.disciplines) && a.disciplines.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2" onClick={e => e.stopPropagation()}>
+                          {a.disciplines.map(d => (
+                            <button
+                              key={d}
+                              onClick={() => onViewAthlete?.({ ...a, discipline: d })}
+                              className={`px-1.5 py-0.5 rounded text-[9px] mono-font transition-colors ${d === a.discipline ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' : 'bg-white/5 text-slate-400 border border-white/5 hover:bg-white/10'}`}
+                            >
+                              {d}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {!Array.isArray(a.disciplines) && (
+                        <p className="text-[10px] text-slate-600 landing-font mb-2">{a.discipline || '—'}</p>
+                      )}
                       {/* Stats */}
                       <div className="flex gap-2 mb-3">
                         <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
