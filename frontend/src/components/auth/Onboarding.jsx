@@ -1,6 +1,20 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { User, Users, ChevronRight, ChevronLeft, MapPin, Calendar, Ruler, Weight, Trophy } from 'lucide-react'
+import { User, Users, ChevronRight, ChevronLeft, MapPin, Calendar, Ruler, Weight, Trophy, Link as LinkIcon } from 'lucide-react'
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
+
+// Discipline helpers (mirror AthleteDashboard / CoachDashboard)
+const THROWS_KEYS = ['discus', 'shot', 'javelin', 'hammer']
+const isThrowsDiscipline = (d) => d && THROWS_KEYS.some(t => d.toLowerCase().includes(t))
+const formatMark = (value, discipline) => {
+  if (value == null) return null
+  if (isThrowsDiscipline(discipline)) return `${Number(value).toFixed(2)}m`
+  const v = Number(value)
+  const mins = Math.floor(v / 60)
+  const secs = (v % 60).toFixed(2)
+  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
+}
 
 // All discipline options grouped by category
 const DISCIPLINE_OPTIONS = [
@@ -47,6 +61,8 @@ export default function Onboarding({ onSkip }) {
   const [primaryEvents, setPrimaryEvents] = useState([])
   const [heightCm, setHeightCm] = useState('')
   const [weightKg, setWeightKg] = useState('')
+  const [worldAthleticsUrl, setWorldAthleticsUrl] = useState('')
+  const [scrapeProgress, setScrapeProgress] = useState('')
 
   // Consent
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -105,8 +121,81 @@ export default function Onboarding({ onSkip }) {
           primary_events: primaryEvents,
           height_cm: heightCm ? parseFloat(heightCm) : null,
           weight_kg: weightKg ? parseFloat(weightKg) : null,
+          world_athletics_url: worldAthleticsUrl || null,
         })
         if (athleteError) throw athleteError
+
+        // ── Optional: scrape World Athletics profile right now ──
+        // We don't block onboarding completion if this fails; the athlete
+        // can refresh from their dashboard later.
+        if (worldAthleticsUrl && worldAthleticsUrl.includes('worldathletics.org')) {
+          try {
+            setScrapeProgress('Pulling your results from World Athletics — this can take up to a minute...')
+            const ctrl = new AbortController()
+            const timer = setTimeout(() => ctrl.abort(), 90000)
+            const res = await fetch(`${API_BASE}/api/v1/analyze/url`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url: worldAthleticsUrl }),
+              signal: ctrl.signal,
+            })
+            clearTimeout(timer)
+            if (res.ok) {
+              const result = await res.json()
+              if (result.success) {
+                const scraped = result.data?._scraped || {}
+                const races = scraped.races || []
+                const isThrows = isThrowsDiscipline(scraped.discipline)
+                let pbVal = null
+                for (const r of races) {
+                  if (r.value == null) continue
+                  if (pbVal == null || (isThrows ? r.value > pbVal : r.value < pbVal)) pbVal = r.value
+                }
+                const sorted = races
+                  .filter(r => r.date && r.value != null)
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                const last = sorted[0]
+
+                // Patch the athlete_profiles row with the scraped data
+                const url = import.meta.env.VITE_SUPABASE_URL
+                const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+                const projectRef = url.replace('https://', '').split('.')[0]
+                const tokenRaw = localStorage.getItem(`sb-${projectRef}-auth-token`)
+                const token = tokenRaw ? JSON.parse(tokenRaw)?.access_token : null
+                if (token) {
+                  await fetch(`${url}/rest/v1/athlete_profiles?id=eq.${user.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                      'apikey': key,
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                      'Prefer': 'return=minimal',
+                    },
+                    body: JSON.stringify({
+                      nationality: scraped.nationality || null,
+                      discipline: scraped.discipline || null,
+                      disciplines: scraped.supported_disciplines || null,
+                      pb_value: pbVal,
+                      pb_display: pbVal ? formatMark(pbVal, scraped.discipline) : null,
+                      last_result_value: last?.value || null,
+                      last_result_display: last?.value ? formatMark(last.value, scraped.discipline) : null,
+                      last_result_date: last?.date || null,
+                      races,
+                      disciplines_data: scraped.disciplines_data || {},
+                      analysis_data: result.data,
+                      last_synced_at: new Date().toISOString(),
+                    }),
+                  })
+                }
+              }
+            }
+          } catch (scrapeErr) {
+            // Non-fatal — log but don't block onboarding
+            console.warn('[onboarding] WA scrape failed:', scrapeErr)
+          } finally {
+            setScrapeProgress('')
+          }
+        }
       }
     } catch (err) {
       setError(err.message || 'Failed to create profile')
@@ -343,6 +432,28 @@ export default function Onboarding({ onSkip }) {
             </div>
           )}
 
+          {/* World Athletics URL (athlete only — optional, populates dashboard) */}
+          {accountType === 'athlete' && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1 flex items-center gap-1.5">
+                <LinkIcon className="w-3.5 h-3.5" />
+                World Athletics Profile URL
+                <span className="text-gray-600 font-normal">(optional)</span>
+              </label>
+              <input
+                type="url"
+                value={worldAthleticsUrl}
+                onChange={(e) => setWorldAthleticsUrl(e.target.value)}
+                placeholder="https://worldathletics.org/athletes/..."
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                If you have a World Athletics profile, paste the URL here and we'll pull your full career
+                trajectory automatically. You can also add this later from your dashboard.
+              </p>
+            </div>
+          )}
+
           {/* Under-13 block */}
           {isUnder13 && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
@@ -414,7 +525,10 @@ export default function Onboarding({ onSkip }) {
             className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg font-medium transition-colors"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {scrapeProgress && <span className="text-xs text-white/80">{scrapeProgress}</span>}
+              </>
             ) : (
               <>
                 Complete Setup

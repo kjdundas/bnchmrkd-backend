@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext'
 import AuthPage from './components/auth/AuthPage'
 import Onboarding from './components/auth/Onboarding'
 import CoachDashboard from './components/coach/CoachDashboard'
+import AthleteDashboard from './components/athlete/AthleteDashboard'
 import BnchMrkdApp from './bnchmarkd-app'
 
 export default function App() {
@@ -10,19 +11,25 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
+  const [showAthleteDashboard, setShowAthleteDashboard] = useState(false)
   const [incomingAthlete, setIncomingAthlete] = useState(null)
   const [autoRouted, setAutoRouted] = useState(false)
 
-  // Auto-route coaches directly to their dashboard after login
+  // Auto-route coaches and athletes to their respective dashboards after login
   // — but not if they've deep-linked to a legal page (?view=privacy/terms/about)
   useEffect(() => {
     const deepLink = typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('view')
       : null
     const isLegalDeepLink = deepLink === 'privacy' || deepLink === 'terms' || deepLink === 'about'
-    if (!autoRouted && user && profile?.account_type === 'coach' && !isLegalDeepLink) {
-      setShowDashboard(true)
-      setAutoRouted(true)
+    if (!autoRouted && user && profile && !isLegalDeepLink) {
+      if (profile.account_type === 'coach') {
+        setShowDashboard(true)
+        setAutoRouted(true)
+      } else if (profile.account_type === 'athlete') {
+        setShowAthleteDashboard(true)
+        setAutoRouted(true)
+      }
     }
     if (!user) setAutoRouted(false)
   }, [user, profile, autoRouted])
@@ -59,6 +66,20 @@ export default function App() {
         onViewAthlete={(athlete) => {
           setIncomingAthlete(athlete)
           setShowDashboard(false)
+        }}
+      />
+    )
+  }
+
+  // Athlete dashboard — gated to athlete accounts only
+  if (showAthleteDashboard && user && profile?.account_type === 'athlete') {
+    return (
+      <AthleteDashboard
+        user={user}
+        profile={profile}
+        onSignOut={async () => {
+          await signOut()
+          setShowAthleteDashboard(false)
         }}
       />
     )
