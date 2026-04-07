@@ -10,7 +10,7 @@ import {
   Search, User, Globe, Medal, Lock
 } from 'lucide-react';
 
-export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard }) {
+export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
   const THROWS_DISCIPLINES = ['Discus Throw', 'Javelin Throw', 'Hammer Throw', 'Shot Put'];
   const THROWS_CODES = ['MDT', 'FDT', 'MJT', 'FJT', 'MHT', 'FHT', 'MSP', 'FSP'];
@@ -1964,6 +1964,50 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     setScrapeProgress({ step: 'complete', message: 'Analysis complete!', progress: 1.0 });
     setCurrentView('results');
   };
+
+  // ── Handle athlete clicked from CoachDashboard roster ──
+  // Roster format: { name, dob, gender, discipline, races: [{date, value, ...}] }
+  // processScrapedData expects: { athlete_name, gender, dob, disciplines: { [code]: [{date, time}] } }
+  useEffect(() => {
+    if (!incomingAthlete) return;
+    const athlete = incomingAthlete;
+    onIncomingAthleteConsumed?.();
+
+    try {
+      const races = Array.isArray(athlete.races) ? athlete.races : [];
+      const discKey = athlete.discipline || '100m';
+      const mappedRaces = races
+        .filter(r => r && r.value != null && r.date)
+        .map(r => ({
+          date: r.date,
+          time: typeof r.value === 'number' ? r.value : parseFloat(r.value),
+          competition: r.competition || null,
+          wind: r.wind || null,
+          implement_weight_kg: r.implement_weight_kg || null,
+        }));
+
+      if (mappedRaces.length === 0) {
+        setError(`No race data found for ${athlete.name}`);
+        return;
+      }
+
+      const scrapedShape = {
+        athlete_name: athlete.name,
+        gender: athlete.gender,
+        dob: athlete.dob,
+        disciplines: { [discKey]: mappedRaces },
+      };
+
+      setScraping(true);
+      setError(null);
+      setScrapeProgress({ step: 'analyzing', message: `Loading ${athlete.name}...`, progress: 0.5 });
+      processScrapedData(scrapedShape).finally(() => setScraping(false));
+    } catch (err) {
+      console.error('[athlete] Failed to load roster athlete:', err);
+      setError(`Failed to load ${athlete.name}: ${err.message}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomingAthlete]);
 
   // ═══════════════════════════════════════════════════════════════════
   // LOADING ANIMATION COMPONENT — Track/Stadium Theme

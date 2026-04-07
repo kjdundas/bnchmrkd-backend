@@ -10,6 +10,7 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
+  const [incomingAthlete, setIncomingAthlete] = useState(null)
 
   // Show loading spinner while checking auth state
   if (loading) {
@@ -41,7 +42,7 @@ export default function App() {
         profile={profile}
         onBack={() => setShowDashboard(false)}
         onViewAthlete={(athlete) => {
-          // TODO: Navigate to analysis view with athlete data pre-filled
+          setIncomingAthlete(athlete)
           setShowDashboard(false)
         }}
       />
@@ -57,6 +58,8 @@ export default function App() {
       onSignOut={signOut}
       onSetupProfile={() => setShowOnboarding(true)}
       onOpenDashboard={() => setShowDashboard(true)}
+      incomingAthlete={incomingAthlete}
+      onIncomingAthleteConsumed={() => setIncomingAthlete(null)}
     />
   )
 }
