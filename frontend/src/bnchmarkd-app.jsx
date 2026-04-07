@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine, ReferenceDot
+  ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine, ReferenceDot,
+  ScatterChart, Scatter, ZAxis
 } from 'recharts';
 import {
   Activity, Timer, TrendingUp, Target, Award, ChevronRight, Plus, Trash2,
@@ -1758,6 +1759,21 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           implementWeight: isThrowsDisc ? (athleteData.implementWeight || getDefaultWeight(athleteData.discipline, athleteData.gender, age)) : null
         });
 
+        // Attach raw races for Overview scatter + table
+        results._rawRaces = validRaces.map(r => {
+          const rd = new Date(r.date);
+          const years = rd.getFullYear() - dob.getFullYear();
+          const diffMs = rd - new Date(dob.getFullYear() + years, dob.getMonth(), dob.getDate());
+          return {
+            date: r.date,
+            value: parseFloat(r.time),
+            age: +(years + diffMs / (365.25 * 24 * 3600 * 1000)).toFixed(2),
+            competition: r.competition || null,
+            wind: r.wind || null,
+            implement_weight_kg: null,
+          };
+        }).filter(r => !isNaN(r.value));
+
         setAnalysisResults(results);
         setCurrentView('results');
 
@@ -1935,6 +1951,27 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           raceHistory,
         });
         analysisResult._totalRaces = races.length;
+        // Attach ALL individual races (not just annual bests) so the Overview
+        // scatter plot + table can show full history. Each entry includes a
+        // decimal age for precise X-axis positioning.
+        analysisResult._rawRaces = races.map(r => {
+          let ageAtRace = null;
+          if (r.date && dob) {
+            const rd = new Date(r.date);
+            const db = new Date(dob);
+            const years = rd.getFullYear() - db.getFullYear();
+            const diffMs = rd - new Date(db.getFullYear() + years, db.getMonth(), db.getDate());
+            ageAtRace = +(years + diffMs / (365.25 * 24 * 3600 * 1000)).toFixed(2);
+          }
+          return {
+            date: r.date,
+            value: r.time,
+            age: ageAtRace,
+            competition: r.competition || null,
+            wind: r.wind != null ? r.wind : null,
+            implement_weight_kg: r.implement_weight_kg != null ? r.implement_weight_kg : null,
+          };
+        }).filter(r => r.value != null);
         results[discCode] = analysisResult;
       } catch (err) {
         console.error(`Analysis failed for ${discCode} (gender=${genderLabel}, pb=${pb}, races=${raceHistory.length}):`, err.message, err.stack);
@@ -4950,6 +4987,118 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
               </div>
             )}
+
+            {/* ── FULL RACE HISTORY: scatter plot + results table ── */}
+            {analysisResults._rawRaces && analysisResults._rawRaces.length > 0 && (() => {
+              const isThrows = isThrowsDiscipline(analysisResults.discipline);
+              const unit = isThrows ? 'm' : 's';
+              const races = analysisResults._rawRaces;
+              // Only use races that have an age for the scatter
+              const scatterRaces = races.filter(r => r.age != null && r.value != null);
+              const fmtVal = (v) => v == null ? '—' : (isThrows ? v.toFixed(2) + 'm' : v.toFixed(2) + 's');
+              // Table: sort newest → oldest
+              const tableRaces = [...races].sort((a, b) => {
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return new Date(b.date) - new Date(a.date);
+              });
+              return (
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" style={{color: '#f97316'}} />
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Full Race History</h3>
+                    </div>
+                    <span className="text-[10px] text-slate-500 mono-font">{races.length} race{races.length === 1 ? '' : 's'}</span>
+                  </div>
+
+                  {/* Scatter plot */}
+                  {scatterRaces.length > 0 ? (
+                    <div style={{width: '100%', height: 320}} className="mb-6">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart margin={{top: 10, right: 20, bottom: 30, left: 10}}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.06)" />
+                          <XAxis
+                            type="number"
+                            dataKey="age"
+                            name="Age"
+                            domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                            tick={{fill: '#94a3b8', fontSize: 11}}
+                            label={{value: 'Age (years)', position: 'insideBottom', offset: -15, fill: '#94a3b8', fontSize: 11}}
+                          />
+                          <YAxis
+                            type="number"
+                            dataKey="value"
+                            name="Performance"
+                            domain={['auto', 'auto']}
+                            reversed={!isThrows}
+                            tick={{fill: '#94a3b8', fontSize: 11}}
+                            tickFormatter={(v) => isThrows ? `${v.toFixed(1)}m` : `${v.toFixed(2)}s`}
+                            label={{value: isThrows ? 'Distance (m)' : 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 11}}
+                          />
+                          <Tooltip
+                            cursor={{strokeDasharray: '3 3'}}
+                            contentStyle={{background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11}}
+                            labelStyle={{color: '#f1f5f9'}}
+                            formatter={(value, name, props) => {
+                              if (name === 'Performance') return [fmtVal(value), 'Mark'];
+                              if (name === 'Age') return [value.toFixed(2), 'Age'];
+                              return [value, name];
+                            }}
+                            labelFormatter={() => ''}
+                            content={({active, payload}) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const d = payload[0].payload;
+                              return (
+                                <div style={{background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 12px', fontSize: 11}}>
+                                  <div className="text-white font-semibold mono-font">{fmtVal(d.value)}</div>
+                                  <div className="text-slate-400 mono-font">Age {d.age?.toFixed(2)}</div>
+                                  {d.date && <div className="text-slate-500 mono-font">{d.date}</div>}
+                                  {d.competition && <div className="text-slate-500 landing-font" style={{maxWidth: 220}}>{d.competition}</div>}
+                                </div>
+                              );
+                            }}
+                          />
+                          <Scatter name="Races" data={scatterRaces} fill="#f97316" fillOpacity={0.8} />
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="mb-6 p-4 rounded-lg text-center text-xs text-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                      Scatter plot unavailable — no athlete date of birth on file, can't compute ages.
+                    </div>
+                  )}
+
+                  {/* Results table */}
+                  <div className="overflow-x-auto rounded-lg" style={{border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <table className="w-full text-[11px] mono-font">
+                      <thead style={{background: 'rgba(255,255,255,0.03)'}}>
+                        <tr className="text-slate-400">
+                          <th className="text-left py-2 px-3 font-semibold">Date</th>
+                          <th className="text-left py-2 px-3 font-semibold">Age</th>
+                          <th className="text-left py-2 px-3 font-semibold">Mark</th>
+                          {!isThrows && <th className="text-left py-2 px-3 font-semibold">Wind</th>}
+                          {isThrows && <th className="text-left py-2 px-3 font-semibold">Implement</th>}
+                          <th className="text-left py-2 px-3 font-semibold">Competition</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tableRaces.map((r, i) => (
+                          <tr key={i} className="text-slate-300 hover:bg-white/5 transition-colors" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+                            <td className="py-2 px-3">{r.date || '—'}</td>
+                            <td className="py-2 px-3 text-slate-500">{r.age != null ? r.age.toFixed(2) : '—'}</td>
+                            <td className="py-2 px-3 text-white font-semibold">{fmtVal(r.value)}</td>
+                            {!isThrows && <td className="py-2 px-3 text-slate-500">{r.wind != null ? (r.wind > 0 ? '+' : '') + r.wind.toFixed(1) : '—'}</td>}
+                            {isThrows && <td className="py-2 px-3 text-slate-500">{r.implement_weight_kg != null ? `${r.implement_weight_kg}kg` : '—'}</td>}
+                            <td className="py-2 px-3 text-slate-400 landing-font">{r.competition || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
 
             </>)}
 
