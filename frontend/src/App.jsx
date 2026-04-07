@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import AuthPage from './components/auth/AuthPage'
 import Onboarding from './components/auth/Onboarding'
@@ -11,6 +11,16 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [incomingAthlete, setIncomingAthlete] = useState(null)
+  const [autoRouted, setAutoRouted] = useState(false)
+
+  // Auto-route coaches directly to their dashboard after login
+  useEffect(() => {
+    if (!autoRouted && user && profile?.account_type === 'coach') {
+      setShowDashboard(true)
+      setAutoRouted(true)
+    }
+    if (!user) setAutoRouted(false)
+  }, [user, profile, autoRouted])
 
   // Show loading spinner while checking auth state
   if (loading) {
