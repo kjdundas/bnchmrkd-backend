@@ -46,11 +46,14 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(userId) {
     try {
-      // Raw fetch to bypass supabase-js Web Locks hang
-      const { data: sess } = await supabase.auth.getSession()
-      const token = sess?.session?.access_token
+      // Read token from localStorage directly to avoid Web Locks hang on getSession()
       const url = import.meta.env.VITE_SUPABASE_URL
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const projectRef = url.replace('https://', '').split('.')[0]
+      const tokenRaw = localStorage.getItem(`sb-${projectRef}-auth-token`)
+      const token = tokenRaw ? JSON.parse(tokenRaw)?.access_token : null
+      if (!token) { setLoading(false); return }
+
       const ctrl = new AbortController()
       const timer = setTimeout(() => ctrl.abort(), 10000)
       try {

@@ -1,16 +1,29 @@
 // Raw fetch wrappers for Supabase REST API.
-// We bypass supabase-js for data operations because the JS client can hang
-// indefinitely on Web Locks issues. Auth still goes through supabase-js.
-
-import { supabase } from './supabase'
+// We bypass supabase-js entirely for data operations because both its query
+// builder AND its auth.getSession() can hang on Web Locks issues.
+// We read the access token directly from localStorage where supabase-js stores it.
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Get a fresh access token from the supabase-js auth (this part of supabase-js is reliable)
-async function getAuthHeaders() {
-  const { data } = await supabase.auth.getSession()
-  const token = data?.session?.access_token
+// Extract the project ref from the URL (e.g. "bmbqjyrhzusidxmfrssi")
+const PROJECT_REF = (SUPABASE_URL || '').replace('https://', '').split('.')[0]
+const TOKEN_KEY = `sb-${PROJECT_REF}-auth-token`
+
+// Read the access token directly from localStorage — bypasses Web Locks hang
+function getTokenFromStorage() {
+  try {
+    const raw = localStorage.getItem(TOKEN_KEY)
+    if (!raw) return null
+    const session = JSON.parse(raw)
+    return session?.access_token || null
+  } catch {
+    return null
+  }
+}
+
+function getAuthHeaders() {
+  const token = getTokenFromStorage()
   if (!token) throw new Error('No active session — please sign in again.')
   return {
     'apikey': SUPABASE_KEY,
@@ -24,7 +37,7 @@ async function rawFetch(path, options = {}, timeoutMs = 15000) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const headers = await getAuthHeaders()
+    const headers = getAuthHeaders()
     const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
       ...options,
       headers: { ...headers, ...(options.headers || {}) },
