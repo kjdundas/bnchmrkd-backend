@@ -10,3 +10,8 @@ selenium>=4.15.0
 webdriver-manager>=4.0.0
 psycopg2-binary>=2.9.0
 python-dotenv>=1.0.0
+# AI Scanner feature
+openai>=1.54.0
+pdfplumber>=0.11.0
+rapidfuzz>=3.10.0
+python-multipart>=0.0.9

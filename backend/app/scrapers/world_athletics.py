@@ -206,13 +206,29 @@ class WorldAthleticsScraper(BaseScraper):
             result["dob"] = _parse_date(dob_str) if dob_str else None
             result["nationality"] = basic_data.get("countryFullName", "").strip() or None
 
-            # Gender: look in the data or infer from name/events
-            gender_code = basic_data.get("sexCode", "")
-            if gender_code:
-                result["gender"] = "M" if gender_code.upper() in ("M", "MALE") else "F"
-            else:
-                sex_name = basic_data.get("sexNameUrlSlug", "")
-                result["gender"] = "M" if "men" in sex_name.lower() and "women" not in sex_name.lower() else "F"
+            # Gender: check multiple possible keys World Athletics uses.
+            # IMPORTANT: check "women" BEFORE "men" because "men" is a substring of "women".
+            gender_val = None
+            for key in ("sexCode", "sex", "gender"):
+                raw = (basic_data.get(key) or "").strip().upper()
+                if raw in ("M", "MALE", "MEN"):
+                    gender_val = "M"
+                    break
+                if raw in ("F", "W", "FEMALE", "WOMEN"):
+                    gender_val = "F"
+                    break
+
+            if gender_val is None:
+                slug = (basic_data.get("sexNameUrlSlug") or "").lower()
+                if "women" in slug:          # check women first!
+                    gender_val = "F"
+                elif "men" in slug:
+                    gender_val = "M"
+
+            if gender_val is None:
+                print(f"  [scraper] ⚠ Could not determine gender from basicData: {basic_data}")
+
+            result["gender"] = gender_val
 
         except Exception as e:
             print(f"  [scraper] Failed to extract athlete info: {e}")
@@ -456,7 +472,7 @@ class WorldAthleticsScraper(BaseScraper):
 
             return {
                 "athlete_name": info["name"] or "Unknown",
-                "gender": info["gender"] or "M",
+                "gender": info["gender"],  # do NOT default — let caller handle None
                 "dob": info["dob"].isoformat() if info["dob"] else None,
                 "nationality": info["nationality"],
                 "disciplines": disciplines,

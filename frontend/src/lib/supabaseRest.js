@@ -74,6 +74,16 @@ export async function insertInto(table, payload) {
   return Array.isArray(data) ? data[0] : data
 }
 
+// UPDATE rows matching a filter, returning the updated row(s)
+export async function updateIn(table, filter, payload) {
+  const data = await rawFetch(`/${table}?${filter}`, {
+    method: 'PATCH',
+    headers: { 'Prefer': 'return=representation' },
+    body: JSON.stringify(payload),
+  })
+  return Array.isArray(data) ? data[0] : data
+}
+
 // DELETE rows matching a filter
 export async function deleteFrom(table, filter) {
   return rawFetch(`/${table}?${filter}`, { method: 'DELETE' })

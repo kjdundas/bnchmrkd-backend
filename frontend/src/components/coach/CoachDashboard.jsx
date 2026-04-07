@@ -6,9 +6,12 @@ import {
   Eye, Clock, Zap, ChevronDown, Loader2, CheckCircle, AlertCircle, Trash2
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { selectFrom, insertInto, deleteFrom } from '../../lib/supabaseRest'
+import { selectFrom, insertInto, deleteFrom, updateIn } from '../../lib/supabaseRest'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
+
+// AI Scanner is gated to Keenan during testing
+const SCANNER_BETA_UUID = 'e4a344cd-1175-40f2-8b0d-94593eaedd53'
 
 // Discipline type helpers
 const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
@@ -78,6 +81,97 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   }, [user?.id])
 
   useEffect(() => { fetchRoster() }, [fetchRoster])
+
+  // ── AI Scanner state ──
+  const scannerEnabled = user?.id === SCANNER_BETA_UUID
+  const [scanStage, setScanStage] = useState('input') // 'input' | 'review' | 'done'
+  const [scanInputType, setScanInputType] = useState('text') // 'text' | 'pdf' | 'image'
+  const [scanText, setScanText] = useState('')
+  const [scanFile, setScanFile] = useState(null)
+  const [scanLoading, setScanLoading] = useState(false)
+  const [scanError, setScanError] = useState('')
+  const [scanCandidates, setScanCandidates] = useState([])
+  const [scanStats, setScanStats] = useState(null)
+  const [scanSelections, setScanSelections] = useState({}) // { `${candidateIdx}:${resultIdx}`: true }
+  const [scanSaving, setScanSaving] = useState(false)
+  const [scanSavedCount, setScanSavedCount] = useState(0)
+
+  const resetScanner = () => {
+    setScanStage('input'); setScanText(''); setScanFile(null); setScanError('')
+    setScanCandidates([]); setScanStats(null); setScanSelections({}); setScanSavedCount(0)
+  }
+
+  const handleScanExtract = async () => {
+    setScanError('')
+    if (scanInputType === 'text' && !scanText.trim()) { setScanError('Paste some results text first.'); return }
+    if ((scanInputType === 'pdf' || scanInputType === 'image') && !scanFile) { setScanError('Choose a file first.'); return }
+    if (!roster.length) { setScanError('Your roster is empty — add athletes first.'); return }
+
+    setScanLoading(true)
+    try {
+      const rosterPayload = roster.map(a => ({ id: a.id, name: a.name, discipline: a.discipline }))
+      const form = new FormData()
+      form.append('input_type', scanInputType)
+      form.append('roster_json', JSON.stringify(rosterPayload))
+      if (scanInputType === 'text') form.append('text', scanText)
+      else form.append('file', scanFile)
+
+      const res = await fetch(`${API_BASE}/api/v1/ai-scanner/extract`, { method: 'POST', body: form })
+      if (!res.ok) {
+        const t = await res.text()
+        throw new Error(`Scanner failed (${res.status}): ${t.slice(0, 200)}`)
+      }
+      const data = await res.json()
+      setScanCandidates(data.candidates || [])
+      setScanStats(data.stats || null)
+      // Pre-select all results by default
+      const sel = {}
+      ;(data.candidates || []).forEach((c, ci) => {
+        (c.results || []).forEach((_, ri) => { sel[`${ci}:${ri}`] = true })
+      })
+      setScanSelections(sel)
+      setScanStage('review')
+    } catch (err) {
+      console.error('[scanner] extract failed:', err)
+      setScanError(err.message || 'Extraction failed')
+    } finally {
+      setScanLoading(false)
+    }
+  }
+
+  const handleScanConfirm = async () => {
+    setScanSaving(true)
+    setScanError('')
+    let saved = 0
+    try {
+      for (let ci = 0; ci < scanCandidates.length; ci++) {
+        const cand = scanCandidates[ci]
+        const picked = (cand.results || []).filter((_, ri) => scanSelections[`${ci}:${ri}`])
+        if (!picked.length) continue
+        // Find current athlete races, append, write back
+        const athlete = roster.find(a => a.id === cand.roster_athlete_id)
+        if (!athlete) continue
+        const existing = Array.isArray(athlete.races) ? athlete.races : []
+        const newRaces = picked.map(r => ({
+          date: r.date,
+          time: r.value,
+          competition: r.competition || null,
+          source: 'ai_scanner',
+        }))
+        const merged = [...existing, ...newRaces]
+        await updateIn('coach_roster', `id=eq.${athlete.id}`, { races: merged })
+        saved += newRaces.length
+      }
+      setScanSavedCount(saved)
+      setScanStage('done')
+      fetchRoster()
+    } catch (err) {
+      console.error('[scanner] save failed:', err)
+      setScanError(err.message || 'Save failed')
+    } finally {
+      setScanSaving(false)
+    }
+  }
 
   // ── Derived data ──
   const rosterWithAge = roster.map(a => ({ ...a, age: calcAge(a.dob) }))
@@ -350,7 +444,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               { key: 'highlights', label: 'Highlights', icon: Zap },
               { key: 'roster', label: 'Roster', icon: Users },
               { key: 'add', label: 'Add Athletes', icon: UserPlus },
-              { key: 'assistant', label: 'AI Scanner', icon: Bot },
+              ...(scannerEnabled ? [{ key: 'assistant', label: 'AI Scanner', icon: Bot }] : []),
             ].map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -754,8 +848,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             </div>
           )}
 
-          {/* ═══════════════ AI ASSISTANT ═══════════════ */}
-          {activeSection === 'assistant' && (
+          {/* ═══════════════ AI SCANNER ═══════════════ */}
+          {activeSection === 'assistant' && scannerEnabled && (
             <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
               {/* Header */}
               <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -764,55 +858,170 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 </div>
                 <div className="flex-1">
                   <p className="text-[12px] font-semibold text-white landing-font">Results Scanner</p>
-                  <p className="text-[9px] text-slate-600 landing-font">Upload competition PDFs — English & Arabic supported</p>
+                  <p className="text-[9px] text-slate-600 landing-font">
+                    {scanStage === 'input' && 'Paste results text, or upload a PDF / image'}
+                    {scanStage === 'review' && 'Review extracted results — uncheck any that look wrong'}
+                    {scanStage === 'done' && 'Done'}
+                  </p>
                 </div>
                 <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: 'rgba(249,115,22,0.1)', color: '#f97316', border: '1px solid rgba(249,115,22,0.2)' }}>Beta</span>
-              </div>
-
-              {/* Messages */}
-              <div className="p-5 space-y-3 min-h-[380px] max-h-[460px] overflow-y-auto">
-                {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded-xl px-3.5 py-2.5 ${msg.role === 'user' ? '' : ''}`}
-                      style={{ background: msg.role === 'user' ? 'rgba(249,115,22,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${msg.role === 'user' ? 'rgba(249,115,22,0.15)' : 'rgba(255,255,255,0.05)'}` }}>
-                      {msg.file && (
-                        <div className="flex items-center gap-1.5 mb-1.5 px-2 py-1 rounded-md" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          <Paperclip className="w-3 h-3 text-slate-500" />
-                          <span className="text-[10px] text-slate-400 mono-font">{msg.file}</span>
-                        </div>
-                      )}
-                      <p className="text-[12px] text-slate-300 leading-relaxed landing-font">{msg.content}</p>
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
-
-              {/* Input */}
-              <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                {chatFile && (
-                  <div className="flex items-center gap-2 mb-2 px-2.5 py-1.5 rounded-lg" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.12)' }}>
-                    <Paperclip className="w-3 h-3 text-orange-500" />
-                    <span className="text-[10px] text-orange-400 mono-font flex-1">{chatFile.name}</span>
-                    <button onClick={() => setChatFile(null)} className="text-orange-500 hover:text-white"><X className="w-3 h-3" /></button>
-                  </div>
+                {scanStage !== 'input' && (
+                  <button onClick={resetScanner} className="text-[10px] text-slate-500 hover:text-white landing-font">Reset</button>
                 )}
-                <div className="flex gap-2">
-                  <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.pdf,.png,.jpg'; input.onchange = (e) => setChatFile(e.target.files[0]); input.click() }}
-                    className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-600 hover:text-white hover:bg-white/5 transition-all" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <Paperclip className="w-3.5 h-3.5" />
-                  </button>
-                  <input type="text" placeholder="Ask about results or upload a PDF..." value={chatInput} onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
-                    className="flex-1 px-3.5 py-2 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
-                  <button onClick={handleChatSend} disabled={!chatInput.trim() && !chatFile}
-                    className="w-9 h-9 rounded-lg flex items-center justify-center text-black disabled:opacity-20 transition-all"
+              </div>
+
+              {/* ── Stage 1: Input ── */}
+              {scanStage === 'input' && (
+                <div className="p-5 space-y-4">
+                  <div className="flex gap-1.5">
+                    {['text', 'pdf', 'image'].map(t => (
+                      <button key={t} onClick={() => { setScanInputType(t); setScanFile(null) }}
+                        className="px-3 py-1.5 rounded-lg text-[11px] font-semibold landing-font uppercase tracking-wider transition-all"
+                        style={{
+                          background: scanInputType === t ? 'rgba(249,115,22,0.15)' : 'rgba(255,255,255,0.03)',
+                          color: scanInputType === t ? '#f97316' : '#64748b',
+                          border: `1px solid ${scanInputType === t ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                        }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+
+                  {scanInputType === 'text' && (
+                    <textarea
+                      value={scanText}
+                      onChange={(e) => setScanText(e.target.value)}
+                      placeholder="Paste competition results text here (any format — heats, finals, PDFs copied as text, etc.)"
+                      rows={10}
+                      className="w-full px-3.5 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30 resize-y"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    />
+                  )}
+
+                  {(scanInputType === 'pdf' || scanInputType === 'image') && (
+                    <div>
+                      <input
+                        type="file"
+                        accept={scanInputType === 'pdf' ? '.pdf' : 'image/*'}
+                        onChange={(e) => setScanFile(e.target.files[0] || null)}
+                        className="block w-full text-[11px] text-slate-400 landing-font file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:uppercase file:tracking-wider file:text-black file:bg-orange-500 hover:file:bg-orange-400"
+                      />
+                      {scanFile && (
+                        <p className="mt-2 text-[10px] text-slate-500 mono-font">
+                          {scanFile.name} — {(scanFile.size / 1024).toFixed(1)} KB
+                        </p>
+                      )}
+                      {scanInputType === 'image' && (
+                        <p className="mt-2 text-[10px] text-amber-500 landing-font flex items-center gap-1.5">
+                          <AlertTriangle className="w-3 h-3" />
+                          Image extraction can't be cross-verified against source text — review results carefully.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {scanError && (
+                    <div className="px-3 py-2 rounded-lg text-[11px] text-red-400 landing-font" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                      {scanError}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleScanExtract}
+                    disabled={scanLoading}
+                    className="w-full py-2.5 rounded-lg text-[12px] font-bold text-black landing-font uppercase tracking-wider disabled:opacity-40 flex items-center justify-center gap-2"
                     style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
-                    <Send className="w-3.5 h-3.5" />
+                    {scanLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Scanning...</> : <>Extract Results</>}
                   </button>
                 </div>
-              </div>
+              )}
+
+              {/* ── Stage 2: Review ── */}
+              {scanStage === 'review' && (
+                <div className="p-5 space-y-4">
+                  {scanStats && (
+                    <div className="flex gap-3 text-[10px] mono-font">
+                      <span className="text-slate-500">Raw: <span className="text-white">{scanStats.raw_extraction_count}</span></span>
+                      <span className="text-slate-500">Accepted: <span className="text-green-400">{scanStats.accepted_count}</span></span>
+                      <span className="text-slate-500">Dropped: <span className="text-red-400">{scanStats.dropped_count}</span></span>
+                      {scanStats.source_is_image && <span className="text-amber-500">⚠ image source</span>}
+                    </div>
+                  )}
+
+                  {scanCandidates.length === 0 && (
+                    <div className="py-8 text-center text-[12px] text-slate-500 landing-font">
+                      No matching athletes found in this document.
+                    </div>
+                  )}
+
+                  <div className="space-y-3 max-h-[440px] overflow-y-auto">
+                    {scanCandidates.map((cand, ci) => (
+                      <div key={ci} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-[12px] font-semibold text-white landing-font">{cand.roster_athlete_name}</p>
+                            <p className="text-[9px] text-slate-600 landing-font">
+                              Matched as "{cand.extracted_name}" · confidence {cand.confidence}%
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          {(cand.results || []).map((r, ri) => {
+                            const key = `${ci}:${ri}`
+                            return (
+                              <label key={ri} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-white/5">
+                                <input
+                                  type="checkbox"
+                                  checked={!!scanSelections[key]}
+                                  onChange={(e) => setScanSelections(prev => ({ ...prev, [key]: e.target.checked }))}
+                                  className="accent-orange-500"
+                                />
+                                <span className="text-[11px] text-slate-300 mono-font flex-1">
+                                  {r.date} · {r.event} · <span className="text-white">{r.mark_raw}</span>
+                                  {r.competition && <span className="text-slate-600"> · {r.competition}</span>}
+                                </span>
+                                {r.duplicate && <span className="text-[9px] text-amber-500 landing-font">duplicate</span>}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {scanError && (
+                    <div className="px-3 py-2 rounded-lg text-[11px] text-red-400 landing-font" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                      {scanError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button onClick={resetScanner} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-slate-400 landing-font" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                      Back
+                    </button>
+                    <button
+                      onClick={handleScanConfirm}
+                      disabled={scanSaving || !Object.values(scanSelections).some(Boolean)}
+                      className="flex-1 py-2 rounded-lg text-[11px] font-bold text-black landing-font uppercase tracking-wider disabled:opacity-40 flex items-center justify-center gap-2"
+                      style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
+                      {scanSaving ? <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</> : <><CheckCircle className="w-3 h-3" /> Confirm & Save</>}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Stage 3: Done ── */}
+              {scanStage === 'done' && (
+                <div className="p-8 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-green-400 mx-auto" />
+                  <p className="text-[14px] font-semibold text-white landing-font">
+                    Saved {scanSavedCount} result{scanSavedCount === 1 ? '' : 's'} to your roster.
+                  </p>
+                  <button onClick={resetScanner} className="px-4 py-2 rounded-lg text-[11px] font-semibold text-white landing-font" style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}>
+                    Scan Another
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
