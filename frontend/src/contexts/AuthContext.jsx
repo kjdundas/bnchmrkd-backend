@@ -46,17 +46,28 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(userId) {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (error && error.code === 'PGRST116') {
-        // No profile yet — user just signed up, needs onboarding
-        setProfile(null)
-      } else if (data) {
-        setProfile(data)
+      // Raw fetch to bypass supabase-js Web Locks hang
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      const url = import.meta.env.VITE_SUPABASE_URL
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 10000)
+      try {
+        const res = await fetch(`${url}/rest/v1/user_profiles?id=eq.${userId}&select=*`, {
+          headers: {
+            'apikey': key,
+            'Authorization': `Bearer ${token}`,
+          },
+          signal: ctrl.signal,
+        })
+        if (res.ok) {
+          const rows = await res.json()
+          if (rows && rows.length > 0) setProfile(rows[0])
+          else setProfile(null)
+        }
+      } finally {
+        clearTimeout(timer)
       }
     } catch (err) {
       console.warn('Failed to fetch profile:', err)

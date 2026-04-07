@@ -6,6 +6,7 @@ import {
   Eye, Clock, Zap, ChevronDown, Loader2, CheckCircle, AlertCircle, Trash2
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { selectFrom, insertInto, deleteFrom } from '../../lib/supabaseRest'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -57,20 +58,20 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
 
-  // ── Fetch roster from Supabase ──
+  // ── Fetch roster from Supabase (raw fetch — bypasses supabase-js Web Locks hang) ──
   const fetchRoster = useCallback(async () => {
     if (!user?.id) return
     setRosterLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('coach_roster')
-        .select('*')
-        .eq('coach_id', user.id)
-        .order('created_at', { ascending: false })
-      if (error) throw error
+      console.log('[roster] Fetching for coach:', user.id)
+      const data = await selectFrom('coach_roster', {
+        filter: `coach_id=eq.${user.id}`,
+        order: 'created_at.desc',
+      })
+      console.log('[roster] Fetched', data?.length || 0, 'athletes')
       setRoster(data || [])
     } catch (err) {
-      console.error('Failed to fetch roster:', err)
+      console.error('[roster] Failed to fetch:', err)
     } finally {
       setRosterLoading(false)
     }
@@ -122,12 +123,11 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
   const handleDeleteAthlete = async (athleteId) => {
     try {
-      const { error } = await supabase.from('coach_roster').delete().eq('id', athleteId)
-      if (error) throw error
+      await deleteFrom('coach_roster', `id=eq.${athleteId}`)
       setRoster(prev => prev.filter(a => a.id !== athleteId))
       setDeleteConfirm(null)
     } catch (err) {
-      console.error('Delete failed:', err)
+      console.error('[roster] Delete failed:', err)
     }
   }
 
@@ -222,16 +222,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       setUrlProgress(`Saving ${athleteName} to roster...`)
 
-      // Refresh auth session before insert (may have expired during long scrape)
-      const { data: sessionData } = await supabase.auth.getSession()
-      const session = sessionData?.session
-      if (!session?.user) {
-        throw new Error('Your session expired. Please sign in again and retry.')
-      }
-      console.log('[roster] Auth OK, user:', session.user.id, 'token length:', session.access_token?.length)
-
       const newAthlete = {
-        coach_id: session.user.id,
+        coach_id: user.id,
         name: athleteName,
         dob: dob || null,
         gender: gender,
@@ -248,46 +240,13 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         races: races,
       }
 
-      console.log('[roster] Inserting athlete:', athleteName)
-
-      // Use raw fetch to Supabase REST API — bypasses supabase-js which can hang
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      const insertController = new AbortController()
-      const insertTimeout = setTimeout(() => insertController.abort(), 15000)
-
-      let insertRes
-      try {
-        insertRes = await fetch(`${supabaseUrl}/rest/v1/coach_roster`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${session.access_token}`,
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify(newAthlete),
-          signal: insertController.signal,
-        })
-      } finally {
-        clearTimeout(insertTimeout)
-      }
-
-      console.log('[roster] Insert response:', insertRes.status, insertRes.statusText)
-
-      if (!insertRes.ok) {
-        const errBody = await insertRes.text()
-        console.error('[roster] Insert error body:', errBody)
-        throw new Error(`Supabase insert failed (${insertRes.status}): ${errBody}`)
-      }
-
-      const insertedArr = await insertRes.json()
-      const inserted = Array.isArray(insertedArr) ? insertedArr[0] : insertedArr
+      console.log('[roster] Inserting athlete:', athleteName, 'races:', races.length)
+      const inserted = await insertInto('coach_roster', newAthlete)
+      console.log('[roster] Insert succeeded:', inserted?.id)
 
       if (inserted?.id) {
         setRoster(prev => [inserted, ...prev])
       } else {
-        // Fallback: add locally
         setRoster(prev => [{ ...newAthlete, id: crypto.randomUUID(), created_at: new Date().toISOString() }, ...prev])
       }
 
