@@ -78,19 +78,30 @@ def _parse_mark(mark_str: str, is_throws: bool = False) -> Optional[float]:
     """
     if not mark_str:
         return None
-    # Clean the string
-    clean = mark_str.strip().lower()
-    # Remove hand-timing indicator (sprints only, but harmless for throws)
-    clean = clean.replace('h', '')
-    # Skip non-result marks
-    if any(x in clean for x in ['dns', 'dnf', 'dq', 'nm', 'nh', '-', 'x']):
+    raw = mark_str.strip()
+    if not raw:
         return None
-    # Handle throws foul mark ('x' already caught above, but 'X' standalone)
-    if clean == 'x' or clean == '':
+    token = raw.lower().replace(' ', '')
+
+    # Exact-match non-result tokens (NOT substring — "nh" would otherwise
+    # match any string containing those two letters). Includes throws foul 'x'.
+    NON_RESULT = {'dns', 'dnf', 'dq', 'dnq', 'nm', 'nh', 'x', 'xxx',
+                  '-', '–', '—', '', 'r', 'abs', 'ncr'}
+    if token in NON_RESULT:
         return None
+
+    # Keep only digits, dot, comma, sign — strips trailing 'm' (metres suffix
+    # on throws), 'A' altitude, 'i' indoor, 'h' hand-time, '#' record marker, etc.
+    numeric = re.sub(r'[^\d.,+\-]', '', token)
+    # European decimal comma → dot
+    numeric = numeric.replace(',', '.')
+    numeric = numeric.lstrip('+')
+
+    if not numeric or numeric in ('-', '.', '+'):
+        return None
+
     try:
-        val = float(clean)
-        # Basic sanity: throws distances > 0, sprint times > 0
+        val = float(numeric)
         return val if val > 0 else None
     except ValueError:
         return None
@@ -552,6 +563,7 @@ class WorldAthleticsScraper(BaseScraper):
 
         matched = 0
         unmatched_events = set()
+        throws_debug = []  # capture first few throws rows for diagnostics
 
         for row in all_rows:
             raw_discipline = row.get(discipline_col, "")
@@ -566,6 +578,15 @@ class WorldAthleticsScraper(BaseScraper):
 
             mark_value = row.get(mark_col, "") if mark_col else ""
             mark_val = _parse_mark(mark_value, is_throws=is_throws)
+
+            if is_throws and len(throws_debug) < 5:
+                throws_debug.append({
+                    "raw_discipline": raw_discipline,
+                    "disc_code": disc_code,
+                    "raw_mark": repr(mark_value),
+                    "parsed_mark": mark_val,
+                })
+
             if mark_val is None:
                 continue
 
@@ -600,5 +621,7 @@ class WorldAthleticsScraper(BaseScraper):
         print(f"  [scraper] Matched {matched} races across {len(disciplines)} disciplines: {list(disciplines.keys())}")
         if unmatched_events:
             print(f"  [scraper] Unmatched events (not supported): {unmatched_events}")
+        if throws_debug:
+            print(f"  [scraper] Throws debug (first 5): {throws_debug}")
 
         return disciplines
