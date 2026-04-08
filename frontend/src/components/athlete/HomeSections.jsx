@@ -420,7 +420,10 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
 
   // Delta from current PB to projection
   const delta = proj && pb != null ? proj.projection - Number(pb) : null
-  const improvedDelta = delta != null && (higher ? delta > 0 : delta < 0)
+  // Neutral band: projection within ±0.01 of PB is "on pace", not up or down.
+  // This prevents "+0.00s" rendering in red alongside an "accelerating" headline.
+  const deltaIsNeutral = delta != null && Math.abs(delta) < 0.01
+  const improvedDelta = delta != null && !deltaIsNeutral && (higher ? delta > 0 : delta < 0)
 
   return (
     <section
@@ -465,7 +468,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
             Your trajectory
           </p>
           <h2 className="landing-font text-white mt-1 text-xl font-semibold leading-tight">
-            {trendingUp ? 'You are accelerating' : trendingDown ? 'Your form is dipping' : 'Holding pattern'}
+            {deltaIsNeutral ? 'Holding pattern' : trendingUp ? 'You are accelerating' : trendingDown ? 'Your form is dipping' : 'Holding pattern'}
           </h2>
         </div>
 
@@ -520,22 +523,28 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
             <span className="mono-font text-sm text-slate-500">{higher ? 'm' : 's'}</span>
           </div>
           {delta != null && proj && (
-            <div
-              className="flex items-center gap-1 mt-2 mono-font text-[11px] tabular-nums"
-              style={{ color: improvedDelta ? '#34d399' : '#fb7185' }}
-            >
-              {improvedDelta ? (
-                <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.5} />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5" strokeWidth={2.5} />
-              )}
-              <span className="font-semibold">
-                {delta > 0 ? '+' : ''}
-                {delta.toFixed(2)}
-                {higher ? 'm' : 's'}
-              </span>
-              <span className="text-slate-500 ml-1">from current PB</span>
-            </div>
+            deltaIsNeutral ? (
+              <div className="flex items-center gap-1 mt-2 mono-font text-[11px] tabular-nums text-slate-400">
+                <span className="font-semibold">On pace with PB</span>
+              </div>
+            ) : (
+              <div
+                className="flex items-center gap-1 mt-2 mono-font text-[11px] tabular-nums"
+                style={{ color: improvedDelta ? '#34d399' : '#fb7185' }}
+              >
+                {improvedDelta ? (
+                  <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.5} />
+                ) : (
+                  <TrendingDown className="w-3.5 h-3.5" strokeWidth={2.5} />
+                )}
+                <span className="font-semibold">
+                  {delta > 0 ? '+' : ''}
+                  {delta.toFixed(2)}
+                  {higher ? 'm' : 's'}
+                </span>
+                <span className="text-slate-500 ml-1">from current PB</span>
+              </div>
+            )
           )}
           {!proj && (
             <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500 mt-2">
