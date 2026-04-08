@@ -195,29 +195,36 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       //    and recompute PB / last_result so the profile view updates immediately.
       const isThrowsDisc = (d) => !!d && /shot|discus|hammer|javelin|throw|put/i.test(d)
 
+      // Pick the discipline bucket key that an athlete's existing disciplines_data
+      // already uses — so new races append to the SAME bucket the athlete profile
+      // view reads from, instead of creating an orphan bucket under the display name.
+      const pickBucketKey = (athlete) => {
+        const dd = athlete.disciplines_data || {}
+        const keys = Object.keys(dd)
+        if (athlete.discipline && keys.includes(athlete.discipline)) return athlete.discipline
+        if (keys.length === 1) return keys[0]
+        // No existing buckets — fall back to the athlete's discipline string
+        return athlete.discipline || 'unknown'
+      }
+
       for (const [athleteId, entries] of Object.entries(perAthlete)) {
         if (!entries.length) continue
         const athlete = roster.find(a => a.id === athleteId)
         if (!athlete) continue
 
+        const bucketKey = pickBucketKey(athlete)
         const newRaces = entries.map(e => e.race)
         const existing = Array.isArray(athlete.races) ? athlete.races : []
         const mergedRaces = [...existing, ...newRaces]
 
-        // Update disciplines_data: append new races to their discipline bucket
+        // Append new races to the SINGLE existing discipline bucket
         const disciplinesData = { ...(athlete.disciplines_data || {}) }
-        entries.forEach(({ race, event }) => {
-          const key = event || athlete.discipline || 'unknown'
-          const bucket = Array.isArray(disciplinesData[key]) ? disciplinesData[key] : []
-          disciplinesData[key] = [...bucket, race]
-        })
+        const currentBucket = Array.isArray(disciplinesData[bucketKey]) ? disciplinesData[bucketKey] : []
+        disciplinesData[bucketKey] = [...currentBucket, ...newRaces]
 
-        // Recompute PB + last result from the athlete's primary discipline bucket
-        const primaryDisc = athlete.discipline
-        const bucketForPb = primaryDisc && Array.isArray(disciplinesData[primaryDisc])
-          ? disciplinesData[primaryDisc]
-          : mergedRaces
-        const isThrows = isThrowsDisc(primaryDisc)
+        // Recompute PB + last result from that bucket
+        const bucketForPb = disciplinesData[bucketKey]
+        const isThrows = isThrowsDisc(athlete.discipline || bucketKey)
 
         let pbVal = null
         for (const r of bucketForPb) {
@@ -233,10 +240,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           races: mergedRaces,
           disciplines_data: disciplinesData,
         }
-        if (pbVal != null) patch.pb_value = pbVal
+        // Use the coach_roster display-string column names (pb, last_result, last_date)
+        // alongside the numeric mirrors (pb_value, last_result_value) so BOTH the
+        // roster cards AND the athlete profile view pick up the new state.
+        if (pbVal != null) {
+          patch.pb_value = pbVal
+          patch.pb = formatMark(pbVal, athlete.discipline)
+        }
         if (last) {
           patch.last_result_value = last.value
-          patch.last_result_date = last.date
+          patch.last_result = formatMark(last.value, athlete.discipline)
+          patch.last_date = last.date
         }
 
         await updateIn('coach_roster', `id=eq.${athlete.id}`, patch)
