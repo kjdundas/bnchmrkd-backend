@@ -326,31 +326,87 @@ def extract_pdf_text(pdf_bytes: bytes, max_pages: int = 20) -> str:
 def fuzzy_match_athlete(
     extracted_name: str,
     roster: list[dict[str, Any]],
-    threshold: int = 85,
-) -> Optional[tuple[dict[str, Any], int]]:
+    confident_threshold: int = 88,
+    confident_gap: int = 12,
+    loose_threshold: int = 55,
+    max_candidates: int = 5,
+) -> tuple[str, list[tuple[dict[str, Any], int]]]:
     """
-    Fuzzy-match an extracted name against roster.
-    Returns (roster_athlete, score) or None if no match above threshold.
+    Fuzzy-match an extracted name against roster and classify the match.
+
+    Returns a tuple (status, matches) where status is one of:
+      - "confident": exactly one entry in matches, a clear single winner
+      - "ambiguous": 2+ entries, user needs to pick
+      - "none":      no entries, extracted name doesn't look like anyone
+
+    Matching strategy:
+      1. Score every roster name using rapidfuzz.fuzz.WRatio (combines
+         ratio, partial ratio, token sort, token set — good at first-name
+         variants like "Sam" vs "Samuel Johnson").
+      2. Also score on just the first token of the extracted name against
+         each roster name, to catch cases where the document only shows
+         a first name (e.g. "Sam" → "Sam Smith").
+      3. Take the max of the two scores per candidate.
+      4. Decide tier:
+           - CONFIDENT if top score >= confident_threshold AND
+             (only one candidate OR gap to #2 >= confident_gap)
+           - AMBIGUOUS if top score >= loose_threshold (always return
+             the top N above loose_threshold so the user can pick)
+           - NONE otherwise
     """
     try:
-        from rapidfuzz import fuzz, process
+        from rapidfuzz import fuzz
     except ImportError:
-        return None
+        return ("none", [])
 
     if not extracted_name or not roster:
-        return None
+        return ("none", [])
 
-    names = [a.get("name", "") for a in roster]
-    result = process.extractOne(
-        extracted_name,
-        names,
-        scorer=fuzz.token_set_ratio,
-        score_cutoff=threshold,
-    )
-    if result is None:
-        return None
-    _, score, idx = result
-    return roster[idx], int(score)
+    extracted = extracted_name.strip()
+    if not extracted:
+        return ("none", [])
+
+    # First-token only (e.g. "Sam" from "Sam Johnson") — helps when the
+    # source doc only has first names.
+    first_token = extracted.split()[0] if extracted.split() else extracted
+
+    scored: list[tuple[dict[str, Any], int]] = []
+    for athlete in roster:
+        name = (athlete.get("name") or "").strip()
+        if not name:
+            continue
+        # Full-name vs full-name
+        full_score = fuzz.WRatio(extracted, name)
+        # First-token vs full-name (catches "Sam" → "Sam Smith")
+        token_score = fuzz.WRatio(first_token, name) if first_token != extracted else full_score
+        # Also compare first-token against the first token of each roster name
+        roster_first = name.split()[0] if name.split() else name
+        first_vs_first = fuzz.ratio(first_token.lower(), roster_first.lower())
+        score = max(full_score, token_score, first_vs_first)
+        scored.append((athlete, int(score)))
+
+    if not scored:
+        return ("none", [])
+
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    # Filter to loose threshold
+    above_loose = [s for s in scored if s[1] >= loose_threshold]
+    if not above_loose:
+        return ("none", [])
+
+    top_athlete, top_score = above_loose[0]
+
+    # Confident tier: clear single winner
+    if top_score >= confident_threshold:
+        if len(above_loose) == 1:
+            return ("confident", [(top_athlete, top_score)])
+        second_score = above_loose[1][1]
+        if top_score - second_score >= confident_gap:
+            return ("confident", [(top_athlete, top_score)])
+
+    # Ambiguous: return top N
+    return ("ambiguous", above_loose[:max_candidates])
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -494,8 +550,10 @@ async def extract_results(
     dropped_reasons: list[str] = []
 
     # ── Validate each extraction ──
-    # Group by matched roster athlete
+    # Group confident matches by roster athlete
     grouped: dict[str, dict[str, Any]] = {}
+    # Ambiguous extractions get surfaced to the user for manual disambiguation
+    ambiguous_extractions: list[dict[str, Any]] = []
     # Track unmatched silently (per coach preference)
 
     for ex in extractions:
@@ -533,12 +591,43 @@ async def extract_results(
             dropped_reasons.append(f"unparseable date: {ex.get('date')}")
             continue
 
-        # 6. Fuzzy match athlete
-        match = fuzzy_match_athlete(ex.get("athlete_name", ""), roster)
-        if match is None:
-            # Silent ignore per coach preference
+        # 6. Fuzzy match athlete — may return confident, ambiguous, or none
+        status_tag, matches = fuzzy_match_athlete(ex.get("athlete_name", ""), roster)
+
+        # Build a normalized result record used by both confident and ambiguous paths
+        result_record = {
+            "event": event,
+            "date": iso_date,
+            "value": value,
+            "wind": wind,
+            "competition": (ex.get("competition") or "").strip() or None,
+            "source_quote": quote,
+            "source_is_image": source_is_image,
+        }
+
+        if status_tag == "none":
+            # Silent drop — name doesn't look like anyone on the roster
             continue
-        athlete, confidence = match
+
+        if status_tag == "ambiguous":
+            ambiguous_extractions.append({
+                "extracted_name": ex.get("athlete_name"),
+                "possible_matches": [
+                    {
+                        "roster_athlete_id": str(a.get("id")),
+                        "roster_athlete_name": a.get("name"),
+                        "roster_athlete_gender": a.get("gender"),
+                        "roster_athlete_discipline": a.get("discipline"),
+                        "confidence": int(score),
+                    }
+                    for a, score in matches
+                ],
+                "result": result_record,
+            })
+            continue
+
+        # Confident path — single clear match
+        athlete, confidence = matches[0]
 
         # 7. Duplicate check
         existing_races = athlete.get("races") or []
@@ -563,26 +652,23 @@ async def extract_results(
             grouped[athlete_id]["confidence"] = confidence
 
         grouped[athlete_id]["results"].append({
-            "event": event,
-            "date": iso_date,
-            "value": value,
-            "wind": wind,
-            "competition": (ex.get("competition") or "").strip() or None,
-            "source_quote": quote,
+            **result_record,
             "is_duplicate": is_dup,
-            "source_is_image": source_is_image,
         })
 
     candidates = list(grouped.values())
     accepted_count = sum(len(c["results"]) for c in candidates)
+    ambiguous_count = len(ambiguous_extractions)
 
     return {
         "success": True,
         "candidates": candidates,
+        "ambiguous": ambiguous_extractions,
         "stats": {
             "raw_extraction_count": raw_count,
             "accepted_count": accepted_count,
-            "dropped_count": raw_count - accepted_count,
+            "ambiguous_count": ambiguous_count,
+            "dropped_count": raw_count - accepted_count - ambiguous_count,
             "source_is_image": source_is_image,
         },
         "dropped_reasons": dropped_reasons[:20],  # cap for response size

@@ -91,6 +91,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState('')
   const [scanCandidates, setScanCandidates] = useState([])
+  const [scanAmbiguous, setScanAmbiguous] = useState([]) // [{extracted_name, possible_matches, result}]
+  const [scanAmbigPicks, setScanAmbigPicks] = useState({}) // { [ambigIdx]: athleteId | 'skip' }
   const [scanStats, setScanStats] = useState(null)
   const [scanSelections, setScanSelections] = useState({}) // { `${candidateIdx}:${resultIdx}`: true }
   const [scanSaving, setScanSaving] = useState(false)
@@ -98,7 +100,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
   const resetScanner = () => {
     setScanStage('input'); setScanText(''); setScanFile(null); setScanError('')
-    setScanCandidates([]); setScanStats(null); setScanSelections({}); setScanSavedCount(0)
+    setScanCandidates([]); setScanAmbiguous([]); setScanAmbigPicks({})
+    setScanStats(null); setScanSelections({}); setScanSavedCount(0)
   }
 
   const handleScanExtract = async () => {
@@ -123,13 +126,16 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       }
       const data = await res.json()
       setScanCandidates(data.candidates || [])
+      setScanAmbiguous(data.ambiguous || [])
       setScanStats(data.stats || null)
-      // Pre-select all results by default
+      // Pre-select all confident results by default
       const sel = {}
       ;(data.candidates || []).forEach((c, ci) => {
         (c.results || []).forEach((_, ri) => { sel[`${ci}:${ri}`] = true })
       })
       setScanSelections(sel)
+      // No pre-pick on ambiguous — user must actively choose
+      setScanAmbigPicks({})
       setScanStage('review')
     } catch (err) {
       console.error('[scanner] extract failed:', err)
@@ -144,24 +150,49 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     setScanError('')
     let saved = 0
     try {
+      // Aggregate all new races per athlete id (merging confident + resolved ambiguous)
+      const perAthlete = {} // { [athleteId]: [newRace, ...] }
+
+      // 1. Confident candidates — only selected results
       for (let ci = 0; ci < scanCandidates.length; ci++) {
         const cand = scanCandidates[ci]
         const picked = (cand.results || []).filter((_, ri) => scanSelections[`${ci}:${ri}`])
         if (!picked.length) continue
-        // Find current athlete races, append, write back
-        const athlete = roster.find(a => a.id === cand.roster_athlete_id)
-        if (!athlete) continue
-        const existing = Array.isArray(athlete.races) ? athlete.races : []
-        const newRaces = picked.map(r => ({
+        const list = perAthlete[cand.roster_athlete_id] = perAthlete[cand.roster_athlete_id] || []
+        picked.forEach(r => list.push({
           date: r.date,
           time: r.value,
           competition: r.competition || null,
           source: 'ai_scanner',
         }))
+      }
+
+      // 2. Ambiguous — only those the user actively picked a real athlete for
+      scanAmbiguous.forEach((amb, ai) => {
+        const pick = scanAmbigPicks[ai]
+        if (!pick || pick === 'skip') return
+        const r = amb.result
+        if (!r) return
+        const list = perAthlete[pick] = perAthlete[pick] || []
+        list.push({
+          date: r.date,
+          time: r.value,
+          competition: r.competition || null,
+          source: 'ai_scanner',
+        })
+      })
+
+      // 3. Flush to Supabase
+      for (const [athleteId, newRaces] of Object.entries(perAthlete)) {
+        if (!newRaces.length) continue
+        const athlete = roster.find(a => a.id === athleteId)
+        if (!athlete) continue
+        const existing = Array.isArray(athlete.races) ? athlete.races : []
         const merged = [...existing, ...newRaces]
         await updateIn('coach_roster', `id=eq.${athlete.id}`, { races: merged })
         saved += newRaces.length
       }
+
       setScanSavedCount(saved)
       setScanStage('done')
       fetchRoster()
@@ -965,9 +996,83 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     </div>
                   )}
 
-                  {scanCandidates.length === 0 && (
+                  {scanCandidates.length === 0 && scanAmbiguous.length === 0 && (
                     <div className="py-8 text-center text-[12px] text-slate-500 landing-font">
                       No matching athletes found in this document.
+                    </div>
+                  )}
+
+                  {/* ── Ambiguous disambiguation — user picks which athlete ── */}
+                  {scanAmbiguous.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                        <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-amber-400">
+                          Needs your input · {scanAmbiguous.length} ambiguous name{scanAmbiguous.length === 1 ? '' : 's'}
+                        </p>
+                      </div>
+                      {scanAmbiguous.map((amb, ai) => {
+                        const r = amb.result || {}
+                        const currentPick = scanAmbigPicks[ai]
+                        return (
+                          <div
+                            key={`amb-${ai}`}
+                            className="rounded-lg p-3"
+                            style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)' }}
+                          >
+                            <p className="text-[12px] text-white landing-font mb-1">
+                              Who is <span className="font-bold text-amber-300">"{amb.extracted_name}"</span>?
+                            </p>
+                            <p className="text-[10px] text-slate-500 mono-font mb-2">
+                              {r.date} · {r.event} · <span className="text-slate-300">{r.value}{r.event?.includes('throw') || r.event?.includes('jump') ? 'm' : 's'}</span>
+                              {r.competition && <span> · {r.competition}</span>}
+                            </p>
+                            <div className="space-y-1">
+                              {(amb.possible_matches || []).map(m => {
+                                const selected = currentPick === m.roster_athlete_id
+                                return (
+                                  <button
+                                    key={m.roster_athlete_id}
+                                    type="button"
+                                    onClick={() => setScanAmbigPicks(prev => ({ ...prev, [ai]: m.roster_athlete_id }))}
+                                    className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded text-left transition-colors"
+                                    style={{
+                                      background: selected ? 'rgba(249,115,22,0.18)' : 'rgba(255,255,255,0.03)',
+                                      border: selected ? '1px solid rgba(249,115,22,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                                    }}
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="text-[11px] text-white landing-font truncate">{m.roster_athlete_name}</p>
+                                      <p className="text-[9px] text-slate-500 landing-font truncate">
+                                        {m.roster_athlete_discipline || '—'}{m.roster_athlete_gender ? ` · ${m.roster_athlete_gender}` : ''}
+                                      </p>
+                                    </div>
+                                    <span className="text-[9px] text-slate-500 mono-font flex-shrink-0">{m.confidence}%</span>
+                                  </button>
+                                )
+                              })}
+                              <button
+                                type="button"
+                                onClick={() => setScanAmbigPicks(prev => ({ ...prev, [ai]: 'skip' }))}
+                                className="w-full px-2 py-1.5 rounded text-left text-[10px] text-slate-500 landing-font italic"
+                                style={{
+                                  background: currentPick === 'skip' ? 'rgba(148,163,184,0.12)' : 'transparent',
+                                  border: currentPick === 'skip' ? '1px solid rgba(148,163,184,0.3)' : '1px dashed rgba(148,163,184,0.15)',
+                                }}
+                              >
+                                None of these — skip this result
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {scanCandidates.length > 0 && (
+                        <div className="pt-2">
+                          <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500 px-1">
+                            Confident matches · {scanCandidates.length}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1018,7 +1123,10 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     </button>
                     <button
                       onClick={handleScanConfirm}
-                      disabled={scanSaving || !Object.values(scanSelections).some(Boolean)}
+                      disabled={scanSaving || (
+                        !Object.values(scanSelections).some(Boolean) &&
+                        !Object.values(scanAmbigPicks).some(v => v && v !== 'skip')
+                      )}
                       className="flex-1 py-2 rounded-lg text-[11px] font-bold text-black landing-font uppercase tracking-wider disabled:opacity-40 flex items-center justify-center gap-2"
                       style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
                       {scanSaving ? <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</> : <><CheckCircle className="w-3 h-3" /> Confirm & Save</>}
