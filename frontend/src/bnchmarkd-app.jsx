@@ -5188,28 +5188,80 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── PEAK PROJECTION removed from Overview — full version lives in Insights tab ── */}
 
-            {/* ── INSIGHTS — clean recommendation cards ── */}
-            {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Zap className="w-4 h-4" style={{color: '#f97316'}} />
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Insights</h3>
-                </div>
-                <div className="space-y-2">
-                  {analysisResults.recommendations.map((rec, idx) => (
-                    <div key={idx} className="flex gap-3 p-3 sm:p-4 rounded-xl" style={{background: rec.priority === 'high' ? 'rgba(239,68,68,0.05)' : rec.priority === 'medium' ? 'rgba(245,158,11,0.05)' : 'rgba(59,130,246,0.05)', border: `1px solid ${rec.priority === 'high' ? 'rgba(239,68,68,0.12)' : rec.priority === 'medium' ? 'rgba(245,158,11,0.12)' : 'rgba(59,130,246,0.12)'}`}}>
-                      <div className="flex-shrink-0 mt-0.5">
-                        <div className="w-2 h-2 rounded-full" style={{background: rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#3b82f6'}}></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-white landing-font mb-0.5">{rec.title}</h4>
-                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed landing-font">{rec.text}</p>
-                      </div>
+            {/* ── INSIGHTS — polished recommendation cards ── */}
+            {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (() => {
+              const PRIORITY_META = {
+                high:   { label: 'HIGH',   color: '#ef4444', soft: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.22)',  Icon: AlertTriangle },
+                medium: { label: 'FOCUS',  color: '#f59e0b', soft: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.22)', Icon: Zap },
+                low:    { label: 'NOTE',   color: '#3b82f6', soft: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.22)', Icon: Info },
+              };
+              const recs = analysisResults.recommendations;
+              // Sort high → medium → low so the most important item sits at the top.
+              const order = { high: 0, medium: 1, low: 2 };
+              const sorted = [...recs].sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3));
+              return (
+                <div className="bento-card rounded-2xl p-5 sm:p-7 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  {/* Section header — matches bento pattern */}
+                  <div className="mb-5">
+                    <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300 mb-1">Actions</p>
+                    <div className="flex items-end justify-between gap-3">
+                      <h3 className="landing-font text-lg sm:text-xl font-semibold text-white leading-tight">What to focus on next</h3>
+                      <span className="mono-font text-[10px] text-slate-500 tabular-nums pb-1">{sorted.length} item{sorted.length === 1 ? '' : 's'}</span>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="space-y-3">
+                    {sorted.map((rec, idx) => {
+                      const meta = PRIORITY_META[rec.priority] || PRIORITY_META.low;
+                      const IconComp = meta.Icon;
+                      return (
+                        <div
+                          key={idx}
+                          className="relative flex gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl overflow-hidden"
+                          style={{
+                            background: meta.soft,
+                            border: `1px solid ${meta.border}`,
+                          }}
+                        >
+                          {/* Left priority accent bar */}
+                          <div
+                            className="absolute left-0 top-0 bottom-0 w-[3px]"
+                            style={{ background: `linear-gradient(180deg, ${meta.color} 0%, transparent 100%)` }}
+                          />
+                          {/* Icon badge */}
+                          <div
+                            className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center mt-0.5"
+                            style={{
+                              background: `${meta.color}15`,
+                              border: `1px solid ${meta.color}33`,
+                            }}
+                          >
+                            <IconComp className="w-4 h-4" style={{ color: meta.color }} />
+                          </div>
+                          {/* Body */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-sm sm:text-base font-semibold text-white landing-font leading-tight">{rec.title}</h4>
+                              <span
+                                className="mono-font text-[9px] font-bold tracking-[0.14em] px-1.5 py-0.5 rounded"
+                                style={{
+                                  color: meta.color,
+                                  background: `${meta.color}18`,
+                                  border: `1px solid ${meta.color}33`,
+                                }}
+                              >
+                                {meta.label}
+                              </span>
+                            </div>
+                            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed landing-font">{rec.text}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* ── FULL RACE HISTORY: scatter plot + results table ── */}
             {analysisResults._rawRaces && analysisResults._rawRaces.length > 0 && (() => {
