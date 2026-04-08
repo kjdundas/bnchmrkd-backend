@@ -1120,18 +1120,34 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                           {(cand.results || []).map((r, ri) => {
                             const key = `${ci}:${ri}`
                             return (
-                              <label key={ri} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-white/5">
+                              <label key={ri} className="flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-white/5">
                                 <input
                                   type="checkbox"
                                   checked={!!scanSelections[key]}
                                   onChange={(e) => setScanSelections(prev => ({ ...prev, [key]: e.target.checked }))}
-                                  className="accent-orange-500"
+                                  className="accent-orange-500 mt-0.5"
                                 />
                                 <span className="text-[11px] text-slate-300 mono-font flex-1">
-                                  {r.date} · {r.event} · <span className="text-white">{r.mark_raw}</span>
-                                  {r.competition && <span className="text-slate-600"> · {r.competition}</span>}
+                                  <span className="flex items-center gap-1.5 flex-wrap">
+                                    <span>{r.date}</span>
+                                    {r.date_inferred && (
+                                      <span className="text-[8px] uppercase tracking-wider text-amber-400 landing-font px-1 py-[1px] rounded" style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)' }}>
+                                        inferred — verify
+                                      </span>
+                                    )}
+                                    <span>·</span>
+                                    <span>{r.event}</span>
+                                    <span>·</span>
+                                    <span className="text-white">{r.mark_raw || r.value}</span>
+                                    {r.competition && <span className="text-slate-600">· {r.competition}</span>}
+                                    {r.duplicate && <span className="text-[9px] text-amber-500 landing-font">duplicate</span>}
+                                  </span>
+                                  {r.event_source_quote && (
+                                    <span className="block text-[9px] text-slate-500 mt-0.5 truncate" title={r.event_source_quote}>
+                                      event from: "{r.event_source_quote}"
+                                    </span>
+                                  )}
                                 </span>
-                                {r.duplicate && <span className="text-[9px] text-amber-500 landing-font">duplicate</span>}
                               </label>
                             )
                           })}
