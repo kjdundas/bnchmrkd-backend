@@ -5282,9 +5282,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" style={{color: '#f97316'}} />
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Full Race History</h3>
+                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Full Event History</h3>
                     </div>
-                    <span className="text-[10px] text-slate-500 mono-font">{races.length} race{races.length === 1 ? '' : 's'}</span>
+                    <span className="text-[10px] text-slate-500 mono-font">{races.length} result{races.length === 1 ? '' : 's'}</span>
                   </div>
 
                   {/* Scatter plot */}
