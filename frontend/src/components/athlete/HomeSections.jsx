@@ -402,11 +402,30 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
     () => performancePosition(pb, discipline, sex),
     [pb, discipline, sex]
   )
-  const proj = useMemo(() => computeProjection(races, higher), [races, higher])
 
-  // Animated count-up for the projected number
-  const target = proj?.projection ?? pb ?? 0
-  const animated = useCountUp(target, 1400)
+  // Derive PB / SB / Last Race from logged races
+  const stats = useMemo(() => {
+    const valid = (races || [])
+      .filter(r => r && r.value != null && Number.isFinite(Number(r.value)) && r.date)
+      .map(r => ({ value: Number(r.value), date: new Date(r.date) }))
+      .filter(r => !isNaN(r.date.getTime()))
+    if (!valid.length) return { pb: null, sb: null, last: null, sbIsPb: false }
+    const byDate = [...valid].sort((a, b) => b.date - a.date)
+    const last = byDate[0]
+    const bestOf = (arr) => arr.reduce((best, r) =>
+      best == null ? r : (higher ? (r.value > best.value ? r : best) : (r.value < best.value ? r : best)),
+      null
+    )
+    const pbRow = bestOf(valid)
+    const currentYear = new Date().getFullYear()
+    const seasonRows = valid.filter(r => r.date.getFullYear() === currentYear)
+    const sbRow = bestOf(seasonRows)
+    const sbIsPb = sbRow && pbRow && Math.abs(sbRow.value - pbRow.value) < 1e-6
+    return { pb: pbRow, sb: sbRow, last, sbIsPb }
+  }, [races, higher])
+
+  // Use derived PB if prop is missing
+  const effectivePb = pb != null ? Number(pb) : stats.pb?.value ?? null
 
   // Format helpers
   const fmtMark = (v) => {
@@ -414,18 +433,43 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
     return higher ? `${Number(v).toFixed(2)}m` : `${Number(v).toFixed(2)}s`
   }
 
+  // Delta vs PB for SB and last race (sign flipped so "better" is always negative for time / positive for distance)
+  const deltaVsPb = (v) => {
+    if (v == null || effectivePb == null) return null
+    return Number(v) - effectivePb
+  }
+
+  // Format a delta as "+0.04s" or "−0.02m", with color direction
+  const fmtDelta = (d) => {
+    if (d == null) return null
+    if (Math.abs(d) < 0.005) return { text: '= PB', tone: 'neutral' }
+    const sign = d > 0 ? '+' : '−'
+    const abs = Math.abs(d).toFixed(2)
+    const unit = higher ? 'm' : 's'
+    // For time events (higher=false), negative delta is better. For distance (higher=true), positive is better.
+    const better = higher ? d > 0 : d < 0
+    return { text: `${sign}${abs}${unit}`, tone: better ? 'up' : 'down' }
+  }
+
+  // Relative time label: "today" / "2d ago" / "3w ago"
+  const relTime = (date) => {
+    if (!date) return null
+    const ms = Date.now() - date.getTime()
+    const days = Math.floor(ms / 86400000)
+    if (days <= 0) return 'today'
+    if (days === 1) return 'yesterday'
+    if (days < 7) return `${days}d ago`
+    if (days < 28) return `${Math.floor(days / 7)}w ago`
+    if (days < 365) return `${Math.floor(days / 30)}mo ago`
+    return `${Math.floor(days / 365)}y ago`
+  }
+
+  const sbDelta = fmtDelta(deltaVsPb(stats.sb?.value))
+  const lastDelta = fmtDelta(deltaVsPb(stats.last?.value))
+
   // Tier headline
   const currentTier = position?.nearestTier?.label
   const nextTier = position?.nextTier?.label
-  const trendingUp = proj?.improving === true
-  const trendingDown = proj?.improving === false
-
-  // Delta from current PB to projection
-  const delta = proj && pb != null ? proj.projection - Number(pb) : null
-  // Neutral band: projection within ±0.01 of PB is "on pace", not up or down.
-  // This prevents "+0.00s" rendering in red alongside an "accelerating" headline.
-  const deltaIsNeutral = delta != null && Math.abs(delta) < 0.01
-  const improvedDelta = delta != null && !deltaIsNeutral && (higher ? delta > 0 : delta < 0)
 
   return (
     <section
@@ -464,13 +508,13 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
       />
 
       {/* Header — kicker + streak chip */}
-      <header className="relative px-5 pt-5 pb-2 flex items-start justify-between gap-3">
+      <header className="relative px-5 pt-5 pb-1 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300">
-            Your trajectory
+            Your headline
           </p>
-          <h2 className="landing-font text-white mt-1 text-xl font-semibold leading-tight">
-            {deltaIsNeutral ? 'Holding pattern' : trendingUp ? 'You are accelerating' : trendingDown ? 'Your form is dipping' : 'Holding pattern'}
+          <h2 className="landing-font text-white mt-1 text-[15px] font-medium leading-tight text-slate-300">
+            Where you stand right now
           </h2>
         </div>
 
@@ -497,101 +541,136 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
         )}
       </header>
 
-      {/* Big projection number */}
-      <div className="relative px-5 pt-4 pb-2 flex items-end justify-between gap-4">
-        <div className="min-w-0">
-          <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
-            Projected · 60 days
-          </p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <p
-              className="landing-font tabular-nums leading-none"
-              style={{
-                fontSize: '3rem',
-                fontWeight: 700,
-                letterSpacing: '-0.03em',
-                background: trendingUp
-                  ? 'linear-gradient(180deg, #ffffff 0%, #fb923c 100%)'
-                  : trendingDown
-                  ? 'linear-gradient(180deg, #ffffff 0%, #94a3b8 100%)'
-                  : 'linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              {proj ? animated.toFixed(2) : pb != null ? Number(pb).toFixed(2) : '—'}
+      {/* 3-stat headline strip — PB | SB | LAST RACE */}
+      <div className="relative px-5 pt-5 pb-5">
+        <div className="grid grid-cols-3 gap-3">
+          {/* ─── PERSONAL BEST (anchor) ─── */}
+          <div className="relative">
+            <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-orange-300/80">
+              Personal best
             </p>
-            <span className="mono-font text-sm text-slate-500">{higher ? 'm' : 's'}</span>
-          </div>
-          {delta != null && proj && (
-            deltaIsNeutral ? (
-              <div className="flex items-center gap-1 mt-2 mono-font text-[11px] tabular-nums text-slate-400">
-                <span className="font-semibold">On pace with PB</span>
-              </div>
-            ) : (
-              <div
-                className="flex items-center gap-1 mt-2 mono-font text-[11px] tabular-nums"
-                style={{ color: improvedDelta ? '#34d399' : '#fb7185' }}
+            <div className="flex items-baseline gap-1 mt-1.5">
+              <p
+                className="landing-font tabular-nums leading-none"
+                style={{
+                  fontSize: '2.25rem',
+                  fontWeight: 700,
+                  letterSpacing: '-0.03em',
+                  background: 'linear-gradient(180deg, #ffffff 0%, #fb923c 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
               >
-                {improvedDelta ? (
-                  <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.5} />
-                ) : (
-                  <TrendingDown className="w-3.5 h-3.5" strokeWidth={2.5} />
-                )}
-                <span className="font-semibold">
-                  {delta > 0 ? '+' : ''}
-                  {delta.toFixed(2)}
-                  {higher ? 'm' : 's'}
-                </span>
-                <span className="text-slate-500 ml-1">from current PB</span>
-              </div>
-            )
-          )}
-          {!proj && (
-            <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500 mt-2">
-              log 3+ results to unlock projection
-            </p>
-          )}
-        </div>
-
-        {/* Right-side mini stack: current PB + tier */}
-        <div className="text-right flex-shrink-0">
-          <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
-            Current PB
-          </p>
-          <p className="landing-font text-white tabular-nums text-lg font-semibold mt-0.5">
-            {fmtMark(pb)}
-          </p>
-          {currentTier && (
-            <div className="mt-2">
-              <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">
-                Tier
+                {effectivePb != null ? Number(effectivePb).toFixed(2) : '—'}
               </p>
-              <p className="landing-font text-orange-300 text-[13px] font-semibold mt-0.5">
+              <span className="mono-font text-xs text-slate-500">{higher ? 'm' : 's'}</span>
+            </div>
+            <div
+              className="h-[2px] w-10 mt-2 rounded-full"
+              style={{ background: `linear-gradient(90deg, ${ORANGE}, transparent)` }}
+            />
+            {currentTier && (
+              <p className="landing-font text-orange-300 text-[11px] font-semibold mt-2">
                 {currentTier}
               </p>
+            )}
+          </div>
+
+          {/* ─── SEASON BEST ─── */}
+          <div
+            className="relative pl-3"
+            style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="flex items-center gap-1.5">
+              <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
+                Season best
+              </p>
+              {stats.sbIsPb && (
+                <span
+                  className="mono-font text-[8px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded font-bold"
+                  style={{
+                    background: 'rgba(249,115,22,0.25)',
+                    border: '1px solid rgba(249,115,22,0.5)',
+                    color: '#fb923c',
+                  }}
+                >
+                  New PB
+                </span>
+              )}
             </div>
-          )}
+            <div className="flex items-baseline gap-1 mt-1.5">
+              <p className="landing-font text-white tabular-nums leading-none text-[1.75rem] font-semibold" style={{ letterSpacing: '-0.02em' }}>
+                {stats.sb ? Number(stats.sb.value).toFixed(2) : '—'}
+              </p>
+              <span className="mono-font text-[11px] text-slate-500">{higher ? 'm' : 's'}</span>
+            </div>
+            {sbDelta && !stats.sbIsPb && (
+              <p
+                className="mono-font text-[10px] tabular-nums font-semibold mt-1.5"
+                style={{
+                  color: sbDelta.tone === 'up' ? '#34d399' : sbDelta.tone === 'down' ? '#fb7185' : '#94a3b8',
+                }}
+              >
+                {sbDelta.text} <span className="text-slate-500">vs PB</span>
+              </p>
+            )}
+            {stats.sb && (
+              <p className="mono-font text-[9px] uppercase tracking-[0.16em] text-slate-600 mt-0.5">
+                {relTime(stats.sb.date)}
+              </p>
+            )}
+          </div>
+
+          {/* ─── LAST RACE ─── */}
+          <div
+            className="relative pl-3"
+            style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
+              Last race
+            </p>
+            <div className="flex items-baseline gap-1 mt-1.5">
+              <p className="landing-font text-white tabular-nums leading-none text-[1.75rem] font-semibold" style={{ letterSpacing: '-0.02em' }}>
+                {stats.last ? Number(stats.last.value).toFixed(2) : '—'}
+              </p>
+              <span className="mono-font text-[11px] text-slate-500">{higher ? 'm' : 's'}</span>
+            </div>
+            {lastDelta && (
+              <p
+                className="mono-font text-[10px] tabular-nums font-semibold mt-1.5"
+                style={{
+                  color: lastDelta.tone === 'up' ? '#34d399' : lastDelta.tone === 'down' ? '#fb7185' : '#94a3b8',
+                }}
+              >
+                {lastDelta.text} <span className="text-slate-500">vs PB</span>
+              </p>
+            )}
+            {stats.last && (
+              <p className="mono-font text-[9px] uppercase tracking-[0.16em] text-slate-600 mt-0.5">
+                {relTime(stats.last.date)}
+              </p>
+            )}
+          </div>
         </div>
+
+        {!stats.pb && (
+          <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500 mt-4 text-center">
+            log a result to unlock your headline
+          </p>
+        )}
       </div>
 
       {/* Footer — next milestone reminder */}
       {nextTier && nextTier !== currentTier && (
         <footer
-          className="relative mt-3 px-5 py-3 flex items-center gap-2"
+          className="relative px-5 py-3 flex items-center gap-2"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           <Target className="w-3.5 h-3.5 text-orange-300 flex-shrink-0" />
           <p className="landing-font text-slate-300 text-[12px] flex-1 truncate">
-            On pace for{' '}
+            Next tier:{' '}
             <span className="text-white font-semibold">{nextTier}</span>
-            {trendingUp && (
-              <span className="text-emerald-400 ml-1.5 mono-font text-[10px]">▲ accelerating</span>
-            )}
-            {trendingDown && (
-              <span className="text-rose-400 ml-1.5 mono-font text-[10px]">▼ slowing</span>
-            )}
           </p>
         </footer>
       )}
