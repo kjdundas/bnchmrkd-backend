@@ -154,8 +154,19 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     setScanError('')
     let saved = 0
     try {
+      // Helper: build a race record in the canonical roster shape
+      // (matches what the scraper + manual log produce so athlete views render it).
+      const buildRace = (r, discipline) => ({
+        date: r.date,
+        value: r.value,
+        competition: r.competition || null,
+        wind: r.wind ?? null,
+        discipline: discipline || r.event || null,
+        source: 'ai_scanner',
+      })
+
       // Aggregate all new races per athlete id (merging confident + resolved ambiguous)
-      const perAthlete = {} // { [athleteId]: [newRace, ...] }
+      const perAthlete = {} // { [athleteId]: [{race, event}, ...] }
 
       // 1. Confident candidates — only selected results
       for (let ci = 0; ci < scanCandidates.length; ci++) {
@@ -163,12 +174,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         const picked = (cand.results || []).filter((_, ri) => scanSelections[`${ci}:${ri}`])
         if (!picked.length) continue
         const list = perAthlete[cand.roster_athlete_id] = perAthlete[cand.roster_athlete_id] || []
-        picked.forEach(r => list.push({
-          date: r.date,
-          time: r.value,
-          competition: r.competition || null,
-          source: 'ai_scanner',
-        }))
+        const athleteDiscipline = cand.roster_athlete_discipline || null
+        picked.forEach(r => list.push({ race: buildRace(r, athleteDiscipline || r.event), event: athleteDiscipline || r.event }))
       }
 
       // 2. Ambiguous — only those the user actively picked a real athlete for
@@ -178,22 +185,61 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         const r = amb.result
         if (!r) return
         const list = perAthlete[pick] = perAthlete[pick] || []
-        list.push({
-          date: r.date,
-          time: r.value,
-          competition: r.competition || null,
-          source: 'ai_scanner',
-        })
+        // Look up that athlete's discipline from the current roster
+        const pickedAthlete = roster.find(a => a.id === pick)
+        const athleteDiscipline = pickedAthlete?.discipline || r.event || null
+        list.push({ race: buildRace(r, athleteDiscipline), event: athleteDiscipline })
       })
 
-      // 3. Flush to Supabase
-      for (const [athleteId, newRaces] of Object.entries(perAthlete)) {
-        if (!newRaces.length) continue
+      // 3. Flush to Supabase — for each athlete, merge races, update disciplines_data,
+      //    and recompute PB / last_result so the profile view updates immediately.
+      const isThrowsDisc = (d) => !!d && /shot|discus|hammer|javelin|throw|put/i.test(d)
+
+      for (const [athleteId, entries] of Object.entries(perAthlete)) {
+        if (!entries.length) continue
         const athlete = roster.find(a => a.id === athleteId)
         if (!athlete) continue
+
+        const newRaces = entries.map(e => e.race)
         const existing = Array.isArray(athlete.races) ? athlete.races : []
-        const merged = [...existing, ...newRaces]
-        await updateIn('coach_roster', `id=eq.${athlete.id}`, { races: merged })
+        const mergedRaces = [...existing, ...newRaces]
+
+        // Update disciplines_data: append new races to their discipline bucket
+        const disciplinesData = { ...(athlete.disciplines_data || {}) }
+        entries.forEach(({ race, event }) => {
+          const key = event || athlete.discipline || 'unknown'
+          const bucket = Array.isArray(disciplinesData[key]) ? disciplinesData[key] : []
+          disciplinesData[key] = [...bucket, race]
+        })
+
+        // Recompute PB + last result from the athlete's primary discipline bucket
+        const primaryDisc = athlete.discipline
+        const bucketForPb = primaryDisc && Array.isArray(disciplinesData[primaryDisc])
+          ? disciplinesData[primaryDisc]
+          : mergedRaces
+        const isThrows = isThrowsDisc(primaryDisc)
+
+        let pbVal = null
+        for (const r of bucketForPb) {
+          if (r?.value == null) continue
+          if (pbVal == null || (isThrows ? r.value > pbVal : r.value < pbVal)) pbVal = r.value
+        }
+        const sortedDesc = [...bucketForPb]
+          .filter(r => r?.date && r?.value != null)
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+        const last = sortedDesc[0] || null
+
+        const patch = {
+          races: mergedRaces,
+          disciplines_data: disciplinesData,
+        }
+        if (pbVal != null) patch.pb_value = pbVal
+        if (last) {
+          patch.last_result_value = last.value
+          patch.last_result_date = last.date
+        }
+
+        await updateIn('coach_roster', `id=eq.${athlete.id}`, patch)
         saved += newRaces.length
       }
 
