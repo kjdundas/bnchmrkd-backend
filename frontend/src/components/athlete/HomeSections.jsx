@@ -1,13 +1,15 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   Zap, Flame, Dumbbell, Activity, Heart, Target, Sparkles,
-  TrendingUp, TrendingDown, ArrowRight, BookOpen, AlertTriangle, Trophy, ChevronRight
+  TrendingUp, TrendingDown, ArrowRight, BookOpen, AlertTriangle, Trophy, ChevronRight,
+  Info
 } from 'lucide-react'
 import {
   performancePercentile, performanceZoneLabel, qualifierZones,
   buildDnaProfile, RADAR_AXES, disciplineFamily, findLimitingFactor,
   findMissingPriority, getDailyScienceCard, getCalibration,
   performancePosition, getReferenceTiers,
+  DNA_TIERS, scoreToTier, ageAdjustScore, AXIS_INFO, disciplinePriority,
 } from '../../lib/disciplineScience'
 import { findRival, ageFromDob } from '../../lib/historicalRivals'
 
@@ -1010,127 +1012,320 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// 2. ATHLETE DNA RADAR
+// 2. ATHLETE DNA — THE LADDER
+// Replaces the old radar with a sorted, tiered continuum bar per axis.
+// Young athletes get age-adjusted scores so they aren't measured against
+// fully matured adults. Each axis has a popover (ⓘ) explainer.
 // ═══════════════════════════════════════════════════════════════════════
-export function DnaRadar({ metrics, discipline }) {
+
+function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLabel }) {
+  const Icon = AXIS_ICON[row.key] || Zap
+  const { label, measured, adjusted, boost, tier, info } = row
+
+  return (
+    <div className="relative">
+      {/* Header row: icon + label + (ⓘ) + priority chip + tier chip */}
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Icon
+            className="w-3.5 h-3.5 flex-shrink-0"
+            style={{ color: measured ? (tier?.color || ORANGE) : '#475569' }}
+          />
+          <span
+            className={`mono-font text-[11px] uppercase tracking-[0.14em] ${
+              measured ? 'text-slate-200' : 'text-slate-600'
+            }`}
+          >
+            {label}
+          </span>
+          <button
+            type="button"
+            onClick={onToggleInfo}
+            aria-label={`About ${label}`}
+            className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-orange-300 transition-colors"
+          >
+            <Info className="w-3 h-3" />
+          </button>
+          {isTopPriority && (
+            <span
+              className="mono-font text-[8px] font-bold tracking-[0.14em] px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap"
+              style={{
+                color: ORANGE_LITE,
+                background: 'rgba(249,115,22,0.12)',
+                border: '1px solid rgba(249,115,22,0.25)',
+              }}
+            >
+              #1 FOR {String(disciplineLabel || '').toUpperCase()}
+            </span>
+          )}
+        </div>
+        {measured ? (
+          <span
+            className="mono-font text-[9px] font-bold tracking-[0.14em] px-1.5 py-0.5 rounded flex-shrink-0"
+            style={{
+              color: tier.color,
+              background: `${tier.color}18`,
+              border: `1px solid ${tier.color}33`,
+            }}
+          >
+            {tier.label.toUpperCase()}
+          </span>
+        ) : (
+          <span className="mono-font text-[9px] text-slate-600 uppercase tracking-[0.14em] flex-shrink-0">
+            log to unlock
+          </span>
+        )}
+      </div>
+
+      {/* Segmented 5-tier bar */}
+      <div
+        className="relative h-2 rounded-full overflow-hidden flex"
+        style={{ background: 'rgba(255,255,255,0.03)' }}
+      >
+        {DNA_TIERS.map((t, i) => (
+          <div
+            key={t.key}
+            className="h-full"
+            style={{
+              width: '20%',
+              background: measured
+                ? `${t.color}${tier && tier.index >= i ? '55' : '18'}`
+                : 'rgba(255,255,255,0.03)',
+              borderRight: i < DNA_TIERS.length - 1 ? '1px solid rgba(15,23,42,0.8)' : 'none',
+            }}
+          />
+        ))}
+        {/* Finalist tick at 85% */}
+        {measured && (
+          <div
+            className="absolute top-[-3px] bottom-[-3px] w-[1.5px]"
+            style={{
+              left: '85%',
+              backgroundImage:
+                'repeating-linear-gradient(180deg,#94a3b8 0 2px,transparent 2px 4px)',
+            }}
+            aria-label="Finalist level"
+          />
+        )}
+        {/* Athlete marker */}
+        {measured && adjusted != null && (
+          <div
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full"
+            style={{
+              left: `${Math.max(2, Math.min(98, adjusted))}%`,
+              background: tier.color,
+              border: '2px solid #0f172a',
+              boxShadow: `0 0 0 1.5px ${tier.color}`,
+            }}
+          />
+        )}
+      </div>
+
+      {/* Footer: next-tier hint + score + age boost tag */}
+      {measured && (
+        <div className="flex items-center justify-between mt-1 text-[10px] mono-font">
+          <span className="text-slate-600">
+            {tier.nextTier ? `${tier.toNext} pts to ${tier.nextTier.label}` : 'Top tier reached'}
+          </span>
+          <span className="text-slate-600 tabular-nums">
+            {adjusted}
+            {boost > 0 && (
+              <span className="text-orange-400/70 ml-1">(+{boost} for age)</span>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* ⓘ Info popover */}
+      {isInfoOpen && info && (
+        <div
+          role="dialog"
+          className="absolute z-20 left-0 right-0 mt-2 rounded-xl p-4"
+          style={{
+            background: 'rgba(15,23,42,0.98)',
+            border: '1px solid rgba(249,115,22,0.25)',
+            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-orange-300">
+              {label}
+            </p>
+            <button
+              type="button"
+              onClick={onToggleInfo}
+              className="mono-font text-[10px] uppercase tracking-[0.14em] text-slate-500 hover:text-orange-300"
+              aria-label="Close"
+            >
+              close
+            </button>
+          </div>
+          <p className="landing-font text-slate-200 text-sm leading-snug mb-3">{info.what}</p>
+          <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500 mb-1">
+            Why it matters
+          </p>
+          <p className="landing-font text-slate-300 text-[13px] leading-snug mb-3">{info.why}</p>
+          <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500 mb-1">
+            How to improve
+          </p>
+          <ul className="landing-font text-slate-300 text-[13px] leading-snug space-y-1">
+            {(info.how || []).map((h, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-orange-300 mt-0.5">•</span>
+                <span>{h}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function AthleteDNALadder({ metrics, discipline, dob }) {
   const profile = useMemo(() => buildDnaProfile(metrics || []), [metrics])
-  const grow = useMountAnim(1300, 150)
+  const age = useMemo(() => (dob ? ageFromDob(dob) : null), [dob])
+  const priorityOrder = useMemo(() => disciplinePriority(discipline), [discipline])
+  const [openInfoKey, setOpenInfoKey] = useState(null)
+  const containerRef = useRef(null)
 
-  // Hex geometry — viewBox padded so axis labels at scale 1.22 don't clip
-  const W = 360, H = 320, cx = W / 2, cy = H / 2, R = 108
-  const axes = RADAR_AXES
-  const angleFor = (i) => -Math.PI / 2 + i * ((2 * Math.PI) / axes.length)
-  const pt = (i, scale) => ({
-    x: cx + Math.cos(angleFor(i)) * R * scale,
-    y: cy + Math.sin(angleFor(i)) * R * scale,
-  })
+  // Close popover on outside click / Escape
+  useEffect(() => {
+    if (!openInfoKey) return
+    const onDoc = (e) => {
+      if (!containerRef.current || !containerRef.current.contains(e.target)) {
+        setOpenInfoKey(null)
+      }
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpenInfoKey(null)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [openInfoKey])
 
-  // Finalist envelope at 85
-  const finalistPoints = axes.map((_, i) => pt(i, 0.85))
-  const finalistPath = finalistPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'
+  // Build ordered rows — discipline priority drives order so the most
+  // important axis for this event sits at the top.
+  const rows = useMemo(() => {
+    return priorityOrder.map((key, priorityIdx) => {
+      const axis = RADAR_AXES.find((a) => a.key === key)
+      const raw = profile[key]?.score ?? null
+      const adj = ageAdjustScore(raw, key, age)
+      const tier = raw != null && adj ? scoreToTier(adj.adjusted) : null
+      return {
+        key,
+        label: axis?.label || key,
+        priorityIdx,
+        measured: raw != null,
+        raw,
+        adjusted: adj?.adjusted ?? null,
+        boost: adj?.boost ?? 0,
+        tier,
+        info: AXIS_INFO[key],
+      }
+    })
+  }, [profile, priorityOrder, age])
 
-  // Athlete polygon (where score available) — scaled by mount progress so it grows in
-  const athletePoints = axes.map((a, i) => {
-    const s = profile[a.key]?.score
-    if (s == null) return null
-    return { i, ...pt(i, (s / 100) * grow) }
-  }).filter(Boolean)
+  const measuredRows = rows.filter((r) => r.measured)
 
-  const athletePath = athletePoints.length >= 3
-    ? athletePoints.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'
-    : null
-
-  const measuredCount = axes.filter(a => profile[a.key]?.score != null).length
+  // Quick strength/focus headline derived from adjusted scores
+  const sortedByScore = [...measuredRows].sort(
+    (a, b) => (b.adjusted ?? 0) - (a.adjusted ?? 0)
+  )
+  const strengths = sortedByScore
+    .slice(0, 2)
+    .filter((r) => (r.adjusted ?? 0) >= 60)
+    .map((r) => r.label)
+  const focus = sortedByScore
+    .slice(-2)
+    .filter((r) => (r.adjusted ?? 0) < 60)
+    .reverse()
+    .map((r) => r.label)
 
   return (
     <AlmanacCard kicker="The Profile" title="Athlete DNA">
-      <div className="px-5 pt-2 pb-2 flex items-center justify-between">
+      {/* Meta line */}
+      <div className="px-5 pt-2 pb-1 flex items-center justify-between">
         <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">
-          {measuredCount}/{axes.length} axes measured
-        </p>
-        <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">
-          you · vs · finalist
-        </p>
-      </div>
-
-      <div className="flex justify-center px-3 pb-3">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-xs">
-          <defs>
-            <radialGradient id="dnaFill" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={ORANGE} stopOpacity="0.35" />
-              <stop offset="100%" stopColor={ORANGE} stopOpacity="0.05" />
-            </radialGradient>
-          </defs>
-          {[0.25, 0.5, 0.75, 1].map((s, i) => {
-            const pts = axes.map((_, idx) => pt(idx, s))
-            const d = pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'
-            return (
-              <path key={i} d={d} fill="none"
-                stroke="rgba(255,255,255,0.08)" strokeWidth="0.75"
-                strokeDasharray={i === 3 ? '0' : '2 3'} />
-            )
-          })}
-          {axes.map((_, i) => {
-            const p = pt(i, 1)
-            return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(255,255,255,0.08)" strokeWidth="0.75" />
-          })}
-
-          <path d={finalistPath} fill="none" stroke="#94a3b8" strokeWidth="1.25" strokeDasharray="3 4" opacity="0.6" />
-
-          {athletePath && (
-            <path d={athletePath} fill="url(#dnaFill)" stroke={ORANGE} strokeWidth="1.75" />
+          {measuredRows.length}/{rows.length} axes measured
+          {age != null && (
+            <span className="ml-2 text-slate-600">
+              · age-adjusted for {Math.round(age)}
+            </span>
           )}
-          {athletePoints.map((p) => (
-            <circle key={p.i} cx={p.x} cy={p.y} r="3.2"
-              fill={ORANGE} stroke="#ffffff" strokeWidth="1.25" />
-          ))}
-
-          {axes.map((a, i) => {
-            const p = pt(i, 1.22)
-            const score = profile[a.key]?.score
-            const hasData = score != null
-            return (
-              <g key={a.key}>
-                <text
-                  x={p.x} y={p.y}
-                  fill={hasData ? '#e2e8f0' : '#475569'}
-                  fontSize="9"
-                  fontFamily="DM Mono, monospace"
-                  letterSpacing="1.2"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  style={{ textTransform: 'uppercase' }}
-                >
-                  {a.label}
-                </text>
-                <text
-                  x={p.x} y={p.y + 13}
-                  fill={hasData ? ORANGE_LITE : '#334155'}
-                  fontSize="12"
-                  fontFamily="Instrument Sans, sans-serif"
-                  fontWeight="600"
-                  textAnchor="middle"
-                >
-                  {hasData ? Math.round(score * grow) : '—'}
-                </text>
-              </g>
-            )
-          })}
-        </svg>
+        </p>
       </div>
 
-      <div className="px-5 py-3 flex items-center justify-center gap-6 mono-font text-[9px] uppercase tracking-[0.18em]"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <span className="flex items-center gap-2 text-slate-300">
-          <span className="w-4 h-[2px]" style={{ background: ORANGE }} /> you
+      {/* Strengths / Focus headline */}
+      {(strengths.length > 0 || focus.length > 0) && (
+        <div className="px-5 pt-2 pb-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] landing-font">
+          {strengths.length > 0 && (
+            <div className="text-slate-400">
+              <span className="mono-font text-emerald-400 mr-1.5 uppercase tracking-[0.14em] text-[9px]">
+                ▲ your edge
+              </span>
+              {strengths.join(', ')}
+            </div>
+          )}
+          {focus.length > 0 && (
+            <div className="text-slate-400">
+              <span className="mono-font text-orange-300 mr-1.5 uppercase tracking-[0.14em] text-[9px]">
+                ● focus
+              </span>
+              {focus.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Ladder rows */}
+      <div ref={containerRef} className="px-5 pt-1 pb-5 space-y-4">
+        {rows.map((row, idx) => (
+          <LadderRow
+            key={row.key}
+            row={row}
+            isTopPriority={idx === 0}
+            isInfoOpen={openInfoKey === row.key}
+            onToggleInfo={() =>
+              setOpenInfoKey(openInfoKey === row.key ? null : row.key)
+            }
+            disciplineLabel={discipline}
+          />
+        ))}
+      </div>
+
+      {/* Legend footer — finalist tick key */}
+      <div
+        className="px-5 py-3 flex items-center justify-center gap-6 mono-font text-[9px] uppercase tracking-[0.18em]"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <span className="flex items-center gap-2 text-slate-400">
+          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: ORANGE }} />
+          you
         </span>
         <span className="flex items-center gap-2 text-slate-500">
-          <span className="w-4 h-[2px]" style={{ backgroundImage: 'repeating-linear-gradient(90deg,#94a3b8 0 2px,transparent 2px 5px)' }} /> finalist
+          <span
+            className="inline-block w-4 h-[8px]"
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(180deg,#94a3b8 0 2px,transparent 2px 4px)',
+            }}
+          />
+          finalist
         </span>
       </div>
     </AlmanacCard>
   )
 }
+
+// Backwards-compat alias so older call sites keep rendering the new ladder
+// until they are updated.
+export const DnaRadar = AthleteDNALadder
 
 // ═══════════════════════════════════════════════════════════════════════
 // 3. LIMITING FACTOR CARD

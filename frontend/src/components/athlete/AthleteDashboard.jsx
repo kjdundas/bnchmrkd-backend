@@ -12,7 +12,7 @@ import { selectFrom, updateIn } from '../../lib/supabaseRest'
 import { getReferenceTiers, getCalibration, performancePosition } from '../../lib/disciplineScience'
 import MetricLogView from './MetricLogView'
 import {
-  TrajectoryHero, RivalCard, WhereYouStand, DnaRadar, LimitingFactorCard, ScienceSpotlight, SinceLastVisit,
+  TrajectoryHero, RivalCard, WhereYouStand, AthleteDNALadder, LimitingFactorCard, ScienceSpotlight, SinceLastVisit,
   TierUpCelebration, useTierTracker, WeeklyRecap,
 } from './HomeSections'
 
@@ -585,7 +585,11 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing 
         dob={athleteRow?.date_of_birth || athleteRow?.dob}
       />
 
-      <DnaRadar metrics={metrics} discipline={view.discipline} />
+      <AthleteDNALadder
+        metrics={metrics}
+        discipline={view.discipline}
+        dob={athleteRow?.date_of_birth || athleteRow?.dob}
+      />
 
       <LimitingFactorCard
         metrics={metrics}

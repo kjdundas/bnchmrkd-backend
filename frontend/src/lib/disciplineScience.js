@@ -608,6 +608,96 @@ export function buildDnaProfile(metrics) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+// ATHLETE DNA TIERS + AGE-ADJUSTMENT
+// Powers "The Ladder" — a replacement for the DNA radar that places the
+// athlete on a named 5-tier continuum per physical axis.
+// ══════════════════════════════════════════════════════════════════════
+
+// 5-tier continuum. Cutoffs are the LOWER bound of each tier against an
+// age-adjusted 0-100 score.
+export const DNA_TIERS = [
+  { key: 'emerging',   label: 'Emerging',   min: 0,  color: '#64748b' }, // slate
+  { key: 'developing', label: 'Developing', min: 20, color: '#3b82f6' }, // blue
+  { key: 'proficient', label: 'Proficient', min: 40, color: '#14b8a6' }, // teal
+  { key: 'excellent',  label: 'Excellent',  min: 60, color: '#f59e0b' }, // amber
+  { key: 'elite',      label: 'Elite',      min: 80, color: '#f97316' }, // orange/gold
+]
+
+export function scoreToTier(score) {
+  if (score == null) return null
+  let tier = DNA_TIERS[0]
+  for (const t of DNA_TIERS) if (score >= t.min) tier = t
+  const idx = DNA_TIERS.indexOf(tier)
+  const nextTier = DNA_TIERS[idx + 1] || null
+  const toNext = nextTier ? Math.max(0, nextTier.min - score) : 0
+  return { ...tier, index: idx, nextTier, toNext }
+}
+
+// Per-axis "maturity age" — age at which adult norms should apply 1:1.
+// Under this age, we boost the raw score so young athletes aren't judged
+// against grown-adult benchmarks they're biologically not ready to hit.
+// Boost rate = points added per year below maturity, capped at +30.
+const AXIS_AGE_CURVE = {
+  acceleration: { maturity: 20, rate: 1.2 },
+  topSpeed:     { maturity: 23, rate: 1.5 },
+  power:        { maturity: 21, rate: 2.0 },
+  strength:     { maturity: 22, rate: 2.5 }, // strength matures latest
+  mobility:     { maturity: 16, rate: 0.5 }, // mobility expected at all ages
+  conditioning: { maturity: 22, rate: 1.5 },
+}
+
+// Returns { adjusted, raw, boost } for a raw 0-100 score at a given age.
+// If age is null, returns raw unchanged.
+export function ageAdjustScore(rawScore, axisKey, age) {
+  if (rawScore == null) return null
+  if (age == null || !Number.isFinite(age)) {
+    return { adjusted: rawScore, raw: rawScore, boost: 0 }
+  }
+  const curve = AXIS_AGE_CURVE[axisKey]
+  if (!curve) return { adjusted: rawScore, raw: rawScore, boost: 0 }
+  const underBy = Math.max(0, curve.maturity - age)
+  const boost = Math.min(30, Math.round(underBy * curve.rate))
+  const adjusted = Math.max(5, Math.min(100, rawScore + boost))
+  return { adjusted, raw: rawScore, boost }
+}
+
+// Plain-English info for each DNA axis, used by the (ⓘ) popover on the
+// Ladder rows. `why` is generic; the Ladder component can override it per
+// discipline family if needed.
+export const AXIS_INFO = {
+  acceleration: {
+    what: 'How quickly you can reach top speed from a standing or slow start.',
+    why:  'Acceleration decides how much of your race is spent catching up vs. running fast. Critical in the first 30m.',
+    how:  ['Short sprints from blocks or 3-point stance (10–30m)', 'Sled pushes and resisted starts for horizontal power'],
+  },
+  topSpeed: {
+    what: 'The fastest speed you can hit at full stride, once you are already running.',
+    why:  'Top speed is the single strongest predictor of 100m and 200m performance. It is also the hardest quality to improve.',
+    how:  ['Flying sprints (20–40m) with a running start', 'Max-velocity technique drills — tall posture, front-side mechanics'],
+  },
+  power: {
+    what: 'How much force you can put into the ground in a very short time — the spring in your step.',
+    why:  'Power turns strength into speed. High jumpers, sprinters and throwers all live on this quality.',
+    how:  ['Countermovement and depth jumps for vertical power', 'Broad jumps and bounds for horizontal power'],
+  },
+  strength: {
+    what: 'The peak force your muscles can produce, usually measured in the squat, deadlift or pulling movements.',
+    why:  'Strength is the foundation that power and speed are built on. Under-developed strength caps every other quality.',
+    how:  ['Progressive back squat and deadlift programming', 'Olympic lifts like power cleans for explosive strength'],
+  },
+  mobility: {
+    what: 'How freely your joints and muscles move through the positions your sport requires.',
+    why:  'Restricted mobility leaks power and increases injury risk. Hurdlers and throwers need far more than sprinters.',
+    how:  ['Daily movement prep — hips, ankles, thoracic spine', 'Dynamic stretches before training, static holds after'],
+  },
+  conditioning: {
+    what: 'How long you can sustain high-intensity work before your pace drops.',
+    why:  'Critical for 400m, 800m and anything longer. Also helps sprinters recover between training reps.',
+    how:  ['Tempo runs and extensive intervals for aerobic base', 'Repeat sprint ability work for anaerobic capacity'],
+  },
+}
+
+// ══════════════════════════════════════════════════════════════════════
 // LIMITING FACTOR ANALYSIS
 // For a given discipline family, returns a ranked list of priority axes
 // along with expected values at the athlete's current performance level.
