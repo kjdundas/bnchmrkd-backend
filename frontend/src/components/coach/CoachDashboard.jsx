@@ -94,6 +94,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const [scanAmbiguous, setScanAmbiguous] = useState([]) // [{extracted_name, possible_matches, result}]
   const [scanAmbigPicks, setScanAmbigPicks] = useState({}) // { [ambigIdx]: athleteId | 'skip' }
   const [scanStats, setScanStats] = useState(null)
+  const [scanDroppedReasons, setScanDroppedReasons] = useState([])
+  const [scanDebugOpen, setScanDebugOpen] = useState(false)
   const [scanSelections, setScanSelections] = useState({}) // { `${candidateIdx}:${resultIdx}`: true }
   const [scanSaving, setScanSaving] = useState(false)
   const [scanSavedCount, setScanSavedCount] = useState(0)
@@ -101,7 +103,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const resetScanner = () => {
     setScanStage('input'); setScanText(''); setScanFile(null); setScanError('')
     setScanCandidates([]); setScanAmbiguous([]); setScanAmbigPicks({})
-    setScanStats(null); setScanSelections({}); setScanSavedCount(0)
+    setScanStats(null); setScanDroppedReasons([]); setScanDebugOpen(false)
+    setScanSelections({}); setScanSavedCount(0)
   }
 
   const handleScanExtract = async () => {
@@ -128,6 +131,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setScanCandidates(data.candidates || [])
       setScanAmbiguous(data.ambiguous || [])
       setScanStats(data.stats || null)
+      setScanDroppedReasons(data.dropped_reasons || [])
       // Pre-select all confident results by default
       const sel = {}
       ;(data.candidates || []).forEach((c, ci) => {
@@ -993,6 +997,31 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <span className="text-slate-500">Accepted: <span className="text-green-400">{scanStats.accepted_count}</span></span>
                       <span className="text-slate-500">Dropped: <span className="text-red-400">{scanStats.dropped_count}</span></span>
                       {scanStats.source_is_image && <span className="text-amber-500">⚠ image source</span>}
+                    </div>
+                  )}
+
+                  {/* Debug panel: why were results dropped? */}
+                  {scanDroppedReasons && scanDroppedReasons.length > 0 && (
+                    <div className="rounded-lg" style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setScanDebugOpen(v => !v)}
+                        className="w-full px-3 py-2 flex items-center justify-between text-left"
+                      >
+                        <span className="mono-font text-[10px] uppercase tracking-[0.18em] text-red-400">
+                          {scanDebugOpen ? '▼' : '▶'} Why were {scanDroppedReasons.length} dropped?
+                        </span>
+                        <span className="mono-font text-[9px] text-slate-500">click to {scanDebugOpen ? 'hide' : 'show'}</span>
+                      </button>
+                      {scanDebugOpen && (
+                        <div className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
+                          {scanDroppedReasons.map((reason, i) => (
+                            <p key={i} className="mono-font text-[10px] text-slate-400 break-words">
+                              <span className="text-red-400">•</span> {reason}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
