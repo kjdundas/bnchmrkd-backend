@@ -106,6 +106,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   // Standards tracker tier filter in results view
   const [standardsTier, setStandardsTier] = useState('all'); // 'all' | 'world' | 'regional' | 'development'
 
+  // "Where you stand" card — selected championship for the progression rail
+  const [selectedCompId, setSelectedCompId] = useState(null);
+
   // Backend URL — configurable for deployment
   const API_BASE = 'https://web-production-295f1.up.railway.app';
 
@@ -1586,6 +1589,81 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       }
     }
 
+    // ────────────────────────────────────────────────────────────────────
+    // CORRECTNESS OVERRIDES — replace the legacy outputs above with the
+    // age-aware, data-sufficiency-aware results that match the backend
+    // analyzer in app/core/analyzer.py. The legacy code paths above had
+    // four bugs (see analyzer.py docstring): trajectory always picked
+    // the cluster with the lowest age-18 % off PB, percentile was
+    // hard-coded P95 whenever the latest race equalled the PB, peak
+    // projection echoed the current PB when only one age was logged,
+    // and the finalist regression was age-blind.
+    // ────────────────────────────────────────────────────────────────────
+    const _nDistinctAges = new Set(annualSeries.map(r => r.age)).size;
+    const _sufficientForTrajectory = _nDistinctAges >= 3;
+
+    const _expectedTimeAtAge = (a) => {
+      let pctOff;
+      if (a <= 18) pctOff = 8.0 + Math.max(0, 18 - a) * 1.5;
+      else if (a < 25) pctOff = 8.0 * (25 - a) / 7.0;
+      else if (a <= 27) pctOff = 0.0;
+      else if (a <= 30) pctOff = 0.3 * (a - 27);
+      else pctOff = 0.9 + 0.5 * (a - 30);
+      return isThrows
+        ? benchmarkData.calibration.mean * (1 - pctOff / 100)
+        : benchmarkData.calibration.mean * (1 + pctOff / 100);
+    };
+
+    const _normCdf = (z) => {
+      // Abramowitz & Stegun 26.2.17
+      const t = 1 / (1 + 0.2316419 * Math.abs(z));
+      const d = 0.3989423 * Math.exp(-z * z / 2);
+      let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+      if (z > 0) p = 1 - p;
+      return p;
+    };
+
+    const _absolutePercentile = (athleteTime, a) => {
+      const expected = _expectedTimeAtAge(a);
+      const std = Math.max(0.05, benchmarkData.calibration.std) * (1 + 0.02 * Math.abs(a - 25));
+      const z = (athleteTime - expected) / std;
+      return isThrows
+        ? Math.max(0, Math.min(100, 100 * _normCdf(z)))
+        : Math.max(0, Math.min(100, 100 * (1 - _normCdf(z))));
+    };
+
+    const _correctedPercentile = Math.round(_absolutePercentile(pb, age));
+
+    // Age-aware finalist probability via direct ROC threshold logic.
+    const _logitProb = (val, thr, scale) => {
+      const gap = isThrows ? (val - thr) : (thr - val);
+      return 1 / (1 + Math.exp(-gap / scale));
+    };
+    const _scale = Math.max(0.05, benchmarkData.calibration.std * 0.5);
+    let _finalistProb = _logitProb(pb, benchmarkData.rocThresholds.optimal, _scale);
+    let _semiProb = _logitProb(pb, benchmarkData.rocThresholds.s80, _scale);
+    let _qualProb = _logitProb(pb, benchmarkData.rocThresholds.s90, _scale);
+    if (age > 27) {
+      const haircut = Math.max(0.4, 1 - 0.08 * (age - 27));
+      _finalistProb *= haircut;
+      _semiProb *= haircut;
+      _qualProb *= haircut;
+    }
+    _semiProb = Math.max(_semiProb, _finalistProb);
+    _qualProb = Math.max(_qualProb, _semiProb);
+
+    const _correctedFinalist = Math.round(Math.min(1, _finalistProb) * 100);
+    const _correctedSemi = Math.round(Math.min(1, _semiProb) * 100);
+    const _correctedQual = Math.round(Math.min(1, _qualProb) * 100);
+
+    const _correctedTrajectory = _sufficientForTrajectory ? trajectoryType : 'Insufficient Data';
+    const _correctedImprovementRate = _sufficientForTrajectory ? improvementRate : 0;
+    const _correctedPeakTime = _sufficientForTrajectory ? projectedPeakTime : pb;
+    const _correctedPeakAge = _sufficientForTrajectory ? projectedPeakAge : age;
+    const _peakConfidence = _sufficientForTrajectory
+      ? Math.max(0.3, 0.85 - (yearsToPeak * 0.05))
+      : 0;
+
     return {
       name,
       discipline,
@@ -1595,27 +1673,26 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       eventCode,
       isThrows,
       careerPBAge: annualSeries.length > 0 ? annualSeries.reduce((best, r) => isThrows ? (r.time > best.time ? r : best) : (r.time < best.time ? r : best), annualSeries[0]).age : age,
-      trajectoryType,
-      finalistProbability,
-      semiFinalistProbability,
-      qualifierProbability,
-      percentileAtCurrentAge,
-      improvementRate: parseFloat(improvementRate.toFixed(2)),
+      trajectoryType: _correctedTrajectory,
+      sufficientData: _sufficientForTrajectory,
+      nDistinctAges: _nDistinctAges,
+      finalistProbability: _correctedFinalist,
+      semiFinalistProbability: _correctedSemi,
+      qualifierProbability: _correctedQual,
+      percentileAtCurrentAge: _correctedPercentile,
+      improvementRate: parseFloat(_correctedImprovementRate.toFixed(2)),
       finalistNorm: benchmarkData.improvement.finalist_median,
       nonFinalistNorm: benchmarkData.improvement.non_finalist_median,
       careerPhase,
       readinessScore,
       peakProjection: {
-        time: parseFloat(projectedPeakTime.toFixed(2)),
-        age: projectedPeakAge,
-        confidence: Math.max(0.3, 0.85 - (yearsToPeak * 0.05)),
-        ciLower: projections.length > 0
-          ? parseFloat((projectedPeakTime - 0.674 * benchmarkData.improvement.finalist_std * Math.sqrt(yearsToPeak || 1) * 0.01 * projectedPeakTime).toFixed(2))
-          : parseFloat((pb * 0.99).toFixed(2)),
-        ciUpper: projections.length > 0
-          ? parseFloat((projectedPeakTime + 0.674 * benchmarkData.improvement.finalist_std * Math.sqrt(yearsToPeak || 1) * 0.01 * projectedPeakTime).toFixed(2))
-          : parseFloat((pb * 1.01).toFixed(2)),
-        yearsToPeak
+        time: parseFloat(_correctedPeakTime.toFixed(2)),
+        age: _correctedPeakAge,
+        confidence: _peakConfidence,
+        ciLower: parseFloat((_correctedPeakTime * 0.995).toFixed(2)),
+        ciUpper: parseFloat((_correctedPeakTime * 1.005).toFixed(2)),
+        yearsToPeak: Math.max(0, _correctedPeakAge - age),
+        insufficientData: !_sufficientForTrajectory
       },
       raceHistory: annualSeries,
       projections,
@@ -1733,10 +1810,26 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         if (!athleteData.dateOfBirth) throw new Error('Please enter a date of birth.');
 
         const dob = new Date(athleteData.dateOfBirth);
+        if (isNaN(dob.getTime())) throw new Error('Date of birth is not a valid date.');
         const today = new Date();
+        if (dob > today) throw new Error('Date of birth cannot be in the future.');
         let age = today.getFullYear() - dob.getFullYear();
         const monthDiff = today.getMonth() - dob.getMonth();
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+        if (age < 10 || age > 80) throw new Error(`Age calculated from DOB is ${age} — please check the date.`);
+
+        // Validate race values: each time must parse, be positive, and be within sane bounds.
+        const isThrowsCheck = isThrowsDiscipline(athleteData.discipline);
+        for (const r of validRaces) {
+          const t = parseFloat(r.time);
+          if (isNaN(t) || t <= 0) throw new Error(`Invalid race time: "${r.time}".`);
+          if (!isThrowsCheck && t > 10000) throw new Error(`Race time "${r.time}" looks too large for a track event.`);
+          if (isThrowsCheck && t > 200) throw new Error(`Throw distance "${r.time}" looks too large — use metres.`);
+          const rd = new Date(r.date);
+          if (isNaN(rd.getTime())) throw new Error(`Invalid race date: "${r.date}".`);
+          if (rd > today) throw new Error(`Race date "${r.date}" is in the future.`);
+          if (rd < dob) throw new Error(`Race date "${r.date}" is before the athlete's DOB.`);
+        }
 
         const racesByAge = {};
         validRaces.forEach(race => {
@@ -1797,14 +1890,28 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         const age = parseInt(quickAnalysisData.age);
         const pb = parseFloat(quickAnalysisData.personalBest);
 
-        const isThrowsQuick = isThrowsDiscipline(quickAnalysisData.discipline);
+        // Sanity validation on quick-analysis inputs
+        if (isNaN(age) || age < 10 || age > 80) {
+          throw new Error('Age must be a number between 10 and 80.');
+        }
+        if (isNaN(pb) || pb <= 0) {
+          throw new Error('Personal best must be a positive number.');
+        }
+        const isThrowsQ = isThrowsDiscipline(quickAnalysisData.discipline);
+        if (!isThrowsQ && pb > 10000) {
+          throw new Error('Personal best looks too large for a track event — check the value.');
+        }
+        if (isThrowsQ && pb > 200) {
+          throw new Error('Throw distance looks too large — use metres (e.g. 65.50).');
+        }
+
         const results = await runAnalysis({
           name: 'Quick Analysis',
           discipline: quickAnalysisData.discipline,
           gender: quickAnalysisData.gender,
           age, pb,
           raceHistory: [{ age, time: pb, nRaces: 1 }],
-          implementWeight: isThrowsQuick ? (quickAnalysisData.implementWeight || getDefaultWeight(quickAnalysisData.discipline, quickAnalysisData.gender, age)) : null
+          implementWeight: isThrowsQ ? (quickAnalysisData.implementWeight || getDefaultWeight(quickAnalysisData.discipline, quickAnalysisData.gender, age)) : null
         });
 
         setAnalysisResults(results);
@@ -4761,41 +4868,23 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
             </div>
 
-            {/* ── SNAPSHOT GRID — Ultrahuman-style status cards ── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {/* ── SNAPSHOT GRID — 3 tiles: Tier / Trajectory / Standards ── */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
               {[
                 {
-                  label: 'Percentile',
-                  value: `P${analysisResults.percentileAtCurrentAge}`,
-                  status: analysisResults.percentileAtCurrentAge >= 90 ? 'Elite' : analysisResults.percentileAtCurrentAge >= 75 ? 'National' : analysisResults.percentileAtCurrentAge >= 50 ? 'Competitive' : 'Developing',
+                  label: 'Tier',
+                  value: analysisResults.percentileAtCurrentAge >= 90 ? 'Elite' : analysisResults.percentileAtCurrentAge >= 75 ? 'National' : analysisResults.percentileAtCurrentAge >= 50 ? 'Competitive' : 'Developing',
+                  status: `Top ${100 - analysisResults.percentileAtCurrentAge}% at age ${analysisResults.age}`,
                   statusColor: analysisResults.percentileAtCurrentAge >= 90 ? '#10b981' : analysisResults.percentileAtCurrentAge >= 75 ? '#3b82f6' : analysisResults.percentileAtCurrentAge >= 50 ? '#f59e0b' : '#64748b',
                 },
                 {
                   label: 'Trajectory',
-                  value: analysisResults.trajectoryType === 'Late Developer' ? 'Late Dev' : analysisResults.trajectoryType === 'Early Peaker' ? 'Early Peak' : 'Plateau',
-                  status: analysisResults.trajectoryType === 'Late Developer' ? '↑ Upward' : analysisResults.trajectoryType === 'Early Peaker' ? '→ Maintain' : '— Steady',
+                  value: analysisResults.trajectoryType === 'Late Developer' ? 'Climbing' : analysisResults.trajectoryType === 'Early Peaker' ? 'Holding' : 'Plateau',
+                  status: analysisResults.trajectoryType === 'Late Developer' ? '↑ Still rising' : analysisResults.trajectoryType === 'Early Peaker' ? '→ Maintain' : '— Steady',
                   statusColor: analysisResults.trajectoryType === 'Late Developer' ? '#3b82f6' : analysisResults.trajectoryType === 'Early Peaker' ? '#f59e0b' : '#a855f7',
                 },
                 {
-                  label: 'Projected Peak',
-                  value: `${analysisResults.peakProjection.time}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}`,
-                  status: `Age ${analysisResults.peakProjection.age}`,
-                  statusColor: analysisResults.peakProjection.yearsToPeak > 0 ? '#10b981' : '#f59e0b',
-                },
-                {
-                  label: 'Finalist',
-                  value: `${analysisResults.finalistProbability}%`,
-                  status: analysisResults.finalistProbability >= 60 ? 'Likely' : analysisResults.finalistProbability >= 30 ? 'Possible' : 'Developing',
-                  statusColor: analysisResults.finalistProbability >= 60 ? '#10b981' : analysisResults.finalistProbability >= 30 ? '#f59e0b' : '#64748b',
-                },
-                {
-                  label: 'Improvement',
-                  value: `${analysisResults.improvementRate}%`,
-                  status: analysisResults.improvementRate >= analysisResults.finalistNorm ? 'Elite Rate' : analysisResults.improvementRate >= analysisResults.nonFinalistNorm ? 'On Track' : 'Below Avg',
-                  statusColor: analysisResults.improvementRate >= analysisResults.finalistNorm ? '#10b981' : analysisResults.improvementRate >= analysisResults.nonFinalistNorm ? '#f59e0b' : '#ef4444',
-                },
-                {
-                  label: 'Standards Met',
+                  label: 'Standards',
                   value: analysisResults.standards ? `${analysisResults.standards.filter(s => s.met).length}/${analysisResults.standards.length}` : '—',
                   status: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? 'All Clear' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? 'In Progress' : 'None Yet',
                   statusColor: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? '#10b981' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? '#f59e0b' : '#64748b',
@@ -4836,59 +4925,187 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ══════════ OVERVIEW TAB ══════════ */}
             {dashTab === 'overview' && (<>
 
-            {/* ── COMPETITION PATH — visual threshold tracker ── */}
-            {analysisResults.benchmarks && (() => {
-              const thresholds = [
-                { label: 'Qualifier', value: analysisResults.thresholds.qualifier, prob: analysisResults.qualifierProbability },
-                { label: 'Semi-Finalist', value: analysisResults.thresholds.semiFinalist, prob: analysisResults.semiFinalistProbability },
-                { label: 'Finalist', value: analysisResults.thresholds.finalist, prob: analysisResults.finalistProbability },
-              ];
+            {/* ── WHERE YOU STAND — form snapshot + championship progression rail ── */}
+            {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
               const isThrows = isThrowsDiscipline(analysisResults.discipline);
               const unit = isThrows ? 'm' : 's';
               const pb = parseFloat(analysisResults.personalBest);
-              // For the visual track: compute position of PB relative to thresholds
-              const allValues = [...thresholds.map(t => t.value), pb];
-              const minVal = Math.min(...allValues);
-              const maxVal = Math.max(...allValues);
-              const range = maxVal - minVal || 1;
-              const getPos = (v) => {
-                if (isThrows) return ((v - minVal) / range) * 100;
-                return ((maxVal - v) / range) * 100; // inverted for time
+              const races = analysisResults._rawRaces || [];
+              const wrInfo = (COMPETITION_STANDARDS[analysisResults.eventCode] || {}).wr || null;
+
+              // ── Form snapshot: PB / SB / Last race ──
+              const fmt = (v) => `${v.toFixed(2)}${unit}`;
+              const better = (a, b) => isThrows ? a > b : a < b;
+              const sortedByDate = [...races].filter(r => r.date).sort((a, b) => new Date(b.date) - new Date(a.date));
+              const lastRace = sortedByDate[0] || null;
+              const currentYear = new Date().getFullYear();
+              const seasonRaces = races.filter(r => r.date && new Date(r.date).getFullYear() === currentYear);
+              const sb = seasonRaces.length
+                ? seasonRaces.reduce((best, r) => (better(r.value, best) ? r.value : best), seasonRaces[0].value)
+                : null;
+              const pbRace = races.find(r => Math.abs(r.value - pb) < 0.005);
+              const pbYear = pbRace && pbRace.date ? new Date(pbRace.date).getFullYear() : null;
+              const sbDelta = sb != null ? (isThrows ? (sb - pb) : (sb - pb)) : null; // negative = faster than PB (impossible), positive = slower
+              const lastDelta = lastRace && sb != null ? (isThrows ? (lastRace.value - sb) : (lastRace.value - sb)) : null;
+              const fmtDelta = (d) => {
+                if (d == null) return '';
+                const sign = d > 0 ? '+' : '';
+                return `${sign}${d.toFixed(2)}${unit}`;
               };
+              const deltaColor = (d) => {
+                if (d == null || Math.abs(d) < 0.005) return 'text-slate-400';
+                const isBetter = isThrows ? d > 0 : d < 0;
+                return isBetter ? 'text-emerald-400' : 'text-orange-300';
+              };
+              const lastDateStr = lastRace && lastRace.date
+                ? new Date(lastRace.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : '';
+
+              // ── Championship rail: pick selected comp ──
+              const standards = analysisResults.standards;
+              const defaultComp = (() => {
+                // Pick the world-tier comp where the athlete is closest to (but not past) the qualifier — that's "where they're aiming"
+                const worldComps = standards.filter(s => s.compTier === 'world');
+                const pool = worldComps.length ? worldComps : standards;
+                // Find first comp where pb has NOT yet beaten the qualifier (or p8 if no qual)
+                const target = pool.find(s => {
+                  const mark = s.qual || s.p8;
+                  return mark && !(isThrows ? pb >= mark : pb <= mark);
+                });
+                return target || pool[0];
+              })();
+              const activeComp = standards.find(s => s.compId === selectedCompId) || defaultComp;
+
+              // Build markers for rail: qual / p8 / bronze / gold / WR
+              const allMarkers = [];
+              if (activeComp.qual) allMarkers.push({ label: 'Qualifier', value: activeComp.qual, color: '#94a3b8' });
+              if (activeComp.p8) allMarkers.push({ label: '8th place', value: activeComp.p8, color: '#3b82f6' });
+              if (activeComp.bronze) allMarkers.push({ label: 'Bronze', value: activeComp.bronze, color: '#cd7f32' });
+              if (activeComp.gold) allMarkers.push({ label: 'Gold', value: activeComp.gold, color: '#FFD700' });
+              if (wrInfo && wrInfo.mark) allMarkers.push({ label: 'WR', value: wrInfo.mark, color: '#f97316' });
+
+              // Rail bounds: from "slowest meaningful mark" to "fastest meaningful mark", padded by PB
+              const allVals = [...allMarkers.map(m => m.value), pb];
+              const minVal = Math.min(...allVals);
+              const maxVal = Math.max(...allVals);
+              const padding = (maxVal - minVal) * 0.05 || 0.1;
+              const railMin = minVal - padding;
+              const railMax = maxVal + padding;
+              const railRange = railMax - railMin || 1;
+              // For time: lower=better=right side. For throws: higher=better=right side.
+              const getPos = (v) => isThrows
+                ? ((v - railMin) / railRange) * 100
+                : ((railMax - v) / railRange) * 100;
+
+              // Concrete gap line
+              const beats = (mark) => isThrows ? pb >= mark : pb <= mark;
+              const orderedTargets = [
+                activeComp.qual ? { label: 'qualify', value: activeComp.qual } : null,
+                activeComp.p8 ? { label: 'reach the final', value: activeComp.p8 } : null,
+                activeComp.bronze ? { label: 'medal', value: activeComp.bronze } : null,
+                activeComp.gold ? { label: 'win gold', value: activeComp.gold } : null,
+              ].filter(Boolean);
+              const nextTarget = orderedTargets.find(t => !beats(t.value));
+              const gapText = (() => {
+                if (!nextTarget) return `Cleared every standard at ${activeComp.label}.`;
+                const gap = isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value);
+                return `${gap.toFixed(2)}${unit} away from ${nextTarget.label} at ${activeComp.label}`;
+              })();
+
               return (
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <div className="flex items-center gap-2 mb-5">
-                    <Award className="w-4 h-4" style={{color: '#f97316'}} />
-                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Competition Path</h3>
+                  <div className="mb-5">
+                    <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                      <Award className="w-3 h-3" />
+                      Where you stand
+                    </p>
+                    <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight mb-1">
+                      Form &amp; championship gap
+                    </h3>
+                    <p className="text-sm text-slate-400">Current form vs lifetime best, and your distance from real championship marks</p>
                   </div>
-                  {/* Visual threshold track */}
-                  <div className="relative h-3 rounded-full mb-8 sm:mb-10" style={{background: 'rgba(255,255,255,0.06)'}}>
-                    {/* Filled portion up to PB */}
-                    <div className="absolute top-0 left-0 h-full rounded-full" style={{width: `${Math.min(100, Math.max(2, getPos(pb)))}%`, background: 'linear-gradient(90deg, #f97316 0%, #fb923c 100%)', transition: 'width 0.6s ease'}}></div>
-                    {/* Threshold markers */}
-                    {thresholds.map((t, i) => (
-                      <div key={i} className="absolute top-0 flex flex-col items-center" style={{left: `${getPos(t.value)}%`, transform: 'translateX(-50%)'}}>
-                        <div className="w-0.5 h-3 rounded-full" style={{background: t.prob >= 60 ? '#10b981' : t.prob >= 30 ? '#f59e0b' : 'rgba(255,255,255,0.2)'}}></div>
-                        <div className="mt-2 text-center">
-                          <p className="text-[10px] sm:text-xs font-semibold mono-font" style={{color: t.prob >= 60 ? '#10b981' : t.prob >= 30 ? '#f59e0b' : '#64748b'}}>{t.value}{unit}</p>
-                          <p className="text-[9px] sm:text-[10px] text-slate-500 landing-font">{t.label}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {/* PB marker */}
-                    <div className="absolute flex flex-col items-center" style={{left: `${getPos(pb)}%`, top: '-6px', transform: 'translateX(-50%)'}}>
-                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg" style={{background: '#f97316'}}></div>
-                      <p className="text-[10px] font-bold text-orange-400 mono-font mt-1.5">PB</p>
+
+                  {/* ── Form snapshot row ── */}
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+                    <div className="rounded-xl p-3 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                      <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Personal Best</p>
+                      <p className="mono-font text-2xl sm:text-3xl font-bold text-orange-400 leading-none">{fmt(pb)}</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 mt-1.5">{pbYear ? `set ${pbYear}` : 'lifetime best'}</p>
+                    </div>
+                    <div className="rounded-xl p-3 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                      <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Season Best</p>
+                      <p className="mono-font text-2xl sm:text-3xl font-bold text-white leading-none">{sb != null ? fmt(sb) : '—'}</p>
+                      <p className={`text-[10px] sm:text-xs mt-1.5 mono-font ${deltaColor(sbDelta)}`}>{sbDelta != null ? `${fmtDelta(sbDelta)} vs PB` : 'no races this year'}</p>
+                    </div>
+                    <div className="rounded-xl p-3 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                      <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Last Race</p>
+                      <p className="mono-font text-2xl sm:text-3xl font-bold text-white leading-none">{lastRace ? fmt(lastRace.value) : '—'}</p>
+                      <p className={`text-[10px] sm:text-xs mt-1.5 mono-font ${deltaColor(lastDelta)}`}>{lastRace ? (lastDelta != null ? `${fmtDelta(lastDelta)} vs SB · ${lastDateStr}` : lastDateStr) : ''}</p>
                     </div>
                   </div>
-                  {/* Probability cards — compact row */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                    {thresholds.map((t, i) => (
-                      <div key={i} className="text-center p-3 sm:p-4 rounded-xl" style={{background: t.prob >= 60 ? 'rgba(16,185,129,0.08)' : t.prob >= 30 ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${t.prob >= 60 ? 'rgba(16,185,129,0.2)' : t.prob >= 30 ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.06)'}`}}>
-                        <p className="text-2xl sm:text-3xl font-bold mono-font" style={{color: t.prob >= 60 ? '#10b981' : t.prob >= 30 ? '#f59e0b' : '#64748b'}}>{t.prob}%</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 mt-1 landing-font">{t.label}</p>
-                      </div>
-                    ))}
+
+                  {/* ── Championship selector chips ── */}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {standards.slice(0, 6).map(comp => {
+                      const isActive = comp.compId === activeComp.compId;
+                      return (
+                        <button
+                          key={comp.compId}
+                          onClick={() => setSelectedCompId(comp.compId)}
+                          className={`mono-font text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors focus:outline-none focus-visible:outline-none ${
+                            isActive
+                              ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
+                              : 'bg-white/[0.03] text-slate-400 border border-white/[0.06] hover:bg-white/[0.06] hover:text-slate-200'
+                          }`}
+                        >
+                          {comp.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* ── Progression rail ── */}
+                  <div className="relative h-3 rounded-full mb-12" style={{background: 'rgba(255,255,255,0.06)'}}>
+                    {/* Filled portion up to PB */}
+                    <div className="absolute top-0 left-0 h-full rounded-full" style={{width: `${Math.min(100, Math.max(2, getPos(pb)))}%`, background: 'linear-gradient(90deg, #f97316 0%, #fb923c 100%)', transition: 'width 0.6s ease'}}></div>
+                    {/* Marker ticks + labels */}
+                    {allMarkers.map((m, i) => {
+                      const pos = getPos(m.value);
+                      const cleared = beats(m.value);
+                      return (
+                        <div key={i} className="absolute top-0 flex flex-col items-center pointer-events-none" style={{left: `${pos}%`, transform: 'translateX(-50%)'}}>
+                          <div className="w-0.5 h-3 rounded-full" style={{background: cleared ? m.color : 'rgba(255,255,255,0.25)'}}></div>
+                          <div className="mt-2 text-center whitespace-nowrap">
+                            <p className="mono-font text-[10px] font-semibold" style={{color: cleared ? m.color : '#64748b'}}>{m.value}{unit}</p>
+                            <p className="landing-font text-[9px] text-slate-500">{m.label}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* PB marker (above the rail) */}
+                    <div className="absolute flex flex-col items-center pointer-events-none" style={{left: `${Math.min(100, Math.max(0, getPos(pb)))}%`, top: '-22px', transform: 'translateX(-50%)'}}>
+                      <p className="mono-font text-[9px] font-bold text-orange-400 mb-0.5">PB</p>
+                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg" style={{background: '#f97316'}}></div>
+                    </div>
+                  </div>
+
+                  {/* ── Gap caption ── */}
+                  <div className="text-center p-3 sm:p-4 rounded-xl" style={{background: nextTarget ? 'rgba(255,255,255,0.02)' : 'rgba(16,185,129,0.06)', border: nextTarget ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(16,185,129,0.2)'}}>
+                    <p className={`text-sm sm:text-base landing-font ${nextTarget ? 'text-slate-300' : 'text-emerald-300'}`}>
+                      {nextTarget ? (
+                        <>
+                          <span className="text-orange-400 font-semibold mono-font">{(isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value)).toFixed(2)}{unit}</span>
+                          {' '}away from{' '}
+                          <span className="text-white font-semibold">{nextTarget.label}</span>
+                          {' '}at <span className="text-white font-semibold">{activeComp.label}</span>
+                        </>
+                      ) : gapText}
+                    </p>
+                    {wrInfo && (
+                      <p className="text-[10px] mono-font text-slate-500 mt-1.5">
+                        WR: {wrInfo.mark}{unit} — {wrInfo.holder} ({wrInfo.year})
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -4969,31 +5186,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               );
             })()}
 
-            {/* ── PEAK PROJECTION — where you're heading ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4" style={{color: '#f97316'}} />
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Peak Projection</h3>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Projected Peak</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white mono-font">{analysisResults.peakProjection.time}<span className="text-sm text-slate-500">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span></p>
-                </div>
-                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Peak Age</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white mono-font">{analysisResults.peakProjection.age}</p>
-                </div>
-                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Years to Peak</p>
-                  <p className="text-xl sm:text-2xl font-bold mono-font" style={{color: analysisResults.peakProjection.yearsToPeak > 0 ? '#10b981' : '#f59e0b'}}>{analysisResults.peakProjection.yearsToPeak > 0 ? analysisResults.peakProjection.yearsToPeak : 'Now'}</p>
-                </div>
-                <div className="p-3 sm:p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Confidence</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white mono-font">{analysisResults.peakProjection.ci50 ? `${analysisResults.peakProjection.ci50[0]}–${analysisResults.peakProjection.ci50[1]}` : '—'}<span className="text-xs text-slate-500">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span></p>
-                </div>
-              </div>
-            </div>
+            {/* ── PEAK PROJECTION removed from Overview — full version lives in Insights tab ── */}
 
             {/* ── INSIGHTS — clean recommendation cards ── */}
             {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (
@@ -5137,25 +5330,26 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── PERFORMANCE TRAJECTORY CHART WITH TABBED VIEWS ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 " style={{color: '#f97316'}} />
-                  Performance Trajectory
+              <div className="mb-4 sm:mb-6">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3" />
+                  Trajectory
+                </p>
+                <h3 className="landing-font text-xl sm:text-3xl font-semibold text-white tracking-tight">
+                  Performance over time
                 </h3>
               </div>
 
               {/* Chart View Tabs */}
               <div className="flex gap-1 mb-4 sm:mb-6 rounded-lg p-1 overflow-x-auto" style={{background: 'rgba(255,255,255,0.03)'}}>
                 {[
-                  { id: 'time', label: 'Time', icon: Timer },
-                  { id: 'pctOff', label: '% Off PB', icon: Percent },
-                  { id: 'percentileBand', label: 'Percentile', icon: Layers },
-                  { id: 'improvementRate', label: 'Improvement', icon: BarChart2 },
+                  { id: 'time', label: 'Performance', icon: Timer },
+                  { id: 'improvementRate', label: 'Year-on-year', icon: BarChart2 },
                 ].map(tab => {
                   const TabIcon = tab.icon;
                   return (
                     <button key={tab.id} onClick={() => setChartView(tab.id)}
-                      className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap mono-font ${
+                      className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap mono-font focus:outline-none focus-visible:outline-none ${
                         chartView === tab.id
                           ? 'text-orange-400 shadow-sm'
                           : 'text-slate-500 hover:text-slate-300'
@@ -5342,11 +5536,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── PROGRESSION MATRIX (in Trajectory tab) ── */}
             {analysisResults.raceHistory && analysisResults.raceHistory.length > 0 && (
               <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Layers className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Progression Matrix
-                </h3>
-                <p className="text-sm text-slate-400 mb-5">Season best at each age — your career development at a glance</p>
+                <div className="mb-5">
+                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                    <Layers className="w-3 h-3" />
+                    Career Map
+                  </p>
+                  <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight mb-1">
+                    Progression matrix
+                  </h3>
+                  <p className="text-sm text-slate-400">Season best at each age — your development at a glance</p>
+                </div>
                 <div className="overflow-x-auto">
                   <div className="flex gap-1 min-w-max">
                     {(() => {
@@ -5391,69 +5590,51 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── ROD / RODP (in Trajectory tab) ── */}
             {analysisResults.rodData && analysisResults.rodData.length > 1 && (
               <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Rate of Development
-                </h3>
-                <p className="text-sm text-slate-400 mb-5">Year-on-year improvement rate (ROD) and where it ranks vs Olympic finalists (RODP)</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-slate-600">
-                        <th className="text-left py-3 px-3 font-semibold text-white">Age</th>
-                        <th className="text-center py-3 px-3 font-semibold text-white">Season Best</th>
-                        <th className="text-center py-3 px-3 font-semibold text-white">ROD</th>
-                        <th className="text-center py-3 px-3 font-semibold text-white">RODP</th>
-                        <th className="hidden sm:table-cell text-left py-3 px-3 font-semibold text-white">Development</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analysisResults.rodData.map((row, idx) => (
-                        <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700">
-                          <td className="py-2.5 px-3 font-medium text-white">
-                            {row.age}
-                            {(isThrowsDiscipline(analysisResults.discipline) ? row.time >= analysisResults.personalBest - 0.005 : row.time <= analysisResults.personalBest + 0.005) && (
-                              <span className="ml-1.5 text-[10px] bg-orange-900/40 text-orange-700 px-1.5 py-0.5 rounded font-bold">PB</span>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-3 text-center font-bold text-white">{row.time.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
-                          <td className={`py-2.5 px-3 text-center font-bold ${
-                            idx === 0 ? 'text-slate-300' : row.rod > 0 ? 'text-green-600' : row.rod < 0 ? 'text-red-500' : 'text-slate-400'
-                          }`}>
-                            {idx === 0 ? '—' : `${row.rod > 0 ? '+' : ''}${row.rod}%`}
-                          </td>
-                          <td className="py-2.5 px-3 text-center">
-                            {idx === 0 ? (
-                              <span className="text-slate-300">—</span>
-                            ) : (
-                              <div className="flex items-center gap-2 justify-center">
-                                <div className="w-16 bg-slate-700 rounded-full h-2 overflow-hidden">
-                                  <div className={`h-full rounded-full ${
-                                    row.rodp >= 75 ? 'bg-green-500' : row.rodp >= 50 ? 'bg-blue-500' : row.rodp >= 25 ? 'bg-amber-500' : 'bg-red-400'
-                                  }`} style={{ width: `${Math.min(100, row.rodp)}%` }} />
-                                </div>
-                                <span className="text-xs font-semibold text-slate-400 w-12 text-right">{row.rodp.toFixed(0)}%</span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="hidden sm:table-cell py-2.5 px-3">
-                            {idx === 0 ? (
-                              <span className="text-xs text-slate-400">Baseline</span>
-                            ) : (
-                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                row.rodp >= 75 ? 'bg-green-900/40 text-green-700'
-                                : row.rodp >= 50 ? 'bg-blue-900/40 text-blue-700'
-                                : row.rodp >= 25 ? 'bg-amber-900/40 text-amber-700'
-                                : 'bg-red-900/40 text-red-600'
-                              }`}>
-                                {row.rodp >= 75 ? 'Elite' : row.rodp >= 50 ? 'Above Avg' : row.rodp >= 25 ? 'Average' : 'Below Avg'}
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="mb-5">
+                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                    <TrendingUp className="w-3 h-3" />
+                    Momentum
+                  </p>
+                  <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight mb-1">
+                    Rate of development
+                  </h3>
+                  <p className="text-sm text-slate-400">Year-on-year improvement rate and where it ranks vs Olympic finalists</p>
+                </div>
+                {(() => {
+                  const chartData = analysisResults.rodData.slice(1).map(row => ({
+                    age: row.age,
+                    rod: row.rod,
+                    rodp: row.rodp,
+                  }));
+                  return (
+                    <div style={{ width: '100%', height: 280 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={chartData} margin={{ top: 16, right: 24, left: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="age" stroke="#94a3b8" tick={{ fontSize: 11 }} label={{ value: 'Age', position: 'insideBottom', offset: -2, fill: '#94a3b8', fontSize: 11 }} />
+                          <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} label={{ value: 'Improvement %', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 11 }} />
+                          <Tooltip
+                            contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
+                            formatter={(val, name) => [`${val > 0 ? '+' : ''}${val}%`, 'YoY improvement']}
+                            labelFormatter={(age) => `Age ${age}`}
+                          />
+                          <ReferenceLine y={analysisResults.finalistNorm} stroke="#10b981" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `Finalist norm (${analysisResults.finalistNorm}%)`, position: 'right', fill: '#10b981', fontSize: 10 }} />
+                          <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
+                          <Bar dataKey="rod" radius={[4, 4, 0, 0]}>
+                            {chartData.map((row, idx) => (
+                              <Cell key={idx} fill={row.rodp >= 75 ? '#10b981' : row.rodp >= 50 ? '#3b82f6' : row.rodp >= 25 ? '#f59e0b' : '#ef4444'} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })()}
+                <div className="mt-4 flex flex-wrap gap-3 text-[11px] mono-font text-slate-400">
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{background:'#10b981'}}></span>Elite (75+)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{background:'#3b82f6'}}></span>Above avg (50+)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{background:'#f59e0b'}}></span>Average (25+)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{background:'#ef4444'}}></span>Below avg</span>
                 </div>
               </div>
             )}
@@ -5465,10 +5646,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── PERCENTILE RANKING (in Benchmarks tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Target className="w-5 h-5 " style={{color: '#f97316'}} />
-                Percentile Ranking
-              </h3>
+              <div className="mb-6">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <Target className="w-3 h-3" />
+                  Standing
+                </p>
+                <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight">
+                  Where you rank
+                </h3>
+              </div>
               <div className="mb-6">
                 <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden mb-2">
                   <div className={`h-full ${getPercentileColor(analysisResults.percentileAtCurrentAge)} transition-all`}
@@ -5495,10 +5681,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── CAREER TRAJECTORY VS BENCHMARKS (in Benchmarks tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 " style={{color: '#f97316'}} />
-                Career Trajectory vs Benchmarks
-              </h3>
+              <div className="mb-4">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3" />
+                  Benchmark Curve
+                </p>
+                <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight">
+                  You vs Olympic medians
+                </h3>
+              </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 {[
                   { key: 'finalist', label: 'Finalists', color: '#10b981' },
@@ -5551,13 +5742,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── SIMILAR ATHLETES (in Benchmarks tab) ── */}
             {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
               <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Users className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Similar Athletes
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Olympic athletes who recorded similar times at a comparable age — see how their careers developed
-                </p>
+                <div className="mb-6">
+                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                    <Users className="w-3 h-3" />
+                    Career Twins
+                  </p>
+                  <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight mb-1">
+                    Similar athletes
+                  </h3>
+                  <p className="text-sm text-slate-400">Olympic athletes who recorded similar marks at a comparable age — see how their careers developed</p>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {analysisResults.similarAthletes.map((athlete, idx) => (
                     <div key={idx} className="relative bg-gradient-to-br from-slate-800 to-slate-800/80 rounded-xl border border-slate-700 p-4 sm:p-5 hover:shadow-md transition-shadow">
@@ -5605,153 +5799,51 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── PEAK PROJECTION (in Insights tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 " style={{color: '#f97316'}} />
-                Peak Performance Projection
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-                <div className="text-center p-3 sm:p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-xs sm:text-sm text-slate-400 mb-1">Projected Peak Time</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-orange-600">{analysisResults.peakProjection.time}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</p>
-                </div>
-                <div className="text-center p-3 sm:p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-xs sm:text-sm text-slate-400 mb-1">Projected Peak Age</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-white">{analysisResults.peakProjection.age}</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {analysisResults.peakProjection.yearsToPeak > 0
-                      ? `${analysisResults.peakProjection.yearsToPeak} year${analysisResults.peakProjection.yearsToPeak !== 1 ? 's' : ''} away`
-                      : 'At or past peak'}
-                  </p>
-                </div>
-                <div className="text-center p-3 sm:p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-xs sm:text-sm text-slate-400 mb-1">50% Confidence</p>
-                  <p className="text-base sm:text-xl font-bold text-white">
-                    {analysisResults.peakProjection.ciLower}s – {analysisResults.peakProjection.ciUpper}s
-                  </p>
-                </div>
-                <div className="text-center p-3 sm:p-4 bg-slate-700/50 rounded-lg">
-                  <p className="text-xs sm:text-sm text-slate-400 mb-1">Confidence</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-white">
-                    {Math.round(analysisResults.peakProjection.confidence * 100)}%
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {analysisResults.peakProjection.confidence >= 0.7 ? 'High' : analysisResults.peakProjection.confidence >= 0.5 ? 'Moderate' : 'Low'} confidence
-                  </p>
-                </div>
+              <div className="mb-6">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3" />
+                  Forecast
+                </p>
+                <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight">
+                  Peak performance projection
+                </h3>
               </div>
+              {(() => {
+                const isThrows = isThrowsDiscipline(analysisResults.discipline);
+                const unit = isThrows ? 'm' : 's';
+                const yrs = analysisResults.peakProjection.yearsToPeak;
+                const conf = analysisResults.peakProjection.confidence;
+                const confLabel = conf >= 0.7 ? 'high' : conf >= 0.5 ? 'moderate' : 'low';
+                const whenStr = yrs > 0 ? `${yrs} year${yrs !== 1 ? 's' : ''} from now` : 'right now';
+                return (
+                  <div className="p-5 sm:p-6 rounded-xl" style={{background: 'rgba(249,115,22,0.04)', border: '1px solid rgba(249,115,22,0.15)'}}>
+                    <p className="landing-font text-base sm:text-lg text-slate-200 leading-relaxed">
+                      You're projected to peak at{' '}
+                      <span className="mono-font text-2xl sm:text-3xl font-bold text-orange-400">{analysisResults.peakProjection.time}{unit}</span>
+                      {' '}at age{' '}
+                      <span className="mono-font text-2xl sm:text-3xl font-bold text-white">{analysisResults.peakProjection.age}</span>
+                      {' '}— {whenStr}, with {confLabel} confidence.
+                    </p>
+                    <details className="mt-4">
+                      <summary className="cursor-pointer text-xs mono-font uppercase tracking-wider text-slate-500 hover:text-slate-300">Show confidence details</summary>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 rounded-lg" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">50% CI</p>
+                          <p className="mono-font text-white">{analysisResults.peakProjection.ciLower}{unit} – {analysisResults.peakProjection.ciUpper}{unit}</p>
+                        </div>
+                        <div className="p-3 rounded-lg" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider mono-font mb-1">Confidence</p>
+                          <p className="mono-font text-white">{Math.round(conf * 100)}%</p>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* ── YEAR-BY-YEAR PROJECTED TIMES (in Insights tab) ── */}
-            {analysisResults.projections && analysisResults.projections.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Year-by-Year Projected Times
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Based on your {analysisResults.improvementRate}%/year improvement rate, {analysisResults.trajectoryType.toLowerCase()} trajectory pattern, and population age-performance curves
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-slate-600">
-                        <th className="text-left py-3 px-4 font-semibold text-white">Age</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">Projected Time</th>
-                        <th className="hidden sm:table-cell text-center py-3 px-4 font-semibold text-white">50% CI</th>
-                        <th className="hidden sm:table-cell text-center py-3 px-4 font-semibold text-white">90% CI</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">vs Finalist</th>
-                        <th className="text-center py-3 px-4 font-semibold text-white">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analysisResults.projections.map((proj, idx) => {
-                        const gap = isThrowsDiscipline(analysisResults.discipline) ? (analysisResults.thresholds.finalist - proj.projectedTime) : (proj.projectedTime - analysisResults.thresholds.finalist);
-                        const meetsFinalist = isThrowsDiscipline(analysisResults.discipline) ? (proj.projectedTime >= analysisResults.thresholds.finalist) : (proj.projectedTime <= analysisResults.thresholds.finalist);
-                        const meetsSemi = isThrowsDiscipline(analysisResults.discipline) ? (proj.projectedTime >= analysisResults.thresholds.semiFinalist) : (proj.projectedTime <= analysisResults.thresholds.semiFinalist);
-                        const meetsQualifier = isThrowsDiscipline(analysisResults.discipline) ? (proj.projectedTime >= analysisResults.thresholds.qualifier) : (proj.projectedTime <= analysisResults.thresholds.qualifier);
-
-                        return (
-                          <tr key={idx} className={`border-b border-slate-700/50 ${proj.age === analysisResults.peakProjection.age ? 'bg-orange-900/30' : 'hover:bg-slate-700'}`}>
-                            <td className="py-3 px-4 font-medium text-white">
-                              {proj.age}
-                              {proj.age === analysisResults.peakProjection.age && (
-                                <span className="ml-2 text-xs text-orange-600 font-semibold">PEAK</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-center font-bold text-white">{proj.projectedTime.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
-                            <td className="hidden sm:table-cell py-3 px-4 text-center text-slate-400">{proj.ci50Lower.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {proj.ci50Upper.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
-                            <td className="hidden sm:table-cell py-3 px-4 text-center text-slate-400">{proj.ci90Lower.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} – {proj.ci90Upper.toFixed(2)}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</td>
-                            <td className={`py-3 px-4 text-center font-semibold ${meetsFinalist ? 'text-green-600' : 'text-red-500'}`}>
-                              {isThrowsDiscipline(analysisResults.discipline) ? (meetsFinalist ? `${Math.abs(gap).toFixed(2)}m over` : `${Math.abs(gap).toFixed(2)}m to gain`) : (meetsFinalist ? `${Math.abs(gap).toFixed(2)}s under` : `${Math.abs(gap).toFixed(2)}s to go`)}
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              {meetsFinalist ? (
-                                <span className="inline-block px-2 py-1 bg-green-900/40 text-green-300 rounded text-xs font-semibold">Finalist</span>
-                              ) : meetsSemi ? (
-                                <span className="inline-block px-2 py-1 bg-amber-900/40 text-amber-300 rounded text-xs font-semibold">Semi</span>
-                              ) : meetsQualifier ? (
-                                <span className="inline-block px-2 py-1 bg-blue-900/40 text-blue-300 rounded text-xs font-semibold">Qualifier</span>
-                              ) : (
-                                <span className="inline-block px-2 py-1 bg-slate-700/60 text-slate-400 rounded text-xs font-semibold">Developing</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* ── IMPROVEMENT SCENARIOS (in Insights tab) ── */}
-            {analysisResults.improvementScenarios && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Target className="w-5 h-5 " style={{color: '#f97316'}} />
-                  Performance Improvement Scenarios
-                </h3>
-                <p className="text-sm text-slate-400 mb-5">Projected times at different annual improvement rates from your current season best</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-slate-600">
-                        <th className="text-left py-3 px-2 font-semibold text-white sticky left-0 bg-slate-800/90">Rate</th>
-                        {analysisResults.improvementScenarios[0] && Object.keys(analysisResults.improvementScenarios[0].times).map(futAge => (
-                          <th key={futAge} className={`text-center py-3 px-2 font-semibold min-w-[60px] ${
-                            parseInt(futAge) === analysisResults.age ? 'text-blue-600 bg-blue-900/30' : 'text-white'
-                          }`}>{futAge}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analysisResults.improvementScenarios.map((row, idx) => (
-                        <tr key={idx} className={`border-b border-slate-700/50 ${idx === 0 ? 'bg-slate-700/50 font-semibold' : 'hover:bg-slate-700'}`}>
-                          <td className={`py-2 px-2 font-bold sticky left-0 ${idx === 0 ? 'bg-slate-700/50 text-orange-600' : 'bg-slate-800/90 text-slate-400'}`}>
-                            {row.rate}
-                          </td>
-                          {Object.entries(row.times).map(([futAge, time]) => {
-                            const meetsFinalist = isThrowsDiscipline(analysisResults.discipline) ? time >= analysisResults.thresholds.finalist : time <= analysisResults.thresholds.finalist;
-                            const meetsMQT = analysisResults.championshipData && (isThrowsDiscipline(analysisResults.discipline) ? time >= analysisResults.championshipData.mqt : time <= analysisResults.championshipData.mqt);
-                            return (
-                              <td key={futAge} className={`py-2 px-2 text-center text-xs ${
-                                parseInt(futAge) === analysisResults.age ? 'bg-blue-900/30 font-bold' : ''
-                              } ${meetsFinalist ? 'text-green-700 font-bold' : meetsMQT ? 'text-blue-700 font-semibold' : 'text-slate-400'}`}>
-                                {time.toFixed(2)}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="flex gap-4 mt-3 text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5"><span className="font-bold text-green-700">Green</span> = Finalist threshold met</div>
-                  <div className="flex items-center gap-1.5"><span className="font-bold text-blue-700">Blue</span> = Olympic MQT met</div>
-                </div>
-              </div>
-            )}
+            {/* Year-by-Year Projected Times — removed (false-precision wall of numbers, headline lives in Peak Projection above) */}
+            {/* Improvement Scenarios — removed (dense table that didn't earn its space) */}
 
             {/* ── METHODOLOGY (in Insights tab) ── */}
             <div className="rounded-xl p-6 mb-8" style={{background: 'rgba(245,158,11,0.03)', border: '1px solid rgba(245,158,11,0.1)'}}>

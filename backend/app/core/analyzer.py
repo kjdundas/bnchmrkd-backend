@@ -240,31 +240,80 @@ class AthleteAnalyzer:
         # Step 1: Build annual best time series
         annual_bests = self._compute_annual_bests(races, pb)
 
+        # Data sufficiency: trajectory / peak / improvement need at least 3
+        # distinct ages to be meaningful. With 1-2 ages we have no curve to fit.
+        n_distinct_ages = len(annual_bests)
+        sufficient_for_trajectory = n_distinct_ages >= 3
+
         # Step 2: Compute current % off PB trajectory
         current_pct_off_pb = self._compute_pct_off_pb(
             races[-1].time_seconds, pb
         )
 
-        # Step 3: Classify trajectory cluster
-        trajectory_class = self._classify_trajectory(annual_bests)
+        # Step 3: Classify trajectory cluster (guarded)
+        if sufficient_for_trajectory:
+            trajectory_class = self._classify_trajectory(annual_bests)
+        else:
+            trajectory_class = TrajectoryClassification(
+                cluster_name="Insufficient Data",
+                confidence=0.0,
+                description=(
+                    f"Need results from at least 3 different ages to classify "
+                    f"trajectory (currently {n_distinct_ages})."
+                ),
+                cluster_index=-1,
+            )
 
-        # Step 4: Compute percentile rank at current age
-        percentile_analysis = self._analyze_percentiles(
-            current_pct_off_pb, current_age, annual_bests
+        # Step 4: Compute percentile rank at current age — age-conditioned
+        # absolute time vs the qualifier cohort distribution. This replaces
+        # the old % off PB interpolation which always returned P95 when the
+        # athlete's most recent race equalled their PB.
+        percentile_analysis = self._analyze_percentiles_absolute(
+            athlete_pb=pb,
+            current_age=current_age,
+            annual_bests=annual_bests,
         )
 
-        # Step 5: Project peak time
-        peak_projection = self._project_peak(annual_bests, current_age)
+        # Step 5: Project peak time (guarded)
+        if sufficient_for_trajectory:
+            peak_projection = self._project_peak(annual_bests, current_age)
+        else:
+            # No trajectory to project — return current PB at current age with
+            # zero confidence so the UI can render "needs more data".
+            peak_projection = PeakProjection(
+                projected_peak_time=pb,
+                projected_peak_age=current_age,
+                confidence_interval_lower=pb,
+                confidence_interval_upper=pb,
+                confidence=0.0,
+                years_to_peak=0,
+            )
 
-        # Step 6: Run predictive model (finalist probability)
-        competitive_outlook = self._predict_competitiveness(
-            races, pb, current_age, annual_bests
+        # Step 6: Run predictive model (finalist probability) — age aware
+        competitive_outlook = self._predict_competitiveness_age_aware(
+            races=races,
+            pb=pb,
+            current_age=current_age,
+            annual_bests=annual_bests,
+            sufficient_for_trajectory=sufficient_for_trajectory,
         )
 
-        # Step 7: Compare improvement rate against norms
-        improvement_analysis = self._analyze_improvement(
-            races, pb, annual_bests, competitive_outlook.finalist_probability
-        )
+        # Step 7: Compare improvement rate against norms (guarded)
+        if sufficient_for_trajectory:
+            improvement_analysis = self._analyze_improvement(
+                races, pb, annual_bests, competitive_outlook.finalist_probability
+            )
+        else:
+            improvement_analysis = ImprovementAnalysis(
+                current_improvement_rate=None,
+                finalist_norm=self.improvement_norm.finalist_median_pct,
+                comparison="Insufficient Data",
+                is_on_track=False,
+                explanation=(
+                    "Improvement rate cannot be computed until results are "
+                    "logged across at least 3 different ages."
+                ),
+            )
 
         # Step 8: Generate age-specific benchmarks
         benchmarks_at_age = self._generate_benchmarks(
@@ -395,7 +444,7 @@ class AthleteAnalyzer:
 
             if distance < min_distance:
                 min_distance = distance
-            best_cluster_idx = i
+                best_cluster_idx = i
 
         best_cluster = self.trajectory_clusters[best_cluster_idx]
 
@@ -510,6 +559,174 @@ class AthleteAnalyzer:
             percentile_at_20=percentile_at_20,
             percentile_trend=percentile_trend,
             benchmark_time_at_current_age=benchmark_time_at_current_age,
+        )
+
+    # ------------------------------------------------------------------
+    # Age-conditioned absolute-time percentile (replaces % off PB logic)
+    # ------------------------------------------------------------------
+    def _expected_time_at_age(self, age: int) -> float:
+        """
+        Expected qualifier-cohort median absolute time at a given age.
+
+        Uses the cohort PB mean from MODEL_CALIBRATION as the "peak time"
+        and applies a simple aging curve so that veterans are correctly
+        compared against age-matched expectations rather than peak-age PBs.
+
+        For sprints/hurdles: lower = better, expected_time grows with
+        distance from peak age in either direction.
+        For throws: higher = better, expected_distance shrinks with
+        distance from peak age in either direction.
+        """
+        # Piecewise aging curve calibrated to Olympic qualifier cohort
+        # behaviour. Returns "% off cohort peak time" as a positive number.
+        if age <= 18:
+            pct_off = 8.0 + max(0, (18 - age)) * 1.5
+        elif age < 25:
+            # Linear improvement from 18 to 25
+            pct_off = 8.0 * (25 - age) / 7.0
+        elif age <= 27:
+            pct_off = 0.0  # peak window
+        elif age <= 30:
+            pct_off = 0.3 * (age - 27)  # gentle decline
+        else:
+            pct_off = 0.9 + 0.5 * (age - 30)  # steeper after 30
+        if self.is_throws:
+            return self.calibration.mean_time * (1.0 - pct_off / 100.0)
+        return self.calibration.mean_time * (1.0 + pct_off / 100.0)
+
+    def _normal_cdf(self, z: float) -> float:
+        """Standard normal CDF using the error-function approximation."""
+        # Abramowitz & Stegun 7.1.26 via math.erf
+        import math
+        return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
+
+    def _absolute_percentile(self, athlete_time: float, age: int) -> float:
+        """
+        Percentile rank of an absolute time at a given age vs the
+        Olympic-qualifier (Q/SF/F) cohort distribution.
+
+        Returns 0-100 where higher = better.
+        """
+        expected = self._expected_time_at_age(age)
+        std = max(0.05, self.calibration.std_time)
+        # Inflate std modestly with distance from peak age — older cohort
+        # is more variable.
+        std_age = std * (1.0 + 0.02 * abs(age - 25))
+        z = (athlete_time - expected) / std_age
+        if self.is_throws:
+            # higher = better → larger time/distance gives lower z directly,
+            # so percentile is the CDF of z.
+            return max(0.0, min(100.0, 100.0 * self._normal_cdf(z)))
+        # sprints/hurdles: lower = better → percentile is upper tail.
+        return max(0.0, min(100.0, 100.0 * (1.0 - self._normal_cdf(z))))
+
+    def _analyze_percentiles_absolute(
+        self,
+        athlete_pb: float,
+        current_age: int,
+        annual_bests: List[AnnualBest],
+    ) -> PercentileAnalysis:
+        """
+        Build a PercentileAnalysis using absolute-time, age-conditioned
+        comparisons against the Olympic qualifier cohort.
+        """
+        current_percentile = self._absolute_percentile(athlete_pb, current_age)
+
+        # Optional historical context if the athlete has annual bests at 18/20
+        ab_by_age = {ab.age: ab for ab in annual_bests}
+        percentile_at_18 = (
+            self._absolute_percentile(ab_by_age[18].best_time, 18)
+            if 18 in ab_by_age else None
+        )
+        percentile_at_20 = (
+            self._absolute_percentile(ab_by_age[20].best_time, 20)
+            if 20 in ab_by_age else None
+        )
+
+        if percentile_at_18 is not None and percentile_at_20 is not None:
+            change = percentile_at_20 - percentile_at_18
+        elif percentile_at_20 is not None:
+            change = current_percentile - percentile_at_20
+        else:
+            change = 0.0
+
+        if change > 2:
+            trend = "Improving"
+        elif change < -2:
+            trend = "Declining"
+        else:
+            trend = "Stable"
+
+        return PercentileAnalysis(
+            current_percentile=current_percentile,
+            percentile_at_18=percentile_at_18,
+            percentile_at_20=percentile_at_20,
+            percentile_trend=trend,
+            benchmark_time_at_current_age=self._expected_time_at_age(current_age),
+        )
+
+    # ------------------------------------------------------------------
+    # Age-aware competitive outlook (replaces immature-feature regression
+    # for athletes who are past the typical peak window)
+    # ------------------------------------------------------------------
+    def _predict_competitiveness_age_aware(
+        self,
+        races: List[RaceRecord],
+        pb: float,
+        current_age: int,
+        annual_bests: List[AnnualBest],
+        sufficient_for_trajectory: bool,
+    ) -> CompetitiveOutlook:
+        """
+        For developing athletes (age <= 24 with usable history) we keep the
+        original logistic regression. For everyone else we score directly
+        against the ROC thresholds, which is what those thresholds are for.
+        """
+        is_developing = current_age <= 24 and sufficient_for_trajectory
+        if is_developing:
+            return self._predict_competitiveness(races, pb, current_age, annual_bests)
+
+        # Direct PB-vs-threshold scoring. Use a smooth logistic on the gap
+        # between PB and the 80%-sensitivity threshold so the curve is
+        # continuous rather than stepwise.
+        import math
+        thr_finalist = self.roc_threshold.optimal_threshold
+        thr_semi = self.roc_threshold.threshold_80_sensitivity
+        thr_qual = self.roc_threshold.threshold_90_sensitivity
+
+        def _logit_prob(pb_val: float, thr: float, scale: float) -> float:
+            # For sprints (lower=better) the athlete is "above threshold"
+            # when pb_val <= thr. Convert gap to a logit.
+            if self.is_throws:
+                gap = pb_val - thr
+            else:
+                gap = thr - pb_val
+            return 1.0 / (1.0 + math.exp(-gap / scale))
+
+        # Scale ~ typical performance spread within the qualifier cohort.
+        scale = max(0.05, self.calibration.std_time * 0.5)
+
+        finalist_prob = _logit_prob(pb, thr_finalist, scale)
+        semi_prob = _logit_prob(pb, thr_semi, scale)
+        qualifier_prob = _logit_prob(pb, thr_qual, scale)
+
+        # Apply a veteran haircut: a 31-year-old hitting a qualifier mark
+        # has lower forward probability than a 22-year-old at the same time
+        # because they have fewer remaining seasons.
+        if current_age > 27:
+            haircut = max(0.4, 1.0 - 0.08 * (current_age - 27))
+            finalist_prob *= haircut
+            semi_prob *= haircut
+            qualifier_prob *= haircut
+
+        # Ensure ordering qualifier >= semi >= finalist
+        semi_prob = max(semi_prob, finalist_prob)
+        qualifier_prob = max(qualifier_prob, semi_prob)
+
+        return CompetitiveOutlook(
+            finalist_probability=min(1.0, finalist_prob),
+            semifinalist_probability=min(1.0, semi_prob),
+            olympic_qualifier_probability=min(1.0, qualifier_prob),
         )
 
     def _interpolate_percentile(

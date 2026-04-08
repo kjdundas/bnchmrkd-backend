@@ -14,6 +14,7 @@ export default function App() {
   const [showAthleteDashboard, setShowAthleteDashboard] = useState(false)
   const [incomingAthlete, setIncomingAthlete] = useState(null)
   const [autoRouted, setAutoRouted] = useState(false)
+  const [athleteTrajectoryMode, setAthleteTrajectoryMode] = useState(false)
 
   // Auto-route coaches and athletes to their respective dashboards after login
   // — but not if they've deep-linked to a legal page (?view=privacy/terms/about)
@@ -94,21 +95,40 @@ export default function App() {
           await signOut()
           setShowAthleteDashboard(false)
         }}
+        onViewTrajectory={(athletePayload) => {
+          setIncomingAthlete(athletePayload)
+          setAthleteTrajectoryMode(true)
+          setShowAthleteDashboard(false)
+        }}
       />
     )
   }
 
   // Main app — always accessible, landing page first
   return (
-    <BnchMrkdApp
-      user={user}
-      profile={profile}
-      onSignUp={() => setShowAuth(true)}
-      onSignOut={signOut}
-      onSetupProfile={() => setShowOnboarding(true)}
-      onOpenDashboard={() => setShowDashboard(true)}
-      incomingAthlete={incomingAthlete}
-      onIncomingAthleteConsumed={() => setIncomingAthlete(null)}
-    />
+    <>
+      <BnchMrkdApp
+        user={user}
+        profile={profile}
+        onSignUp={() => setShowAuth(true)}
+        onSignOut={signOut}
+        onSetupProfile={() => setShowOnboarding(true)}
+        onOpenDashboard={() => setShowDashboard(true)}
+        incomingAthlete={incomingAthlete}
+        onIncomingAthleteConsumed={() => setIncomingAthlete(null)}
+      />
+      {athleteTrajectoryMode && profile?.account_type === 'athlete' && (
+        <button
+          onClick={() => {
+            setAthleteTrajectoryMode(false)
+            setIncomingAthlete(null)
+            setShowAthleteDashboard(true)
+          }}
+          className="fixed top-4 left-4 z-[200] flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-500/30 text-sm font-medium transition-all"
+        >
+          ← My Dashboard
+        </button>
+      )}
+    </>
   )
 }

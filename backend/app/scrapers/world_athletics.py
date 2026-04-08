@@ -150,7 +150,8 @@ def _normalize_discipline(raw: str) -> Optional[str]:
         return None
     for pattern, code in DISCIPLINE_PATTERNS:
         if pattern.search(raw):
-            return code
+            # Defensive: strip any whitespace to prevent " 100m" / "100m " leaking downstream
+            return code.strip()
     return None
 
 
