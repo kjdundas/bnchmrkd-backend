@@ -149,12 +149,28 @@ MARK_RANGES: dict[str, tuple[float, float]] = {
 
 
 def canonicalize_event(raw: Optional[str]) -> Optional[str]:
-    """Return canonical discipline code or None if not supported."""
+    """
+    Return canonical discipline code or None if not supported.
+
+    Tries exact match first, then substring match against longest aliases
+    first (so "shot put" wins over "shot", "hammer throw" over "hammer",
+    etc.) — this lets us handle event labels that come with surrounding
+    chatter like "#28 Women's Hammer (شابات)" or "Men's 100m Final".
+    """
     if not raw:
         return None
     key = raw.strip().lower().replace("-", " ").replace("_", " ")
     key = re.sub(r"\s+", " ", key)
-    return CANONICAL_EVENTS.get(key)
+    # Exact
+    hit = CANONICAL_EVENTS.get(key)
+    if hit:
+        return hit
+    # Substring — longest alias first to avoid "shot" matching "shot put" src
+    for alias in sorted(CANONICAL_EVENTS.keys(), key=len, reverse=True):
+        # Require word-ish boundary so "100" doesn't match "1000"
+        if re.search(rf"(?:^|[^0-9a-z]){re.escape(alias)}(?:$|[^0-9a-z])", key):
+            return CANONICAL_EVENTS[alias]
+    return None
 
 
 def parse_mark(raw: str, event: str) -> tuple[Optional[float], Optional[float]]:
