@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { analytics } from '../../lib/analytics'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ChevronLeft } from 'lucide-react'
 
 export default function AuthPage({ onBack }) {
@@ -34,6 +35,7 @@ export default function AuthPage({ onBack }) {
         setError(signUpError.message)
       } else {
         setSignupSuccess(true)
+        analytics.signupCompleted()
       }
     } else {
       const { error: signInError } = await signIn(email, password)

@@ -4,6 +4,7 @@ import {
   ChevronLeft, AlertCircle, Plus, Check, ChevronDown, History,
 } from 'lucide-react'
 import { insertInto } from '../../lib/supabaseRest'
+import { analytics } from '../../lib/analytics'
 
 // ═══════════════════════════════════════════════════════════════════════
 // BRAND TOKENS — match the home page (slate gradient + orange accent)
@@ -497,6 +498,7 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
         recorded_at: date,
         notes: notes || null,
       })
+      analytics.metricLogged({ metric: metric.key })
       onSaved?.({
         label: metric.label,
         value: parseFloat(value),

@@ -10,6 +10,7 @@ import {
   Percent, Layers, BarChart2, CheckCircle2, Circle, Flag, Database, Info, ArrowRight, ChevronLeft,
   Search, User, Globe, Medal, Lock
 } from 'lucide-react';
+import { analytics } from './lib/analytics';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
@@ -1802,6 +1803,11 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const handleAnalyze = async () => {
     setLoading(true);
     setError(null);
+    analytics.analyzerRun({
+      discipline: activeTab === 'manual' ? athleteData.discipline : quickAnalysisData.discipline,
+      gender: activeTab === 'manual' ? athleteData.gender : quickAnalysisData.gender,
+      mode: activeTab,
+    });
 
     try {
       if (activeTab === 'manual') {
@@ -3922,7 +3928,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Discipline</label>
-                    <select value={athleteData.discipline} onChange={(e) => handleManualEntry('discipline', e.target.value)}
+                    <select value={athleteData.discipline} onChange={(e) => { handleManualEntry('discipline', e.target.value); analytics.disciplineSelected({ discipline: e.target.value }); }}
                       className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
                       {isThrowsMode ? (
                         <>
@@ -4098,7 +4104,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Discipline</label>
-                    <select value={quickAnalysisData.discipline} onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, discipline: e.target.value })}
+                    <select value={quickAnalysisData.discipline} onChange={(e) => { setQuickAnalysisData({ ...quickAnalysisData, discipline: e.target.value }); analytics.disciplineSelected({ discipline: e.target.value }); }}
                       className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
                       {isThrowsMode ? (
                         <optgroup label="Throws">
@@ -4929,7 +4935,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               ].map(tab => {
                 const TabIcon = tab.icon;
                 return (
-                  <button key={tab.id} onClick={() => setDashTab(tab.id)}
+                  <button key={tab.id} onClick={() => { if (tab.id === 'benchmarks') analytics.standardsTabViewed(); setDashTab(tab.id); }}
                     className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 px-2 sm:py-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap landing-font ${
                       dashTab === tab.id
                         ? 'text-white shadow-lg'
