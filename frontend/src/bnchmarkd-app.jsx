@@ -15,7 +15,7 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
 // ── Data stats constants (update when dataset changes) ──
-const STATS = { athletes: '3,442', records: '496K+', events: '24', games: 'Sydney 2000 – Paris 2024' };
+const STATS = { athletes: '5,100+', records: '311K+', events: '26', games: 'Sydney 2000 – Paris 2024' };
 
 export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
@@ -2788,6 +2788,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             @keyframes statCount { from { opacity: 0; transform: translateY(8px) scale(0.95); filter: blur(2px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
             @keyframes glowPulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
             @keyframes indicatorSlide { from { width: 0%; } to { width: 100%; } }
+            @keyframes tickerLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+            @keyframes tickerRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
             .showcase-fade { transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease; }
             .showcase-fade-out { opacity: 0; transform: scale(0.97); filter: blur(3px); }
             .showcase-fade-in { opacity: 1; transform: scale(1); filter: blur(0); }
@@ -3201,7 +3203,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     coach: {
                       headline: 'See who\'s on track',
                       desc: 'View each athlete\'s percentile ranking against elite trajectories. Spot who\'s tracking toward elite and who needs a new approach.',
-                      stat: '18',
+                      stat: STATS.events,
                       statLabel: 'events covered',
                     },
                   },
@@ -3631,12 +3633,66 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </p>
             </div>
 
-            {/* Key stats row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-14 stagger-3">
+            {/* ── Scrolling discipline ticker ── */}
+            <div className="stagger-3 mb-14 relative overflow-hidden" style={{maskImage: 'linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)'}}>
+              {/* Row 1 — scrolls left */}
+              <div className="flex gap-3 mb-3" style={{animation: 'tickerLeft 45s linear infinite', width: 'max-content'}}>
+                {[...Array(2)].flatMap((_, rep) => [
+                  { disc: '100m', gender: 'M', threshold: '10.15s', accent: '#3b82f6' },
+                  { disc: '200m', gender: 'F', threshold: '23.55s', accent: '#ec4899' },
+                  { disc: 'Shot Put', gender: 'M', threshold: '21.50m', accent: '#3b82f6' },
+                  { disc: '400m Hurdles', gender: 'F', threshold: '57.70s', accent: '#ec4899' },
+                  { disc: '3000m SC', gender: 'M', threshold: '8:16.91', accent: '#3b82f6' },
+                  { disc: 'Javelin', gender: 'F', threshold: '65.00m', accent: '#ec4899' },
+                  { disc: '10000m', gender: 'M', threshold: '27:22.44', accent: '#3b82f6' },
+                  { disc: '400m', gender: 'F', threshold: '52.65s', accent: '#ec4899' },
+                  { disc: 'Discus', gender: 'M', threshold: '67.50m', accent: '#3b82f6' },
+                  { disc: '100m Hurdles', gender: 'F', threshold: '13.28s', accent: '#ec4899' },
+                  { disc: '5000m', gender: 'M', threshold: '13:03.87', accent: '#3b82f6' },
+                  { disc: 'Hammer', gender: 'F', threshold: '75.00m', accent: '#ec4899' },
+                  { disc: '200m', gender: 'M', threshold: '20.62s', accent: '#3b82f6' },
+                ].map((item, i) => (
+                  <div key={`r1-${rep}-${i}`} className="flex items-center gap-2 px-4 py-2.5 rounded-lg flex-shrink-0" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background: item.accent}}></span>
+                    <span className="text-xs font-semibold text-white whitespace-nowrap landing-font">{item.disc}</span>
+                    <span className="text-[10px] font-medium mono-font px-1.5 py-0.5 rounded" style={{background: item.gender === 'M' ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)', color: item.accent}}>{item.gender}</span>
+                    <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#f97316'}}>{item.threshold}</span>
+                  </div>
+                )))}
+              </div>
+              {/* Row 2 — scrolls right */}
+              <div className="flex gap-3" style={{animation: 'tickerRight 50s linear infinite', width: 'max-content'}}>
+                {[...Array(2)].flatMap((_, rep) => [
+                  { disc: '100m', gender: 'F', threshold: '11.50s', accent: '#ec4899' },
+                  { disc: '400m', gender: 'M', threshold: '44.64s', accent: '#3b82f6' },
+                  { disc: 'Discus', gender: 'F', threshold: '65.00m', accent: '#ec4899' },
+                  { disc: '110m Hurdles', gender: 'M', threshold: '13.80s', accent: '#3b82f6' },
+                  { disc: '5000m', gender: 'F', threshold: '14:54.29', accent: '#ec4899' },
+                  { disc: 'Hammer', gender: 'M', threshold: '79.00m', accent: '#3b82f6' },
+                  { disc: '3000m SC', gender: 'F', threshold: '9:26.32', accent: '#ec4899' },
+                  { disc: 'Shot Put', gender: 'F', threshold: '19.50m', accent: '#ec4899' },
+                  { disc: '400m Hurdles', gender: 'M', threshold: '48.17s', accent: '#3b82f6' },
+                  { disc: '10000m', gender: 'F', threshold: '31:08.89', accent: '#ec4899' },
+                  { disc: 'Javelin', gender: 'M', threshold: '88.00m', accent: '#3b82f6' },
+                  { disc: '100m', gender: 'M', threshold: '10.15s', accent: '#3b82f6' },
+                  { disc: '400m', gender: 'F', threshold: '52.65s', accent: '#ec4899' },
+                ].map((item, i) => (
+                  <div key={`r2-${rep}-${i}`} className="flex items-center gap-2 px-4 py-2.5 rounded-lg flex-shrink-0" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background: item.accent}}></span>
+                    <span className="text-xs font-semibold text-white whitespace-nowrap landing-font">{item.disc}</span>
+                    <span className="text-[10px] font-medium mono-font px-1.5 py-0.5 rounded" style={{background: item.gender === 'M' ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)', color: item.accent}}>{item.gender}</span>
+                    <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#f97316'}}>{item.threshold}</span>
+                  </div>
+                )))}
+              </div>
+            </div>
+
+            {/* ── Key stats row ── */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-14 stagger-4">
               {[
                 { value: STATS.athletes, label: 'Olympic Athletes', sub: STATS.games },
-                { value: STATS.records, label: 'Career Races', sub: 'Analysed and classified' },
-                { value: '18', label: 'Disciplines', sub: 'Sprints, hurdles & throws' },
+                { value: STATS.records, label: 'Career Results', sub: 'Analysed and classified' },
+                { value: STATS.events, label: 'Events', sub: 'Sprints, throws & distance' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
                 <div key={i} className="bento-card rounded-xl p-5 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -3647,57 +3703,100 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               ))}
             </div>
 
-            {/* Discipline coverage table */}
-            <div className="bento-card rounded-2xl p-6 sm:p-8 mb-10 stagger-4" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+            {/* ── Discipline coverage — categorised ── */}
+            <div className="bento-card rounded-2xl p-6 sm:p-8 mb-10 stagger-5" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background: 'rgba(249,115,22,0.1)'}}>
                   <BarChart3 className="w-4 h-4" style={{color: '#f97316'}} />
                 </div>
                 <h3 className="text-lg font-bold text-white landing-font">Discipline Coverage</h3>
               </div>
-              <p className="text-xs text-slate-600 mb-6 landing-font ml-11">Finalist thresholds derived from ROC/AUC analysis with Youden's J optimisation.</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr style={{borderBottom: '1px solid rgba(255,255,255,0.08)'}}>
-                      <th className="text-left py-3 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Discipline</th>
-                      <th className="text-center py-3 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Gender</th>
-                      <th className="text-center py-3 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Finalist</th>
-                      <th className="hidden sm:table-cell text-center py-3 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Pop. Mean</th>
-                      <th className="hidden sm:table-cell text-center py-3 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Ages</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { disc: '100m', gender: 'Male', code: 'M100', threshold: '10.15s', mean: '10.45s' },
-                      { disc: '100m', gender: 'Female', code: 'F100', threshold: '11.50s', mean: '11.65s' },
-                      { disc: '200m', gender: 'Male', code: 'M200', threshold: '20.62s', mean: '21.05s' },
-                      { disc: '200m', gender: 'Female', code: 'F200', threshold: '23.55s', mean: '23.75s' },
-                      { disc: '400m', gender: 'Male', code: 'M400', threshold: '44.64s', mean: '45.18s' },
-                      { disc: '400m', gender: 'Female', code: 'F400', threshold: '52.65s', mean: '53.60s' },
-                      { disc: '100m Hurdles', gender: 'Female', code: 'F100H', threshold: '13.28s', mean: '13.55s' },
-                      { disc: '110m Hurdles', gender: 'Male', code: 'M110H', threshold: '13.80s', mean: '13.85s' },
-                      { disc: '400m Hurdles', gender: 'Male', code: 'M400H', threshold: '48.17s', mean: '48.67s' },
-                      { disc: '400m Hurdles', gender: 'Female', code: 'F400H', threshold: '57.70s', mean: '58.20s' },
-                    ].map((row, i) => (
-                      <tr key={i} className="transition-colors hover:bg-white/[0.02]" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-                        <td className="py-3 px-3 font-medium text-white landing-font">{row.disc}</td>
-                        <td className="py-3 px-3 text-center">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{
-                            background: row.gender === 'Male' ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)',
-                            color: row.gender === 'Male' ? '#60a5fa' : '#f472b6'
-                          }}>
-                            {row.gender}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-center font-bold mono-font" style={{color: '#f97316'}}>{row.threshold}</td>
-                        <td className="hidden sm:table-cell py-3 px-3 text-center text-slate-400 mono-font">{row.mean}</td>
-                        <td className="hidden sm:table-cell py-3 px-3 text-center text-slate-600 mono-font">17 – 35</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <p className="text-xs text-slate-600 mb-6 landing-font ml-11">Finalist thresholds derived from ROC/AUC analysis with Youden's J optimisation across all {STATS.events} events.</p>
+
+              {/* Category sections */}
+              {[
+                {
+                  category: 'Sprints & Hurdles',
+                  accent: '#3b82f6',
+                  count: '12 events',
+                  rows: [
+                    { disc: '100m', gender: 'Male', threshold: '10.15s', mean: '10.45s' },
+                    { disc: '100m', gender: 'Female', threshold: '11.50s', mean: '11.65s' },
+                    { disc: '200m', gender: 'Male', threshold: '20.62s', mean: '21.05s' },
+                    { disc: '200m', gender: 'Female', threshold: '23.55s', mean: '23.75s' },
+                    { disc: '400m', gender: 'Male', threshold: '44.64s', mean: '45.18s' },
+                    { disc: '400m', gender: 'Female', threshold: '52.65s', mean: '53.60s' },
+                    { disc: '100m Hurdles', gender: 'Female', threshold: '13.28s', mean: '13.55s' },
+                    { disc: '110m Hurdles', gender: 'Male', threshold: '13.80s', mean: '13.85s' },
+                    { disc: '400m Hurdles', gender: 'Male', threshold: '48.17s', mean: '48.67s' },
+                    { disc: '400m Hurdles', gender: 'Female', threshold: '57.70s', mean: '58.20s' },
+                  ]
+                },
+                {
+                  category: 'Throws',
+                  accent: '#22c55e',
+                  count: '8 events',
+                  rows: [
+                    { disc: 'Discus Throw', gender: 'Male', threshold: '67.50m', mean: '65.00m' },
+                    { disc: 'Discus Throw', gender: 'Female', threshold: '65.00m', mean: '62.00m' },
+                    { disc: 'Javelin Throw', gender: 'Male', threshold: '88.00m', mean: '85.00m' },
+                    { disc: 'Javelin Throw', gender: 'Female', threshold: '65.00m', mean: '62.00m' },
+                    { disc: 'Hammer Throw', gender: 'Male', threshold: '79.00m', mean: '76.00m' },
+                    { disc: 'Hammer Throw', gender: 'Female', threshold: '75.00m', mean: '72.00m' },
+                    { disc: 'Shot Put', gender: 'Male', threshold: '21.50m', mean: '20.00m' },
+                    { disc: 'Shot Put', gender: 'Female', threshold: '19.50m', mean: '18.50m' },
+                  ]
+                },
+                {
+                  category: 'Long Distance',
+                  accent: '#f43f5e',
+                  count: '6 events',
+                  rows: [
+                    { disc: '3000m Steeplechase', gender: 'Male', threshold: '8:16.91', mean: '8:16.06' },
+                    { disc: '3000m Steeplechase', gender: 'Female', threshold: '9:26.32', mean: '9:22.09' },
+                    { disc: '5000m', gender: 'Male', threshold: '13:03.87', mean: '13:13.86' },
+                    { disc: '5000m', gender: 'Female', threshold: '14:54.29', mean: '15:08.46' },
+                    { disc: '10000m', gender: 'Male', threshold: '27:22.44', mean: '27:19.92' },
+                    { disc: '10000m', gender: 'Female', threshold: '31:08.89', mean: '31:03.83' },
+                  ]
+                },
+              ].map((section, si) => (
+                <div key={si} className={si > 0 ? 'mt-6' : ''}>
+                  {/* Category header */}
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="w-1 h-5 rounded-full" style={{background: section.accent}}></div>
+                    <span className="text-sm font-bold text-white landing-font">{section.category}</span>
+                    <span className="text-[10px] font-medium mono-font px-2 py-0.5 rounded-full" style={{background: `${section.accent}18`, color: section.accent}}>{section.count}</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr style={{borderBottom: '1px solid rgba(255,255,255,0.08)'}}>
+                          <th className="text-left py-2.5 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Discipline</th>
+                          <th className="text-center py-2.5 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Gender</th>
+                          <th className="text-center py-2.5 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Finalist Threshold</th>
+                          <th className="hidden sm:table-cell text-center py-2.5 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider mono-font">Pop. Mean</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.rows.map((row, i) => (
+                          <tr key={i} className="transition-colors hover:bg-white/[0.02]" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
+                            <td className="py-2.5 px-3 font-medium text-white landing-font text-sm">{row.disc}</td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{
+                                background: row.gender === 'Male' ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)',
+                                color: row.gender === 'Male' ? '#60a5fa' : '#f472b6'
+                              }}>{row.gender}</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center font-bold mono-font" style={{color: '#f97316'}}>{row.threshold}</td>
+                            <td className="hidden sm:table-cell py-2.5 px-3 text-center text-slate-400 mono-font">{row.mean}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Methodology cards */}
