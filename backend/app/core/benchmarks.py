@@ -2,7 +2,7 @@
 Benchmark reference data for Olympic-level athletes (2000-2024).
 
 Contains age-performance percentiles, ROC thresholds, trajectory centroids,
-logistic regression coefficients, and improvement norms across 14 disciplines (sprints, hurdles, and throws).
+logistic regression coefficients, and improvement norms across 26 disciplines (sprints, hurdles, throws, steeplechase, and distance).
 """
 
 from typing import Dict, List, Tuple
@@ -472,6 +472,146 @@ AGE_PERFORMANCE_PERCENTILES: Dict[str, Dict[int, AgePercentile]] = {
         37: AgePercentile(p10=3.6998, p25=5.1145, p50=11.6228, p75=16.9902, p90=21.5765),
         38: AgePercentile(p10=3.5676, p25=6.2929, p50=8.9817, p75=14.8303, p90=22.7937),
     },
+    "M3SC": {
+        17: AgePercentile(p10=2.4598, p25=4.5913, p50=9.2773, p75=11.4666, p90=13.9476),
+        18: AgePercentile(p10=1.4991, p25=4.4799, p50=7.7491, p75=11.2045, p90=12.3222),
+        19: AgePercentile(p10=1.2509, p25=3.3334, p50=5.8643, p75=8.277, p90=10.0745),
+        20: AgePercentile(p10=0.9929, p25=2.292, p50=4.4767, p75=6.595, p90=8.4446),
+        21: AgePercentile(p10=0.2567, p25=1.5872, p50=3.3452, p75=5.1725, p90=6.8618),
+        22: AgePercentile(p10=0.1354, p25=1.169, p50=2.7462, p75=4.5561, p90=6.13),
+        23: AgePercentile(p10=0.0, p25=0.9743, p50=1.9216, p75=3.54, p90=5.3108),
+        24: AgePercentile(p10=0.0036, p25=1.0633, p50=2.0411, p75=3.5657, p90=5.6612),
+        25: AgePercentile(p10=0.2258, p25=0.7332, p50=1.6048, p75=2.8698, p90=4.8341),
+        26: AgePercentile(p10=0.0, p25=0.3485, p50=1.3327, p75=2.8433, p90=4.8522),
+        27: AgePercentile(p10=0.0, p25=0.46, p50=1.4868, p75=2.647, p90=4.9833),
+        28: AgePercentile(p10=0.0, p25=0.4904, p50=1.5554, p75=2.54, p90=4.9126),
+        29: AgePercentile(p10=0.1229, p25=0.7666, p50=1.6934, p75=2.5644, p90=4.6986),
+        30: AgePercentile(p10=0.0942, p25=0.7569, p50=1.8768, p75=3.2008, p90=6.1984),
+        31: AgePercentile(p10=0.0, p25=0.6208, p50=1.9618, p75=3.3978, p90=5.3577),
+        32: AgePercentile(p10=0.4266, p25=1.0278, p50=1.7605, p75=3.6227, p90=6.5736),
+        33: AgePercentile(p10=0.2368, p25=1.2522, p50=2.4731, p75=4.6008, p90=8.1006),
+        34: AgePercentile(p10=0.6445, p25=1.6718, p50=3.3586, p75=5.2542, p90=7.3091),
+        35: AgePercentile(p10=1.1255, p25=1.4743, p50=2.8829, p75=5.179, p90=6.4487),
+    },
+    "F3SC": {
+        17: AgePercentile(p10=4.1241, p25=7.3285, p50=11.2035, p75=14.9891, p90=16.1495),
+        18: AgePercentile(p10=4.6879, p25=5.5732, p50=8.187, p75=12.8951, p90=18.1302),
+        19: AgePercentile(p10=3.4743, p25=4.875, p50=7.4342, p75=11.274, p90=15.4305),
+        20: AgePercentile(p10=0.9223, p25=3.7313, p50=6.7362, p75=10.2563, p90=14.6479),
+        21: AgePercentile(p10=0.3279, p25=1.891, p50=5.2286, p75=9.2493, p90=12.8676),
+        22: AgePercentile(p10=0.0451, p25=1.5828, p50=3.9276, p75=7.3531, p90=10.9205),
+        23: AgePercentile(p10=0.0, p25=0.8884, p50=2.9857, p75=5.9171, p90=8.8801),
+        24: AgePercentile(p10=0.0, p25=1.42, p50=2.8621, p75=5.1885, p90=7.6411),
+        25: AgePercentile(p10=0.0, p25=0.8885, p50=2.4174, p75=4.197, p90=6.5902),
+        26: AgePercentile(p10=0.0166, p25=0.7083, p50=1.8414, p75=3.8897, p90=6.4263),
+        27: AgePercentile(p10=0.0, p25=0.5093, p50=1.7611, p75=3.5997, p90=6.0678),
+        28: AgePercentile(p10=0.0, p25=0.641, p50=1.8532, p75=3.7135, p90=6.5282),
+        29: AgePercentile(p10=0.0, p25=1.1195, p50=2.1374, p75=3.6556, p90=6.0535),
+        30: AgePercentile(p10=0.0, p25=0.7528, p50=2.2014, p75=4.6679, p90=7.2156),
+        31: AgePercentile(p10=0.0, p25=0.8884, p50=2.252, p75=4.0362, p90=6.4538),
+        32: AgePercentile(p10=0.0, p25=1.0317, p50=2.5543, p75=4.5455, p90=6.9449),
+        33: AgePercentile(p10=0.0, p25=1.1883, p50=2.1132, p75=5.3033, p90=6.2492),
+        34: AgePercentile(p10=0.0, p25=0.3063, p50=2.0683, p75=4.7817, p90=5.9408),
+        35: AgePercentile(p10=0.4703, p25=1.8451, p50=2.5711, p75=5.9223, p90=7.9386),
+    },
+    "M5K": {
+        17: AgePercentile(p10=1.1033, p25=2.6627, p50=4.4653, p75=8.2854, p90=14.0538),
+        18: AgePercentile(p10=0.6055, p25=1.4912, p50=4.8418, p75=7.7306, p90=10.7234),
+        19: AgePercentile(p10=0.4086, p25=1.5446, p50=3.5283, p75=6.425, p90=8.5233),
+        20: AgePercentile(p10=0.0, p25=1.3844, p50=3.3138, p75=5.91, p90=8.3173),
+        21: AgePercentile(p10=0.0, p25=1.2269, p50=3.177, p75=5.4296, p90=8.3679),
+        22: AgePercentile(p10=0.045, p25=1.0085, p50=2.803, p75=4.9756, p90=6.9093),
+        23: AgePercentile(p10=0.0, p25=0.9826, p50=1.9873, p75=3.5223, p90=6.1236),
+        24: AgePercentile(p10=0.0, p25=0.9515, p50=2.0874, p75=3.1628, p90=5.2992),
+        25: AgePercentile(p10=0.0, p25=0.5229, p50=1.4073, p75=2.542, p90=4.4547),
+        26: AgePercentile(p10=0.0, p25=0.6024, p50=1.7016, p75=3.0481, p90=5.0718),
+        27: AgePercentile(p10=0.0, p25=0.6483, p50=1.9269, p75=3.0432, p90=4.5923),
+        28: AgePercentile(p10=0.0, p25=0.2935, p50=1.9263, p75=3.5542, p90=5.4614),
+        29: AgePercentile(p10=0.0, p25=0.5709, p50=1.9841, p75=3.9349, p90=5.8251),
+        30: AgePercentile(p10=0.0, p25=0.4241, p50=1.9325, p75=3.0562, p90=4.1233),
+        31: AgePercentile(p10=0.0, p25=0.7954, p50=2.2801, p75=3.8075, p90=6.1843),
+        32: AgePercentile(p10=0.0, p25=1.2155, p50=2.7215, p75=5.5492, p90=7.3036),
+        33: AgePercentile(p10=0.4594, p25=1.5775, p50=3.4057, p75=4.7802, p90=7.1315),
+        34: AgePercentile(p10=0.1733, p25=1.5984, p50=2.8621, p75=5.5675, p90=6.8839),
+        35: AgePercentile(p10=0.4122, p25=0.9653, p50=3.6036, p75=4.0995, p90=8.2308),
+        36: AgePercentile(p10=0.5921, p25=1.617, p50=2.1407, p75=3.8144, p90=5.7033),
+        37: AgePercentile(p10=0.7353, p25=2.6482, p50=5.2458, p75=6.258, p90=6.918),
+    },
+    "F5K": {
+        17: AgePercentile(p10=1.3487, p25=3.3233, p50=5.9012, p75=9.5455, p90=13.6703),
+        18: AgePercentile(p10=1.3996, p25=2.8223, p50=6.5933, p75=10.2304, p90=13.9019),
+        19: AgePercentile(p10=0.9884, p25=2.5679, p50=5.6638, p75=8.1873, p90=11.0957),
+        20: AgePercentile(p10=0.135, p25=1.5932, p50=4.8787, p75=8.4736, p90=11.7593),
+        21: AgePercentile(p10=0.1449, p25=1.6671, p50=4.1366, p75=6.0522, p90=8.8927),
+        22: AgePercentile(p10=0.0, p25=1.1885, p50=2.8808, p75=6.0522, p90=9.055),
+        23: AgePercentile(p10=0.0, p25=0.6267, p50=2.5486, p75=4.8461, p90=7.5242),
+        24: AgePercentile(p10=0.0, p25=0.8493, p50=2.4814, p75=5.0639, p90=7.2922),
+        25: AgePercentile(p10=0.0, p25=0.9352, p50=2.3146, p75=3.616, p90=5.2031),
+        26: AgePercentile(p10=0.0, p25=0.7513, p50=2.0355, p75=3.2525, p90=5.1976),
+        27: AgePercentile(p10=0.0, p25=0.9544, p50=2.3007, p75=3.8278, p90=5.7927),
+        28: AgePercentile(p10=0.0177, p25=0.695, p50=1.7167, p75=3.7404, p90=5.7817),
+        29: AgePercentile(p10=0.0, p25=0.2318, p50=1.8134, p75=3.3114, p90=6.1897),
+        30: AgePercentile(p10=0.0, p25=0.0764, p50=1.5462, p75=3.2771, p90=6.4706),
+        31: AgePercentile(p10=0.1238, p25=0.9157, p50=1.8771, p75=3.9795, p90=5.8439),
+        32: AgePercentile(p10=0.0, p25=0.8954, p50=2.4459, p75=5.7084, p90=8.8016),
+        33: AgePercentile(p10=0.0, p25=0.9981, p50=2.8164, p75=5.4627, p90=7.6481),
+        34: AgePercentile(p10=0.1729, p25=1.3937, p50=2.285, p75=4.3454, p90=6.2418),
+        35: AgePercentile(p10=1.07, p25=2.4231, p50=3.897, p75=6.8589, p90=8.1914),
+        36: AgePercentile(p10=1.8501, p25=2.4211, p50=4.961, p75=8.4729, p90=9.6061),
+        37: AgePercentile(p10=1.762, p25=2.2056, p50=5.157, p75=8.9878, p90=11.7068),
+        38: AgePercentile(p10=1.6049, p25=3.4679, p50=5.5615, p75=9.0935, p90=11.8522),
+        39: AgePercentile(p10=0.5091, p25=1.9255, p50=6.242, p75=11.0698, p90=16.583),
+    },
+    "M10K": {
+        17: AgePercentile(p10=1.0427, p25=2.6718, p50=4.1096, p75=6.6584, p90=6.7002),
+        18: AgePercentile(p10=0.8495, p25=1.6276, p50=2.7289, p75=5.069, p90=8.955),
+        19: AgePercentile(p10=0.1279, p25=2.0577, p50=3.7594, p75=6.1377, p90=9.663),
+        20: AgePercentile(p10=0.0, p25=0.8081, p50=2.0271, p75=4.3519, p90=7.1438),
+        21: AgePercentile(p10=0.0, p25=0.7268, p50=1.9839, p75=4.7379, p90=6.183),
+        22: AgePercentile(p10=0.0, p25=0.2807, p50=1.3598, p75=3.0424, p90=5.4157),
+        23: AgePercentile(p10=0.0312, p25=0.9507, p50=1.8867, p75=3.0099, p90=6.2161),
+        24: AgePercentile(p10=0.0, p25=0.2255, p50=1.5729, p75=3.1909, p90=4.6089),
+        25: AgePercentile(p10=0.0, p25=0.3485, p50=1.2957, p75=2.5282, p90=4.9768),
+        26: AgePercentile(p10=0.0, p25=0.3085, p50=1.5837, p75=2.6601, p90=5.0749),
+        27: AgePercentile(p10=0.0, p25=0.5747, p50=1.2861, p75=2.6433, p90=3.525),
+        28: AgePercentile(p10=0.0, p25=0.7101, p50=1.3131, p75=3.2283, p90=6.2061),
+        29: AgePercentile(p10=0.0, p25=0.816, p50=1.5209, p75=3.5627, p90=6.8572),
+        30: AgePercentile(p10=0.0, p25=0.4088, p50=1.5308, p75=2.9104, p90=3.5534),
+        31: AgePercentile(p10=0.0, p25=0.2284, p50=1.9666, p75=4.5463, p90=6.3812),
+        32: AgePercentile(p10=0.2465, p25=0.7074, p50=2.1613, p75=4.185, p90=6.9548),
+        33: AgePercentile(p10=0.687, p25=1.4857, p50=2.6652, p75=4.8667, p90=6.9939),
+        34: AgePercentile(p10=1.0047, p25=1.7148, p50=3.1652, p75=4.7825, p90=6.0602),
+        35: AgePercentile(p10=1.874, p25=2.2264, p50=3.5851, p75=4.6791, p90=7.9063),
+        36: AgePercentile(p10=2.5688, p25=3.1852, p50=4.571, p75=4.7707, p90=9.3071),
+        38: AgePercentile(p10=2.9015, p25=3.3223, p50=3.7639, p75=6.3511, p90=6.9656),
+    },
+    "F10K": {
+        17: AgePercentile(p10=1.1138, p25=4.1862, p50=9.4312, p75=15.3058, p90=19.0208),
+        18: AgePercentile(p10=0.5153, p25=1.7491, p50=6.25, p75=7.9479, p90=10.6016),
+        19: AgePercentile(p10=1.0737, p25=2.2925, p50=5.6367, p75=8.5772, p90=13.26),
+        20: AgePercentile(p10=0.0, p25=1.5435, p50=3.6089, p75=7.3201, p90=11.4548),
+        21: AgePercentile(p10=0.0, p25=0.9691, p50=4.0227, p75=6.7347, p90=7.8936),
+        22: AgePercentile(p10=0.7336, p25=1.454, p50=3.7154, p75=6.0826, p90=7.7994),
+        23: AgePercentile(p10=0.0, p25=0.6228, p50=2.4099, p75=4.0946, p90=7.2712),
+        24: AgePercentile(p10=0.0, p25=0.2692, p50=2.0602, p75=4.4682, p90=6.7575),
+        25: AgePercentile(p10=0.0, p25=0.9618, p50=2.3122, p75=4.8045, p90=6.734),
+        26: AgePercentile(p10=0.0, p25=0.6049, p50=1.7168, p75=3.9128, p90=5.6687),
+        27: AgePercentile(p10=0.0, p25=0.2725, p50=2.1341, p75=3.7966, p90=6.2643),
+        28: AgePercentile(p10=0.0, p25=0.6217, p50=1.8668, p75=4.0806, p90=6.5914),
+        29: AgePercentile(p10=0.0, p25=0.2298, p50=1.6883, p75=3.7445, p90=5.724),
+        30: AgePercentile(p10=0.0, p25=0.6002, p50=1.6043, p75=4.2825, p90=7.0877),
+        31: AgePercentile(p10=0.0, p25=0.2806, p50=1.9703, p75=3.8041, p90=5.7564),
+        32: AgePercentile(p10=0.0, p25=0.9869, p50=2.6471, p75=3.9439, p90=5.3136),
+        33: AgePercentile(p10=0.0, p25=0.9799, p50=2.3045, p75=4.801, p90=6.421),
+        34: AgePercentile(p10=0.0, p25=1.2806, p50=3.3307, p75=5.6618, p90=7.8332),
+        35: AgePercentile(p10=0.2455, p25=0.7783, p50=3.8072, p75=5.7875, p90=9.3371),
+        36: AgePercentile(p10=0.5843, p25=2.1515, p50=3.6817, p75=6.2457, p90=8.0907),
+        37: AgePercentile(p10=1.6129, p25=2.5365, p50=4.4824, p75=5.9336, p90=6.2677),
+        38: AgePercentile(p10=0.0, p25=1.0529, p50=3.396, p75=6.5613, p90=10.784),
+        39: AgePercentile(p10=2.2286, p25=5.0333, p50=6.951, p75=10.1425, p90=11.0905),
+        40: AgePercentile(p10=4.0218, p25=4.2003, p50=5.9173, p75=9.0801, p90=13.5261),
+        41: AgePercentile(p10=3.3518, p25=5.1559, p50=7.7537, p75=7.9896, p90=9.3704),
+    },
 }
 
 
@@ -550,6 +690,12 @@ ROC_THRESHOLDS: Dict[str, ROCThreshold] = {
     "FHT": ROCThreshold(optimal_threshold=74.03, threshold_90_sensitivity=23.22, threshold_80_sensitivity=23.22, threshold_70_sensitivity=23.22),
     "MSP": ROCThreshold(optimal_threshold=20.68, threshold_90_sensitivity=11.44, threshold_80_sensitivity=11.44, threshold_70_sensitivity=11.44),
     "FSP": ROCThreshold(optimal_threshold=18.75, threshold_90_sensitivity=8.67, threshold_80_sensitivity=8.67, threshold_70_sensitivity=8.67),
+    "M3SC": ROCThreshold(optimal_threshold=496.91, threshold_90_sensitivity=496.91, threshold_80_sensitivity=494.06, threshold_70_sensitivity=492.08),
+    "F3SC": ROCThreshold(optimal_threshold=566.32, threshold_90_sensitivity=566.32, threshold_80_sensitivity=559.27, threshold_70_sensitivity=556.89),
+    "M5K": ROCThreshold(optimal_threshold=783.87, threshold_90_sensitivity=795.19, threshold_80_sensitivity=789.17, threshold_70_sensitivity=783.53),
+    "F5K": ROCThreshold(optimal_threshold=894.29, threshold_90_sensitivity=905.26, threshold_80_sensitivity=894.29, threshold_70_sensitivity=886.72),
+    "M10K": ROCThreshold(optimal_threshold=1642.44, threshold_90_sensitivity=1715.75, threshold_80_sensitivity=1715.75, threshold_70_sensitivity=1715.75),
+    "F10K": ROCThreshold(optimal_threshold=1868.89, threshold_90_sensitivity=2048.79, threshold_80_sensitivity=1906.94, threshold_70_sensitivity=1896.54),
 }
 
 
@@ -770,6 +916,36 @@ TRAJECTORY_CENTROIDS: Dict[str, List[TrajectoryCluster]] = {
         TrajectoryCluster(name="Late Developer", description="Late Developer trajectory pattern", pct_off_pb=[21.6947, 16.3422, 10.8147, 6.4363, 4.7693, 4.7638]),
         TrajectoryCluster(name="Consistent Performer", description="Consistent Performer trajectory pattern", pct_off_pb=[13.3509, 11.4304, 13.2382, 15.867, 17.0571, 16.14]),
     ],
+    "M3SC": [
+        TrajectoryCluster(name="Early Peaker", description="Achieves peak performance in early-to-mid 20s, then shows age-related decline.", pct_off_pb=[3.8, 1.9, 1.3, 2.5, 3.8, 3.9]),
+        TrajectoryCluster(name="Standard", description="Steady improvement through mid 20s, with a broad competitive window.", pct_off_pb=[8.5, 5.0, 2.7, 1.7, 1.1, 1.8]),
+        TrajectoryCluster(name="Late Developer", description="Steady improvement through late 20s, peaks in mid-to-late 20s.", pct_off_pb=[9.8, 7.7, 5.8, 4.6, 2.7, 1.7]),
+    ],
+    "F3SC": [
+        TrajectoryCluster(name="Early Peaker", description="Achieves peak performance in early-to-mid 20s, then shows age-related decline.", pct_off_pb=[8.7, 5.1, 2.3, 2.3, 2.0, 2.4]),
+        TrajectoryCluster(name="Standard", description="Steady improvement through mid 20s, with a broad competitive window.", pct_off_pb=[10.8, 15.9, 10.8, 8.9, 6.3, 2.8]),
+        TrajectoryCluster(name="Late Developer", description="Steady improvement through late 20s, peaks in mid-to-late 20s.", pct_off_pb=[12.5, 9.9, 5.4, 3.2, 2.1, 1.5]),
+    ],
+    "M5K": [
+        TrajectoryCluster(name="Early Peaker", description="Achieves peak performance in early-to-mid 20s, then shows age-related decline.", pct_off_pb=[4.3, 2.3, 1.6, 2.1, 2.4, 2.6]),
+        TrajectoryCluster(name="Standard", description="Steady improvement through mid 20s, with a broad competitive window.", pct_off_pb=[6.6, 6.1, 5.0, 2.2, 1.5, 2.2]),
+        TrajectoryCluster(name="Late Developer", description="Steady improvement through late 20s, peaks in mid-to-late 20s.", pct_off_pb=[15.0, 6.6, 4.9, 3.0, 2.5, 1.3]),
+    ],
+    "F5K": [
+        TrajectoryCluster(name="Early Peaker", description="Achieves peak performance in early-to-mid 20s, then shows age-related decline.", pct_off_pb=[5.7, 2.2, 2.0, 1.7, 1.8, 3.2]),
+        TrajectoryCluster(name="Standard", description="Steady improvement through mid 20s, with a broad competitive window.", pct_off_pb=[8.6, 5.8, 4.5, 3.9, 2.1, 2.3]),
+        TrajectoryCluster(name="Late Developer", description="Steady improvement through late 20s, peaks in mid-to-late 20s.", pct_off_pb=[11.5, 11.7, 6.4, 3.2, 2.4, 3.4]),
+    ],
+    "M10K": [
+        TrajectoryCluster(name="Early Peaker", description="Achieves peak performance in early-to-mid 20s, then shows age-related decline.", pct_off_pb=[4.2, 2.5, 0.7, 2.8, 4.7, 2.6]),
+        TrajectoryCluster(name="Standard", description="Steady improvement through mid 20s, with a broad competitive window.", pct_off_pb=[2.9, 1.7, 1.0, 0.8, 1.6, 2.2]),
+        TrajectoryCluster(name="Late Developer", description="Steady improvement through late 20s, peaks in mid-to-late 20s.", pct_off_pb=[5.2, 3.9, 3.4, 3.2, 1.0, 1.1]),
+    ],
+    "F10K": [
+        TrajectoryCluster(name="Early Peaker", description="Achieves peak performance in early-to-mid 20s, then shows age-related decline.", pct_off_pb=[7.1, 3.1, 1.9, 2.6, 1.6, 1.6]),
+        TrajectoryCluster(name="Standard", description="Steady improvement through mid 20s, with a broad competitive window.", pct_off_pb=[8.5, 6.5, 5.5, 2.7, 2.1, 2.1]),
+        TrajectoryCluster(name="Late Developer", description="Steady improvement through late 20s, peaks in mid-to-late 20s.", pct_off_pb=[7.8, 21.4, 10.3, 4.9, 1.9, 0.0]),
+    ],
 }
 
 
@@ -874,6 +1050,12 @@ IMPROVEMENT_NORMS: Dict[str, ImprovementNorm] = {
     "FHT": ImprovementNorm(finalist_median_pct=12.993, finalist_std_pct=9.103, non_finalist_median_pct=13.831, non_finalist_std_pct=14.787),
     "MSP": ImprovementNorm(finalist_median_pct=16.194, finalist_std_pct=9.994, non_finalist_median_pct=10.533, non_finalist_std_pct=9.494),
     "FSP": ImprovementNorm(finalist_median_pct=15.096, finalist_std_pct=8.266, non_finalist_median_pct=9.046, non_finalist_std_pct=9.828),
+    "M3SC": ImprovementNorm(finalist_median_pct=-0.2678, finalist_std_pct=2.3779, non_finalist_median_pct=-0.4789, non_finalist_std_pct=2.3779),
+    "F3SC": ImprovementNorm(finalist_median_pct=-0.8339, finalist_std_pct=3.018, non_finalist_median_pct=-0.7536, non_finalist_std_pct=3.018),
+    "M5K": ImprovementNorm(finalist_median_pct=-0.3222, finalist_std_pct=2.9798, non_finalist_median_pct=-0.3241, non_finalist_std_pct=2.9798),
+    "F5K": ImprovementNorm(finalist_median_pct=-0.3845, finalist_std_pct=3.3219, non_finalist_median_pct=-0.3896, non_finalist_std_pct=3.3219),
+    "M10K": ImprovementNorm(finalist_median_pct=-0.1018, finalist_std_pct=3.1705, non_finalist_median_pct=0.1125, non_finalist_std_pct=3.1705),
+    "F10K": ImprovementNorm(finalist_median_pct=-0.1435, finalist_std_pct=3.6977, non_finalist_median_pct=-0.062, non_finalist_std_pct=3.6977),
 }
 
 
@@ -901,6 +1083,12 @@ MODEL_CALIBRATION: Dict[str, ModelCalibration] = {
     "FHT": ModelCalibration(mean_time=65.618, std_time=11.867),
     "MSP": ModelCalibration(mean_time=18.827, std_time=2.764),
     "FSP": ModelCalibration(mean_time=16.226, std_time=2.932),
+    "M3SC": ModelCalibration(mean_time=496.06, std_time=12.2473),
+    "F3SC": ModelCalibration(mean_time=562.09, std_time=14.0911),
+    "M5K": ModelCalibration(mean_time=793.8587, std_time=36.1474),
+    "F5K": ModelCalibration(mean_time=908.4598, std_time=41.8259),
+    "M10K": ModelCalibration(mean_time=1639.9232, std_time=26.6648),
+    "F10K": ModelCalibration(mean_time=1863.8301, std_time=45.3142),
 }
 
 
@@ -908,7 +1096,7 @@ MODEL_CALIBRATION: Dict[str, ModelCalibration] = {
 # VALID DISCIPLINES AND GENDERS
 # ==============================================================================
 
-VALID_DISCIPLINES = ["100m", "200m", "400m", "100mH", "110mH", "400mH", "Discus Throw", "Javelin Throw", "Hammer Throw", "Shot Put"]
+VALID_DISCIPLINES = ["100m", "200m", "400m", "100mH", "110mH", "400mH", "Discus Throw", "Javelin Throw", "Hammer Throw", "Shot Put", "3000m Steeplechase", "5000m", "10000m"]
 VALID_GENDERS = ["M", "F"]
 
 # ==============================================================================

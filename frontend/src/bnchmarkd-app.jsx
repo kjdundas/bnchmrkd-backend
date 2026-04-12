@@ -2527,13 +2527,6 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <button onClick={() => setCurrentView('about')} className="hidden sm:block text-sm text-slate-500 hover:text-slate-300 transition-colors landing-font font-medium">
                   Methodology
                 </button>
-                <button
-                  onClick={() => setCurrentView('categories')}
-                  className="text-sm font-semibold text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg landing-font"
-                  style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)'}}
-                >
-                  Get Started
-                </button>
                 {user ? (
                   <div className="flex items-center gap-2 sm:gap-3">
                     {profile?.account_type === 'coach' && (
@@ -2558,10 +2551,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 ) : (
                   <button
                     onClick={onSignUp}
-                    className="text-sm font-semibold text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg landing-font"
-                    style={{background: '#22c55e'}}
+                    className="text-sm font-semibold text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg landing-font transition-colors hover:text-orange-400"
+                    style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)'}}
                   >
-                    Sign Up
+                    Log In
                   </button>
                 )}
               </div>
