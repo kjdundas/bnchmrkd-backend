@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { User, Users, ChevronRight, ChevronLeft, MapPin, Calendar, Ruler, Weight, Trophy, Link as LinkIcon } from 'lucide-react'
+import CoachOnboarding from './CoachOnboarding'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -256,7 +257,12 @@ export default function Onboarding({ onSkip }) {
     )
   }
 
-  // Step 2: Profile Details
+  // Coach flow → full Strava-style onboarding
+  if (accountType === 'coach') {
+    return <CoachOnboarding onComplete={() => {}} />
+  }
+
+  // Step 2: Athlete Profile Details
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-12">
       <div className="max-w-lg w-full">
