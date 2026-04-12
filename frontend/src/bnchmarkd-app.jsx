@@ -15,14 +15,32 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
 // ── Data stats constants (update when dataset changes) ──
-const STATS = { athletes: '3,442', records: '496K+', events: '18', games: 'Sydney 2000 – Paris 2024' };
+const STATS = { athletes: '3,442', records: '496K+', events: '24', games: 'Sydney 2000 – Paris 2024' };
 
 export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
   const THROWS_DISCIPLINES = ['Discus Throw', 'Javelin Throw', 'Hammer Throw', 'Shot Put'];
   const THROWS_CODES = ['MDT', 'FDT', 'MJT', 'FJT', 'MHT', 'FHT', 'MSP', 'FSP'];
   const isThrowsDiscipline = (disc) => THROWS_DISCIPLINES.includes(disc) || THROWS_CODES.includes(disc);
+
+  // Distance discipline detection helpers
+  const DISTANCE_DISCIPLINES = ['3000m Steeplechase', '5000m', '10000m'];
+  const DISTANCE_CODES = ['M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K'];
+  const isDistanceDiscipline = (disc) => DISTANCE_DISCIPLINES.includes(disc) || DISTANCE_CODES.includes(disc);
+
   const getUnitLabel = (disc) => isThrowsDiscipline(disc) ? 'Distance (m)' : 'Time (s)';
+
+  // Format seconds to mm:ss.ff for distance events, or ss.ff for sprint/hurdle events
+  const formatTime = (seconds, disc) => {
+    if (seconds == null || isNaN(seconds)) return '—';
+    if (isThrowsDiscipline(disc)) return `${Number(seconds).toFixed(2)}m`;
+    if (seconds >= 60) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
+    }
+    return seconds.toFixed(2);
+  };
 
   // Implement weight specifications per WA age group rules
   const IMPLEMENT_WEIGHTS = {
@@ -55,8 +73,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     return 'landing';
   });
   const [activeTab, setActiveTab] = useState('manual');
-  const [disciplineCategory, setDisciplineCategory] = useState('sprints'); // 'sprints' | 'throws'
+  const [disciplineCategory, setDisciplineCategory] = useState('sprints'); // 'sprints' | 'throws' | 'distance'
   const isThrowsMode = disciplineCategory === 'throws';
+  const isDistanceMode = disciplineCategory === 'distance';
   const [athleteData, setAthleteData] = useState({
     name: '',
     dateOfBirth: '',
@@ -955,7 +974,211 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { name: 'Late Developer', pct_off_pb: [7.2, 4.5, 2.8, 1.5, 2.2, 3.8], peakAge: 30 },
         { name: 'Consistent Performer', pct_off_pb: [5.0, 3.0, 1.8, 1.2, 2.0, 3.2], peakAge: 27 }
       ]
+    },
+    // ── 3000m STEEPLECHASE ──────────────────────────────────────────
+    M3SC: {
+      percentiles: {
+        17: { p10: 2.46, p25: 4.59, p50: 9.28, p75: 11.47, p90: 13.95 },
+        18: { p10: 1.50, p25: 4.48, p50: 7.75, p75: 11.20, p90: 12.32 },
+        19: { p10: 1.25, p25: 3.33, p50: 5.86, p75: 8.28, p90: 10.07 },
+        20: { p10: 0.99, p25: 2.29, p50: 4.48, p75: 6.60, p90: 8.44 },
+        21: { p10: 0.26, p25: 1.59, p50: 3.35, p75: 5.17, p90: 6.86 },
+        22: { p10: 0.14, p25: 1.17, p50: 2.75, p75: 4.56, p90: 6.13 },
+        23: { p10: 0.00, p25: 0.97, p50: 1.92, p75: 3.54, p90: 5.31 },
+        24: { p10: 0.00, p25: 1.06, p50: 2.04, p75: 3.57, p90: 5.66 },
+        25: { p10: 0.23, p25: 0.73, p50: 1.60, p75: 2.87, p90: 4.83 },
+        26: { p10: 0.00, p25: 0.35, p50: 1.33, p75: 2.84, p90: 4.85 },
+        27: { p10: 0.00, p25: 0.46, p50: 1.49, p75: 2.65, p90: 4.98 },
+        28: { p10: 0.00, p25: 0.49, p50: 1.56, p75: 2.54, p90: 4.91 },
+        29: { p10: 0.12, p25: 0.77, p50: 1.69, p75: 2.56, p90: 4.70 },
+        30: { p10: 0.09, p25: 0.76, p50: 1.88, p75: 3.20, p90: 6.20 },
+        31: { p10: 0.00, p25: 0.62, p50: 1.96, p75: 3.40, p90: 5.36 },
+        32: { p10: 0.43, p25: 1.03, p50: 1.76, p75: 3.62, p90: 6.57 },
+        33: { p10: 0.24, p25: 1.25, p50: 2.47, p75: 4.60, p90: 8.10 },
+        34: { p10: 0.64, p25: 1.67, p50: 3.36, p75: 5.25, p90: 7.31 },
+        35: { p10: 1.13, p25: 1.47, p50: 2.88, p75: 5.18, p90: 6.45 }
+      },
+      rocThresholds: { optimal: 496.91, s90: 496.91, s80: 494.06, s70: 492.08 },
+      calibration: { mean: 496.06, std: 12.25 },
+      improvement: { finalist_median: -0.2678, finalist_std: 2.3779, non_finalist_median: -0.4789, non_finalist_std: 2.3779 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [3.8, 1.9, 1.3, 2.5, 3.8, 3.9], peakAge: 24 },
+        { name: 'Standard', pct_off_pb: [8.5, 5.0, 2.7, 1.7, 1.1, 1.8], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [9.8, 7.7, 5.8, 4.6, 2.7, 1.7], peakAge: 29 }
+      ]
+    },
+    F3SC: {
+      percentiles: {
+        17: { p10: 4.12, p25: 7.33, p50: 11.20, p75: 14.99, p90: 16.15 },
+        18: { p10: 4.69, p25: 5.57, p50: 8.19, p75: 12.90, p90: 18.13 },
+        19: { p10: 3.47, p25: 4.88, p50: 7.43, p75: 11.27, p90: 15.43 },
+        20: { p10: 0.92, p25: 3.73, p50: 6.74, p75: 10.26, p90: 14.65 },
+        21: { p10: 0.33, p25: 1.89, p50: 5.23, p75: 9.25, p90: 12.87 },
+        22: { p10: 0.05, p25: 1.58, p50: 3.93, p75: 7.35, p90: 10.92 },
+        23: { p10: 0.00, p25: 0.89, p50: 2.99, p75: 5.92, p90: 8.88 },
+        24: { p10: 0.00, p25: 1.42, p50: 2.86, p75: 5.19, p90: 7.64 },
+        25: { p10: 0.00, p25: 0.89, p50: 2.42, p75: 4.20, p90: 6.59 },
+        26: { p10: 0.02, p25: 0.71, p50: 1.84, p75: 3.89, p90: 6.43 },
+        27: { p10: 0.00, p25: 0.51, p50: 1.76, p75: 3.60, p90: 6.07 },
+        28: { p10: 0.00, p25: 0.64, p50: 1.85, p75: 3.71, p90: 6.53 },
+        29: { p10: 0.00, p25: 1.12, p50: 2.14, p75: 3.66, p90: 6.05 },
+        30: { p10: 0.00, p25: 0.75, p50: 2.20, p75: 4.67, p90: 7.22 },
+        31: { p10: 0.00, p25: 0.89, p50: 2.25, p75: 4.04, p90: 6.45 },
+        32: { p10: 0.00, p25: 1.03, p50: 2.55, p75: 4.55, p90: 6.94 },
+        33: { p10: 0.00, p25: 1.19, p50: 2.11, p75: 5.30, p90: 6.25 },
+        34: { p10: 0.00, p25: 0.31, p50: 2.07, p75: 4.78, p90: 5.94 },
+        35: { p10: 0.47, p25: 1.85, p50: 2.57, p75: 5.92, p90: 7.94 }
+      },
+      rocThresholds: { optimal: 566.32, s90: 566.32, s80: 559.27, s70: 556.89 },
+      calibration: { mean: 562.09, std: 14.09 },
+      improvement: { finalist_median: -0.8339, finalist_std: 3.018, non_finalist_median: -0.7536, non_finalist_std: 3.018 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [8.7, 5.1, 2.3, 2.3, 2.0, 2.4], peakAge: 24 },
+        { name: 'Standard', pct_off_pb: [10.8, 15.9, 10.8, 8.9, 6.3, 2.8], peakAge: 22 },
+        { name: 'Late Developer', pct_off_pb: [12.5, 9.9, 5.4, 3.2, 2.1, 1.5], peakAge: 29 }
+      ]
+    },
+    // ── 5000m ────────────────────────────────────────────────────────
+    M5K: {
+      percentiles: {
+        17: { p10: 1.10, p25: 2.66, p50: 4.47, p75: 8.29, p90: 14.05 },
+        18: { p10: 0.61, p25: 1.49, p50: 4.84, p75: 7.73, p90: 10.72 },
+        19: { p10: 0.41, p25: 1.54, p50: 3.53, p75: 6.43, p90: 8.52 },
+        20: { p10: 0.00, p25: 1.38, p50: 3.31, p75: 5.91, p90: 8.32 },
+        21: { p10: 0.00, p25: 1.23, p50: 3.18, p75: 5.43, p90: 8.37 },
+        22: { p10: 0.05, p25: 1.01, p50: 2.80, p75: 4.98, p90: 6.91 },
+        23: { p10: 0.00, p25: 0.98, p50: 1.99, p75: 3.52, p90: 6.12 },
+        24: { p10: 0.00, p25: 0.95, p50: 2.09, p75: 3.16, p90: 5.30 },
+        25: { p10: 0.00, p25: 0.52, p50: 1.41, p75: 2.54, p90: 4.45 },
+        26: { p10: 0.00, p25: 0.60, p50: 1.70, p75: 3.05, p90: 5.07 },
+        27: { p10: 0.00, p25: 0.65, p50: 1.93, p75: 3.04, p90: 4.59 },
+        28: { p10: 0.00, p25: 0.29, p50: 1.93, p75: 3.55, p90: 5.46 },
+        29: { p10: 0.00, p25: 0.57, p50: 1.98, p75: 3.93, p90: 5.83 },
+        30: { p10: 0.00, p25: 0.42, p50: 1.93, p75: 3.06, p90: 4.12 },
+        31: { p10: 0.00, p25: 0.80, p50: 2.28, p75: 3.81, p90: 6.18 },
+        32: { p10: 0.00, p25: 1.22, p50: 2.72, p75: 5.55, p90: 7.30 },
+        33: { p10: 0.46, p25: 1.58, p50: 3.41, p75: 4.78, p90: 7.13 },
+        34: { p10: 0.17, p25: 1.60, p50: 2.86, p75: 5.57, p90: 6.88 },
+        35: { p10: 0.41, p25: 0.97, p50: 3.60, p75: 4.10, p90: 8.23 },
+        36: { p10: 0.59, p25: 1.62, p50: 2.14, p75: 3.81, p90: 5.70 },
+        37: { p10: 0.74, p25: 2.65, p50: 5.25, p75: 6.26, p90: 6.92 }
+      },
+      rocThresholds: { optimal: 783.87, s90: 795.19, s80: 789.17, s70: 783.53 },
+      calibration: { mean: 793.86, std: 36.15 },
+      improvement: { finalist_median: -0.3222, finalist_std: 2.9798, non_finalist_median: -0.3241, non_finalist_std: 2.9798 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [4.3, 2.3, 1.6, 2.1, 2.4, 2.6], peakAge: 24 },
+        { name: 'Standard', pct_off_pb: [6.6, 6.1, 5.0, 2.2, 1.5, 2.2], peakAge: 22 },
+        { name: 'Late Developer', pct_off_pb: [15.0, 6.6, 4.9, 3.0, 2.5, 1.3], peakAge: 29 }
+      ]
+    },
+    F5K: {
+      percentiles: {
+        17: { p10: 1.35, p25: 3.32, p50: 5.90, p75: 9.55, p90: 13.67 },
+        18: { p10: 1.40, p25: 2.82, p50: 6.59, p75: 10.23, p90: 13.90 },
+        19: { p10: 0.99, p25: 2.57, p50: 5.66, p75: 8.19, p90: 11.10 },
+        20: { p10: 0.14, p25: 1.59, p50: 4.88, p75: 8.47, p90: 11.76 },
+        21: { p10: 0.14, p25: 1.67, p50: 4.14, p75: 6.05, p90: 8.89 },
+        22: { p10: 0.00, p25: 1.19, p50: 2.88, p75: 6.05, p90: 9.06 },
+        23: { p10: 0.00, p25: 0.63, p50: 2.55, p75: 4.85, p90: 7.52 },
+        24: { p10: 0.00, p25: 0.85, p50: 2.48, p75: 5.06, p90: 7.29 },
+        25: { p10: 0.00, p25: 0.94, p50: 2.31, p75: 3.62, p90: 5.20 },
+        26: { p10: 0.00, p25: 0.75, p50: 2.04, p75: 3.25, p90: 5.20 },
+        27: { p10: 0.00, p25: 0.95, p50: 2.30, p75: 3.83, p90: 5.79 },
+        28: { p10: 0.02, p25: 0.70, p50: 1.72, p75: 3.74, p90: 5.78 },
+        29: { p10: 0.00, p25: 0.23, p50: 1.81, p75: 3.31, p90: 6.19 },
+        30: { p10: 0.00, p25: 0.08, p50: 1.55, p75: 3.28, p90: 6.47 },
+        31: { p10: 0.12, p25: 0.92, p50: 1.88, p75: 3.98, p90: 5.84 },
+        32: { p10: 0.00, p25: 0.90, p50: 2.45, p75: 5.71, p90: 8.80 },
+        33: { p10: 0.00, p25: 1.00, p50: 2.82, p75: 5.46, p90: 7.65 },
+        34: { p10: 0.17, p25: 1.39, p50: 2.29, p75: 4.35, p90: 6.24 },
+        35: { p10: 1.07, p25: 2.42, p50: 3.90, p75: 6.86, p90: 8.19 },
+        36: { p10: 1.85, p25: 2.42, p50: 4.96, p75: 8.47, p90: 9.61 },
+        37: { p10: 1.76, p25: 2.21, p50: 5.16, p75: 8.99, p90: 11.71 },
+        38: { p10: 1.60, p25: 3.47, p50: 5.56, p75: 9.09, p90: 11.85 },
+        39: { p10: 0.51, p25: 1.93, p50: 6.24, p75: 11.07, p90: 16.58 }
+      },
+      rocThresholds: { optimal: 894.29, s90: 905.26, s80: 894.29, s70: 886.72 },
+      calibration: { mean: 908.46, std: 41.83 },
+      improvement: { finalist_median: -0.3845, finalist_std: 3.3219, non_finalist_median: -0.3896, non_finalist_std: 3.3219 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [5.7, 2.2, 2.0, 1.7, 1.8, 3.2], peakAge: 24 },
+        { name: 'Standard', pct_off_pb: [8.6, 5.8, 4.5, 3.9, 2.1, 2.3], peakAge: 23 },
+        { name: 'Late Developer', pct_off_pb: [11.5, 11.7, 6.4, 3.2, 2.4, 3.4], peakAge: 22 }
+      ]
+    },
+    // ── 10000m ───────────────────────────────────────────────────────
+    M10K: {
+      percentiles: {
+        17: { p10: 1.04, p25: 2.67, p50: 4.11, p75: 6.66, p90: 6.70 },
+        18: { p10: 0.85, p25: 1.63, p50: 2.73, p75: 5.07, p90: 8.96 },
+        19: { p10: 0.13, p25: 2.06, p50: 3.76, p75: 6.14, p90: 9.66 },
+        20: { p10: 0.00, p25: 0.81, p50: 2.03, p75: 4.35, p90: 7.14 },
+        21: { p10: 0.00, p25: 0.73, p50: 1.98, p75: 4.74, p90: 6.18 },
+        22: { p10: 0.00, p25: 0.28, p50: 1.36, p75: 3.04, p90: 5.42 },
+        23: { p10: 0.03, p25: 0.95, p50: 1.89, p75: 3.01, p90: 6.22 },
+        24: { p10: 0.00, p25: 0.23, p50: 1.57, p75: 3.19, p90: 4.61 },
+        25: { p10: 0.00, p25: 0.35, p50: 1.30, p75: 2.53, p90: 4.98 },
+        26: { p10: 0.00, p25: 0.31, p50: 1.58, p75: 2.66, p90: 5.07 },
+        27: { p10: 0.00, p25: 0.57, p50: 1.29, p75: 2.64, p90: 3.53 },
+        28: { p10: 0.00, p25: 0.71, p50: 1.31, p75: 3.23, p90: 6.21 },
+        29: { p10: 0.00, p25: 0.82, p50: 1.52, p75: 3.56, p90: 6.86 },
+        30: { p10: 0.00, p25: 0.41, p50: 1.53, p75: 2.91, p90: 3.55 },
+        31: { p10: 0.00, p25: 0.23, p50: 1.97, p75: 4.55, p90: 6.38 },
+        32: { p10: 0.25, p25: 0.71, p50: 2.16, p75: 4.19, p90: 6.95 },
+        33: { p10: 0.69, p25: 1.49, p50: 2.67, p75: 4.87, p90: 6.99 },
+        34: { p10: 1.00, p25: 1.71, p50: 3.17, p75: 4.78, p90: 6.06 },
+        35: { p10: 1.87, p25: 2.23, p50: 3.59, p75: 4.68, p90: 7.91 },
+        36: { p10: 2.57, p25: 3.19, p50: 4.57, p75: 4.77, p90: 9.31 },
+        38: { p10: 2.90, p25: 3.32, p50: 3.76, p75: 6.35, p90: 6.97 }
+      },
+      rocThresholds: { optimal: 1642.44, s90: 1715.75, s80: 1715.75, s70: 1715.75 },
+      calibration: { mean: 1639.92, std: 26.66 },
+      improvement: { finalist_median: -0.1018, finalist_std: 3.1705, non_finalist_median: 0.1125, non_finalist_std: 3.1705 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [4.2, 2.5, 0.7, 2.8, 4.7, 2.6], peakAge: 24 },
+        { name: 'Standard', pct_off_pb: [2.9, 1.7, 1.0, 0.8, 1.6, 2.2], peakAge: 26 },
+        { name: 'Late Developer', pct_off_pb: [5.2, 3.9, 3.4, 3.2, 1.0, 1.1], peakAge: 26 }
+      ]
+    },
+    F10K: {
+      percentiles: {
+        17: { p10: 1.11, p25: 4.19, p50: 9.43, p75: 15.31, p90: 19.02 },
+        18: { p10: 0.52, p25: 1.75, p50: 6.25, p75: 7.95, p90: 10.60 },
+        19: { p10: 1.07, p25: 2.29, p50: 5.64, p75: 8.58, p90: 13.26 },
+        20: { p10: 0.00, p25: 1.54, p50: 3.61, p75: 7.32, p90: 11.45 },
+        21: { p10: 0.00, p25: 0.97, p50: 4.02, p75: 6.73, p90: 7.89 },
+        22: { p10: 0.73, p25: 1.45, p50: 3.72, p75: 6.08, p90: 7.80 },
+        23: { p10: 0.00, p25: 0.62, p50: 2.41, p75: 4.09, p90: 7.27 },
+        24: { p10: 0.00, p25: 0.27, p50: 2.06, p75: 4.47, p90: 6.76 },
+        25: { p10: 0.00, p25: 0.96, p50: 2.31, p75: 4.80, p90: 6.73 },
+        26: { p10: 0.00, p25: 0.60, p50: 1.72, p75: 3.91, p90: 5.67 },
+        27: { p10: 0.00, p25: 0.27, p50: 2.13, p75: 3.80, p90: 6.26 },
+        28: { p10: 0.00, p25: 0.62, p50: 1.87, p75: 4.08, p90: 6.59 },
+        29: { p10: 0.00, p25: 0.23, p50: 1.69, p75: 3.74, p90: 5.72 },
+        30: { p10: 0.00, p25: 0.60, p50: 1.60, p75: 4.28, p90: 7.09 },
+        31: { p10: 0.00, p25: 0.28, p50: 1.97, p75: 3.80, p90: 5.76 },
+        32: { p10: 0.00, p25: 0.99, p50: 2.65, p75: 3.94, p90: 5.31 },
+        33: { p10: 0.00, p25: 0.98, p50: 2.30, p75: 4.80, p90: 6.42 },
+        34: { p10: 0.00, p25: 1.28, p50: 3.33, p75: 5.66, p90: 7.83 },
+        35: { p10: 0.25, p25: 0.78, p50: 3.81, p75: 5.79, p90: 9.34 },
+        36: { p10: 0.58, p25: 2.15, p50: 3.68, p75: 6.25, p90: 8.09 },
+        37: { p10: 1.61, p25: 2.54, p50: 4.48, p75: 5.93, p90: 6.27 },
+        38: { p10: 0.00, p25: 1.05, p50: 3.40, p75: 6.56, p90: 10.78 },
+        39: { p10: 2.23, p25: 5.03, p50: 6.95, p75: 10.14, p90: 11.09 },
+        40: { p10: 4.02, p25: 4.20, p50: 5.92, p75: 9.08, p90: 13.53 },
+        41: { p10: 3.35, p25: 5.16, p50: 7.75, p75: 7.99, p90: 9.37 }
+      },
+      rocThresholds: { optimal: 1868.89, s90: 2048.79, s80: 1906.94, s70: 1896.54 },
+      calibration: { mean: 1863.83, std: 45.31 },
+      improvement: { finalist_median: -0.1435, finalist_std: 3.6977, non_finalist_median: -0.062, non_finalist_std: 3.6977 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [7.1, 3.1, 1.9, 2.6, 1.6, 1.6], peakAge: 24 },
+        { name: 'Standard', pct_off_pb: [8.5, 6.5, 5.5, 2.7, 2.1, 2.1], peakAge: 24 },
+        { name: 'Late Developer', pct_off_pb: [7.8, 21.4, 10.3, 4.9, 1.9, 0.0], peakAge: 22 }
+      ]
     }
+
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1146,6 +1369,67 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 74.50, bronze: 72.00, p8: 68.50, semi: null },
       ],
     },
+    // ── DISTANCE: 3000m STEEPLECHASE ────────────────────────────────
+    M3SC: {
+      wr: { mark: 472.11, holder: 'Lamecha Girma', year: 2023 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 495.00, gold: 486.05, bronze: 486.47, p8: 491.72, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 495.00, gold: 513.88, bronze: 514.56, p8: 519.00, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 500.92, bronze: 508.00, p8: 530.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 495.28, bronze: 504.08, p8: 515.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 496.41, bronze: 501.00, p8: 512.00, semi: null },
+      ],
+    },
+    F3SC: {
+      wr: { mark: 524.32, holder: 'Beatrice Chepkoech', year: 2018 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 563.00, gold: 532.76, bronze: 535.00, p8: 548.00, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 558.00, gold: 531.59, bronze: 538.86, p8: 550.00, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 550.46, bronze: 552.46, p8: 575.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 552.71, bronze: 560.00, p8: 580.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 538.15, bronze: 555.00, p8: 570.00, semi: null },
+      ],
+    },
+    // ── DISTANCE: 5000m ─────────────────────────────────────────────
+    M5K: {
+      wr: { mark: 755.36, holder: 'Joshua Cheptegei', year: 2020 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 785.00, gold: 793.66, bronze: 795.13, p8: 798.10, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 781.00, gold: 778.38, bronze: 779.33, p8: 780.79, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 804.77, bronze: 805.06, p8: 825.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 790.00, bronze: 800.00, p8: 830.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 800.59, bronze: 801.00, p8: 815.00, semi: null },
+      ],
+    },
+    F5K: {
+      wr: { mark: 840.21, holder: 'Gudaf Tsegay', year: 2023 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 900.00, gold: 868.56, bronze: 871.64, p8: 885.21, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 890.00, gold: 894.36, bronze: 895.42, p8: 901.25, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 920.00, bronze: 935.00, p8: 965.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 879.71, bronze: 895.00, p8: 920.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 933.96, bronze: 945.00, p8: 965.00, semi: null },
+      ],
+    },
+    // ── DISTANCE: 10000m ────────────────────────────────────────────
+    M10K: {
+      wr: { mark: 1571.00, holder: 'Joshua Cheptegei', year: 2020 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 1620.00, gold: 1603.14, bronze: 1603.46, p8: 1610.00, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 1620.00, gold: 1735.77, bronze: 1736.02, p8: 1750.00, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 1695.00, bronze: 1725.00, p8: 1770.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 1680.00, bronze: 1700.00, p8: 1730.00, semi: null },
+      ],
+    },
+    F10K: {
+      wr: { mark: 1734.14, holder: 'Beatrice Chebet', year: 2024 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 1840.00, gold: 1843.25, bronze: 1844.12, p8: 1849.98, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 1820.00, gold: 1837.61, bronze: 1839.65, p8: 1881.67, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 1890.00, bronze: 1920.00, p8: 1980.00, semi: null },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 1877.82, bronze: 1905.00, p8: 1950.00, semi: null },
+      ],
+    },
   };
 
   // Helper: flatten competition standards into legacy format for backward compat
@@ -1207,6 +1491,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     if (discipline === 'Javelin Throw') return `${genderCode}JT`;
     if (discipline === 'Hammer Throw') return `${genderCode}HT`;
     if (discipline === 'Shot Put') return `${genderCode}SP`;
+    if (discipline === '3000m Steeplechase') return `${genderCode}3SC`;
+    if (discipline === '5000m') return `${genderCode}5K`;
+    if (discipline === '10000m') return `${genderCode}10K`;
     throw new Error(`Unknown discipline: ${discipline}`);
   };
 
@@ -1232,6 +1519,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     FHT: { gold: 76.0, silver: 74.2, bronze: 72.5, mqt: 72.5, asianGold: 69.5, u20Gold: 66.0 },
     MSP: { gold: 22.0, silver: 21.5, bronze: 21.1, mqt: 21.1, asianGold: 20.2, u20Gold: 19.0 },
     FSP: { gold: 20.0, silver: 19.3, bronze: 18.8, mqt: 18.8, asianGold: 17.5, u20Gold: 16.5 },
+    // Distance events (times in seconds — averages from 2016/2020/2024 Olympic cycles)
+    M3SC: { gold: 490.0, silver: 492.0, bronze: 494.0, mqt: 497.0, asianGold: 505.0, u20Gold: 500.0 },
+    F3SC: { gold: 536.0, silver: 540.0, bronze: 544.0, mqt: 560.0, asianGold: 555.0, u20Gold: 558.0 },
+    M5K: { gold: 782.0, silver: 785.0, bronze: 788.0, mqt: 793.0, asianGold: 808.0, u20Gold: 795.0 },
+    F5K: { gold: 870.0, silver: 876.0, bronze: 882.0, mqt: 900.0, asianGold: 925.0, u20Gold: 885.0 },
+    M10K: { gold: 1610.0, silver: 1615.0, bronze: 1620.0, mqt: 1640.0, asianGold: 1700.0, u20Gold: null },
+    F10K: { gold: 1845.0, silver: 1855.0, bronze: 1865.0, mqt: 1880.0, asianGold: 1900.0, u20Gold: null },
   };
 
   const sigmoid = (x) => 1 / (1 + Math.exp(-x));
@@ -2418,19 +2712,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     if (!active || !payload || payload.length === 0 || !analysisResults) return null;
     const data = payload[0]?.payload;
     if (!data) return null;
-    const unit = isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's';
+    const disc = analysisResults.discipline;
+    const fmtT = (v) => formatTime(v, disc);
 
     return (
       <div className="bg-slate-900/95 backdrop-blur-md border border-slate-600 rounded-lg shadow-xl shadow-black/30 p-3 text-sm">
         <p className="font-bold text-white mb-1">Age {label}</p>
         {data.actualTime && (
-          <p className="text-orange-400">Actual: {data.actualTime.toFixed(2)}{unit}</p>
+          <p className="text-orange-400">Actual: {fmtT(data.actualTime)}</p>
         )}
         {data.projectedTime && !data.actualTime && (
           <>
-            <p className="text-blue-400">Projected: {data.projectedTime.toFixed(2)}{unit}</p>
-            <p className="text-slate-400 text-xs">50% CI: {data.ci50Lower?.toFixed(2)}{unit} – {data.ci50Upper?.toFixed(2)}{unit}</p>
-            <p className="text-slate-400 text-xs">90% CI: {data.ci90Lower?.toFixed(2)}{unit} – {data.ci90Upper?.toFixed(2)}{unit}</p>
+            <p className="text-blue-400">Projected: {fmtT(data.projectedTime)}</p>
+            <p className="text-slate-400 text-xs">50% CI: {fmtT(data.ci50Lower)} – {fmtT(data.ci50Upper)}</p>
+            <p className="text-slate-400 text-xs">90% CI: {fmtT(data.ci90Lower)} – {fmtT(data.ci90Upper)}</p>
           </>
         )}
       </div>
@@ -3602,22 +3897,30 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </span>
               </div>
 
-              {/* ── LONG DISTANCE (COMPILING DATA) ── */}
-              <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(244,63,94,0.08)'}}>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.12)'}}>
+              {/* ── LONG DISTANCE (ACTIVE) ── */}
+              <button
+                onClick={() => { setDisciplineCategory('distance'); setAthleteData(d => ({...d, discipline: '3000m Steeplechase'})); setQuickAnalysisData(d => ({...d, discipline: '3000m Steeplechase'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
+                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(244,63,94,0.15)'}}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     <path d="M6 40 Q 16 20, 24 28 Q 32 36, 42 10" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeDasharray="5 4">
                       <animate attributeName="stroke-dashoffset" values="0;-18" dur="2.5s" repeatCount="indefinite" />
                     </path>
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-300 mb-1 landing-font">Long Distance</h3>
-                <p className="text-sm text-slate-500 mb-3 landing-font">3000m, 5000m, 10,000m, Steeplechase</p>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold mono-font flex items-center gap-1.5 w-fit" style={{background: 'rgba(244,63,94,0.1)', color: '#fb7185'}}>
-                  <svg className="w-3 h-3 animate-spin" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 12" /></svg>
-                  Compiling Data
-                </span>
-              </div>
+                <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-rose-400 transition-colors">Long Distance</h3>
+                <p className="text-sm text-slate-500 mb-3 landing-font">3000m SC, 5000m, 10,000m</p>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(244,63,94,0.15)', color: '#fb7185'}}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
+                    Live
+                  </span>
+                  <span className="text-xs text-slate-500 mono-font">6 events</span>
+                </div>
+                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-rose-400 transition-colors" />
+              </button>
 
               {/* ── COMBINED EVENTS (COMPILING DATA) ── */}
               <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(245,158,11,0.08)'}}>
@@ -3832,7 +4135,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           {athleteProfile.personal_bests.map((pb, i) => (
                             <div key={i} className="rounded-lg p-3 text-center" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)'}}>
                               <div className="text-xs text-slate-500 uppercase tracking-wider mono-font">{pb.discipline}</div>
-                              <div className="text-xl font-bold mt-1 mono-font" style={{color: '#f97316'}}>{typeof pb.time === 'number' ? pb.time.toFixed(2) : pb.time}{isThrowsDiscipline(pb.discipline || athleteProfile.primary_discipline) ? 'm' : 's'}</div>
+                              <div className="text-xl font-bold mt-1 mono-font" style={{color: '#f97316'}}>{typeof pb.time === 'number' ? formatTime(pb.time, pb.discipline || athleteProfile.primary_discipline) : pb.time}</div>
                               {pb.year && <div className="text-xs text-slate-500 mt-1 mono-font">{pb.year}</div>}
                             </div>
                           ))}
@@ -3855,7 +4158,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                   <span className="text-slate-400">{r.discipline}</span>
                                 </div>
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                  {r.time && <span className="text-orange-400 font-mono">{typeof r.time === 'number' ? r.time.toFixed(2) : r.time}{isThrowsDiscipline(r.discipline || athleteProfile.primary_discipline) ? 'm' : 's'}</span>}
+                                  {r.time && <span className="text-orange-400 font-mono">{typeof r.time === 'number' ? formatTime(r.time, r.discipline || athleteProfile.primary_discipline) : r.time}</span>}
                                   {r.position && <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                                     r.position <= 3 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'
                                   }`}>{r.position}{r.position === 1 ? 'st' : r.position === 2 ? 'nd' : r.position === 3 ? 'rd' : 'th'}</span>}
@@ -3900,7 +4203,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             />
                             <Tooltip
                               contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }}
-                              formatter={(value, name) => [typeof value === 'number' ? value.toFixed(2) + (isThrowsDiscipline(athleteTrajectory.discipline) ? 'm' : 's') : value, name === 'bestTime' ? 'Season Best' : name]}
+                              formatter={(value, name) => [typeof value === 'number' ? formatTime(value, athleteTrajectory.discipline) : value, name === 'bestTime' ? 'Season Best' : name]}
                               labelFormatter={(label) => `Age ${label}`}
                             />
                             <Legend wrapperStyle={{ color: '#94a3b8' }} />
@@ -3967,7 +4270,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                 <tr key={i} className="hover:bg-white/[0.02]" style={{borderBottom: '1px solid rgba(255,255,255,0.03)'}}>
                                   <td className="py-2 px-3 text-white font-medium landing-font">{s.age || '–'}</td>
                                   <td className="py-2 px-3 text-slate-500 landing-font">{s.year || '–'}</td>
-                                  <td className="py-2 px-3 text-right mono-font" style={{color: '#f97316'}}>{s.best_time.toFixed(2)}</td>
+                                  <td className="py-2 px-3 text-right mono-font" style={{color: '#f97316'}}>{formatTime(s.best_time, athleteTrajectory.discipline)}</td>
                                   <td className="py-2 px-3 text-right text-slate-400 mono-font">{s.pct_off_pb != null ? s.pct_off_pb.toFixed(1) + '%' : '–'}</td>
                                   <td className="py-2 px-3 text-right text-slate-500 mono-font">{s.n_races || '–'}</td>
                                 </tr>
@@ -4103,6 +4406,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <option value="Hammer Throw">Hammer Throw</option>
                           <option value="Shot Put">Shot Put</option>
                         </>
+                      ) : isDistanceMode ? (
+                        <optgroup label="Distance">
+                          <option value="3000m Steeplechase">3000m Steeplechase</option>
+                          <option value="5000m">5000m</option>
+                          <option value="10000m">10000m</option>
+                        </optgroup>
                       ) : (
                         <>
                           <optgroup label="Sprints">
@@ -4233,6 +4542,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <optgroup label="Throws">
                         <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
                       </optgroup>
+                    ) : isDistanceMode ? (
+                      <optgroup label="Distance">
+                        <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
+                      </optgroup>
                     ) : (
                       <>
                         <optgroup label="Sprints">
@@ -4275,6 +4588,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       {isThrowsMode ? (
                         <optgroup label="Throws">
                           <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
+                        </optgroup>
+                      ) : isDistanceMode ? (
+                        <optgroup label="Distance">
+                          <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
                         </optgroup>
                       ) : (
                         <>
@@ -4493,7 +4810,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               const fmtMark = (v) => {
                 if (v === null || v === undefined) return '—';
-                return isThrows ? v.toFixed(2) + 'm' : v.toFixed(2) + 's';
+                return formatTime(v, analysisResults.discipline);
               };
 
               return (
@@ -4859,9 +5176,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <div className={`rounded-lg p-2 text-center text-xs font-medium ${
                         Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-300' : 'bg-amber-900/30 text-amber-300'
                       }`}>
-                        Age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                        Age {athlete.closestAge}: <span className="font-bold">{formatTime(athlete.timeAtSimilarAge, analysisResults.discipline)}</span>
                         {' '}({Math.abs(athlete.timeDiff) < 0.05 ? 'identical' :
-                          `${Math.abs(athlete.timeDiff).toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} ${isThrowsDiscipline(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
+                          `${Math.abs(athlete.timeDiff).toFixed(2)}s ${isThrowsDiscipline(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
                       </div>
                     </div>
                   ))}
@@ -4904,7 +5221,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               <td key={futAge} className={`py-2 px-2 text-center text-xs ${
                                 parseInt(futAge) === analysisResults.age ? 'font-bold text-orange-300' : ''
                               } ${meetsFinalist ? 'text-green-400 font-bold' : meetsMQT ? 'text-blue-400 font-semibold' : 'text-slate-400'}`}>
-                                {time.toFixed(2)}
+                                {formatTime(time, analysisResults.discipline)}
                               </td>
                             );
                           })}
@@ -5127,7 +5444,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const wrInfo = (COMPETITION_STANDARDS[analysisResults.eventCode] || {}).wr || null;
 
               // ── Form snapshot: PB / SB / Last race ──
-              const fmt = (v) => `${v.toFixed(2)}${unit}`;
+              const disc = analysisResults.discipline;
+              const fmt = (v) => formatTime(v, disc);
               const better = (a, b) => isThrows ? a > b : a < b;
               const sortedByDate = [...races].filter(r => r.date).sort((a, b) => new Date(b.date) - new Date(a.date));
               const lastRace = sortedByDate[0] || null;
@@ -5202,7 +5520,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const gapText = (() => {
                 if (!nextTarget) return `Cleared every standard at ${activeComp.label}.`;
                 const gap = isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value);
-                return `${gap.toFixed(2)}${unit} away from ${nextTarget.label} at ${activeComp.label}`;
+                return `${formatTime(gap, analysisResults.discipline)} away from ${nextTarget.label} at ${activeComp.label}`;
               })();
 
               return (
@@ -5287,7 +5605,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <p className={`text-sm sm:text-base landing-font ${nextTarget ? 'text-slate-300' : 'text-emerald-300'}`}>
                       {nextTarget ? (
                         <>
-                          <span className="text-orange-400 font-semibold mono-font">{(isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value)).toFixed(2)}{unit}</span>
+                          <span className="text-orange-400 font-semibold mono-font">{formatTime(isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value), analysisResults.discipline)}</span>
                           {' '}away from{' '}
                           <span className="text-white font-semibold">{nextTarget.label}</span>
                           {' '}at <span className="text-white font-semibold">{activeComp.label}</span>
@@ -5316,7 +5634,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 : analysisResults.standards.filter(s => s.compTier === standardsTier);
               const metCount = filteredStandards.filter(s => s.met).length;
               const total = filteredStandards.length;
-              const fmtMark = (v) => v === null || v === undefined ? '—' : isThrows ? v.toFixed(2) + 'm' : v.toFixed(2) + 's';
+              const fmtMark = (v) => v === null || v === undefined ? '—' : formatTime(v, analysisResults.discipline);
               const beatsMark = (mark) => isThrows ? pb >= mark : pb <= mark;
               const tierCounts = { all: analysisResults.standards.length, world: analysisResults.standards.filter(s => s.compTier === 'world').length, regional: analysisResults.standards.filter(s => s.compTier === 'regional').length, development: analysisResults.standards.filter(s => s.compTier === 'development').length };
               return (
@@ -5463,7 +5781,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const races = analysisResults._rawRaces;
               // Only use races that have an age for the scatter
               const scatterRaces = races.filter(r => r.age != null && r.value != null);
-              const fmtVal = (v) => v == null ? '—' : (isThrows ? v.toFixed(2) + 'm' : v.toFixed(2) + 's');
+              const fmtVal = (v) => v == null ? '—' : formatTime(v, analysisResults.discipline);
               // Table: sort newest → oldest
               const tableRaces = [...races].sort((a, b) => {
                 if (!a.date) return 1;
@@ -5501,7 +5819,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             domain={['auto', 'auto']}
                             reversed={!isThrows}
                             tick={{fill: '#94a3b8', fontSize: 11}}
-                            tickFormatter={(v) => isThrows ? `${v.toFixed(1)}m` : `${v.toFixed(2)}s`}
+                            tickFormatter={(v) => formatTime(v, analysisResults.discipline)}
                             label={{value: isThrows ? 'Distance (m)' : 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 11}}
                           />
                           <Tooltip
@@ -5814,7 +6132,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           }`}>
                             <span className={`text-xs font-semibold mb-1 ${isPB || isCurrent ? 'text-white text-opacity-80' : 'text-slate-400'}`}>{a}</span>
                             <span className={`text-sm font-bold ${!time ? 'text-slate-300' : ''}`}>
-                              {time ? time.toFixed(2) : '—'}
+                              {time ? formatTime(time, analysisResults.discipline) : '—'}
                             </span>
                             {isPB && <span className="text-[10px] mt-0.5 font-bold">PB</span>}
                             {isCurrent && !isPB && <span className="text-[10px] mt-0.5 opacity-80">NOW</span>}
@@ -5957,13 +6275,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
-                  <YAxis reversed={!isThrowsDiscipline(analysisResults.discipline)} tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.toFixed(1)} />
+                  <YAxis reversed={!isThrowsDiscipline(analysisResults.discipline)} tick={{ fontSize: 11, fill: '#94a3b8' }} domain={['auto', 'auto']} label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} tickFormatter={v => formatTime(v, analysisResults.discipline)} />
                   <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#e2e8f0' }}
                     formatter={(v, dataKey) => {
                       if (v == null) return null;
                       const labels = { you: 'You', finalist: 'Finalist Median', semiFinalist: 'Semi-Finalist Median', qualifier: 'Qualifier Median' };
-                      const unit = isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's';
-                      return [`${parseFloat(v).toFixed(2)}${unit}`, labels[dataKey] || dataKey];
+                      return [formatTime(parseFloat(v), analysisResults.discipline), labels[dataKey] || dataKey];
                     }}
                     labelFormatter={(l) => `Age ${l}`} />
                   {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
@@ -6028,8 +6345,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-700 border border-green-900/50'
                         : 'bg-amber-900/30 text-amber-700 border border-amber-900/50'
                       }`}>
-                        At age {athlete.closestAge}: <span className="font-bold">{athlete.timeAtSimilarAge}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
-                        {' '}({athlete.timeDiff < 0.05 ? 'virtually identical' : `${Math.abs(athlete.timeDiff).toFixed(2)}${isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'} ${isThrowsDiscipline(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
+                        At age {athlete.closestAge}: <span className="font-bold">{formatTime(athlete.timeAtSimilarAge, analysisResults.discipline)}</span>
+                        {' '}({athlete.timeDiff < 0.05 ? 'virtually identical' : `${Math.abs(athlete.timeDiff).toFixed(2)}s ${isThrowsDiscipline(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
                       </div>
                     </div>
                   ))}
