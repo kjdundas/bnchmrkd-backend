@@ -15,7 +15,7 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
 // ── Data stats constants (update when dataset changes) ──
-const STATS = { athletes: '5,100+', records: '311K+', events: '26', games: 'Sydney 2000 – Paris 2024' };
+const STATS = { athletes: '5,100+', records: '628K+', events: '26', games: 'Sydney 2000 – Paris 2024' };
 
 export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
