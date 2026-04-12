@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine, ReferenceDot,
@@ -103,6 +103,94 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   // Landing page role toggle + active pillar
   const [landingRole, setLandingRole] = useState('athlete');
   const [activePillar, setActivePillar] = useState(0);
+
+  // ── HERO TRAJECTORY SHOWCASE — auto-cycling athlete profiles ──
+  const SHOWCASE_ATHLETES = useMemo(() => [
+    {
+      label: "Men's 100m — Late Developer",
+      discipline: '100m', gender: 'M',
+      pb: '10.02s', peakAge: '27', trajectory: 'Late Developer', percentile: 92,
+      ages: ['18','20','22','24','26','28','30'],
+      // y-values: lower = better (inverted for time events)
+      points: [[60,158],[112,140],[164,118],[216,88],[268,68],[320,64],[372,72]],
+      path: 'M60,158 C88,148 112,136 164,118 S216,88 268,68 S340,62 372,72',
+      corridor: 'M60,148 L112,140 L164,130 L216,120 L268,114 L320,118 L372,128',
+      projPath: 'M372,72 C390,76 408,82 420,88',
+      peakPt: [320,64], peakLabel: 'PEAK 10.02s',
+      mqtY: 92,
+      bars: [35, 52, 68, 78, 92, 88, 85],
+      tags: ['100m','200m','60m'],
+      tagLabel: 'Sprint events',
+      color: '#f97316',
+    },
+    {
+      label: "Women's 800m — Standard Progression",
+      discipline: '800m', gender: 'F',
+      pb: '1:58.4', peakAge: '25', trajectory: 'Standard', percentile: 85,
+      ages: ['17','19','21','23','25','27','29'],
+      points: [[60,162],[112,138],[164,108],[216,82],[268,72],[320,78],[372,90]],
+      path: 'M60,162 C88,150 112,132 164,108 S216,82 268,72 S340,76 372,90',
+      corridor: 'M60,152 L112,142 L164,130 L216,118 L268,112 L320,116 L372,126',
+      projPath: 'M372,90 C390,95 408,100 420,106',
+      peakPt: [268,72], peakLabel: 'PEAK 1:58.4',
+      mqtY: 88,
+      bars: [28, 45, 62, 75, 85, 80, 72],
+      tags: ['800m','1500m','400m'],
+      tagLabel: 'Middle distance',
+      color: '#8b5cf6',
+    },
+    {
+      label: "Men's Discus — Early Peaker",
+      discipline: 'DT', gender: 'M',
+      pb: '67.2m', peakAge: '23', trajectory: 'Early Peaker', percentile: 78,
+      ages: ['18','20','22','24','26','28','30'],
+      // for throws, higher = better but we keep same SVG convention (lower y = better)
+      points: [[60,150],[112,110],[164,78],[216,68],[268,80],[320,95],[372,112]],
+      path: 'M60,150 C88,132 112,108 164,78 S216,68 268,80 S340,92 372,112',
+      corridor: 'M60,145 L112,135 L164,122 L216,112 L268,108 L320,114 L372,124',
+      projPath: 'M372,112 C390,118 408,124 420,130',
+      peakPt: [216,68], peakLabel: 'PEAK 67.2m',
+      mqtY: 85,
+      bars: [40, 58, 72, 78, 70, 62, 55],
+      tags: ['DT','SP','HT'],
+      tagLabel: 'Throws events',
+      color: '#06b6d4',
+    },
+    {
+      label: "Women's 100mH — Breakthrough",
+      discipline: '100mH', gender: 'F',
+      pb: '12.68s', peakAge: '26', trajectory: 'Late Developer', percentile: 88,
+      ages: ['18','20','22','24','26','28','30'],
+      points: [[60,165],[112,148],[164,125],[216,98],[268,72],[320,70],[372,80]],
+      path: 'M60,165 C88,155 112,142 164,125 S216,98 268,72 S340,68 372,80',
+      corridor: 'M60,155 L112,145 L164,132 L216,120 L268,114 L320,118 L372,128',
+      projPath: 'M372,80 C390,84 408,90 420,96',
+      peakPt: [320,70], peakLabel: 'PEAK 12.68s',
+      mqtY: 90,
+      bars: [32, 48, 65, 80, 88, 84, 78],
+      tags: ['100mH','100m','200m'],
+      tagLabel: 'Sprint & hurdles',
+      color: '#ec4899',
+    },
+  ], []);
+
+  const [showcaseIdx, setShowcaseIdx] = useState(0);
+  const [showcaseTransition, setShowcaseTransition] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+
+  useEffect(() => {
+    if (currentView !== 'landing') return;
+    const timer = setInterval(() => {
+      setShowcaseTransition(true);
+      setTimeout(() => {
+        setShowcaseIdx(prev => (prev + 1) % SHOWCASE_ATHLETES.length);
+        setShowcaseTransition(false);
+      }, 400);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [currentView, SHOWCASE_ATHLETES.length]);
+
+  const showcaseAthlete = SHOWCASE_ATHLETES[showcaseIdx];
 
   // Standards tracker tier filter in results view
   const [standardsTier, setStandardsTier] = useState('all'); // 'all' | 'world' | 'regional' | 'development'
@@ -2378,6 +2466,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             @keyframes lineReveal { from { stroke-dashoffset: 200; } to { stroke-dashoffset: 0; } }
             @keyframes streakFill { from { width: 0%; } to { width: 100%; } }
             @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+            @keyframes floatParticle { 0% { opacity: 0; transform: translateY(0) translateX(0); } 15% { opacity: 0.8; } 85% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-80px) translateX(20px); } }
+            @keyframes ribbonReveal { from { opacity: 0; } to { opacity: 0.18; } }
+            @keyframes statCount { from { opacity: 0; transform: translateY(8px) scale(0.95); filter: blur(2px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+            @keyframes glowPulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
+            @keyframes indicatorSlide { from { width: 0%; } to { width: 100%; } }
+            .showcase-fade { transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease; }
+            .showcase-fade-out { opacity: 0; transform: scale(0.97); filter: blur(3px); }
+            .showcase-fade-in { opacity: 1; transform: scale(1); filter: blur(0); }
+            .trajectory-tooltip { pointer-events: none; position: absolute; background: rgba(10,10,15,0.92); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 12px; backdrop-filter: blur(12px); transition: opacity 0.2s ease, transform 0.15s ease; z-index: 30; }
             .pillar-card { position: relative; cursor: pointer; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
             .pillar-card::before { content: ''; position: absolute; inset: 0; border-radius: 1rem; opacity: 0; transition: opacity 0.5s ease; }
             .pillar-card:hover::before { opacity: 1; }
@@ -2524,119 +2621,192 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {/* RIGHT — Animated trajectory visualization + bento preview */}
               <div className="stagger-4 relative">
                 {/* Main trajectory card */}
-                <div className="bento-card rounded-2xl p-6 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <div className={`bento-card rounded-2xl p-6 relative overflow-hidden showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`} style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+
+                  {/* Ambient glow behind chart — colored per athlete */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-full blur-[80px]" style={{background: `radial-gradient(circle, ${showcaseAthlete.color}15 0%, transparent 70%)`, animation: 'glowPulse 4s ease-in-out infinite'}}></div>
+                  </div>
+
                   {/* Card header */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4 relative z-10">
                     <div>
                       <p className="text-xs text-slate-500 mono-font tracking-wide uppercase">Career Trajectory</p>
-                      <p className="text-sm font-semibold text-white landing-font mt-0.5">Men's 100m — Olympic Finalist</p>
+                      <p className="text-sm font-semibold text-white landing-font mt-0.5">{showcaseAthlete.label}</p>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md" style={{background: 'rgba(34,197,94,0.12)'}}>
                       <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                      <span className="text-xs font-medium text-green-400 mono-font">92nd pctl</span>
+                      <span className="text-xs font-medium text-green-400 mono-font">{showcaseAthlete.percentile}th pctl</span>
                     </div>
                   </div>
 
                   {/* Animated SVG trajectory chart */}
-                  <svg viewBox="0 0 440 200" className="w-full" style={{filter: 'drop-shadow(0 0 20px rgba(249,115,22,0.15))'}}>
-                    {/* Grid lines */}
-                    {[40, 80, 120, 160].map(y => (
-                      <line key={y} x1="40" y1={y} x2="420" y2={y} stroke="rgba(148,163,184,0.06)" strokeWidth="0.5" />
-                    ))}
-                    {/* Age labels */}
-                    {['18', '20', '22', '24', '26', '28', '30'].map((age, i) => (
-                      <text key={age} x={60 + i * 52} y="195" fill="#475569" fontSize="10" textAnchor="middle" style={{fontFamily: "'DM Mono', monospace"}}>{age}</text>
-                    ))}
-                    {/* Benchmark corridor (P25-P75) */}
-                    <path d="M60,145 L112,138 L164,128 L216,118 L268,112 L320,115 L372,125" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
-                    {/* Finalist threshold */}
-                    <line x1="40" y1="95" x2="420" y2="95" stroke="rgba(239,68,68,0.25)" strokeWidth="1" strokeDasharray="6 4" />
-                    <text x="425" y="98" fill="rgba(239,68,68,0.5)" fontSize="8" style={{fontFamily: "'DM Mono', monospace"}}>MQT</text>
-                    {/* Athlete trajectory — animated */}
-                    <path
-                      d="M60,155 C90,148 112,135 164,115 S240,78 268,70 S330,68 372,75"
-                      fill="none" stroke="url(#trajectoryGrad)" strokeWidth="2.5" strokeLinecap="round"
-                      strokeDasharray="800" style={{animation: 'drawTrajectory 2.5s ease-out 0.8s both'}}
-                    />
-                    {/* Projection extension — dashed */}
-                    <path
-                      d="M372,75 C390,78 408,82 420,86"
-                      fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="4 4" opacity="0.5"
-                      style={{animation: 'fadeSlideUp 0.5s ease-out 3s both'}}
-                    />
-                    {/* Data points */}
-                    {[[60,155],[112,135],[164,115],[216,90],[268,70],[320,68],[372,75]].map(([cx,cy], i) => (
-                      <g key={i} style={{animation: `fadeSlideUp 0.3s ease-out ${1.2 + i * 0.2}s both`}}>
-                        <circle cx={cx} cy={cy} r="3" fill="#f97316" />
-                        <circle cx={cx} cy={cy} r="6" fill="none" stroke="rgba(249,115,22,0.3)" strokeWidth="1" />
-                      </g>
-                    ))}
-                    {/* Peak marker */}
-                    <g style={{animation: 'fadeSlideUp 0.4s ease-out 2.6s both'}}>
-                      <circle cx="320" cy="68" r="4" fill="#f97316">
-                        <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite" />
-                      </circle>
-                      <circle cx="320" cy="68" r="10" fill="none" stroke="rgba(249,115,22,0.2)" strokeWidth="1">
-                        <animate attributeName="r" values="10;16;10" dur="2s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite" />
-                      </circle>
-                      <text x="320" y="58" fill="#f97316" fontSize="9" textAnchor="middle" fontWeight="600" style={{fontFamily: "'DM Mono', monospace"}}>PEAK 10.02s</text>
-                    </g>
-                    {/* Gradient definition */}
-                    <defs>
-                      <linearGradient id="trajectoryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#ea580c" />
-                        <stop offset="50%" stopColor="#f97316" />
-                        <stop offset="100%" stopColor="#fb923c" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                  <div className="relative">
+                    <svg viewBox="0 0 440 200" className="w-full relative z-10" style={{filter: `drop-shadow(0 0 20px ${showcaseAthlete.color}25)`}}>
+                      {/* Grid lines */}
+                      {[40, 80, 120, 160].map(y => (
+                        <line key={y} x1="40" y1={y} x2="420" y2={y} stroke="rgba(148,163,184,0.06)" strokeWidth="0.5" />
+                      ))}
+                      {/* Age labels */}
+                      {showcaseAthlete.ages.map((age, i) => (
+                        <text key={`${showcaseIdx}-age-${i}`} x={60 + i * 52} y="195" fill="#475569" fontSize="10" textAnchor="middle" style={{fontFamily: "'DM Mono', monospace"}}>{age}</text>
+                      ))}
+                      {/* Benchmark corridor (P25-P75) — wide translucent band */}
+                      <path d={showcaseAthlete.corridor} fill="none" stroke="rgba(148,163,184,0.1)" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" />
 
-                  {/* Mini stats row below chart */}
-                  <div className="flex items-center justify-between mt-4 pt-4" style={{borderTop: '1px solid rgba(255,255,255,0.05)'}}>
+                      {/* Confidence interval ribbon — gradient fill beneath trajectory */}
+                      <path
+                        d={`${showcaseAthlete.path} L372,${showcaseAthlete.points[6][1] + 30} L60,${showcaseAthlete.points[0][1] + 30} Z`}
+                        fill={`url(#ribbonGrad-${showcaseIdx})`}
+                        style={{animation: 'ribbonReveal 1.2s ease-out 1s both'}}
+                      />
+
+                      {/* MQT / Finalist threshold */}
+                      <line x1="40" y1={showcaseAthlete.mqtY} x2="420" y2={showcaseAthlete.mqtY} stroke="rgba(239,68,68,0.25)" strokeWidth="1" strokeDasharray="6 4" />
+                      <text x="425" y={showcaseAthlete.mqtY + 3} fill="rgba(239,68,68,0.5)" fontSize="8" style={{fontFamily: "'DM Mono', monospace"}}>MQT</text>
+
+                      {/* Athlete trajectory — animated draw */}
+                      <path
+                        key={`traj-${showcaseIdx}`}
+                        d={showcaseAthlete.path}
+                        fill="none" stroke={`url(#trajGrad-${showcaseIdx})`} strokeWidth="2.5" strokeLinecap="round"
+                        strokeDasharray="800" style={{animation: 'drawTrajectory 2.5s ease-out 0.3s both'}}
+                      />
+                      {/* Projection extension — dashed */}
+                      <path
+                        key={`proj-${showcaseIdx}`}
+                        d={showcaseAthlete.projPath}
+                        fill="none" stroke={showcaseAthlete.color} strokeWidth="1.5" strokeLinecap="round" strokeDasharray="4 4" opacity="0.5"
+                        style={{animation: 'fadeSlideUp 0.5s ease-out 2.8s both'}}
+                      />
+
+                      {/* Data points with hover interaction */}
+                      {showcaseAthlete.points.map(([cx,cy], i) => (
+                        <g key={`${showcaseIdx}-pt-${i}`}
+                          style={{animation: `fadeSlideUp 0.3s ease-out ${0.8 + i * 0.18}s both`, cursor: 'pointer'}}
+                          onMouseEnter={() => setHoveredPoint({ idx: i, cx, cy, age: showcaseAthlete.ages[i] })}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        >
+                          <circle cx={cx} cy={cy} r="16" fill="transparent" />
+                          <circle cx={cx} cy={cy} r={hoveredPoint?.idx === i ? 5 : 3} fill={showcaseAthlete.color} style={{transition: 'r 0.15s ease'}} />
+                          <circle cx={cx} cy={cy} r={hoveredPoint?.idx === i ? 10 : 6} fill="none" stroke={`${showcaseAthlete.color}4D`} strokeWidth="1" style={{transition: 'r 0.15s ease'}} />
+                        </g>
+                      ))}
+
+                      {/* Peak marker with pulse */}
+                      <g key={`peak-${showcaseIdx}`} style={{animation: 'fadeSlideUp 0.4s ease-out 2.2s both'}}>
+                        <circle cx={showcaseAthlete.peakPt[0]} cy={showcaseAthlete.peakPt[1]} r="4" fill={showcaseAthlete.color}>
+                          <animate attributeName="r" values="4;7;4" dur="2.5s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx={showcaseAthlete.peakPt[0]} cy={showcaseAthlete.peakPt[1]} r="12" fill="none" stroke={`${showcaseAthlete.color}33`} strokeWidth="1">
+                          <animate attributeName="r" values="12;20;12" dur="2.5s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.5;0;0.5" dur="2.5s" repeatCount="indefinite" />
+                        </circle>
+                        <text x={showcaseAthlete.peakPt[0]} y={showcaseAthlete.peakPt[1] - 14} fill={showcaseAthlete.color} fontSize="9" textAnchor="middle" fontWeight="600" style={{fontFamily: "'DM Mono', monospace"}}>{showcaseAthlete.peakLabel}</text>
+                      </g>
+
+                      {/* Floating particles along trajectory */}
+                      {[0.2, 0.45, 0.7].map((t, i) => {
+                        const ptIdx = Math.floor(t * (showcaseAthlete.points.length - 1));
+                        const [px, py] = showcaseAthlete.points[ptIdx];
+                        return (
+                          <circle key={`particle-${showcaseIdx}-${i}`} cx={px + (i * 8 - 8)} cy={py} r="1.5" fill={showcaseAthlete.color} opacity="0"
+                            style={{animation: `floatParticle ${2.5 + i * 0.5}s ease-out ${2 + i * 1.2}s infinite`}} />
+                        );
+                      })}
+
+                      {/* Gradient definitions */}
+                      <defs>
+                        <linearGradient id={`trajGrad-${showcaseIdx}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor={showcaseAthlete.color} stopOpacity="0.7" />
+                          <stop offset="50%" stopColor={showcaseAthlete.color} />
+                          <stop offset="100%" stopColor={showcaseAthlete.color} stopOpacity="0.8" />
+                        </linearGradient>
+                        <linearGradient id={`ribbonGrad-${showcaseIdx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor={showcaseAthlete.color} stopOpacity="0.15" />
+                          <stop offset="100%" stopColor={showcaseAthlete.color} stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    {/* Hover tooltip */}
+                    {hoveredPoint && (
+                      <div className="trajectory-tooltip" style={{
+                        left: `${(hoveredPoint.cx / 440) * 100}%`,
+                        top: `${(hoveredPoint.cy / 200) * 100 - 18}%`,
+                        transform: 'translate(-50%, -100%)',
+                      }}>
+                        <p className="text-[10px] text-slate-400 mono-font">Age {hoveredPoint.age}</p>
+                        <p className="text-xs font-bold mono-font" style={{color: showcaseAthlete.color}}>Season Best</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mini stats row below chart — animated counters */}
+                  <div className="flex items-center justify-between mt-4 pt-4 relative z-10" style={{borderTop: '1px solid rgba(255,255,255,0.05)'}}>
                     {[
-                      { label: 'PB', value: '10.02s', color: '#f97316' },
-                      { label: 'Peak Age', value: '26', color: '#3b82f6' },
-                      { label: 'Trajectory', value: 'Late Developer', color: '#22c55e' },
+                      { label: 'Personal Best', value: showcaseAthlete.pb, color: showcaseAthlete.color },
+                      { label: 'Peak Age', value: showcaseAthlete.peakAge, color: '#3b82f6' },
+                      { label: 'Trajectory', value: showcaseAthlete.trajectory, color: '#22c55e' },
                     ].map((item, i) => (
-                      <div key={i} className="text-center">
+                      <div key={`${showcaseIdx}-stat-${i}`} className="text-center" style={{animation: `statCount 0.4s ease-out ${0.3 + i * 0.12}s both`}}>
                         <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider">{item.label}</p>
                         <p className="text-sm font-bold mono-font mt-0.5" style={{color: item.color}}>{item.value}</p>
                       </div>
                     ))}
                   </div>
+
+                  {/* Cycling indicator dots */}
+                  <div className="flex items-center justify-center gap-2 mt-3 relative z-10">
+                    {SHOWCASE_ATHLETES.map((_, i) => (
+                      <button key={i} onClick={() => { setShowcaseTransition(true); setTimeout(() => { setShowcaseIdx(i); setShowcaseTransition(false); }, 400); }}
+                        className="relative w-6 h-1 rounded-full overflow-hidden" style={{background: 'rgba(255,255,255,0.08)'}}>
+                        {i === showcaseIdx && (
+                          <div className="absolute inset-0 rounded-full" style={{background: showcaseAthlete.color, animation: 'indicatorSlide 5.5s linear both'}}></div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Floating mini bento cards */}
-                <div className="grid grid-cols-2 gap-3 mt-3">
+                <div className={`grid grid-cols-2 gap-3 mt-3 showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`}>
                   {/* Percentile gauge card */}
                   <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                     <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Percentile</p>
                     <div className="flex items-end gap-1">
-                      {[35, 52, 68, 78, 92, 88, 85].map((h, i) => (
-                        <div key={i} className="flex-1 rounded-sm" style={{
-                          height: `${h * 0.4}px`,
-                          background: i === 4 ? 'linear-gradient(to top, #ea580c, #f97316)' : 'rgba(148,163,184,0.1)',
-                          animation: `fadeSlideUp 0.3s ease-out ${1.5 + i * 0.1}s both`
-                        }}></div>
-                      ))}
+                      {showcaseAthlete.bars.map((h, i) => {
+                        const maxIdx = showcaseAthlete.bars.indexOf(Math.max(...showcaseAthlete.bars));
+                        return (
+                          <div key={`${showcaseIdx}-bar-${i}`} className="flex-1 rounded-sm relative" style={{
+                            height: `${h * 0.4}px`,
+                            background: i === maxIdx ? `linear-gradient(to top, ${showcaseAthlete.color}CC, ${showcaseAthlete.color})` : 'rgba(148,163,184,0.08)',
+                            transformOrigin: 'bottom',
+                            animation: `barGrow 0.5s ease-out ${0.1 + i * 0.06}s both`
+                          }}>
+                            {i === maxIdx && (
+                              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" style={{background: showcaseAthlete.color, boxShadow: `0 0 6px ${showcaseAthlete.color}`}}></div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                    <p className="text-right text-lg font-bold text-white mono-font mt-2">P92</p>
+                    <p className="text-right text-lg font-bold text-white mono-font mt-2">P{showcaseAthlete.percentile}</p>
                   </div>
 
                   {/* Discipline coverage card */}
                   <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                     <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Disciplines</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {['100m', '200m', '400m', '110mH', 'SP', 'DT', 'HT', 'JT'].map((d, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{
-                          background: i >= 4 ? 'rgba(59,130,246,0.12)' : 'rgba(249,115,22,0.12)',
-                          color: i >= 4 ? '#60a5fa' : '#fb923c',
-                          animation: `fadeSlideUp 0.3s ease-out ${1.8 + i * 0.08}s both`
+                      {showcaseAthlete.tags.map((d, i) => (
+                        <span key={`${showcaseIdx}-tag-${i}`} className="px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{
+                          background: `${showcaseAthlete.color}1A`,
+                          color: showcaseAthlete.color,
+                          animation: `fadeSlideUp 0.3s ease-out ${0.2 + i * 0.08}s both`
                         }}>{d}</span>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2 landing-font">Sprints, hurdles & throws</p>
+                    <p className="text-xs text-slate-500 mt-2 landing-font">{showcaseAthlete.tagLabel}</p>
                   </div>
                 </div>
               </div>

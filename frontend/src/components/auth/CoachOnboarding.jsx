@@ -52,7 +52,7 @@ const SQUAD_SIZES = [
 
 export default function CoachOnboarding({ onComplete }) {
   const { user, createProfile, createCoachProfile } = useAuth()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(2) // start at 2 — role picker already served as welcome
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -274,7 +274,7 @@ export default function CoachOnboarding({ onComplete }) {
             background: 'rgba(255,255,255,0.04)',
             border: `1px solid ${organization ? CARD_BORDER_SELECTED : CARD_BORDER}`,
           }}
-          placeholder="e.g. Dubai Athletics Club"
+          placeholder="Organisation name"
         />
         <button
           onClick={() => { setOrganization(''); next() }}

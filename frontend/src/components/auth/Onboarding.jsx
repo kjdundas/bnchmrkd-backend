@@ -343,7 +343,7 @@ export default function Onboarding({ onSkip }) {
                 type="text"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                placeholder="e.g. UAE"
+                placeholder="Country"
                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               />
             </div>
@@ -353,7 +353,7 @@ export default function Onboarding({ onSkip }) {
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. Dubai"
+                placeholder="City"
                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               />
             </div>
@@ -368,7 +368,7 @@ export default function Onboarding({ onSkip }) {
               type="text"
               value={accountType === 'coach' ? organization : clubSchool}
               onChange={(e) => accountType === 'coach' ? setOrganization(e.target.value) : setClubSchool(e.target.value)}
-              placeholder={accountType === 'coach' ? 'e.g. Ultimate Athletics Dubai' : 'e.g. Dubai International Academy'}
+              placeholder={accountType === 'coach' ? 'Organisation name' : 'Club or school name'}
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
