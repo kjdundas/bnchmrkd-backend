@@ -14,6 +14,9 @@ import { analytics } from './lib/analytics';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
+// ── Data stats constants (update when dataset changes) ──
+const STATS = { athletes: '3,442', records: '496K+', events: '18', games: 'Sydney 2000 – Paris 2024' };
+
 export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
   const THROWS_DISCIPLINES = ['Discus Throw', 'Javelin Throw', 'Hammer Throw', 'Shot Put'];
@@ -2265,7 +2268,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         }
       }).finally(() => setScraping(false));
     } catch (err) {
-      console.error('[athlete] Failed to load roster athlete:', err);
+      // Roster athlete load failed — silent, error shown in UI
       setError(`Failed to load ${athlete.name}: ${err.message}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2385,7 +2388,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 : scrapeProgress.progress < 0.5
                 ? '"Usain Bolt\'s 9.58s world record has stood since 2009 — over 15 years unchallenged."'
                 : scrapeProgress.progress < 0.7
-                ? '"Our analysis covers 311,000+ career races from 2,322 Olympic athletes across 7 Games."'
+                ? `"Our analysis covers ${STATS.records} career races from ${STATS.athletes} Olympic athletes across 7 Games."`
                 : scrapeProgress.progress < 0.9
                 ? '"The difference between an Olympic finalist and a semi-finalist is often less than 0.1 seconds."'
                 : '"Analysis complete — your results are being prepared..."'
@@ -2606,9 +2609,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 {/* Data credibility — horizontal, compact */}
                 <div className="stagger-6 flex items-center gap-4 sm:gap-8">
                   {[
-                    { value: '496K+', label: 'Records' },
-                    { value: '3,442', label: 'Athletes' },
-                    { value: '18', label: 'Events' },
+                    { value: STATS.records, label: 'Records' },
+                    { value: STATS.athletes, label: 'Athletes' },
+                    { value: STATS.events, label: 'Events' },
                   ].map((stat, i) => (
                     <div key={i} className="flex items-baseline gap-1.5 sm:gap-2">
                       <span className="text-lg sm:text-xl font-bold text-white tabular-nums mono-font">{stat.value}</span>
@@ -2884,8 +2887,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     accent: '#f97316',
                     athlete: {
                       headline: 'Know where you stand',
-                      desc: 'Enter your PB and instantly see how you compare to Olympic athletes at the same age. Based on 496K+ real competition records.',
-                      stat: '496K+',
+                      desc: `Enter your PB and instantly see how you compare to Olympic athletes at the same age. Based on ${STATS.records} real competition records.`,
+                      stat: STATS.records,
                       statLabel: 'data points',
                     },
                     coach: {
@@ -2925,7 +2928,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     coach: {
                       headline: 'Plan with data',
                       desc: 'Compare any athlete\'s trajectory against historical elites. Use real progression data to set targets and adjust training plans with confidence.',
-                      stat: '3,442',
+                      stat: STATS.athletes,
                       statLabel: 'elite careers mapped',
                     },
                   },
@@ -3324,8 +3327,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* Key stats row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-14 stagger-3">
               {[
-                { value: '3,442', label: 'Olympic Athletes', sub: 'Sydney 2000 – Paris 2024' },
-                { value: '496K+', label: 'Career Races', sub: 'Analysed and classified' },
+                { value: STATS.athletes, label: 'Olympic Athletes', sub: STATS.games },
+                { value: STATS.records, label: 'Career Races', sub: 'Analysed and classified' },
                 { value: '18', label: 'Disciplines', sub: 'Sprints, hurdles & throws' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
@@ -3710,7 +3713,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </span>
             </div>
             <h1 className="stagger-2 text-2xl sm:text-4xl font-bold text-white mb-2 landing-font tracking-tight">Search Olympic athletes</h1>
-            <p className="stagger-3 text-sm sm:text-base text-slate-500 mb-6 sm:mb-8 landing-font">Browse career trajectories, personal bests, and Olympic results across 2,322 athletes.</p>
+            <p className="stagger-3 text-sm sm:text-base text-slate-500 mb-6 sm:mb-8 landing-font">Browse career trajectories, personal bests, and Olympic results across {STATS.athletes} athletes.</p>
 
             {/* Search + Filter Bar */}
             <div className="bento-card rounded-xl p-3 sm:p-6 mb-4 sm:mb-6 stagger-3" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -3721,7 +3724,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     type="text"
                     value={explorerSearch}
                     onChange={(e) => setExplorerSearch(e.target.value)}
-                    placeholder="Search 2,322 Olympic athletes..."
+                    placeholder={`Search ${STATS.athletes} Olympic athletes...`}
                     className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg text-white placeholder-slate-500 focus:outline-none landing-font text-base sm:text-lg"
                     style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}
                     autoFocus
@@ -6101,7 +6104,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 Methodology
               </h4>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Analysis powered by statistical models built from {'>'}2,300 Olympic athletes and {'>'}311,000 career race results
+                Analysis powered by statistical models built from {'>'}{STATS.athletes} Olympic athletes and {'>'}{STATS.records} career race results
                 spanning Sydney 2000 through Paris 2024. Finalist identification uses ROC/AUC analysis with Youden's J-optimized
                 thresholds. Trajectory classification uses K-means clustering (K=3) on age-normalized % off PB series.
                 Peak projections model improvement rate decay toward estimated peak age with post-peak decline calibrated from

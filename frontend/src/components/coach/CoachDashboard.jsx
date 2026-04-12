@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Users, UserPlus, TrendingUp, Activity, Upload, Link, Search,
   ChevronRight, ChevronLeft, ArrowUpRight, AlertTriangle, Target,
-  Calendar, Plus, X, FileSpreadsheet, Globe, Bot, Send, Paperclip,
+  Calendar, Plus, X, FileSpreadsheet, Globe, Bot,
   Eye, Clock, Zap, ChevronDown, Loader2, CheckCircle, AlertCircle, Trash2
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -46,35 +46,29 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const [csvUploading, setCsvUploading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterTier, setFilterTier] = useState('all')
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: 'Hi Coach — upload a competition PDF and I\'ll scan it for your athletes\' results. I handle English and Arabic documents.' }
-  ])
-  const [chatInput, setChatInput] = useState('')
-  const [chatFile, setChatFile] = useState(null)
+  // Chat state removed — replaced by AI Scanner
   const [mounted, setMounted] = useState(false)
   const [roster, setRoster] = useState([])
   const [rosterLoading, setRosterLoading] = useState(true)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const fileInputRef = useRef(null)
-  const chatEndRef = useRef(null)
+  // chatEndRef removed — replaced by AI Scanner
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
+  // Chat scroll removed — replaced by AI Scanner
 
   // ── Fetch roster from Supabase (raw fetch — bypasses supabase-js Web Locks hang) ──
   const fetchRoster = useCallback(async () => {
     if (!user?.id) return
     setRosterLoading(true)
     try {
-      console.log('[roster] Fetching for coach:', user.id)
       const data = await selectFrom('coach_roster', {
         filter: `coach_id=eq.${user.id}`,
         order: 'created_at.desc',
       })
-      console.log('[roster] Fetched', data?.length || 0, 'athletes')
       setRoster(data || [])
     } catch (err) {
-      console.error('[roster] Failed to fetch:', err)
+      // Roster fetch failed — silent, user sees empty state
     } finally {
       setRosterLoading(false)
     }
@@ -142,7 +136,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setScanAmbigPicks({})
       setScanStage('review')
     } catch (err) {
-      console.error('[scanner] extract failed:', err)
+      // scanner extract failed — error shown in UI via scanError
       setScanError(err.message || 'Extraction failed')
     } finally {
       setScanLoading(false)
@@ -261,7 +255,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setScanStage('done')
       fetchRoster()
     } catch (err) {
-      console.error('[scanner] save failed:', err)
+      // scanner save failed — error shown in UI via scanError
       setScanError(err.message || 'Save failed')
     } finally {
       setScanSaving(false)
@@ -316,7 +310,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setRoster(prev => prev.filter(a => a.id !== athleteId))
       setDeleteConfirm(null)
     } catch (err) {
-      console.error('[roster] Delete failed:', err)
+      // delete failed — silent
     }
   }
 
@@ -461,9 +455,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         races: races,
       }
 
-      console.log('[roster] Inserting athlete:', athleteName, 'races:', races.length)
       const inserted = await insertInto('coach_roster', newAthlete)
-      console.log('[roster] Insert succeeded:', inserted?.id)
 
       if (inserted?.id) {
         setRoster(prev => [inserted, ...prev])
@@ -477,7 +469,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setAddMethod(null)
       setActiveSection('roster')
     } catch (err) {
-      console.error('URL import failed:', err)
+      // URL import failed — error shown in UI via urlError
       const msg = err.name === 'AbortError'
         ? 'Request timed out — the scraper may be overloaded. Try again.'
         : (err.message || 'Import failed — check the URL and try again')
@@ -487,14 +479,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     }
   }
 
-  const handleChatSend = () => {
-    if (!chatInput.trim() && !chatFile) return
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput || `📎 ${chatFile?.name}`, file: chatFile?.name }])
-    setChatInput(''); setChatFile(null)
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'This feature is coming soon — I\'ll be able to scan competition PDFs and match results to your roster automatically. Stay tuned!' }])
-    }, 1200)
-  }
+  // handleChatSend removed — replaced by AI Scanner
 
   // ── Shared components ──
   const tierConfig = {
@@ -681,12 +666,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       {[
                         { icon: TrendingUp, label: 'Trajectory Tracking', desc: 'See who\'s peaking, plateauing, or declining', color: '#22c55e' },
-                        { icon: Target, label: 'Olympic Benchmarks', desc: 'Compare every athlete against 25 years of Olympic data', color: '#f97316' },
+                        { icon: Target, label: 'Olympic Benchmarks', desc: 'Benchmark against 25 years of Olympic data', color: '#f97316' },
                         { icon: Activity, label: 'Performance Alerts', desc: 'Get flagged when an athlete\'s trend changes', color: '#ef4444' },
                         { icon: Users, label: 'Squad Analytics', desc: 'Tier breakdown, improvement rates, and rankings', color: '#3b82f6' },
                       ].map(({ icon: Icon, label, desc, color }, i) => (
                         <div key={i} className="relative group">
-                          <div className="flex flex-col items-center text-center p-4 rounded-xl transition-all" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                          <div className="flex flex-col items-center text-center p-4 rounded-xl transition-all h-full" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
                               <Icon className="w-5 h-5" style={{ color }} />
                             </div>

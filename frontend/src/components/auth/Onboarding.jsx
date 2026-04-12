@@ -192,7 +192,7 @@ export default function Onboarding({ onSkip }) {
             }
           } catch (scrapeErr) {
             // Non-fatal — log but don't block onboarding
-            console.warn('[onboarding] WA scrape failed:', scrapeErr)
+            // WA scrape failed — non-fatal, continue onboarding
           } finally {
             setScrapeProgress('')
           }
