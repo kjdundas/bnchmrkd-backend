@@ -4821,8 +4821,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     )}
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{analysisResults.personalBest}</span>
-                    <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
+                    {!isThrowsDiscipline(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
+                      <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">s</span>
+                    )}
                   </div>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
                   {analysisResults.implementWeight && (
@@ -5074,7 +5076,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff'}}></div>
-                      <span className="text-[10px] text-slate-500 mono-font">= Your PB ({analysisResults.personalBest}{unit})</span>
+                      <span className="text-[10px] text-slate-500 mono-font">= Your PB ({formatTime(analysisResults.personalBest, analysisResults.discipline)})</span>
                     </div>
                   </div>
                 </div>
@@ -5249,7 +5251,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     ))}
                     <div className="flex items-center gap-1.5">
                       <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff'}}></div>
-                      <span className="text-[10px] text-slate-500 mono-font">You ({analysisResults.personalBest}{unit})</span>
+                      <span className="text-[10px] text-slate-500 mono-font">You ({formatTime(analysisResults.personalBest, analysisResults.discipline)})</span>
                     </div>
                   </div>
                 </div>
@@ -5313,7 +5315,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Improvement Scenarios</h3>
                 </div>
                 <p className="text-sm text-slate-400 mb-5">
-                  Projected {isThrowsDiscipline(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {analysisResults.personalBest}{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}
+                  Projected {isThrowsDiscipline(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {formatTime(analysisResults.personalBest, analysisResults.discipline)}{!isThrowsDiscipline(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) ? 's' : ''}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -5464,8 +5466,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </div>
                   <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">{analysisResults.name}</h2>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{analysisResults.personalBest}</span>
-                    <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">{isThrowsDiscipline(analysisResults.discipline) ? 'm' : 's'}</span>
+                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
+                    {!isThrowsDiscipline(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
+                      <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">s</span>
+                    )}
                   </div>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
                 </div>
