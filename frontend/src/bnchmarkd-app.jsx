@@ -28,7 +28,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const DISTANCE_CODES = ['M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K'];
   const isDistanceDiscipline = (disc) => DISTANCE_DISCIPLINES.includes(disc) || DISTANCE_CODES.includes(disc);
 
-  const getUnitLabel = (disc) => isThrowsDiscipline(disc) ? 'Distance (m)' : 'Time (s)';
+  const getUnitLabel = (disc) => isThrowsDiscipline(disc) ? 'Distance (m)' : isDistanceDiscipline(disc) ? 'Time (mm:ss)' : 'Time (s)';
 
   // Format seconds to mm:ss.ff for distance events, or ss.ff for sprint/hurdle events
   const formatTime = (seconds, disc) => {
@@ -40,6 +40,25 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
     }
     return seconds.toFixed(2);
+  };
+
+  // Parse user time input — accepts mm:ss.ff, m:ss.ff, or raw seconds
+  // Examples: "8:06.05" → 486.05, "13:13.66" → 793.66, "26:43.14" → 1603.14, "10.85" → 10.85
+  const parseTimeInput = (input) => {
+    if (input == null) return NaN;
+    const str = String(input).trim();
+    if (!str) return NaN;
+    // Check for mm:ss or m:ss pattern (contains a colon)
+    if (str.includes(':')) {
+      const parts = str.split(':');
+      if (parts.length !== 2) return NaN;
+      const mins = parseFloat(parts[0]);
+      const secs = parseFloat(parts[1]);
+      if (isNaN(mins) || isNaN(secs) || mins < 0 || secs < 0 || secs >= 60) return NaN;
+      return mins * 60 + secs;
+    }
+    // Otherwise treat as raw seconds (or metres for throws)
+    return parseFloat(str);
   };
 
   // Implement weight specifications per WA age group rules
@@ -2212,8 +2231,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         // Validate race values: each time must parse, be positive, and be within sane bounds.
         const isThrowsCheck = isThrowsDiscipline(athleteData.discipline);
         for (const r of validRaces) {
-          const t = parseFloat(r.time);
-          if (isNaN(t) || t <= 0) throw new Error(`Invalid race time: "${r.time}".`);
+          const t = parseTimeInput(r.time);
+          if (isNaN(t) || t <= 0) throw new Error(`Invalid race time: "${r.time}". Use mm:ss.ff (e.g. 8:06.05) for distance events or seconds for sprints.`);
           if (!isThrowsCheck && t > 10000) throw new Error(`Race time "${r.time}" looks too large for a track event.`);
           if (isThrowsCheck && t > 200) throw new Error(`Throw distance "${r.time}" looks too large — use metres.`);
           const rd = new Date(r.date);
@@ -2229,7 +2248,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           const racemonthDiff = raceDate.getMonth() - dob.getMonth();
           if (racemonthDiff < 0 || (racemonthDiff === 0 && raceDate.getDate() < dob.getDate())) raceAge--;
 
-          const time = parseFloat(race.time);
+          const time = parseTimeInput(race.time);
           if (!racesByAge[raceAge]) racesByAge[raceAge] = { times: [], age: raceAge };
           racesByAge[raceAge].times.push(time);
         });
@@ -2259,7 +2278,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           const diffMs = rd - new Date(dob.getFullYear() + years, dob.getMonth(), dob.getDate());
           return {
             date: r.date,
-            value: parseFloat(r.time),
+            value: parseTimeInput(r.time),
             age: +(years + diffMs / (365.25 * 24 * 3600 * 1000)).toFixed(2),
             competition: r.competition || null,
             wind: r.wind || null,
@@ -2279,14 +2298,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         }
 
         const age = parseInt(quickAnalysisData.age);
-        const pb = parseFloat(quickAnalysisData.personalBest);
+        const pb = parseTimeInput(quickAnalysisData.personalBest);
 
         // Sanity validation on quick-analysis inputs
         if (isNaN(age) || age < 10 || age > 80) {
           throw new Error('Age must be a number between 10 and 80.');
         }
         if (isNaN(pb) || pb <= 0) {
-          throw new Error('Personal best must be a positive number.');
+          throw new Error('Personal best must be a positive number. Use mm:ss.ff (e.g. 8:06.05) for distance events.');
         }
         const isThrowsQ = isThrowsDiscipline(quickAnalysisData.discipline);
         if (!isThrowsQ && pb > 10000) {
@@ -4199,6 +4218,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               tick={{ fill: '#94a3b8', fontSize: 12 }}
                               domain={['auto', 'auto']}
                               reversed={!isThrowsDiscipline(athleteTrajectory.discipline)}
+                              tickFormatter={v => formatTime(v, athleteTrajectory.discipline)}
                               label={{ value: getUnitLabel(athleteTrajectory.discipline), angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
                             />
                             <Tooltip
@@ -4476,7 +4496,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <thead>
                       <tr style={{borderBottom: '1px solid rgba(255,255,255,0.08)'}}>
                         <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mono-font">Date</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mono-font">{isThrowsMode ? 'Distance (m)' : 'Time (s)'}</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mono-font">{isThrowsMode ? 'Distance (m)' : isDistanceMode ? 'Time (mm:ss)' : 'Time (s)'}</th>
                         {!isThrowsMode && <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mono-font">Wind (m/s)</th>}
                         <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mono-font">Competition</th>
                         <th className="text-center py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mono-font">Action</th>
@@ -4486,7 +4506,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       {athleteData.races.map((race, idx) => (
                         <tr key={idx} className="hover:bg-white/[0.02]" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
                           <td className="py-3 px-4"><input type="date" value={race.date} onChange={(e) => handleManualEntry('date', e.target.value, idx)} className="w-full px-2 py-1 text-white rounded text-sm placeholder-slate-500 mono-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} /></td>
-                          <td className="py-3 px-4"><input type="number" step="0.01" placeholder={isThrowsMode ? "e.g., 67.48" : "e.g., 10.85"} value={race.time} onChange={(e) => handleManualEntry('time', e.target.value, idx)} className="w-full px-2 py-1 text-white rounded text-sm placeholder-slate-500 mono-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} /></td>
+                          <td className="py-3 px-4"><input type={isDistanceMode ? "text" : "number"} step={isDistanceMode ? undefined : "0.01"} placeholder={isThrowsMode ? "e.g., 67.48" : isDistanceMode ? "e.g., 8:06.05" : "e.g., 10.85"} value={race.time} onChange={(e) => handleManualEntry('time', e.target.value, idx)} className="w-full px-2 py-1 text-white rounded text-sm placeholder-slate-500 mono-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} /></td>
                           {!isThrowsMode && <td className="py-3 px-4"><input type="number" step="0.1" placeholder="-0.5 to +2.0" value={race.wind} onChange={(e) => handleManualEntry('wind', e.target.value, idx)} className="w-full px-2 py-1 text-white rounded text-sm placeholder-slate-500 mono-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} /></td>}
                           <td className="py-3 px-4"><input type="text" placeholder={isThrowsMode ? "e.g., World Championships" : "e.g., Olympics"} value={race.competition} onChange={(e) => handleManualEntry('competition', e.target.value, idx)} className="w-full px-2 py-1 text-white rounded text-sm placeholder-slate-500 mono-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} /></td>
                           <td className="py-3 px-4 text-center"><button onClick={() => removeRaceRow(idx)} className="text-red-500 hover:text-red-700 transition-colors"><Trash2 className="w-4 h-4" /></button></td>
@@ -4629,8 +4649,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Personal Best {getUnitLabel(quickAnalysisData.discipline)}</label>
-                    <input type="number" step="0.01" placeholder={isThrowsMode ? "e.g., 65.50" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
+                    <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Personal Best {isDistanceMode ? '(mm:ss.ff)' : getUnitLabel(quickAnalysisData.discipline)}</label>
+                    <input type={isDistanceMode ? "text" : "number"} step={isDistanceMode ? undefined : "0.01"} placeholder={isThrowsMode ? "e.g., 65.50" : isDistanceMode ? "e.g., 8:06.05" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
                       onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, personalBest: e.target.value })}
                       className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                   </div>
@@ -5945,7 +5965,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                       <XAxis dataKey="age" label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                      <YAxis label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} reversed={!isThrowsDiscipline(analysisResults.discipline)} domain={['auto', 'auto']} />
+                      <YAxis label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} reversed={!isThrowsDiscipline(analysisResults.discipline)} domain={['auto', 'auto']} tickFormatter={v => formatTime(v, analysisResults.discipline)} />
                       <Tooltip content={<TrajectoryTooltip />} />
                       <Area type="monotone" dataKey="ci90Upper" stroke="none" fill="url(#ci90Gradient)" name="90% CI" connectNulls={false} isAnimationActive={false} />
                       <Area type="monotone" dataKey="ci90Lower" stroke="none" fill="#1e293b" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
