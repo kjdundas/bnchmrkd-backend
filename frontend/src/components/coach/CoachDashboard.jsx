@@ -581,6 +581,161 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           {/* ═══════════════ HIGHLIGHTS ═══════════════ */}
           {activeSection === 'highlights' && (
             <div className="space-y-5">
+
+              {/* ── EMPTY STATE — shown when roster is empty ── */}
+              {rosterWithAge.length === 0 ? (
+                <div className="space-y-6">
+                  {/* Welcome hero */}
+                  <div className="relative overflow-hidden rounded-2xl p-8 sm:p-10" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(59,130,246,0.04) 100%)', border: '1px solid rgba(249,115,22,0.12)', ...stagger(0) }}>
+                    <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full blur-[100px]" style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)', transform: 'translate(30%, -40%)' }} />
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
+                          <Zap className="w-4 h-4 text-black" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest mono-font" style={{ color: '#f97316' }}>Getting Started</span>
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-bold text-white landing-font leading-tight">Welcome to your coaching dashboard{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}</h2>
+                      <p className="text-sm text-slate-400 landing-font mt-2 max-w-lg">Add your first athlete to unlock squad analytics, trajectory tracking, and Olympic-level benchmarking across every discipline.</p>
+                    </div>
+                  </div>
+
+                  {/* Setup steps — 3 clear CTAs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={stagger(1)}>
+                    {/* Step 1: Import from World Athletics */}
+                    <button
+                      onClick={() => { setActiveSection('add'); setAddMethod('url'); }}
+                      className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, transparent 100%)' }} />
+                      <div className="relative z-10">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)' }}>
+                          <Globe className="w-5 h-5" style={{ color: '#f97316' }} />
+                        </div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-bold mono-font" style={{ color: '#f97316' }}>01</span>
+                          <span className="text-[10px] text-slate-600 mono-font">RECOMMENDED</span>
+                        </div>
+                        <p className="text-[14px] font-semibold text-white landing-font">Import from World Athletics</p>
+                        <p className="text-[11px] text-slate-500 landing-font mt-1.5 leading-relaxed">Paste an athlete's World Athletics profile URL and we'll pull their full race history automatically.</p>
+                        <div className="flex items-center gap-1 mt-3" style={{ color: '#f97316' }}>
+                          <span className="text-[11px] font-semibold landing-font">Import athlete</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Step 2: CSV Upload */}
+                    <button
+                      onClick={() => { setActiveSection('add'); setAddMethod('csv'); }}
+                      className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 100%)' }} />
+                      <div className="relative z-10">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.15)' }}>
+                          <FileSpreadsheet className="w-5 h-5" style={{ color: '#3b82f6' }} />
+                        </div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-bold mono-font" style={{ color: '#3b82f6' }}>02</span>
+                          <span className="text-[10px] text-slate-600 mono-font">BULK IMPORT</span>
+                        </div>
+                        <p className="text-[14px] font-semibold text-white landing-font">Upload a CSV</p>
+                        <p className="text-[11px] text-slate-500 landing-font mt-1.5 leading-relaxed">Got a spreadsheet of athletes? Upload a CSV with names, DOBs, disciplines, and race results.</p>
+                        <div className="flex items-center gap-1 mt-3" style={{ color: '#3b82f6' }}>
+                          <span className="text-[11px] font-semibold landing-font">Upload CSV</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Step 3: Manual Entry */}
+                    <button
+                      onClick={() => { setActiveSection('add'); setAddMethod('manual'); }}
+                      className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, transparent 100%)' }} />
+                      <div className="relative z-10">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                          <UserPlus className="w-5 h-5" style={{ color: '#8b5cf6' }} />
+                        </div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-bold mono-font" style={{ color: '#8b5cf6' }}>03</span>
+                          <span className="text-[10px] text-slate-600 mono-font">MANUAL</span>
+                        </div>
+                        <p className="text-[14px] font-semibold text-white landing-font">Add manually</p>
+                        <p className="text-[11px] text-slate-500 landing-font mt-1.5 leading-relaxed">Enter an athlete's details and race history by hand. Best for athletes without a World Athletics profile.</p>
+                        <div className="flex items-center gap-1 mt-3" style={{ color: '#8b5cf6' }}>
+                          <span className="text-[11px] font-semibold landing-font">Add athlete</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* What you'll unlock — feature preview */}
+                  <div className="rounded-xl p-6" style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(2) }}>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-5 landing-font">What you'll see once you add athletes</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { icon: TrendingUp, label: 'Trajectory Tracking', desc: 'See who\'s peaking, plateauing, or declining', color: '#22c55e' },
+                        { icon: Target, label: 'Olympic Benchmarks', desc: 'Compare every athlete against 25 years of Olympic data', color: '#f97316' },
+                        { icon: Activity, label: 'Performance Alerts', desc: 'Get flagged when an athlete\'s trend changes', color: '#ef4444' },
+                        { icon: Users, label: 'Squad Analytics', desc: 'Tier breakdown, improvement rates, and rankings', color: '#3b82f6' },
+                      ].map(({ icon: Icon, label, desc, color }, i) => (
+                        <div key={i} className="relative group">
+                          <div className="flex flex-col items-center text-center p-4 rounded-xl transition-all" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
+                              <Icon className="w-5 h-5" style={{ color }} />
+                            </div>
+                            <p className="text-[12px] font-semibold text-white landing-font mb-1">{label}</p>
+                            <p className="text-[10px] text-slate-600 landing-font leading-relaxed">{desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sample insight teasers — blurred preview */}
+                  <div className="rounded-xl p-6 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(3) }}>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 landing-font">Sample Insights Preview</p>
+                    <div className="space-y-2.5 relative">
+                      {/* Sample alert cards — blurred */}
+                      <div style={{ filter: 'blur(3px)', opacity: 0.5, pointerEvents: 'none' }}>
+                        {[
+                          { name: 'Athlete A', disc: '100m', msg: '3% improvement in last 6 months — approaching qualifier standard', trend: 'up', color: '#22c55e' },
+                          { name: 'Athlete B', disc: 'Discus', msg: 'Peak projection: 24 months — current trajectory targets 62.5m', trend: 'up', color: '#3b82f6' },
+                          { name: 'Athlete C', disc: '400m', msg: 'Performance declining since March — 2 consecutive slower marks', trend: 'down', color: '#ef4444' },
+                        ].map((a, i) => (
+                          <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div className={`w-1.5 h-8 rounded-full`} style={{ background: a.color, opacity: 0.7 }} />
+                            <div className="flex-1">
+                              <p className="text-[12px] text-white landing-font font-medium">{a.name} · {a.disc}</p>
+                              <p className="text-[10px] text-slate-500 landing-font">{a.msg}</p>
+                            </div>
+                            <ArrowUpRight className={`w-3.5 h-3.5 ${a.trend === 'down' ? 'rotate-90' : ''}`} style={{ color: a.color }} />
+                          </div>
+                        ))}
+                      </div>
+                      {/* Overlay CTA */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button
+                          onClick={() => { setActiveSection('add'); setAddMethod('url'); }}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-black landing-font transition-all hover:brightness-110 hover:scale-[1.02]"
+                          style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)', boxShadow: '0 8px 32px rgba(249,115,22,0.3)' }}
+                        >
+                          Add your first athlete to unlock insights
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+              /* ── POPULATED STATE — existing highlights ── */
+              <div className="space-y-5">
               {/* Hero stat row */}
               <div className="grid grid-cols-4 gap-3" style={stagger(0)}>
                 {[
@@ -671,6 +826,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   </div>
                 </div>
               </div>
+              </div>
+              )}
             </div>
           )}
 
