@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { selectFrom, insertInto, deleteFrom, updateIn } from '../../lib/supabaseRest'
+import { getAgeGroup, getPerformanceLevel, LEVEL_COLORS } from '../../lib/performanceLevels'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -901,6 +902,27 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       {!Array.isArray(a.disciplines) && (
                         <p className="text-[10px] text-slate-600 landing-font mb-2">{a.discipline || '—'}</p>
                       )}
+                      {/* Level sticker */}
+                      {(() => {
+                        const age = a.age != null ? a.age : calcAge(a.dob);
+                        const pbVal = a.pb_value;
+                        const disc = a.discipline;
+                        if (age != null && pbVal && disc && isThrowsDiscipline(disc)) {
+                          const pl = getPerformanceLevel(disc, a.gender, age, pbVal);
+                          if (pl) {
+                            return (
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold mono-font" style={{ background: `${pl.color}18`, color: pl.color, border: `1px solid ${pl.color}30` }}>
+                                  L{pl.level}
+                                </span>
+                                <span className="text-[9px] text-slate-500 landing-font">{pl.name}</span>
+                                <span className="text-[8px] text-slate-700 mono-font ml-auto">{pl.ageGroup}</span>
+                              </div>
+                            );
+                          }
+                        }
+                        return null;
+                      })()}
                       {/* Stats */}
                       <div className="flex gap-2 mb-3">
                         <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
