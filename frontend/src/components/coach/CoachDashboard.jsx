@@ -332,9 +332,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     setEditingAthlete(athlete)
   }
 
+  const [editError, setEditError] = useState('')
+
   const handleEditSave = async () => {
     if (!editingAthlete) return
     setEditSaving(true)
+    setEditError('')
     try {
       const updates = {
         name: editForm.name.trim(),
@@ -347,7 +350,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       setRoster(prev => prev.map(a => a.id === editingAthlete.id ? { ...a, ...updates } : a))
       setEditingAthlete(null)
     } catch (err) {
-      // save failed — silent
+      console.error('Edit save failed:', err)
+      setEditError(err.message || 'Failed to save changes')
     }
     setEditSaving(false)
   }
@@ -1063,6 +1067,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
                   </div>
                 </div>
+                {/* Error */}
+                {editError && (
+                  <div className="mt-4 px-3 py-2 rounded-lg text-[11px] text-red-400 landing-font" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    {editError}
+                  </div>
+                )}
                 {/* Actions */}
                 <div className="flex gap-2 mt-6">
                   <button onClick={() => setEditingAthlete(null)}
