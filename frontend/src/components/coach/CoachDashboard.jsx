@@ -321,11 +321,14 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     }
   }
 
+  const genderDisplay = (g) => g === 'M' ? 'Male' : g === 'F' ? 'Female' : g || 'Male'
+  const genderCode = (g) => g === 'Male' ? 'M' : g === 'Female' ? 'F' : g || 'M'
+
   const openEditModal = (athlete) => {
     setEditForm({
       name: athlete.name || '',
       dob: athlete.dob || '',
-      gender: athlete.gender || 'Male',
+      gender: genderDisplay(athlete.gender),
       discipline: athlete.discipline || '',
       nationality: athlete.nationality || '',
     })
@@ -342,7 +345,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       const updates = {
         name: editForm.name.trim(),
         dob: editForm.dob || null,
-        gender: editForm.gender,
+        gender: genderCode(editForm.gender),
         discipline: editForm.discipline.trim(),
         nationality: editForm.nationality.trim() || null,
       }
