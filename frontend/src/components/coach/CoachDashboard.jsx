@@ -46,7 +46,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const [csvPreview, setCsvPreview] = useState(null)
   const [csvUploading, setCsvUploading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterTier, setFilterTier] = useState('all')
+  const [filterAgeGroup, setFilterAgeGroup] = useState('all')
   // Chat state removed — replaced by AI Scanner
   const [mounted, setMounted] = useState(false)
   const [roster, setRoster] = useState([])
@@ -264,9 +264,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   }
 
   // ── Derived data ──
-  const rosterWithAge = roster.map(a => ({ ...a, age: calcAge(a.dob) }))
+  const rosterWithAge = roster.map(a => {
+    const age = calcAge(a.dob);
+    return { ...a, age, ageGroup: age != null ? getAgeGroup(age) : null };
+  })
   const displayRoster = rosterWithAge
-    .filter(a => filterTier === 'all' || a.tier === filterTier)
+    .filter(a => filterAgeGroup === 'all' || a.ageGroup === filterAgeGroup)
     .filter(a => !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase()) || (a.discipline || '').toLowerCase().includes(searchQuery.toLowerCase()))
 
   // Stats
@@ -831,11 +834,11 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   />
                 </div>
                 <div className="flex gap-1">
-                  {['all', 'finalist', 'semi-finalist', 'qualifier', 'developing'].map(tier => (
-                    <button key={tier} onClick={() => setFilterTier(tier)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all mono-font ${filterTier === tier ? 'text-white' : 'text-slate-700 hover:text-slate-500'}`}
-                      style={filterTier === tier ? { background: 'rgba(255,255,255,0.08)' } : {}}>
-                      {tier === 'all' ? 'All' : tierConfig[tier]?.label}
+                  {['all', 'U13', 'U15', 'U17', 'U20', 'Senior'].map(ag => (
+                    <button key={ag} onClick={() => setFilterAgeGroup(ag)}
+                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all mono-font ${filterAgeGroup === ag ? 'text-white' : 'text-slate-700 hover:text-slate-500'}`}
+                      style={filterAgeGroup === ag ? { background: 'rgba(255,255,255,0.08)' } : {}}>
+                      {ag === 'all' ? 'All' : ag}
                     </button>
                   ))}
                 </div>
