@@ -11,7 +11,7 @@ import {
   Search, User, Globe, Medal, Lock
 } from 'lucide-react';
 import { analytics } from './lib/analytics';
-import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel } from './lib/performanceLevels';
+import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
@@ -5565,6 +5565,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const pb = parseFloat(analysisResults.personalBest);
               const athleteAgeGroup = pl.ageGroup;
               const athleteLevel = pl.level;
+              const timeMode = isTimeDiscipline(analysisResults.discipline);
+              const unit = timeMode ? 's' : 'm';
+              const fmtThreshold = (v) => {
+                if (timeMode && v >= 60) { const m = Math.floor(v / 60); const s = (v % 60).toFixed(2); return `${m}:${s.padStart(5, '0')}`; }
+                return `${v.toFixed(2)}${unit}`;
+              };
 
               return (
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -5601,7 +5607,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           const isAthleteRow = ag === athleteAgeGroup;
                           let pbLevelInRow = 0;
                           for (let i = thresholds.length - 1; i >= 0; i--) {
-                            if (thresholds[i] !== null && pb >= thresholds[i]) { pbLevelInRow = i + 1; break; }
+                            if (thresholds[i] !== null && (timeMode ? pb <= thresholds[i] : pb >= thresholds[i])) { pbLevelInRow = i + 1; break; }
                           }
                           return (
                             <tr key={ag} style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
@@ -5629,7 +5635,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                 return (
                                   <td key={level} className="text-center py-2 px-1">
                                     <div className="rounded-md py-1.5 px-1 transition-all" style={{ background: bgColor, border: `1px solid ${borderColor}`, boxShadow: isCurrentCell ? `0 0 12px ${pl.color}15` : 'none' }}>
-                                      <div className="text-[10px] mono-font font-semibold tabular-nums" style={{color: textColor}}>{threshold.toFixed(2)}m</div>
+                                      <div className="text-[10px] mono-font font-semibold tabular-nums" style={{color: textColor}}>{fmtThreshold(threshold)}</div>
                                       {isCleared && !isCurrentCell && <div className="text-[8px] text-emerald-500 mt-0.5">✓</div>}
                                       {isCurrentCell && <div className="text-[8px] text-orange-400 mt-0.5 font-bold">YOU</div>}
                                       {isNext && <div className="text-[8px] text-orange-400/60 mt-0.5">next</div>}
@@ -5658,7 +5664,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <span className="text-[9px] text-slate-500 mono-font">Next Target</span>
                     </div>
                     {pl.gap !== null && (
-                      <span className="text-[9px] text-orange-400/70 mono-font ml-auto">{pl.gap.toFixed(2)}m to L{pl.nextLevel} ({pl.nextName})</span>
+                      <span className="text-[9px] text-orange-400/70 mono-font ml-auto">{pl.gap.toFixed(2)}{unit} to L{pl.nextLevel} ({pl.nextName})</span>
                     )}
                   </div>
                 </div>
@@ -6060,10 +6066,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const levelData = PERFORMANCE_LEVELS[key];
               if (!levelData) return null;
 
-              const ageGroups = Object.keys(levelData); // e.g. ['U13','U15','U17','U20','Senior']
+              const ageGroups = Object.keys(levelData);
               const pb = parseFloat(analysisResults.personalBest);
               const athleteAgeGroup = pl.ageGroup;
               const athleteLevel = pl.level;
+              const timeMode = isTimeDiscipline(analysisResults.discipline);
+              const unit = timeMode ? 's' : 'm';
+              const fmtThreshold = (v) => {
+                if (timeMode && v >= 60) { const m = Math.floor(v / 60); const s = (v % 60).toFixed(2); return `${m}:${s.padStart(5, '0')}`; }
+                return `${v.toFixed(2)}${unit}`;
+              };
 
               return (
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -6100,10 +6112,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         {ageGroups.map((ag, rowIdx) => {
                           const thresholds = levelData[ag];
                           const isAthleteRow = ag === athleteAgeGroup;
-                          // For non-athlete rows, determine what level the PB would reach in that age group
                           let pbLevelInRow = 0;
                           for (let i = thresholds.length - 1; i >= 0; i--) {
-                            if (thresholds[i] !== null && pb >= thresholds[i]) {
+                            if (thresholds[i] !== null && (timeMode ? pb <= thresholds[i] : pb >= thresholds[i])) {
                               pbLevelInRow = i + 1;
                               break;
                             }
@@ -6130,12 +6141,11 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                 const isCurrentCell = isAthleteRow && level === athleteLevel;
                                 const isCleared = isAthleteRow && level <= athleteLevel;
                                 const isNext = isAthleteRow && level === athleteLevel + 1;
-                                // For non-athlete rows, show where PB would sit
                                 const wouldClear = !isAthleteRow && level <= pbLevelInRow;
 
                                 let bgColor = 'transparent';
                                 let borderColor = 'transparent';
-                                let textColor = '#475569'; // slate-600
+                                let textColor = '#475569';
 
                                 if (isCurrentCell) {
                                   bgColor = `${pl.color}20`;
@@ -6162,7 +6172,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                       boxShadow: isCurrentCell ? `0 0 12px ${pl.color}15` : 'none',
                                     }}>
                                       <div className={`text-[10px] mono-font font-semibold tabular-nums`} style={{color: textColor}}>
-                                        {threshold.toFixed(2)}m
+                                        {fmtThreshold(threshold)}
                                       </div>
                                       {isCleared && !isCurrentCell && <div className="text-[8px] text-emerald-500 mt-0.5">✓</div>}
                                       {isCurrentCell && <div className="text-[8px] text-orange-400 mt-0.5 font-bold">YOU</div>}
@@ -6194,7 +6204,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     </div>
                     {pl.gap !== null && (
                       <span className="text-[9px] text-orange-400/70 mono-font ml-auto">
-                        {pl.gap.toFixed(2)}m to L{pl.nextLevel} ({pl.nextName})
+                        {pl.gap.toFixed(2)}{unit} to L{pl.nextLevel} ({pl.nextName})
                       </span>
                     )}
                   </div>

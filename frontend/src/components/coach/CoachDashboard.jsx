@@ -907,7 +907,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         const age = a.age != null ? a.age : calcAge(a.dob);
                         const pbVal = a.pb_value;
                         const disc = a.discipline;
-                        if (age != null && pbVal && disc && isThrowsDiscipline(disc)) {
+                        if (age != null && pbVal && disc) {
                           const pl = getPerformanceLevel(disc, a.gender, age, pbVal);
                           if (pl) {
                             return (
