@@ -17,6 +17,136 @@ import TermsOfService from './components/legal/TermsOfService';
 // ── Data stats constants (update when dataset changes) ──
 const STATS = { athletes: '5,100+', records: '628K+', events: '26', games: 'Sydney 2000 – Paris 2024' };
 
+// ── CountUp: animated number that counts from 0 to target on scroll into view ──
+function CountUp({ target, suffix = '', duration = 2000, className = '' }) {
+  const ref = useRef(null);
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !started) {
+        setStarted(true);
+        const numTarget = typeof target === 'number' ? target : parseFloat(target.replace(/[^0-9.]/g, ''));
+        const startTime = performance.now();
+        const animate = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+          setCount(Math.floor(eased * numTarget));
+          if (progress < 1) requestAnimationFrame(animate);
+          else setCount(numTarget);
+        };
+        requestAnimationFrame(animate);
+      }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [target, duration, started]);
+
+  const formatted = count >= 1000 ? count.toLocaleString() : count.toString();
+  return <span ref={ref} className={className}>{formatted}{suffix}</span>;
+}
+
+// ── ScrollReveal: reveals children word-by-word as user scrolls into view ──
+function ScrollRevealText({ text, className = '', style = {} }) {
+  const ref = useRef(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setRevealed(true); obs.disconnect(); }
+    }, { threshold: 0.2 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const words = text.split(' ');
+  return (
+    <span ref={ref} className={className} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="scroll-reveal-word" style={{
+          transitionDelay: revealed ? `${i * 0.06}s` : '0s',
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0)' : 'translateY(12px)',
+        }}>{word}{i < words.length - 1 ? '\u00A0' : ''}</span>
+      ))}
+    </span>
+  );
+}
+
+// ── SpotlightCard: card wrapper that follows mouse with radial gradient ──
+function SpotlightCard({ children, className = '', style = {}, spotlightColor = 'rgba(249,115,22,0.08)' }) {
+  const cardRef = useRef(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }, []);
+
+  return (
+    <div ref={cardRef} onMouseMove={handleMouseMove} className={`spotlight-card ${className}`} style={style}>
+      <div className="spotlight-gradient" style={{
+        background: `radial-gradient(600px circle at ${pos.x}px ${pos.y}px, ${spotlightColor}, transparent 40%)`,
+      }} />
+      <div style={{position: 'relative', zIndex: 2}}>{children}</div>
+    </div>
+  );
+}
+
+function useScrollVelocity(baseSpeed = 1, sensitivity = 0.003, maxMultiplier = 4) {
+  const [multiplier, setMultiplier] = useState(1);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let lastT = performance.now();
+    let raf;
+    const decay = () => {
+      setMultiplier(prev => {
+        const next = prev + (baseSpeed - prev) * 0.08;
+        return Math.abs(next - baseSpeed) < 0.01 ? baseSpeed : next;
+      });
+      raf = requestAnimationFrame(decay);
+    };
+    const onScroll = () => {
+      const now = performance.now();
+      const dt = now - lastT;
+      if (dt > 0) {
+        const vel = Math.abs(window.scrollY - lastY) / dt;
+        setMultiplier(Math.min(baseSpeed + vel / sensitivity, maxMultiplier));
+      }
+      lastY = window.scrollY;
+      lastT = now;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    raf = requestAnimationFrame(decay);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [baseSpeed, sensitivity, maxMultiplier]);
+  return multiplier;
+}
+
+function ScrollVelocityTicker({ children, baseSpeed = 45, direction = 'left', className = '' }) {
+  const multiplier = useScrollVelocity(1, 0.003, 4);
+  const duration = baseSpeed / multiplier;
+  const animName = direction === 'left' ? 'tickerLeft' : 'tickerRight';
+  return (
+    <div className={`flex gap-3 ${className}`} style={{
+      animation: `${animName} ${duration}s linear infinite`,
+      width: 'max-content',
+    }}>
+      {children}
+    </div>
+  );
+}
+
 export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetupProfile, onOpenDashboard, incomingAthlete, onIncomingAthleteConsumed }) {
   // Throws discipline detection helpers
   const THROWS_DISCIPLINES = ['Discus Throw', 'Javelin Throw', 'Hammer Throw', 'Shot Put'];
@@ -2813,6 +2943,45 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             .cta-primary { background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%); transition: all 0.3s ease; }
             .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(249,115,22,0.35); }
             .noise-overlay { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); }
+
+            /* ── Shiny Text shimmer effect ── */
+            .shiny-text {
+              background: linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 60%);
+              background-size: 200% 100%;
+              -webkit-background-clip: text;
+              background-clip: text;
+              animation: shinyTextSweep 4s ease-in-out infinite;
+            }
+            @keyframes shinyTextSweep { 0%,100% { background-position: 200% 0; } 50% { background-position: -200% 0; } }
+
+            /* ── Spotlight Card effect ── */
+            .spotlight-card {
+              position: relative;
+              overflow: hidden;
+            }
+            .spotlight-card .spotlight-gradient {
+              position: absolute;
+              inset: 0;
+              opacity: 0;
+              transition: opacity 0.4s ease;
+              pointer-events: none;
+              z-index: 1;
+            }
+            .spotlight-card:hover .spotlight-gradient {
+              opacity: 1;
+            }
+
+            /* ── Scroll Reveal progressive word unveil ── */
+            .scroll-reveal-word {
+              display: inline-block;
+              opacity: 0;
+              transform: translateY(12px);
+              transition: opacity 0.5s ease, transform 0.5s ease;
+            }
+            .scroll-reveal-word.revealed {
+              opacity: 1;
+              transform: translateY(0);
+            }
           `}</style>
 
           {/* ── ATMOSPHERIC BACKGROUND LAYERS ── */}
@@ -2887,13 +3056,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   Put your performance{' '}
                   <span className="hidden sm:inline"><br /></span>
                   in{' '}
-                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                    Olympic context.
+                  <span className="shiny-text" style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '100% 100%', position: 'relative'}}>
+                    <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Olympic context.</span>
+                    <span style={{position: 'absolute', inset: 0, background: 'linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 60%)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shinyTextSweep 4s ease-in-out infinite', pointerEvents: 'none'}}>Olympic context.</span>
                   </span>
                 </h1>
 
                 <p className="stagger-4 text-base sm:text-lg text-slate-400 leading-relaxed max-w-md mb-8 landing-font">
-                  Benchmark any track & field athlete against 25 years of Olympic career trajectories. Percentile rankings, peak projections, and finalist probability — all from real competition data.
+                  <ScrollRevealText text="Benchmark any track & field athlete against 25 years of Olympic career trajectories. Percentile rankings, peak projections, and finalist probability — all from real competition data." />
                 </p>
 
                 {/* CTAs */}
@@ -2915,15 +3085,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </button>
                 </div>
 
-                {/* Data credibility — horizontal, compact */}
+                {/* Data credibility — horizontal, compact with count-up animation */}
                 <div className="stagger-6 flex items-center gap-4 sm:gap-8">
                   {[
-                    { value: STATS.records, label: 'Records' },
-                    { value: STATS.athletes, label: 'Athletes' },
-                    { value: STATS.events, label: 'Events' },
+                    { target: 628, suffix: 'K+', label: 'Records' },
+                    { target: 5100, suffix: '+', label: 'Athletes' },
+                    { target: 26, suffix: '', label: 'Events' },
                   ].map((stat, i) => (
                     <div key={i} className="flex items-baseline gap-1.5 sm:gap-2">
-                      <span className="text-lg sm:text-xl font-bold text-white tabular-nums mono-font">{stat.value}</span>
+                      <CountUp target={stat.target} suffix={stat.suffix} duration={i === 0 ? 2200 : i === 1 ? 2000 : 1400} className="text-lg sm:text-xl font-bold text-white tabular-nums mono-font" />
                       <span className="text-[10px] sm:text-xs text-slate-600 uppercase tracking-widest landing-font font-medium">{stat.label}</span>
                     </div>
                   ))}
@@ -3143,8 +3313,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <p className="text-xs mono-font uppercase tracking-[0.25em] mb-4 role-transition" style={{color: landingRole === 'coach' ? '#3b82f6' : '#22c55e'}}>Four pillars. One platform.</p>
                 <h2 className="text-2xl sm:text-4xl font-bold text-white landing-font tracking-tight mb-4">
                   How will you use{' '}
-                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                    bnchmrkd?
+                  <span style={{position: 'relative', display: 'inline-block'}}>
+                    <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>bnchmrkd?</span>
+                    <span style={{position: 'absolute', inset: 0, background: 'linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 60%)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shinyTextSweep 5s ease-in-out 1s infinite', pointerEvents: 'none'}}>bnchmrkd?</span>
                   </span>
                 </h2>
               </div>
@@ -3382,10 +3553,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         const isActive = activePillar === i;
                         const content = landingRole === 'coach' ? pillar.coach : pillar.athlete;
                         return (
-                          <button
+                          <SpotlightCard
                             key={pillar.word}
-                            onClick={() => setActivePillar(i)}
-                            className={`pillar-card group relative rounded-2xl text-left overflow-hidden ${isActive ? 'pillar-card-active' : ''}`}
+                            spotlightColor={`${pillar.accent}12`}
+                            className={`pillar-card group rounded-2xl text-left ${isActive ? 'pillar-card-active' : ''}`}
                             style={{
                               background: isActive
                                 ? `linear-gradient(145deg, ${pillar.accent}12 0%, ${pillar.accent}06 50%, rgba(255,255,255,0.02) 100%)`
@@ -3393,7 +3564,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               border: isActive ? `1px solid ${pillar.accent}40` : '1px solid rgba(255,255,255,0.06)',
                               boxShadow: isActive ? `0 8px 40px ${pillar.accent}15, 0 0 0 1px ${pillar.accent}10` : 'none',
                               padding: '1.25rem',
+                              cursor: 'pointer',
                             }}
+                          >
+                          <button
+                            onClick={() => setActivePillar(i)}
+                            className="w-full text-left"
+                            style={{background: 'none', border: 'none', padding: 0}}
                           >
                             {/* Active glow effect */}
                             {isActive && (
@@ -3426,6 +3603,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               <span className="text-[9px] text-slate-600 mono-font uppercase tracking-wider">{content.statLabel}</span>
                             </div>
                           </button>
+                          </SpotlightCard>
                         );
                       })}
                     </div>
@@ -3627,16 +3805,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" style={{animation: 'pulseGlow 2s ease-in-out infinite'}}></span>
                 METHODOLOGY
               </span>
-              <h2 className="text-3xl sm:text-5xl font-bold text-white mb-4 landing-font tracking-tight">About Our Data</h2>
+              <h2 className="text-3xl sm:text-5xl font-bold text-white mb-4 landing-font tracking-tight"><ScrollRevealText text="About Our Data" /></h2>
               <p className="text-lg text-slate-500 max-w-xl mx-auto landing-font leading-relaxed">
-                Every insight is grounded in real Olympic data. Here's what powers the analysis.
+                <ScrollRevealText text="Every insight is grounded in real Olympic data. Here's what powers the analysis." />
               </p>
             </div>
 
             {/* ── Scrolling discipline ticker ── */}
             <div className="stagger-3 mb-14 relative overflow-hidden" style={{maskImage: 'linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)'}}>
-              {/* Row 1 — scrolls left */}
-              <div className="flex gap-3 mb-3" style={{animation: 'tickerLeft 45s linear infinite', width: 'max-content'}}>
+              {/* Row 1 — scrolls left, speed reacts to scroll velocity */}
+              <ScrollVelocityTicker baseSpeed={45} direction="left" className="mb-3">
                 {[...Array(2)].flatMap((_, rep) => [
                   { disc: '100m', gender: 'M', threshold: '10.15s', accent: '#3b82f6' },
                   { disc: '200m', gender: 'F', threshold: '23.55s', accent: '#ec4899' },
@@ -3659,9 +3837,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#f97316'}}>{item.threshold}</span>
                   </div>
                 )))}
-              </div>
-              {/* Row 2 — scrolls right */}
-              <div className="flex gap-3" style={{animation: 'tickerRight 50s linear infinite', width: 'max-content'}}>
+              </ScrollVelocityTicker>
+              {/* Row 2 — scrolls right, speed reacts to scroll velocity */}
+              <ScrollVelocityTicker baseSpeed={50} direction="right">
                 {[...Array(2)].flatMap((_, rep) => [
                   { disc: '100m', gender: 'F', threshold: '11.50s', accent: '#ec4899' },
                   { disc: '400m', gender: 'M', threshold: '44.64s', accent: '#3b82f6' },
@@ -3684,7 +3862,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#f97316'}}>{item.threshold}</span>
                   </div>
                 )))}
-              </div>
+              </ScrollVelocityTicker>
             </div>
 
             {/* ── Key stats row ── */}
