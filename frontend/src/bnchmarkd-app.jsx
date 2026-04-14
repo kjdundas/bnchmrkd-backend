@@ -16,7 +16,7 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
 // ── Data stats constants (update when dataset changes) ──
-const STATS = { athletes: '5,100+', records: '628K+', events: '26', games: 'Sydney 2000 – Paris 2024' };
+const STATS = { athletes: '7,360+', records: '915K+', events: '19', disciplines: '19', games: 'Sydney 2000 – Paris 2024' };
 
 // ── CountUp: animated number that counts from 0 to target on scroll into view ──
 function CountUp({ target, suffix = '', duration = 2000, className = '' }) {
@@ -3687,9 +3687,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 {/* Data credibility — horizontal, compact with count-up animation */}
                 <div className="stagger-6 flex items-center gap-4 sm:gap-8">
                   {[
-                    { target: 628, suffix: 'K+', label: 'Records' },
-                    { target: 5100, suffix: '+', label: 'Athletes' },
-                    { target: 26, suffix: '', label: 'Events' },
+                    { target: 915, suffix: 'K+', label: 'Records' },
+                    { target: 7360, suffix: '+', label: 'Athletes' },
+                    { target: 19, suffix: '', label: 'Disciplines' },
                   ].map((stat, i) => (
                     <div key={i} className="flex items-baseline gap-1.5 sm:gap-2">
                       <CountUp target={stat.target} suffix={stat.suffix} duration={i === 0 ? 2200 : i === 1 ? 2000 : 1400} className="text-lg sm:text-xl font-bold text-white tabular-nums mono-font" />
@@ -3973,8 +3973,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     coach: {
                       headline: 'See who\'s on track',
                       desc: 'View each athlete\'s percentile ranking against elite trajectories. Spot who\'s tracking toward elite and who needs a new approach.',
-                      stat: STATS.events,
-                      statLabel: 'events covered',
+                      stat: STATS.disciplines,
+                      statLabel: 'disciplines covered',
                     },
                   },
                   {
@@ -4469,7 +4469,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {[
                 { value: STATS.athletes, label: 'Olympic Athletes', sub: STATS.games },
                 { value: STATS.records, label: 'Career Results', sub: 'Analysed and classified' },
-                { value: STATS.events, label: 'Events', sub: 'Sprints, throws & distance' },
+                { value: STATS.disciplines, label: 'Disciplines', sub: 'Sprints, hurdles, distance, throws & jumps' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
                 <div key={i} className="bento-card rounded-xl p-5 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -4488,14 +4488,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
                 <h3 className="text-lg font-bold text-white landing-font">Discipline Coverage</h3>
               </div>
-              <p className="text-xs text-slate-600 mb-6 landing-font ml-11">Finalist thresholds derived from ROC/AUC analysis with Youden's J optimisation across all {STATS.events} events.</p>
+              <p className="text-xs text-slate-600 mb-6 landing-font ml-11">Finalist thresholds derived from ROC/AUC analysis with Youden's J optimisation across all {STATS.disciplines} disciplines.</p>
 
               {/* Category sections */}
               {[
                 {
                   category: 'Sprints & Hurdles',
                   accent: '#3b82f6',
-                  count: '12 events',
+                  count: '10 events',
                   rows: [
                     { disc: '100m', gender: 'Male', threshold: '10.15s', mean: '10.45s' },
                     { disc: '100m', gender: 'Female', threshold: '11.50s', mean: '11.65s' },
@@ -4507,6 +4507,30 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     { disc: '110m Hurdles', gender: 'Male', threshold: '13.80s', mean: '13.85s' },
                     { disc: '400m Hurdles', gender: 'Male', threshold: '48.17s', mean: '48.67s' },
                     { disc: '400m Hurdles', gender: 'Female', threshold: '57.70s', mean: '58.20s' },
+                  ]
+                },
+                {
+                  category: 'Middle Distance',
+                  accent: '#a855f7',
+                  count: '4 events',
+                  rows: [
+                    { disc: '800m', gender: 'Male', threshold: '1:44.70', mean: '1:45.80' },
+                    { disc: '800m', gender: 'Female', threshold: '1:58.80', mean: '2:00.10' },
+                    { disc: '1500m', gender: 'Male', threshold: '3:32.80', mean: '3:34.40' },
+                    { disc: '1500m', gender: 'Female', threshold: '4:02.50', mean: '4:04.20' },
+                  ]
+                },
+                {
+                  category: 'Long Distance',
+                  accent: '#f43f5e',
+                  count: '6 events',
+                  rows: [
+                    { disc: '3000m Steeplechase', gender: 'Male', threshold: '8:16.91', mean: '8:16.06' },
+                    { disc: '3000m Steeplechase', gender: 'Female', threshold: '9:26.32', mean: '9:22.09' },
+                    { disc: '5000m', gender: 'Male', threshold: '13:03.87', mean: '13:13.86' },
+                    { disc: '5000m', gender: 'Female', threshold: '14:54.29', mean: '15:08.46' },
+                    { disc: '10000m', gender: 'Male', threshold: '27:22.44', mean: '27:19.92' },
+                    { disc: '10000m', gender: 'Female', threshold: '31:08.89', mean: '31:03.83' },
                   ]
                 },
                 {
@@ -4525,16 +4549,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   ]
                 },
                 {
-                  category: 'Long Distance',
-                  accent: '#f43f5e',
-                  count: '6 events',
+                  category: 'Jumps',
+                  accent: '#10b981',
+                  count: '8 events',
                   rows: [
-                    { disc: '3000m Steeplechase', gender: 'Male', threshold: '8:16.91', mean: '8:16.06' },
-                    { disc: '3000m Steeplechase', gender: 'Female', threshold: '9:26.32', mean: '9:22.09' },
-                    { disc: '5000m', gender: 'Male', threshold: '13:03.87', mean: '13:13.86' },
-                    { disc: '5000m', gender: 'Female', threshold: '14:54.29', mean: '15:08.46' },
-                    { disc: '10000m', gender: 'Male', threshold: '27:22.44', mean: '27:19.92' },
-                    { disc: '10000m', gender: 'Female', threshold: '31:08.89', mean: '31:03.83' },
+                    { disc: 'High Jump', gender: 'Male', threshold: '2.34m', mean: '2.30m' },
+                    { disc: 'High Jump', gender: 'Female', threshold: '2.00m', mean: '1.96m' },
+                    { disc: 'Long Jump', gender: 'Male', threshold: '8.30m', mean: '8.12m' },
+                    { disc: 'Long Jump', gender: 'Female', threshold: '6.95m', mean: '6.82m' },
+                    { disc: 'Triple Jump', gender: 'Male', threshold: '17.40m', mean: '17.12m' },
+                    { disc: 'Triple Jump', gender: 'Female', threshold: '14.70m', mean: '14.50m' },
+                    { disc: 'Pole Vault', gender: 'Male', threshold: '5.90m', mean: '5.75m' },
+                    { disc: 'Pole Vault', gender: 'Female', threshold: '4.80m', mean: '4.68m' },
                   ]
                 },
               ].map((section, si) => (
