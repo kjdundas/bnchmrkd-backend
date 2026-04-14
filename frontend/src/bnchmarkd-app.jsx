@@ -4793,18 +4793,23 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <line x1="8" y1="38" x2="18" y2="10" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round">
-                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="20" y1="38" x2="24" y2="14" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round">
-                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" begin="0.2s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="32" y1="38" x2="30" y2="18" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round">
-                      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" begin="0.4s" repeatCount="indefinite" />
-                    </line>
-                    <rect x="6" y="22" width="36" height="2.5" rx="1" fill="#f97316" opacity="0.3">
-                      <animate attributeName="opacity" values="0.15;0.4;0.15" dur="2s" repeatCount="indefinite" />
-                    </rect>
+                    {/* Ground line */}
+                    <line x1="4" y1="41" x2="44" y2="41" stroke="#f97316" strokeWidth="1" opacity="0.25" strokeDasharray="2 2" />
+                    {/* Hurdle */}
+                    <line x1="30" y1="28" x2="42" y2="28" stroke="#f97316" strokeWidth="2" strokeLinecap="round" opacity="0.75" />
+                    <line x1="32" y1="28" x2="30" y2="41" stroke="#f97316" strokeWidth="1.3" opacity="0.5" />
+                    <line x1="40" y1="28" x2="42" y2="41" stroke="#f97316" strokeWidth="1.3" opacity="0.5" />
+                    {/* Hurdler mid-leap (stick figure) */}
+                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 1,-1.5; 0,0" dur="2.2s" repeatCount="indefinite" />
+                      <circle cx="14" cy="10" r="2.4" fill="#f1f5f9" />
+                      <line x1="14" y1="12.4" x2="17" y2="23" />
+                      <line x1="17" y1="23" x2="32" y2="22" />
+                      <line x1="17" y1="23" x2="10" y2="32" />
+                      <line x1="10" y1="32" x2="5" y2="38" />
+                      <line x1="15.5" y1="15" x2="8" y2="18" />
+                      <line x1="15.5" y1="15" x2="24" y2="11" />
+                    </g>
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">Sprints & Hurdles</h3>
@@ -4827,12 +4832,29 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <path d="M10 36 Q 24 8, 40 28" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 3">
-                      <animate attributeName="stroke-dashoffset" values="0;-14" dur="2s" repeatCount="indefinite" />
-                    </path>
-                    <circle cx="40" cy="28" r="4" fill="#f97316" opacity="0.5">
-                      <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" />
-                    </circle>
+                    {/* Ground line */}
+                    <line x1="4" y1="41" x2="44" y2="41" stroke="#f97316" strokeWidth="1" opacity="0.25" strokeDasharray="2 2" />
+                    {/* Discus thrower */}
+                    <g>
+                      <animateTransform attributeName="transform" type="rotate" values="0 24 24; 2 24 24; 0 24 24" dur="2.6s" repeatCount="indefinite" />
+                      <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
+                        {/* Head */}
+                        <circle cx="22" cy="10" r="2.4" fill="#f1f5f9" />
+                        {/* Torso with slight twist */}
+                        <line x1="22" y1="12.4" x2="22" y2="26" />
+                        {/* Throwing arm extended up/out with disc */}
+                        <line x1="22" y1="15" x2="36" y2="10" />
+                        {/* Off-arm across body */}
+                        <line x1="22" y1="15" x2="12" y2="19" />
+                        {/* Legs in wide stance */}
+                        <line x1="22" y1="26" x2="14" y2="40" />
+                        <line x1="22" y1="26" x2="30" y2="40" />
+                      </g>
+                      {/* Disc at end of throwing arm */}
+                      <circle cx="38" cy="10" r="3" fill="none" stroke="#f97316" strokeWidth="2">
+                        <animate attributeName="r" values="2.6;3.4;2.6" dur="2.6s" repeatCount="indefinite" />
+                      </circle>
+                    </g>
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">Throws</h3>
@@ -4855,12 +4877,25 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <path d="M8 38 Q 24 6, 40 38" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round">
-                      <animate attributeName="d" values="M8 38 Q 24 6, 40 38;M8 38 Q 24 10, 40 38;M8 38 Q 24 6, 40 38" dur="2s" repeatCount="indefinite" />
-                    </path>
-                    <circle cx="24" cy="12" r="3" fill="#10b981" opacity="0.8">
-                      <animate attributeName="cy" values="14;10;14" dur="2s" repeatCount="indefinite" />
-                    </circle>
+                    {/* Uprights + bar */}
+                    <line x1="8" y1="24" x2="8" y2="41" stroke="#10b981" strokeWidth="1.3" opacity="0.5" />
+                    <line x1="40" y1="24" x2="40" y2="41" stroke="#10b981" strokeWidth="1.3" opacity="0.5" />
+                    <line x1="8" y1="26" x2="40" y2="26" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+                    {/* Ground */}
+                    <line x1="4" y1="41" x2="44" y2="41" stroke="#10b981" strokeWidth="1" opacity="0.2" strokeDasharray="2 2" />
+                    {/* Fosbury-flop figure arched over bar */}
+                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1.5; 0,0" dur="2.5s" repeatCount="indefinite" />
+                      {/* Arched body */}
+                      <path d="M14 22 Q 24 12 36 20" strokeWidth="2.2" />
+                      {/* Head at left end (goes over first) */}
+                      <circle cx="14" cy="22" r="2.4" fill="#f1f5f9" />
+                      {/* Legs kicking up on right */}
+                      <line x1="36" y1="20" x2="42" y2="12" />
+                      <line x1="36" y1="20" x2="38" y2="10" />
+                      {/* Trailing arm */}
+                      <line x1="18" y1="19" x2="10" y2="18" />
+                    </g>
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-emerald-400 transition-colors">Jumps</h3>
@@ -4883,12 +4918,28 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <ellipse cx="24" cy="24" rx="16" ry="10" fill="none" stroke="#a855f7" strokeWidth="2" strokeDasharray="6 4">
-                      <animate attributeName="stroke-dashoffset" values="0;-20" dur="3s" repeatCount="indefinite" />
-                    </ellipse>
-                    <circle cx="8" cy="24" r="2.5" fill="#a855f7" opacity="0.7">
-                      <animateMotion dur="3s" repeatCount="indefinite" path="M16,0 A16,10 0 1,1 -0.1,0 A16,10 0 1,1 0.1,0" />
-                    </circle>
+                    {/* Subtle curved track */}
+                    <path d="M4 42 Q 24 38 44 42" stroke="#a855f7" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" fill="none" />
+                    {/* Mid-stride runner */}
+                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1; 0,0" dur="1.4s" repeatCount="indefinite" />
+                      {/* Head */}
+                      <circle cx="22" cy="10" r="2.4" fill="#f1f5f9" />
+                      {/* Torso, slight forward lean */}
+                      <line x1="22" y1="12.4" x2="24" y2="24" />
+                      {/* Front leg (thigh) */}
+                      <line x1="24" y1="24" x2="32" y2="28" />
+                      {/* Front shin */}
+                      <line x1="32" y1="28" x2="34" y2="38" />
+                      {/* Back leg thigh (lifted) */}
+                      <line x1="24" y1="24" x2="16" y2="28" />
+                      {/* Back shin folded under */}
+                      <line x1="16" y1="28" x2="20" y2="34" />
+                      {/* Forward arm */}
+                      <line x1="23" y1="15" x2="30" y2="18" />
+                      {/* Back arm */}
+                      <line x1="23" y1="15" x2="16" y2="12" />
+                    </g>
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-purple-400 transition-colors">Middle Distance</h3>
@@ -4911,9 +4962,29 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <path d="M6 40 Q 16 20, 24 28 Q 32 36, 42 10" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeDasharray="5 4">
-                      <animate attributeName="stroke-dashoffset" values="0;-18" dur="2.5s" repeatCount="indefinite" />
+                    {/* Water below with wave animation */}
+                    <path d="M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42" stroke="#f43f5e" strokeWidth="1.5" fill="none" opacity="0.55">
+                      <animate attributeName="d" values="M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42;M4 42 Q 10 43 16 42 T 28 42 T 40 42 T 48 42;M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42" dur="2.5s" repeatCount="indefinite" />
                     </path>
+                    {/* Barrier */}
+                    <line x1="8" y1="30" x2="8" y2="42" stroke="#f43f5e" strokeWidth="1.4" opacity="0.5" />
+                    <line x1="6" y1="30" x2="20" y2="30" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" opacity="0.65" />
+                    {/* Leaping figure */}
+                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-2; 0,0" dur="2.2s" repeatCount="indefinite" />
+                      {/* Head */}
+                      <circle cx="26" cy="14" r="2.4" fill="#f1f5f9" />
+                      {/* Torso */}
+                      <line x1="26" y1="16.4" x2="28" y2="26" />
+                      {/* Front leg extended forward/down */}
+                      <line x1="28" y1="26" x2="38" y2="32" />
+                      {/* Back leg trailing up and back */}
+                      <line x1="28" y1="26" x2="20" y2="22" />
+                      {/* Front arm forward */}
+                      <line x1="27" y1="19" x2="34" y2="16" />
+                      {/* Back arm */}
+                      <line x1="27" y1="19" x2="20" y2="17" />
+                    </g>
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-rose-400 transition-colors">Long Distance</h3>
@@ -4932,11 +5003,31 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(245,158,11,0.08)'}}>
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {[{cx:12,cy:14},{cx:24,cy:10},{cx:36,cy:14},{cx:12,cy:26},{cx:24,cy:30},{cx:36,cy:26},{cx:18,cy:38},{cx:30,cy:38}].map((dot, i) => (
-                      <circle key={i} cx={dot.cx} cy={dot.cy} r="3" fill="#f59e0b" opacity="0.4">
-                        <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" begin={`${i * 0.25}s`} repeatCount="indefinite" />
-                      </circle>
-                    ))}
+                    {/* Sparkles around figure — the "all-around" vibe */}
+                    <circle cx="8" cy="10" r="1" fill="#f59e0b" opacity="0.5">
+                      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.4s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="40" cy="14" r="1" fill="#f59e0b" opacity="0.4">
+                      <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.4s" begin="0.6s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="10" cy="26" r="1" fill="#f59e0b" opacity="0.4">
+                      <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="42" cy="28" r="1" fill="#f59e0b" opacity="0.45">
+                      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.4s" begin="0.3s" repeatCount="indefinite" />
+                    </circle>
+                    {/* Victory-pose figure (muted while compiling data) */}
+                    <g stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.75">
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1; 0,0" dur="3s" repeatCount="indefinite" />
+                      <circle cx="24" cy="14" r="2.4" fill="#cbd5e1" />
+                      <line x1="24" y1="16.4" x2="24" y2="28" />
+                      {/* Arms raised in V */}
+                      <line x1="24" y1="17" x2="14" y2="8" />
+                      <line x1="24" y1="17" x2="34" y2="8" />
+                      {/* Legs — planted */}
+                      <line x1="24" y1="28" x2="19" y2="40" />
+                      <line x1="24" y1="28" x2="29" y2="40" />
+                    </g>
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-300 mb-1 landing-font">Combined Events</h3>
