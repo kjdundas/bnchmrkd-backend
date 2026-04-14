@@ -155,8 +155,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const isThrowsDiscipline = (disc) => THROWS_DISCIPLINES.includes(disc) || THROWS_CODES.includes(disc);
 
   // Distance discipline detection helpers
-  const DISTANCE_DISCIPLINES = ['3000m Steeplechase', '5000m', '10000m'];
-  const DISTANCE_CODES = ['M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K'];
+  const DISTANCE_DISCIPLINES = ['800m', '1500m', '3000m Steeplechase', '5000m', '10000m'];
+  const DISTANCE_CODES = ['M800', 'F800', 'M1500', 'F1500', 'M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K'];
   const isDistanceDiscipline = (disc) => DISTANCE_DISCIPLINES.includes(disc) || DISTANCE_CODES.includes(disc);
 
   const getUnitLabel = (disc) => isThrowsDiscipline(disc) ? 'Distance (m)' : isDistanceDiscipline(disc) ? 'Time (mm:ss)' : 'Time (s)';
@@ -1327,6 +1327,154 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { name: 'Standard', pct_off_pb: [8.5, 6.5, 5.5, 2.7, 2.1, 2.1], peakAge: 24 },
         { name: 'Late Developer', pct_off_pb: [7.8, 21.4, 10.3, 4.9, 1.9, 0.0], peakAge: 22 }
       ]
+    },
+    // ═══════════════════════════════════════════════════════════════════
+    // MIDDLE DISTANCE (800m, 1500m) — from md_out/ analysis
+    // 62,769 WA race records + 962 Olympians (Sydney 2000 → Paris 2024)
+    // ═══════════════════════════════════════════════════════════════════
+    M800: {
+      percentiles: {
+        15: { p10: 3.55, p25: 4.75, p50: 10.18, p75: 11.56, p90: 11.84 },
+        16: { p10: 2.49, p25: 4.26, p50: 6.84, p75: 9.64, p90: 10.4 },
+        17: { p10: 1.76, p25: 3.57, p50: 5.44, p75: 7.24, p90: 8.76 },
+        18: { p10: 0.2, p25: 2.05, p50: 3.57, p75: 5.71, p90: 7.98 },
+        19: { p10: -0.9, p25: 1.0, p50: 2.59, p75: 4.71, p90: 7.04 },
+        20: { p10: -1.1, p25: -0.08, p50: 1.28, p75: 2.85, p90: 4.76 },
+        21: { p10: -1.32, p25: -0.3, p50: 0.84, p75: 2.51, p90: 4.07 },
+        22: { p10: -1.77, p25: -0.93, p50: 0.26, p75: 1.92, p90: 3.67 },
+        23: { p10: -2.01, p25: -0.94, p50: 0.28, p75: 1.58, p90: 4.47 },
+        24: { p10: -1.83, p25: -1.09, p50: -0.02, p75: 1.3, p90: 2.87 },
+        25: { p10: -1.86, p25: -1.04, p50: 0.09, p75: 1.9, p90: 4.28 },
+        26: { p10: -1.79, p25: -1.09, p50: 0.1, p75: 1.78, p90: 3.44 },
+        27: { p10: -1.84, p25: -0.67, p50: 0.41, p75: 1.86, p90: 4.36 },
+        28: { p10: -1.66, p25: -0.7, p50: 0.67, p75: 2.44, p90: 3.86 },
+        29: { p10: -1.06, p25: -0.55, p50: 0.9, p75: 2.54, p90: 4.96 },
+        30: { p10: -1.19, p25: -0.57, p50: 1.14, p75: 2.42, p90: 5.29 },
+        31: { p10: -1.12, p25: -0.26, p50: 1.5, p75: 3.28, p90: 5.3 },
+        32: { p10: -1.53, p25: 0.09, p50: 1.68, p75: 4.17, p90: 8.43 },
+        33: { p10: 0.19, p25: 0.94, p50: 2.62, p75: 4.49, p90: 7.49 },
+        34: { p10: -0.78, p25: 0.14, p50: 2.05, p75: 5.0, p90: 8.3 },
+        35: { p10: 0.44, p25: 2.44, p50: 4.56, p75: 7.16, p90: 8.58 },
+        36: { p10: 0.44, p25: 2.44, p50: 4.56, p75: 7.16, p90: 8.58 },
+        37: { p10: 0.44, p25: 2.44, p50: 4.56, p75: 7.16, p90: 8.58 },
+        38: { p10: 0.44, p25: 2.44, p50: 4.56, p75: 7.16, p90: 8.58 }
+      },
+      rocThresholds: { optimal: 105.71, s90: 105.59, s80: 104.16, s70: 102.69 },
+      calibration: { mean: 105.59, std: 1.76 },
+      improvement: { finalist_median: 3.93, finalist_std: 1.8, non_finalist_median: 2.79, non_finalist_std: 1.44 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [8.8, 5.5, 3.5, 2.0, 1.7, 2.4], peakAge: 22 },
+        { name: 'Late Developer', pct_off_pb: [13.2, 9.4, 6.1, 3.9, 2.2, 1.5], peakAge: 26 },
+        { name: 'Plateau Pattern', pct_off_pb: [8.2, 5.7, 4.2, 3.1, 2.6, 2.9], peakAge: 24 }
+      ]
+    },
+    F800: {
+      percentiles: {
+        15: { p10: 2.98, p25: 5.23, p50: 7.16, p75: 8.24, p90: 10.47 },
+        16: { p10: 0.85, p25: 3.05, p50: 5.86, p75: 9.13, p90: 11.73 },
+        17: { p10: -0.76, p25: 1.04, p50: 3.68, p75: 6.66, p90: 8.92 },
+        18: { p10: -1.37, p25: 0.78, p50: 2.64, p75: 5.09, p90: 7.79 },
+        19: { p10: -2.44, p25: -0.37, p50: 2.34, p75: 4.98, p90: 9.89 },
+        20: { p10: -3.06, p25: -1.48, p50: 1.17, p75: 4.06, p90: 6.99 },
+        21: { p10: -3.37, p25: -2.01, p50: -0.19, p75: 2.66, p90: 5.27 },
+        22: { p10: -3.77, p25: -2.71, p50: -0.71, p75: 1.14, p90: 5.6 },
+        23: { p10: -4.14, p25: -2.9, p50: -1.51, p75: 0.2, p90: 3.84 },
+        24: { p10: -3.95, p25: -3.09, p50: -1.87, p75: 0.16, p90: 3.38 },
+        25: { p10: -4.5, p25: -3.43, p50: -2.57, p75: -0.89, p90: 1.23 },
+        26: { p10: -4.54, p25: -3.58, p50: -2.33, p75: -1.06, p90: 0.84 },
+        27: { p10: -4.51, p25: -3.61, p50: -2.47, p75: -1.25, p90: 2.23 },
+        28: { p10: -4.36, p25: -3.48, p50: -2.19, p75: -0.66, p90: 2.24 },
+        29: { p10: -4.34, p25: -3.36, p50: -2.51, p75: -0.56, p90: 1.98 },
+        30: { p10: -4.24, p25: -3.3, p50: -2.26, p75: -0.97, p90: 0.92 },
+        31: { p10: -4.44, p25: -3.2, p50: -1.74, p75: -0.07, p90: 1.03 },
+        32: { p10: -3.69, p25: -3.02, p50: -1.83, p75: 1.18, p90: 3.55 },
+        33: { p10: -3.8, p25: -2.82, p50: -1.13, p75: 0.97, p90: 3.28 },
+        34: { p10: -3.65, p25: -2.46, p50: -0.95, p75: 3.29, p90: 5.73 },
+        35: { p10: -3.61, p25: -2.63, p50: 0.41, p75: 2.25, p90: 4.1 },
+        36: { p10: -3.61, p25: -2.63, p50: 0.41, p75: 2.25, p90: 4.1 },
+        37: { p10: -3.61, p25: -2.63, p50: 0.41, p75: 2.25, p90: 4.1 },
+        38: { p10: -3.61, p25: -2.63, p50: 0.41, p75: 2.25, p90: 4.1 }
+      },
+      rocThresholds: { optimal: 123.27, s90: 119.92, s80: 118.46, s70: 117.25 },
+      calibration: { mean: 119.92, std: 4.82 },
+      improvement: { finalist_median: 6.91, finalist_std: 2.93, non_finalist_median: 4.74, non_finalist_std: 2.34 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [8.8, 5.5, 3.5, 2.0, 1.7, 2.4], peakAge: 23 },
+        { name: 'Late Developer', pct_off_pb: [13.2, 9.4, 6.1, 3.9, 2.2, 1.5], peakAge: 27 },
+        { name: 'Plateau Pattern', pct_off_pb: [8.2, 5.7, 4.2, 3.1, 2.6, 2.9], peakAge: 25 }
+      ]
+    },
+    M1500: {
+      percentiles: {
+        15: { p10: 2.28, p25: 3.67, p50: 7.92, p75: 12.29, p90: 13.1 },
+        16: { p10: 2.28, p25: 3.67, p50: 7.92, p75: 12.29, p90: 13.1 },
+        17: { p10: 1.22, p25: 3.43, p50: 6.22, p75: 8.12, p90: 10.22 },
+        18: { p10: -0.61, p25: 1.85, p50: 3.95, p75: 6.67, p90: 8.65 },
+        19: { p10: -0.74, p25: 1.08, p50: 3.17, p75: 4.99, p90: 7.0 },
+        20: { p10: -1.95, p25: -0.42, p50: 1.72, p75: 3.35, p90: 5.4 },
+        21: { p10: -2.28, p25: -0.82, p50: 0.93, p75: 2.97, p90: 5.51 },
+        22: { p10: -2.52, p25: -1.38, p50: 0.3, p75: 2.21, p90: 4.23 },
+        23: { p10: -2.59, p25: -1.49, p50: -0.27, p75: 1.6, p90: 3.16 },
+        24: { p10: -2.52, p25: -1.75, p50: -0.46, p75: 1.55, p90: 3.6 },
+        25: { p10: -2.95, p25: -1.83, p50: -0.62, p75: 0.8, p90: 2.33 },
+        26: { p10: -3.16, p25: -2.04, p50: -0.76, p75: 0.67, p90: 2.65 },
+        27: { p10: -2.84, p25: -1.51, p50: -0.47, p75: 0.8, p90: 2.55 },
+        28: { p10: -2.53, p25: -1.69, p50: -0.32, p75: 1.19, p90: 3.46 },
+        29: { p10: -2.32, p25: -1.31, p50: -0.09, p75: 1.45, p90: 4.18 },
+        30: { p10: -2.0, p25: -1.14, p50: 0.09, p75: 2.38, p90: 4.67 },
+        31: { p10: -2.52, p25: -1.44, p50: -0.09, p75: 2.37, p90: 5.46 },
+        32: { p10: -2.19, p25: -1.07, p50: 0.71, p75: 4.36, p90: 5.39 },
+        33: { p10: -1.48, p25: -0.91, p50: 0.32, p75: 2.74, p90: 4.28 },
+        34: { p10: -1.68, p25: -0.19, p50: 0.41, p75: 3.18, p90: 6.98 },
+        35: { p10: -0.76, p25: -0.14, p50: 3.1, p75: 6.86, p90: 9.56 },
+        36: { p10: -0.76, p25: -0.14, p50: 3.1, p75: 6.86, p90: 9.56 },
+        37: { p10: -0.76, p25: -0.14, p50: 3.1, p75: 6.86, p90: 9.56 },
+        38: { p10: -0.76, p25: -0.14, p50: 3.1, p75: 6.86, p90: 9.56 }
+      },
+      rocThresholds: { optimal: 216.9, s90: 215.42, s80: 212.49, s70: 210.75 },
+      calibration: { mean: 215.42, std: 4.07 },
+      improvement: { finalist_median: 9.66, finalist_std: 4.55, non_finalist_median: 7.57, non_finalist_std: 3.64 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [10.4, 6.5, 4.2, 2.3, 2.0, 2.9], peakAge: 23 },
+        { name: 'Late Developer', pct_off_pb: [15.6, 11.1, 7.2, 4.5, 2.6, 1.8], peakAge: 27 },
+        { name: 'Plateau Pattern', pct_off_pb: [9.8, 6.8, 4.9, 3.6, 3.1, 3.4], peakAge: 25 }
+      ]
+    },
+    F1500: {
+      percentiles: {
+        15: { p10: 3.89, p25: 5.85, p50: 7.08, p75: 9.2, p90: 13.55 },
+        16: { p10: -0.15, p25: 2.23, p50: 5.76, p75: 7.91, p90: 10.69 },
+        17: { p10: -1.38, p25: 0.69, p50: 4.93, p75: 8.47, p90: 11.92 },
+        18: { p10: -2.49, p25: 0.36, p50: 4.32, p75: 7.12, p90: 10.8 },
+        19: { p10: -3.07, p25: -0.59, p50: 2.0, p75: 4.31, p90: 6.18 },
+        20: { p10: -3.98, p25: -1.96, p50: 1.09, p75: 4.15, p90: 6.34 },
+        21: { p10: -4.15, p25: -2.56, p50: -0.01, p75: 3.14, p90: 5.47 },
+        22: { p10: -5.18, p25: -3.34, p50: -1.31, p75: 1.56, p90: 3.37 },
+        23: { p10: -5.04, p25: -3.01, p50: -1.27, p75: 0.89, p90: 3.24 },
+        24: { p10: -4.8, p25: -3.32, p50: -1.6, p75: 0.32, p90: 3.36 },
+        25: { p10: -4.77, p25: -3.9, p50: -2.72, p75: 0.14, p90: 2.42 },
+        26: { p10: -5.35, p25: -4.35, p50: -2.72, p75: -0.78, p90: 1.7 },
+        27: { p10: -5.34, p25: -4.13, p50: -2.8, p75: -1.05, p90: 1.72 },
+        28: { p10: -5.35, p25: -3.79, p50: -2.52, p75: -0.95, p90: 1.78 },
+        29: { p10: -5.36, p25: -3.89, p50: -2.87, p75: -1.49, p90: 2.49 },
+        30: { p10: -5.42, p25: -4.26, p50: -2.77, p75: -1.0, p90: 2.77 },
+        31: { p10: -6.22, p25: -4.53, p50: -2.64, p75: -0.73, p90: 2.11 },
+        32: { p10: -5.64, p25: -3.8, p50: -2.24, p75: 0.49, p90: 2.69 },
+        33: { p10: -4.62, p25: -3.37, p50: -2.62, p75: -0.82, p90: 1.69 },
+        34: { p10: -5.16, p25: -3.6, p50: -0.76, p75: 1.46, p90: 3.57 },
+        35: { p10: -3.27, p25: -2.63, p50: -0.13, p75: 1.88, p90: 4.38 },
+        36: { p10: -3.27, p25: -2.63, p50: -0.13, p75: 1.88, p90: 4.38 },
+        37: { p10: -3.27, p25: -2.63, p50: -0.13, p75: 1.88, p90: 4.38 },
+        38: { p10: -3.27, p25: -2.63, p50: -0.13, p75: 1.88, p90: 4.38 }
+      },
+      rocThresholds: { optimal: 252.82, s90: 244.22, s80: 241.73, s70: 238.97 },
+      calibration: { mean: 244.22, std: 3.62 },
+      improvement: { finalist_median: 15.17, finalist_std: 7.66, non_finalist_median: 11.16, non_finalist_std: 6.13 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [10.4, 6.5, 4.2, 2.3, 2.0, 2.9], peakAge: 24 },
+        { name: 'Late Developer', pct_off_pb: [15.6, 11.1, 7.2, 4.5, 2.6, 1.8], peakAge: 28 },
+        { name: 'Plateau Pattern', pct_off_pb: [9.8, 6.8, 4.9, 3.6, 3.1, 3.4], peakAge: 26 }
+      ]
     }
 
   };
@@ -1580,6 +1728,48 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 1877.82, bronze: 1905.00, p8: 1950.00, semi: null },
       ],
     },
+    // ── MIDDLE DISTANCE: 800m ───────────────────────────────────────
+    M800: {
+      wr: { mark: 100.91, holder: 'David Rudisha', year: 2012 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 104.70, gold: 101.19, bronze: 101.50, p8: 104.71, semi: 105.20 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 104.50, gold: 101.86, bronze: 101.95, p8: 103.80, semi: 105.00 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 105.70, bronze: 107.20, p8: 110.50, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 104.85, bronze: 105.90, p8: 108.20, semi: 108.80 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 105.86, bronze: 106.71, p8: 107.44, semi: 108.00 },
+      ],
+    },
+    F800: {
+      wr: { mark: 113.28, holder: 'Jarmila Kratochvílová', year: 1983 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 119.30, gold: 116.72, bronze: 117.42, p8: 120.14, semi: 120.80 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 119.00, gold: 114.62, bronze: 114.91, p8: 117.50, semi: 118.80 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 122.50, bronze: 124.00, p8: 127.50, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 120.60, bronze: 121.80, p8: 124.50, semi: 125.00 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 118.13, bronze: 119.03, p8: 121.00, semi: 121.60 },
+      ],
+    },
+    // ── MIDDLE DISTANCE: 1500m ──────────────────────────────────────
+    M1500: {
+      wr: { mark: 206.00, holder: 'Hicham El Guerrouj', year: 1998 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 213.50, gold: 207.65, bronze: 207.80, p8: 209.61, semi: 214.00 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 213.00, gold: 214.10, bronze: 214.25, p8: 218.50, semi: 216.50 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 222.00, bronze: 223.50, p8: 228.50, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 219.00, bronze: 220.50, p8: 224.00, semi: 224.50 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 227.26, bronze: 227.42, p8: 227.74, semi: 229.50 },
+      ],
+    },
+    F1500: {
+      wr: { mark: 229.04, holder: 'Faith Kipyegon', year: 2024 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 242.50, gold: 231.29, bronze: 232.61, p8: 236.28, semi: 238.00 },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 241.50, gold: 232.15, bronze: 235.16, p8: 240.00, semi: 240.50 },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 252.00, bronze: 254.50, p8: 261.00, semi: null },
+        { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 247.50, bronze: 250.00, p8: 255.50, semi: 256.00 },
+        { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 247.94, bronze: 249.31, p8: 251.03, semi: 252.50 },
+      ],
+    },
   };
 
   // Performance Levels imported from lib/performanceLevels.js
@@ -1643,6 +1833,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     if (discipline === 'Javelin Throw') return `${genderCode}JT`;
     if (discipline === 'Hammer Throw') return `${genderCode}HT`;
     if (discipline === 'Shot Put') return `${genderCode}SP`;
+    if (discipline === '800m') return `${genderCode}800`;
+    if (discipline === '1500m') return `${genderCode}1500`;
     if (discipline === '3000m Steeplechase') return `${genderCode}3SC`;
     if (discipline === '5000m') return `${genderCode}5K`;
     if (discipline === '10000m') return `${genderCode}10K`;
@@ -1678,6 +1870,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     F5K: { gold: 870.0, silver: 876.0, bronze: 882.0, mqt: 900.0, asianGold: 925.0, u20Gold: 885.0 },
     M10K: { gold: 1610.0, silver: 1615.0, bronze: 1620.0, mqt: 1640.0, asianGold: 1700.0, u20Gold: null },
     F10K: { gold: 1845.0, silver: 1855.0, bronze: 1865.0, mqt: 1880.0, asianGold: 1900.0, u20Gold: null },
+    M800: { gold: 102.80, silver: 103.01, bronze: 103.27, mqt: 104.70, asianGold: 105.70, u20Gold: 104.85 },
+    F800: { gold: 115.74, silver: 116.51, bronze: 116.93, mqt: 119.30, asianGold: 122.50, u20Gold: 120.60 },
+    M1500: { gold: 215.32, silver: 215.64, bronze: 215.70, mqt: 213.00, asianGold: 222.00, u20Gold: 219.00 },
+    F1500: { gold: 237.77, silver: 239.56, bronze: 238.82, mqt: 242.50, asianGold: 252.00, u20Gold: 247.50 },
   };
 
   const sigmoid = (x) => 1 / (1 + Math.exp(-x));
@@ -4180,9 +4376,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(16,185,129,0.1)', color: '#34d399'}}>Coming Soon</span>
               </div>
 
-              {/* ── MIDDLE DISTANCE (COMPILING DATA) ── */}
-              <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(168,85,247,0.08)'}}>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.12)'}}>
+              {/* ── MIDDLE DISTANCE (ACTIVE) ── */}
+              <button
+                onClick={() => { setDisciplineCategory('distance'); setAthleteData(d => ({...d, discipline: '800m'})); setQuickAnalysisData(d => ({...d, discipline: '800m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
+                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(168,85,247,0.15)'}}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     <ellipse cx="24" cy="24" rx="16" ry="10" fill="none" stroke="#a855f7" strokeWidth="2" strokeDasharray="6 4">
                       <animate attributeName="stroke-dashoffset" values="0;-20" dur="3s" repeatCount="indefinite" />
@@ -4192,13 +4392,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     </circle>
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-300 mb-1 landing-font">Middle Distance</h3>
+                <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-purple-400 transition-colors">Middle Distance</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">800m, 1500m</p>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold mono-font flex items-center gap-1.5 w-fit" style={{background: 'rgba(168,85,247,0.1)', color: '#c084fc'}}>
-                  <svg className="w-3 h-3 animate-spin" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 12" /></svg>
-                  Compiling Data
-                </span>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(168,85,247,0.15)', color: '#c084fc'}}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                    Live
+                  </span>
+                  <span className="text-xs text-slate-500 mono-font">4 events</span>
+                </div>
+                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-purple-400 transition-colors" />
+              </button>
 
               {/* ── LONG DISTANCE (ACTIVE) ── */}
               <button
@@ -4711,11 +4915,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <option value="Shot Put">Shot Put</option>
                         </>
                       ) : isDistanceMode ? (
-                        <optgroup label="Distance">
-                          <option value="3000m Steeplechase">3000m Steeplechase</option>
-                          <option value="5000m">5000m</option>
-                          <option value="10000m">10000m</option>
-                        </optgroup>
+                        <>
+                          <optgroup label="Middle Distance">
+                            <option value="800m">800m</option>
+                            <option value="1500m">1500m</option>
+                          </optgroup>
+                          <optgroup label="Distance">
+                            <option value="3000m Steeplechase">3000m Steeplechase</option>
+                            <option value="5000m">5000m</option>
+                            <option value="10000m">10000m</option>
+                          </optgroup>
+                        </>
                       ) : (
                         <>
                           <optgroup label="Sprints">
@@ -4847,9 +5057,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
                       </optgroup>
                     ) : isDistanceMode ? (
-                      <optgroup label="Distance">
-                        <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
-                      </optgroup>
+                      <>
+                        <optgroup label="Middle Distance">
+                          <option value="800m">800m</option><option value="1500m">1500m</option>
+                        </optgroup>
+                        <optgroup label="Distance">
+                          <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
+                        </optgroup>
+                      </>
                     ) : (
                       <>
                         <optgroup label="Sprints">
@@ -4894,9 +5109,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <option value="Discus Throw">Discus Throw</option><option value="Javelin Throw">Javelin Throw</option><option value="Hammer Throw">Hammer Throw</option><option value="Shot Put">Shot Put</option>
                         </optgroup>
                       ) : isDistanceMode ? (
-                        <optgroup label="Distance">
-                          <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
-                        </optgroup>
+                        <>
+                          <optgroup label="Middle Distance">
+                            <option value="800m">800m</option><option value="1500m">1500m</option>
+                          </optgroup>
+                          <optgroup label="Distance">
+                            <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
+                          </optgroup>
+                        </>
                       ) : (
                         <>
                           <optgroup label="Sprints">
