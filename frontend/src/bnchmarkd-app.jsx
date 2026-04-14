@@ -80,6 +80,64 @@ function ScrollRevealText({ text, className = '', style = {} }) {
   );
 }
 
+// ── TypewriterCycle: cycles through words with type-in → hold → type-out rhythm,
+//    rendering an orange blinking cursor at the end. Used in the hero subheading. ──
+function TypewriterCycle({
+  words = [],
+  typeSpeed = 85,        // ms per character while typing in
+  deleteSpeed = 45,      // ms per character while deleting
+  holdDuration = 1500,   // ms to hold fully-typed word before deleting
+  gapDuration = 350,     // ms pause between words (after fully deleted)
+  cursorColor = '#f97316',
+  className = '',
+}) {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [display, setDisplay] = useState('');
+  const [phase, setPhase] = useState('typing'); // 'typing' | 'holding' | 'deleting' | 'gap'
+
+  useEffect(() => {
+    if (!words.length) return;
+    const current = words[wordIndex];
+    let timer;
+
+    if (phase === 'typing') {
+      if (display.length < current.length) {
+        timer = setTimeout(() => setDisplay(current.slice(0, display.length + 1)), typeSpeed);
+      } else {
+        timer = setTimeout(() => setPhase('holding'), 0);
+      }
+    } else if (phase === 'holding') {
+      timer = setTimeout(() => setPhase('deleting'), holdDuration);
+    } else if (phase === 'deleting') {
+      if (display.length > 0) {
+        timer = setTimeout(() => setDisplay(current.slice(0, display.length - 1)), deleteSpeed);
+      } else {
+        timer = setTimeout(() => setPhase('gap'), 0);
+      }
+    } else if (phase === 'gap') {
+      timer = setTimeout(() => {
+        setWordIndex((wordIndex + 1) % words.length);
+        setPhase('typing');
+      }, gapDuration);
+    }
+    return () => clearTimeout(timer);
+  }, [display, phase, wordIndex, words, typeSpeed, deleteSpeed, holdDuration, gapDuration]);
+
+  return (
+    <span className={className} aria-live="polite">
+      <span>{display}</span>
+      <span style={{
+        display: 'inline-block',
+        width: '0.08em',
+        marginLeft: '0.05em',
+        background: cursorColor,
+        animation: 'typewriterBlink 1s step-end infinite',
+        alignSelf: 'stretch',
+      }}>&nbsp;</span>
+    </span>
+  );
+}
+
 // ── SpotlightCard: card wrapper that follows mouse with radial gradient ──
 function SpotlightCard({ children, className = '', style = {}, spotlightColor = 'rgba(249,115,22,0.08)' }) {
   const cardRef = useRef(null);
@@ -3661,9 +3719,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </span>
                 </h1>
 
-                <p className="stagger-4 text-base sm:text-lg text-slate-400 leading-relaxed max-w-md mb-8 landing-font">
-                  <ScrollRevealText text="Benchmark any track & field athlete against 25 years of Olympic career trajectories. Percentile rankings, peak projections, and finalist probability — all from real competition data." />
-                </p>
+                <div className="stagger-4 mb-6 landing-font">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white tracking-tight leading-tight">
+                    Talent{'\u00A0'}
+                    <TypewriterCycle
+                      words={['Identification', 'Confirmation', 'Development']}
+                    />
+                  </h2>
+                  <p className="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed max-w-md">
+                    <ScrollRevealText text="25 years of Olympic career data, distilled into one trajectory." />
+                  </p>
+                </div>
 
                 {/* CTAs */}
                 <div className="stagger-5 flex flex-col sm:flex-row gap-3 mb-10">
