@@ -4791,7 +4791,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     {/* Ground line */}
                     <line x1="4" y1="41" x2="44" y2="41" stroke="#f97316" strokeWidth="1" opacity="0.25" strokeDasharray="2 2" />
@@ -4830,7 +4830,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     {/* Ground line */}
                     <line x1="4" y1="41" x2="44" y2="41" stroke="#f97316" strokeWidth="1" opacity="0.25" strokeDasharray="2 2" />
@@ -4875,7 +4875,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(16,185,129,0.15)'}}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     {/* Uprights + bar */}
                     <line x1="8" y1="24" x2="8" y2="41" stroke="#10b981" strokeWidth="1.3" opacity="0.5" />
@@ -4916,7 +4916,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(168,85,247,0.15)'}}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     {/* Subtle curved track */}
                     <path d="M4 42 Q 24 38 44 42" stroke="#a855f7" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" fill="none" />
@@ -4960,7 +4960,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(244,63,94,0.15)'}}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     {/* Water below with wave animation */}
                     <path d="M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42" stroke="#f43f5e" strokeWidth="1.5" fill="none" opacity="0.55">
@@ -5001,7 +5001,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               {/* ── COMBINED EVENTS (COMPILING DATA) ── */}
               <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(245,158,11,0.08)'}}>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)'}}>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)'}}>
                   <svg viewBox="0 0 48 48" className="w-7 h-7">
                     {/* Sparkles around figure — the "all-around" vibe */}
                     <circle cx="8" cy="10" r="1" fill="#f59e0b" opacity="0.5">
