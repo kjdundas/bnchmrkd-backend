@@ -24,15 +24,27 @@ export const TIER_SHORT = {
   1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7',
 };
 
-// Diagonal heat: cool (top-left, early/emerging) → hot (bottom-right, senior/medalist)
+// Monochrome orange density. T1 dim ember → T7 blazing brand orange.
+// Intensity carries tier, hue stays constant — proprietary & brand-cohesive.
 export const TIER_COLORS = {
-  1: '#475569',   // slate-600 — muted entry
-  2: '#6366f1',   // indigo-500
-  3: '#3b82f6',   // blue-500
-  4: '#06b6d4',   // cyan-500
-  5: '#10b981',   // emerald-500
-  6: '#f59e0b',   // amber-500
-  7: '#ef4444',   // red-500 — WR territory
+  1: '#3a1f0e',   // deepest bronze, almost black
+  2: '#5a2d0f',
+  3: '#82400f',
+  4: '#a85416',
+  5: '#d16a1f',
+  6: '#f08028',
+  7: '#fb923c',   // brand orange apex
+};
+
+// Opacity stops for building layered orange washes (used by cell backgrounds).
+export const TIER_OPACITY = {
+  1: 0.08,
+  2: 0.16,
+  3: 0.28,
+  4: 0.44,
+  5: 0.62,
+  6: 0.82,
+  7: 1.00,
 };
 
 export const AGE_GROUPS = ['U13', 'U15', 'U17', 'U20', 'Senior'];

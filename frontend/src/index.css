@@ -30,6 +30,10 @@ html, body { font-family: 'Instrument Sans', system-ui, sans-serif; }
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+@keyframes trajPulse {
+  0%, 100% { opacity: 0.9; }
+  50%      { opacity: 0.3; }
+}
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
