@@ -53,3 +53,16 @@ html, body { font-family: 'Instrument Sans', system-ui, sans-serif; }
 }
 .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Dark dropdown options — native <select> options inherit OS defaults (white bg),
+   which makes white text on dark selects invisible until hovered. Force a dark
+   background + light text so the options are always legible. */
+select option,
+select optgroup {
+  background-color: #0d1117;
+  color: #f1f5f9;
+}
+select optgroup {
+  font-weight: 600;
+  color: #94a3b8;
+}

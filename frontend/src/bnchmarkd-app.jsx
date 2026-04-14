@@ -5628,8 +5628,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
                 {error && <div className="bg-red-900/30 border border-red-800 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>}
                 <button onClick={handleAnalyze} disabled={loading}
-                  className="cta-primary w-full text-white font-bold py-4 rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.01] transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed landing-font">
-                  {loading ? 'Analyzing...' : 'Quick Analyze'}
+                  className="cta-primary w-full text-white font-bold py-4 rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.01] transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed landing-font"
+                  style={{background: 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%)', border: '1px solid rgba(249,115,22,0.5)', boxShadow: '0 4px 20px rgba(249,115,22,0.25)'}}>
+                  {loading ? 'Analyzing...' : 'Benchmark'}
                 </button>
               </div>
             )}
