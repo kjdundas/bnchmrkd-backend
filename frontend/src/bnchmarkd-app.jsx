@@ -5954,10 +5954,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── CAREER BENCHMARK CHART — population curves with athlete dot ── */}
             {analysisResults.trajectoryComparison && analysisResults.trajectoryComparison.length > 0 && (() => {
-              const isThrows = isFieldEvent(analysisResults.discipline);
+              const isFieldEv = isFieldEvent(analysisResults.discipline);
+              const isThrowsOnly = isThrowsDiscipline(analysisResults.discipline);
+              // Keep `isThrows` name for downstream semantics (field-event: higher is better, unit = m)
+              const isThrows = isFieldEv;
               const unit = isThrows ? 'm' : 's';
               const rawData = analysisResults.trajectoryComparison;
-              const weightOpts = isThrows ? getWeightOptions(analysisResults.discipline, analysisResults.gender) : [];
+              // Only throws use weight segmentation — jumps have no implement weights
+              const weightOpts = isThrowsOnly ? getWeightOptions(analysisResults.discipline, analysisResults.gender) : [];
               const userAge = analysisResults.age;
               const userPB = parseFloat(analysisResults.personalBest);
 
@@ -5978,7 +5982,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const classKeys = ['medalist', 'finalist', 'semiFinalist', 'qualifier'];
 
               // For throws, compute weight transition points
-              const weightTransitions = isThrows ? weightOpts.filter((_, i) => i > 0).map((w, i) => ({
+              const weightTransitions = isThrowsOnly ? weightOpts.filter((_, i) => i > 0).map((w, i) => ({
                 age: w.min, from: weightOpts[i].label, to: w.label,
               })) : [];
 
@@ -5986,12 +5990,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               // For throws: each data point gets keys like "medalist_3kg", "medalist_4kg" etc.
               // Only the key matching the age's weight category gets a value; others are null.
               // This creates natural line breaks at weight transitions.
-              // For sprints/hurdles: use the original flat keys.
-              const weightLabels = isThrows ? [...new Set(weightOpts.map(o => o.label))] : [];
+              // For sprints/hurdles/jumps: use the original flat keys.
+              const weightLabels = isThrowsOnly ? [...new Set(weightOpts.map(o => o.label))] : [];
 
               const data = rawData.map(pt => {
                 const row = { age: pt.age, you: pt.you, projected: pt.projected };
-                if (isThrows) {
+                if (isThrowsOnly) {
                   const wt = getWeightAtAge(pt.age);
                   classKeys.forEach(ck => {
                     weightLabels.forEach(wl => {
@@ -6006,8 +6010,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               // Build the Line components to render
               const renderLines = () => {
-                if (!isThrows) {
-                  // Sprint / hurdles: one Line per classification
+                if (!isThrowsOnly) {
+                  // Sprints / hurdles / jumps: one Line per classification
                   return classKeys.filter(ck => benchmarkLines[ck]).map(ck => (
                     <Line key={ck} type="monotone" dataKey={ck}
                       stroke={lineConfig[ck].color} strokeWidth={ck === 'medalist' || ck === 'finalist' ? 2.5 : 2}
@@ -6050,7 +6054,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </div>
                   <p className="text-xs text-slate-500 mb-4 landing-font">
                     Median {isThrows ? 'distances' : 'times'} by Olympic classification at each age. Toggle lines to compare.
-                    {isThrows && ' Lines break at implement weight changes — vertical markers show transitions.'}
+                    {isThrowsOnly && ' Lines break at implement weight changes — vertical markers show transitions.'}
                   </p>
 
                   {/* Toggle buttons */}
@@ -6090,14 +6094,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e2e8f0', fontSize: '12px' }}
                         formatter={tooltipFormatter}
                         labelFormatter={(age) => {
-                          const w = isThrows ? getWeightAtAge(age) : null;
+                          const w = isThrowsOnly ? getWeightAtAge(age) : null;
                           return `Age ${age}${w ? ` (${w})` : ''}`;
                         }}
                         itemSorter={(item) => -item.value}
                       />
 
                       {/* Weight transition markers for throws */}
-                      {isThrows && weightTransitions.map((t, i) => (
+                      {isThrowsOnly && weightTransitions.map((t, i) => (
                         <ReferenceLine key={`wt-${i}`} x={t.age} stroke="#a78bfa" strokeDasharray="4 2" strokeWidth={1}
                           label={{ value: t.to, position: 'top', fill: '#a78bfa', fontSize: 9 }} />
                       ))}
