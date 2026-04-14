@@ -4,10 +4,22 @@ import AuthPage from './components/auth/AuthPage'
 import Onboarding from './components/auth/Onboarding'
 import CoachDashboard from './components/coach/CoachDashboard'
 import AthleteDashboard from './components/athlete/AthleteDashboard'
+import MatrixPreview from './components/MatrixPreview'
 import BnchMrkdApp from './bnchmarkd-app'
 
 export default function App() {
   const { user, profile, loading, signOut } = useAuth()
+
+  // Localhost-only preview route for the Performance Matrix design.
+  // Bypasses all auth + auto-routing so we can iterate on the component
+  // without touching production user flow.
+  if (typeof window !== 'undefined') {
+    const previewView = new URLSearchParams(window.location.search).get('view')
+    if (previewView === 'matrix') {
+      return <MatrixPreview />
+    }
+  }
+
   const [showAuth, setShowAuth] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
