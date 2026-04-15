@@ -76,6 +76,21 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
     ? trajectoryPoints[trajectoryPoints.length - 1]
     : null;
 
+  // Lookup: `${rowIdx},${colIdx}` → { order, isCurrent, total }
+  // Used per-cell to decide what trajectory treatment to render.
+  const trajectoryByCell = useMemo(() => {
+    const map = new Map();
+    trajectoryPoints.forEach((p, i) => {
+      const key = `${p.rowIdx},${p.colIdx}`;
+      map.set(key, {
+        order: i + 1,
+        isCurrent: i === trajectoryPoints.length - 1,
+        total: trajectoryPoints.length,
+      });
+    });
+    return map;
+  }, [trajectoryPoints]);
+
   if (!matrix) {
     return (
       <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 text-slate-500 text-sm mono-font">
@@ -173,7 +188,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
           {matrix.rows.map((row, ri) => (
             <div
               key={row.ageGroup}
-              className="grid gap-[3px] mb-[3px]"
+              className="grid gap-[5px] mb-[5px]"
               style={{ gridTemplateColumns: gridTemplate }}
             >
               {/* Row label */}
@@ -185,7 +200,17 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                 const tier = ci + 1;
                 const seniorOnlyTier = ci === 6 && row.ageGroup !== 'Senior';
                 const reachable = cut != null && !seniorOnlyTier;
-                const isCurrent = current && current.rowIdx === ri && current.colIdx === ci;
+                const trajInfo = trajectoryByCell.get(`${ri},${ci}`);
+                const isVisited = !!trajInfo;
+                const isCurrent = !!trajInfo?.isCurrent;
+                // Visual weight grows with trajectory order: earliest chip is small/dim,
+                // current is big/glowing brand orange.
+                const order = trajInfo?.order ?? 0;
+                const total = trajInfo?.total ?? 0;
+                const progress = total > 1 ? (order - 1) / (total - 1) : 1;  // 0..1
+                const chipSize = 13 + progress * 5;                          // 13 → 18 px
+                const chipIntensity = 0.35 + progress * 0.65;                // 0.35 → 1.0
+                const textIsDark = TIER_OPACITY[tier] >= 0.6;
 
                 return (
                   <div
@@ -197,20 +222,28 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                       background: reachable
                         ? tierBackground(tier, true)
                         : 'repeating-linear-gradient(135deg, rgba(24,10,4,0.6) 0 3px, rgba(10,6,4,0.6) 3px 6px)',
-                      border: isCurrent
-                        ? `1.5px solid ${BRAND}`
-                        : reachable
+                      border: reachable
                         ? `1px solid rgba(251, 146, 60, ${Math.max(TIER_OPACITY[tier] - 0.2, 0.12)})`
                         : '1px solid rgba(251, 146, 60, 0.04)',
+                      // Visited cells get a faint inset ring; current cell gets a
+                      // prominent dashed brand-orange frame *outside* the border,
+                      // plus a soft halo — so the threshold text stays untouched.
                       boxShadow: isCurrent
-                        ? `0 0 0 4px rgba(10,6,4,1), 0 0 0 5px ${BRAND}, 0 10px 30px rgba(251,146,60,0.45)`
+                        ? `inset 0 0 0 1.5px rgba(10,6,4,0.9),
+                           0 0 0 2px rgba(10,6,4,1),
+                           0 0 0 3.5px ${BRAND},
+                           0 0 22px 2px rgba(251,146,60,0.55)`
+                        : isVisited
+                        ? `inset 0 0 0 1.5px rgba(${textIsDark ? '10,6,4' : '255,255,255'}, ${0.15 + progress * 0.25})`
                         : 'none',
                       minHeight: 56,
                       padding: '10px 6px',
                     }}
                     title={
                       reachable
-                        ? `${TIER_NAMES[tier]} · ${row.ageGroup} · ${formatValue(cut, discipline)}`
+                        ? `${TIER_NAMES[tier]} · ${row.ageGroup} · ${formatValue(cut, discipline)}${
+                            trajInfo ? ` · step ${trajInfo.order}/${trajInfo.total}` : ''
+                          }`
                         : `— unreachable at ${row.ageGroup}`
                     }
                   >
@@ -219,14 +252,9 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                         <div
                           className="mono-font font-semibold tracking-tight text-center"
                           style={{
-                            color:
-                              TIER_OPACITY[tier] >= 0.6
-                                ? '#0a0604'    // dark ink on bright cells
-                                : '#f8fafc',   // bright ink on dim cells
+                            color: textIsDark ? '#0a0604' : '#f8fafc',
                             fontSize:
-                              TIER_OPACITY[tier] >= 0.8
-                                ? '13.5px'
-                                : '12.5px',
+                              TIER_OPACITY[tier] >= 0.8 ? '13.5px' : '12.5px',
                             letterSpacing: '-0.01em',
                             textShadow:
                               TIER_OPACITY[tier] < 0.4
@@ -243,16 +271,60 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                       </div>
                     )}
 
-                    {/* "YOU" marker — tucked below threshold, brand glow */}
-                    {isCurrent && (
+                    {/* ── Stepping-stone chip ─────────────────────────────
+                        Small ordinal badge in the top-right corner marking
+                        this cell's place in the athlete's journey. Sits OFF
+                        the threshold number; scales and brightens with order. */}
+                    {isVisited && (
                       <div
-                        className="absolute left-1/2 -translate-x-1/2 mono-font text-[8.5px] font-bold tracking-[0.2em] uppercase"
+                        className="absolute flex items-center justify-center mono-font font-bold select-none"
                         style={{
-                          bottom: -2,
-                          color: TIER_OPACITY[tier] >= 0.6 ? '#0a0604' : BRAND,
+                          top: isCurrent ? -6 : 3,
+                          right: isCurrent ? -6 : 3,
+                          width: chipSize,
+                          height: chipSize,
+                          borderRadius: '50%',
+                          fontSize: chipSize <= 14 ? '8px' : '9.5px',
+                          // Dim stepping stones sit on the cell as a soft inset;
+                          // current cell's chip lifts off the cell with a pill.
+                          background: isCurrent
+                            ? BRAND
+                            : textIsDark
+                            ? `rgba(10, 6, 4, ${chipIntensity})`
+                            : `rgba(255, 255, 255, ${chipIntensity * 0.9})`,
+                          color: isCurrent
+                            ? '#0a0604'
+                            : textIsDark
+                            ? '#f8fafc'
+                            : '#0a0604',
+                          border: isCurrent
+                            ? `1.5px solid #0a0604`
+                            : `1px solid rgba(${textIsDark ? '10,6,4' : '255,255,255'}, ${chipIntensity * 0.6})`,
+                          boxShadow: isCurrent
+                            ? `0 0 12px 2px rgba(251,146,60,0.6), 0 2px 6px rgba(0,0,0,0.5)`
+                            : 'none',
+                          zIndex: 3,
                         }}
                       >
-                        ● You
+                        {order}
+                      </div>
+                    )}
+
+                    {/* "YOU" chip — sits just outside the cell bottom so it
+                        never overlaps the threshold, visible against the frame */}
+                    {isCurrent && (
+                      <div
+                        className="absolute left-1/2 -translate-x-1/2 mono-font font-bold tracking-[0.25em] uppercase whitespace-nowrap px-2 py-[2px] rounded-sm"
+                        style={{
+                          bottom: -14,
+                          fontSize: '8px',
+                          color: '#0a0604',
+                          background: BRAND,
+                          boxShadow: '0 2px 10px rgba(251,146,60,0.5)',
+                          zIndex: 4,
+                        }}
+                      >
+                        You
                       </div>
                     )}
                   </div>
@@ -260,11 +332,6 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
               })}
             </div>
           ))}
-
-          {/* Trajectory overlay — crisp white hairline to contrast the orange field */}
-          {trajectoryPoints.length > 1 && (
-            <TrajectoryOverlay points={trajectoryPoints} cols={TOTAL_COLS} rows={5} />
-          )}
         </div>
 
         {/* Bottom axis — tier NAMES, anchored to Senior row.
@@ -330,99 +397,3 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
   );
 }
 
-// ── Trajectory overlay ──────────────────────────────────────────────────
-// White hairline to contrast the orange field. One colour, the weight
-// and the endpoint markers carry the information — no gradient noise.
-function TrajectoryOverlay({ points, cols, rows }) {
-  const coords = points.map(p => ({
-    x: ((p.colIdx + 0.5) / cols) * 100,
-    y: ((p.rowIdx + 0.5) / rows) * 100,
-  }));
-
-  const pathD = coords
-    .map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(2)},${c.y.toFixed(2)}`)
-    .join(' ');
-
-  return (
-    <div
-      className="absolute pointer-events-none"
-      style={{
-        left: 56 + 3,    // label col + grid gap
-        top: 0,
-        right: 3,
-        bottom: 3,
-      }}
-    >
-      <svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        className="w-full h-full"
-        style={{ overflow: 'visible' }}
-      >
-        <defs>
-          <filter id="trajHalo">
-            <feGaussianBlur stdDeviation="0.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* The line itself — pure white, hairline weight */}
-        <path
-          d={pathD}
-          fill="none"
-          stroke="rgba(255, 255, 255, 0.95)"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-          filter="url(#trajHalo)"
-          style={{
-            strokeDasharray: 400,
-            strokeDashoffset: 400,
-            animation: 'sparkDraw 1.5s cubic-bezier(.22,.61,.36,1) 0.3s forwards',
-          }}
-        />
-
-        {/* Waypoints — small filled white dots, current gets brand ring */}
-        {coords.map((c, i) => {
-          const isLast = i === coords.length - 1;
-          return (
-            <g key={i}>
-              {isLast && (
-                <circle
-                  cx={c.x}
-                  cy={c.y}
-                  r={2.6}
-                  fill="none"
-                  stroke={BRAND}
-                  strokeWidth="0.6"
-                  vectorEffect="non-scaling-stroke"
-                  style={{
-                    opacity: 0,
-                    animation: `sparkFade 0.4s ease-out ${0.5 + i * 0.14}s forwards, trajPulse 2s ease-in-out ${0.9 + i * 0.14}s infinite`,
-                  }}
-                />
-              )}
-              <circle
-                cx={c.x}
-                cy={c.y}
-                r={isLast ? 1.4 : 0.9}
-                fill={isLast ? BRAND : '#ffffff'}
-                stroke="#ffffff"
-                strokeWidth={isLast ? 0.3 : 0}
-                vectorEffect="non-scaling-stroke"
-                style={{
-                  opacity: 0,
-                  animation: `sparkFade 0.3s ease-out ${0.5 + i * 0.12}s forwards`,
-                }}
-              />
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
