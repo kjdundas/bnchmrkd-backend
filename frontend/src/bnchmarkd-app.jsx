@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { analytics } from './lib/analytics';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
+import PerformanceMatrixCard from './components/PerformanceMatrixCard';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
@@ -6389,123 +6390,22 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
             )}
 
-            {/* ── PERFORMANCE LEVEL MATRIX (Quick Results) ── */}
-            {analysisResults.performanceLevel && (() => {
-              const pl = analysisResults.performanceLevel;
-              const genderCode = analysisResults.gender === 'Male' ? 'M' : 'F';
-              const key = `${analysisResults.discipline}_${genderCode}`;
-              const levelData = PERFORMANCE_LEVELS[key];
-              if (!levelData) return null;
-
-              const ageGroups = Object.keys(levelData);
-              const pb = parseFloat(analysisResults.personalBest);
-              const athleteAgeGroup = pl.ageGroup;
-              const athleteLevel = pl.level;
-              const timeMode = isTimeDiscipline(analysisResults.discipline);
-              const unit = timeMode ? 's' : 'm';
-              const fmtThreshold = (v) => {
-                if (timeMode && v >= 60) { const m = Math.floor(v / 60); const s = (v % 60).toFixed(2); return `${m}:${s.padStart(5, '0')}`; }
-                return `${v.toFixed(2)}${unit}`;
-              };
-
-              return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <div className="mb-1">
-                    <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300 mb-1">Performance Levels</p>
-                    <div className="flex items-end justify-between gap-3 mb-1">
-                      <h3 className="landing-font text-lg sm:text-xl font-semibold text-white leading-tight">Where You Stand</h3>
-                      <span className="mono-font text-[10px] text-slate-500 tabular-nums pb-1">L{athleteLevel} · {pl.name}</span>
-                    </div>
-                    <p className="text-[10px] text-slate-600 landing-font mb-4">
-                      All age-group thresholds for {analysisResults.discipline} ({analysisResults.gender}). Your position is highlighted.
-                    </p>
-                  </div>
-
-                  <div className="overflow-x-auto -mx-2 px-2 pb-2">
-                    <table className="w-full border-collapse" style={{minWidth: '700px'}}>
-                      <thead>
-                        <tr>
-                          <th className="text-left text-[9px] mono-font text-slate-500 uppercase tracking-wider py-2 px-2 sticky left-0" style={{background: 'rgba(15,23,42,0.95)', zIndex: 2, minWidth: '64px'}}>Age</th>
-                          {Array.from({length: 12}, (_, i) => i + 1).map(level => {
-                            const isAthleteLevel = level === athleteLevel;
-                            return (
-                              <th key={level} className="text-center py-2 px-1" style={{minWidth: '52px'}}>
-                                <div className={`text-[9px] mono-font font-bold ${isAthleteLevel ? 'text-orange-400' : 'text-slate-500'}`}>L{level}</div>
-                                <div className={`text-[7px] mono-font mt-0.5 ${isAthleteLevel ? 'text-orange-400/60' : 'text-slate-700'}`}>{LEVEL_NAMES[level]?.split(' ')[0]}</div>
-                              </th>
-                            );
-                          })}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ageGroups.map((ag) => {
-                          const thresholds = levelData[ag];
-                          const isAthleteRow = ag === athleteAgeGroup;
-                          let pbLevelInRow = 0;
-                          for (let i = thresholds.length - 1; i >= 0; i--) {
-                            if (thresholds[i] !== null && (timeMode ? pb <= thresholds[i] : pb >= thresholds[i])) { pbLevelInRow = i + 1; break; }
-                          }
-                          return (
-                            <tr key={ag} style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
-                              <td className="py-2 px-2 sticky left-0" style={{background: 'rgba(15,23,42,0.95)', zIndex: 2}}>
-                                <span className={`text-[10px] mono-font font-bold ${isAthleteRow ? 'text-orange-400' : 'text-slate-400'}`}>{ag}</span>
-                                {isAthleteRow && <span className="text-[8px] text-orange-500 ml-1">◀</span>}
-                              </td>
-                              {Array.from({length: 12}, (_, i) => i + 1).map(level => {
-                                const threshold = thresholds[level - 1];
-                                if (threshold === null) return <td key={level} className="text-center py-2 px-1"><div className="text-[9px] text-slate-800 mono-font">—</div></td>;
-
-                                const isCurrentCell = isAthleteRow && level === athleteLevel;
-                                const isCleared = isAthleteRow && level <= athleteLevel;
-                                const isNext = isAthleteRow && level === athleteLevel + 1;
-                                const wouldClear = !isAthleteRow && level <= pbLevelInRow;
-
-                                let bgColor = 'transparent';
-                                let borderColor = 'transparent';
-                                let textColor = '#475569';
-                                if (isCurrentCell) { bgColor = `${pl.color}20`; borderColor = `${pl.color}60`; textColor = '#f97316'; }
-                                else if (isCleared) { bgColor = 'rgba(16,185,129,0.06)'; borderColor = 'rgba(16,185,129,0.15)'; textColor = '#10b981'; }
-                                else if (isNext) { bgColor = 'rgba(249,115,22,0.04)'; borderColor = 'rgba(249,115,22,0.15)'; textColor = '#f97316'; }
-                                else if (wouldClear) { bgColor = 'rgba(255,255,255,0.02)'; textColor = '#64748b'; }
-
-                                return (
-                                  <td key={level} className="text-center py-2 px-1">
-                                    <div className="rounded-md py-1.5 px-1 transition-all" style={{ background: bgColor, border: `1px solid ${borderColor}`, boxShadow: isCurrentCell ? `0 0 12px ${pl.color}15` : 'none' }}>
-                                      <div className="text-[10px] mono-font font-semibold tabular-nums" style={{color: textColor}}>{fmtThreshold(threshold)}</div>
-                                      {isCleared && !isCurrentCell && <div className="text-[8px] text-emerald-500 mt-0.5">✓</div>}
-                                      {isCurrentCell && <div className="text-[8px] text-orange-400 mt-0.5 font-bold">YOU</div>}
-                                      {isNext && <div className="text-[8px] text-orange-400/60 mt-0.5">next</div>}
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="flex items-center gap-4 mt-3 pt-3" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)'}}></div>
-                      <span className="text-[9px] text-slate-500 mono-font">Cleared</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{background: `${pl.color}20`, border: `1px solid ${pl.color}60`}}></div>
-                      <span className="text-[9px] text-slate-500 mono-font">Current</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{background: 'rgba(249,115,22,0.04)', border: '1px solid rgba(249,115,22,0.15)'}}></div>
-                      <span className="text-[9px] text-slate-500 mono-font">Next Target</span>
-                    </div>
-                    {pl.gap !== null && (
-                      <span className="text-[9px] text-orange-400/70 mono-font ml-auto">{pl.gap.toFixed(2)}{unit} to L{pl.nextLevel} ({pl.nextName})</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* ── PERFORMANCE MATRIX (Quick Results) ── */}
+            {analysisResults.performanceLevel && (
+              <div className="mb-4 sm:mb-6">
+                <PerformanceMatrixCard
+                  discipline={analysisResults.discipline}
+                  gender={analysisResults.gender}
+                  currentAgeGroup={analysisResults.performanceLevel.ageGroup}
+                  currentPB={parseFloat(analysisResults.personalBest)}
+                  storageKey={
+                    user?.id
+                      ? `${user.id}.${analysisResults.discipline}.${analysisResults.gender}`
+                      : null
+                  }
+                />
+              </div>
+            )}
 
             {/* ── DISCLAIMER ── */}
             <div className="rounded-xl p-5 mb-8" style={{background: 'rgba(245,158,11,0.03)', border: '1px solid rgba(245,158,11,0.1)'}}>
@@ -6894,159 +6794,22 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               );
             })()}
 
-            {/* ── PERFORMANCE LEVEL MATRIX ── */}
-            {analysisResults.performanceLevel && (() => {
-              const pl = analysisResults.performanceLevel;
-              const genderCode = analysisResults.gender === 'Male' ? 'M' : 'F';
-              const key = `${analysisResults.discipline}_${genderCode}`;
-              const levelData = PERFORMANCE_LEVELS[key];
-              if (!levelData) return null;
-
-              const ageGroups = Object.keys(levelData);
-              const pb = parseFloat(analysisResults.personalBest);
-              const athleteAgeGroup = pl.ageGroup;
-              const athleteLevel = pl.level;
-              const timeMode = isTimeDiscipline(analysisResults.discipline);
-              const unit = timeMode ? 's' : 'm';
-              const fmtThreshold = (v) => {
-                if (timeMode && v >= 60) { const m = Math.floor(v / 60); const s = (v % 60).toFixed(2); return `${m}:${s.padStart(5, '0')}`; }
-                return `${v.toFixed(2)}${unit}`;
-              };
-
-              return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  {/* Header */}
-                  <div className="mb-1">
-                    <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300 mb-1">Performance Levels</p>
-                    <div className="flex items-end justify-between gap-3 mb-1">
-                      <h3 className="landing-font text-lg sm:text-xl font-semibold text-white leading-tight">Where You Stand</h3>
-                      <span className="mono-font text-[10px] text-slate-500 tabular-nums pb-1">L{athleteLevel} · {pl.name}</span>
-                    </div>
-                    <p className="text-[10px] text-slate-600 landing-font mb-4">
-                      All age-group thresholds for {analysisResults.discipline} ({analysisResults.gender}). Your position is highlighted.
-                    </p>
-                  </div>
-
-                  {/* Matrix */}
-                  <div className="overflow-x-auto -mx-2 px-2 pb-2">
-                    <table className="w-full border-collapse" style={{minWidth: '700px'}}>
-                      <thead>
-                        <tr>
-                          <th className="text-left text-[9px] mono-font text-slate-500 uppercase tracking-wider py-2 px-2 sticky left-0" style={{background: 'rgba(15,23,42,0.95)', zIndex: 2, minWidth: '64px'}}>Age</th>
-                          {Array.from({length: 12}, (_, i) => i + 1).map(level => {
-                            const isAthleteLevel = level === athleteLevel;
-                            return (
-                              <th key={level} className="text-center py-2 px-1" style={{minWidth: '52px'}}>
-                                <div className={`text-[9px] mono-font font-bold ${isAthleteLevel ? 'text-orange-400' : 'text-slate-500'}`}>L{level}</div>
-                                <div className={`text-[7px] mono-font mt-0.5 ${isAthleteLevel ? 'text-orange-400/60' : 'text-slate-700'}`}>{LEVEL_NAMES[level]?.split(' ')[0]}</div>
-                              </th>
-                            );
-                          })}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ageGroups.map((ag, rowIdx) => {
-                          const thresholds = levelData[ag];
-                          const isAthleteRow = ag === athleteAgeGroup;
-                          let pbLevelInRow = 0;
-                          for (let i = thresholds.length - 1; i >= 0; i--) {
-                            if (thresholds[i] !== null && (timeMode ? pb <= thresholds[i] : pb >= thresholds[i])) {
-                              pbLevelInRow = i + 1;
-                              break;
-                            }
-                          }
-
-                          return (
-                            <tr key={ag} style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
-                              <td className="py-2 px-2 sticky left-0" style={{background: 'rgba(15,23,42,0.95)', zIndex: 2}}>
-                                <span className={`text-[10px] mono-font font-bold ${isAthleteRow ? 'text-orange-400' : 'text-slate-400'}`}>
-                                  {ag}
-                                </span>
-                                {isAthleteRow && <span className="text-[8px] text-orange-500 ml-1">◀</span>}
-                              </td>
-                              {Array.from({length: 12}, (_, i) => i + 1).map(level => {
-                                const threshold = thresholds[level - 1];
-                                if (threshold === null) {
-                                  return (
-                                    <td key={level} className="text-center py-2 px-1">
-                                      <div className="text-[9px] text-slate-800 mono-font">—</div>
-                                    </td>
-                                  );
-                                }
-
-                                const isCurrentCell = isAthleteRow && level === athleteLevel;
-                                const isCleared = isAthleteRow && level <= athleteLevel;
-                                const isNext = isAthleteRow && level === athleteLevel + 1;
-                                const wouldClear = !isAthleteRow && level <= pbLevelInRow;
-
-                                let bgColor = 'transparent';
-                                let borderColor = 'transparent';
-                                let textColor = '#475569';
-
-                                if (isCurrentCell) {
-                                  bgColor = `${pl.color}20`;
-                                  borderColor = `${pl.color}60`;
-                                  textColor = '#f97316';
-                                } else if (isCleared) {
-                                  bgColor = 'rgba(16,185,129,0.06)';
-                                  borderColor = 'rgba(16,185,129,0.15)';
-                                  textColor = '#10b981';
-                                } else if (isNext) {
-                                  bgColor = 'rgba(249,115,22,0.04)';
-                                  borderColor = 'rgba(249,115,22,0.15)';
-                                  textColor = '#f97316';
-                                } else if (wouldClear) {
-                                  bgColor = 'rgba(255,255,255,0.02)';
-                                  textColor = '#64748b';
-                                }
-
-                                return (
-                                  <td key={level} className="text-center py-2 px-1">
-                                    <div className="rounded-md py-1.5 px-1 transition-all" style={{
-                                      background: bgColor,
-                                      border: `1px solid ${borderColor}`,
-                                      boxShadow: isCurrentCell ? `0 0 12px ${pl.color}15` : 'none',
-                                    }}>
-                                      <div className={`text-[10px] mono-font font-semibold tabular-nums`} style={{color: textColor}}>
-                                        {fmtThreshold(threshold)}
-                                      </div>
-                                      {isCleared && !isCurrentCell && <div className="text-[8px] text-emerald-500 mt-0.5">✓</div>}
-                                      {isCurrentCell && <div className="text-[8px] text-orange-400 mt-0.5 font-bold">YOU</div>}
-                                      {isNext && <div className="text-[8px] text-orange-400/60 mt-0.5">next</div>}
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 mt-3 pt-3" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)'}}></div>
-                      <span className="text-[9px] text-slate-500 mono-font">Cleared</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{background: `${pl.color}20`, border: `1px solid ${pl.color}60`}}></div>
-                      <span className="text-[9px] text-slate-500 mono-font">Current</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm" style={{background: 'rgba(249,115,22,0.04)', border: '1px solid rgba(249,115,22,0.15)'}}></div>
-                      <span className="text-[9px] text-slate-500 mono-font">Next Target</span>
-                    </div>
-                    {pl.gap !== null && (
-                      <span className="text-[9px] text-orange-400/70 mono-font ml-auto">
-                        {pl.gap.toFixed(2)}{unit} to L{pl.nextLevel} ({pl.nextName})
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* ── PERFORMANCE MATRIX (Full Dashboard) ── */}
+            {analysisResults.performanceLevel && (
+              <div className="mb-4 sm:mb-6">
+                <PerformanceMatrixCard
+                  discipline={analysisResults.discipline}
+                  gender={analysisResults.gender}
+                  currentAgeGroup={analysisResults.performanceLevel.ageGroup}
+                  currentPB={parseFloat(analysisResults.personalBest)}
+                  storageKey={
+                    user?.id
+                      ? `${user.id}.${analysisResults.discipline}.${analysisResults.gender}`
+                      : null
+                  }
+                />
+              </div>
+            )}
 
             {/* ── COMPETITION STANDARDS (full dashboard version uses same component as quickResults) ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
