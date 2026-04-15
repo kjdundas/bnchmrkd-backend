@@ -13,6 +13,7 @@ import {
 import { analytics } from './lib/analytics';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PerformanceMatrixCard from './components/PerformanceMatrixCard';
+import CompetitionStandardsLadder from './components/CompetitionStandardsLadder';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
@@ -5937,177 +5938,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               ))}
             </div>
 
-            {/* ── COMPETITION STANDARDS — Where You Stand ── */}
+            {/* ── COMPETITION STANDARDS — Gap Ladder ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
-              const isThrows = isFieldEvent(analysisResults.discipline);
-              const unit = isThrows ? 'm' : 's';
-              const pb = parseFloat(analysisResults.personalBest);
               const eventCode = getEventCode(analysisResults.discipline, analysisResults.gender);
               const compData = COMPETITION_STANDARDS[eventCode];
-              const filteredStandards = standardsTier === 'all'
-                ? analysisResults.standards
-                : analysisResults.standards.filter(s => s.compTier === standardsTier);
-              const metCount = filteredStandards.filter(s => s.met).length;
-              const total = filteredStandards.length;
-
-              const tierCounts = {
-                all: analysisResults.standards.length,
-                world: analysisResults.standards.filter(s => s.compTier === 'world').length,
-                regional: analysisResults.standards.filter(s => s.compTier === 'regional').length,
-                development: analysisResults.standards.filter(s => s.compTier === 'development').length,
-              };
-
-              const fmtMark = (v) => {
-                if (v === null || v === undefined) return '—';
-                return formatTime(v, analysisResults.discipline);
-              };
-
               return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-
-                  {/* Header + WR */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Flag className="w-4 h-4" style={{color: '#f97316'}} />
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Competition Standards</h3>
-                    </div>
-                    {compData?.wr && (
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.15)'}}>
-                        <span className="text-[9px] font-bold text-red-400 mono-font">WR</span>
-                        <span className="text-xs font-bold text-red-300 mono-font">{fmtMark(compData.wr.mark)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-slate-600 mb-4 landing-font">Your PB vs gold, bronze, 8th place, and entry standards across competitions</p>
-
-                  {/* Tier filter tabs */}
-                  <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
-                    {[
-                      { key: 'all', label: 'All', color: '#f97316' },
-                      { key: 'world', label: 'World', color: '#FFD700', icon: '🏅' },
-                      { key: 'regional', label: 'Regional', color: '#E84545', icon: '🌏' },
-                      { key: 'development', label: 'Development', color: '#A259FF', icon: '🎓' },
-                    ].filter(t => t.key === 'all' || tierCounts[t.key] > 0).map(t => (
-                      <button
-                        key={t.key}
-                        onClick={() => setStandardsTier(t.key)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold mono-font transition-all flex-shrink-0"
-                        style={{
-                          background: standardsTier === t.key ? `${t.color}18` : 'rgba(255,255,255,0.03)',
-                          border: standardsTier === t.key ? `1px solid ${t.color}40` : '1px solid rgba(255,255,255,0.06)',
-                          color: standardsTier === t.key ? t.color : '#64748b',
-                        }}
-                      >
-                        {t.icon && <span className="text-[10px]">{t.icon}</span>}
-                        {t.label}
-                        <span className="text-[9px] opacity-60">({tierCounts[t.key]})</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Competition cards */}
-                  <div className="space-y-3">
-                    {filteredStandards.map((std, idx) => {
-                      // Build marks array for the visual gauge
-                      const marks = [];
-                      if (std.qual) marks.push({ label: 'ENTRY', value: std.qual, color: '#64B5F6' });
-                      marks.push({ label: 'GOLD', value: std.gold, color: '#FFD700' });
-                      marks.push({ label: 'BRONZE', value: std.bronze, color: '#CD7F32' });
-                      marks.push({ label: '8TH', value: std.p8, color: '#78909C' });
-                      if (std.semi) marks.push({ label: 'SEMI', value: std.semi, color: '#546E7A' });
-
-                      // Sort marks from easiest (left) to hardest/best (right)
-                      marks.sort((a, b) => isThrows ? a.value - b.value : b.value - a.value);
-
-                      // Calculate gauge range
-                      const allVals = marks.map(m => m.value);
-                      const minVal = Math.min(...allVals, pb);
-                      const maxVal = Math.max(...allVals, pb);
-                      const range = maxVal - minVal || 1;
-                      const padding = range * 0.1;
-                      const gaugeMin = minVal - padding;
-                      const gaugeMax = maxVal + padding;
-                      const gaugeRange = gaugeMax - gaugeMin;
-                      const pbPct = isThrows
-                        ? ((pb - gaugeMin) / gaugeRange) * 100
-                        : ((gaugeMax - pb) / gaugeRange) * 100;
-
-                      // Determine athlete's position label
-                      const beatsMark = (mark) => isThrows ? pb >= mark : pb <= mark;
-                      const positionLabel = beatsMark(std.gold) ? 'Gold Level' : beatsMark(std.bronze) ? 'Medal Zone' : beatsMark(std.p8) ? 'Finalist' : std.semi && beatsMark(std.semi) ? 'Semi-Finalist' : std.qual && beatsMark(std.qual) ? 'Qualifier' : 'Below Entry';
-                      const positionColor = beatsMark(std.gold) ? '#FFD700' : beatsMark(std.bronze) ? '#CD7F32' : beatsMark(std.p8) ? '#10b981' : '#64748b';
-
-                      return (
-                        <div key={idx} className="rounded-xl overflow-hidden" style={{
-                          background: 'rgba(255,255,255,0.02)',
-                          border: `1px solid ${std.color}25`,
-                          borderLeft: `3px solid ${std.color}`,
-                        }}>
-                          {/* Competition header */}
-                          <div className="flex items-center justify-between px-4 py-3" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background: std.color}}></div>
-                              <span className="text-xs sm:text-sm font-semibold text-white landing-font">{std.label}</span>
-                              {std.ageGroup === 'u20' && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded mono-font bg-purple-500/15 text-purple-400">U20</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded mono-font" style={{background: `${positionColor}18`, color: positionColor, border: `1px solid ${positionColor}30`}}>
-                                {positionLabel}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Visual gauge bar */}
-                          <div className="px-4 py-3">
-                            <div className="relative h-8 rounded-full mb-2" style={{background: 'rgba(255,255,255,0.04)'}}>
-                              {/* Mark indicators */}
-                              {marks.map((mark, mi) => {
-                                const pct = isThrows
-                                  ? ((mark.value - gaugeMin) / gaugeRange) * 100
-                                  : ((gaugeMax - mark.value) / gaugeRange) * 100;
-                                return (
-                                  <div key={mi} className="absolute top-0 bottom-0 flex flex-col items-center" style={{left: `${Math.min(Math.max(pct, 3), 97)}%`, transform: 'translateX(-50%)'}}>
-                                    <div className="w-px h-full" style={{background: `${mark.color}50`}}></div>
-                                  </div>
-                                );
-                              })}
-                              {/* PB indicator */}
-                              <div className="absolute top-0 bottom-0 flex items-center" style={{left: `${Math.min(Math.max(pbPct, 2), 98)}%`, transform: 'translateX(-50%)', zIndex: 10}}>
-                                <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff', boxShadow: '0 0 8px rgba(249,115,22,0.5)'}}></div>
-                              </div>
-                            </div>
-
-                            {/* Mark labels below gauge */}
-                            <div className="grid gap-1.5" style={{gridTemplateColumns: `repeat(${marks.length}, 1fr)`}}>
-                              {marks.map((mark, mi) => (
-                                <div key={mi} className="text-center">
-                                  <div className="text-[8px] sm:text-[9px] font-bold mono-font mb-0.5" style={{color: mark.color}}>{mark.label}</div>
-                                  <div className={`text-[10px] sm:text-xs mono-font ${beatsMark(mark.value) ? 'text-green-400 font-bold' : 'text-slate-500'}`}>
-                                    {fmtMark(mark.value)}
-                                  </div>
-                                  {beatsMark(mark.value) && <span className="text-[8px] text-green-500">✓</span>}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Summary footer */}
-                  <div className="flex items-center justify-between mt-4 pt-3" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
-                    <span className="text-[10px] text-slate-600 mono-font">
-                      {standardsTier === 'all' ? 'All competitions' : standardsTier === 'world' ? 'Olympics & World Champs' : standardsTier === 'regional' ? 'Continental Championships' : 'U20 & Collegiate'} · {metCount}/{total} entry standards met
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff'}}></div>
-                      <span className="text-[10px] text-slate-500 mono-font">= Your PB ({formatTime(analysisResults.personalBest, analysisResults.discipline)})</span>
-                    </div>
-                  </div>
-                </div>
+                <CompetitionStandardsLadder
+                  standards={analysisResults.standards}
+                  personalBest={parseFloat(analysisResults.personalBest)}
+                  discipline={analysisResults.discipline}
+                  gender={analysisResults.gender}
+                  wr={compData?.wr?.mark}
+                />
               );
             })()}
 
@@ -6811,78 +6653,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
             )}
 
-            {/* ── COMPETITION STANDARDS (full dashboard version uses same component as quickResults) ── */}
+            {/* ── COMPETITION STANDARDS — Gap Ladder (full dashboard) ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
-              const isThrows = isFieldEvent(analysisResults.discipline);
-              const unit = isThrows ? 'm' : 's';
-              const pb = parseFloat(analysisResults.personalBest);
               const eventCode = getEventCode(analysisResults.discipline, analysisResults.gender);
               const compData = COMPETITION_STANDARDS[eventCode];
-              const filteredStandards = standardsTier === 'all'
-                ? analysisResults.standards
-                : analysisResults.standards.filter(s => s.compTier === standardsTier);
-              const metCount = filteredStandards.filter(s => s.met).length;
-              const total = filteredStandards.length;
-              const fmtMark = (v) => v === null || v === undefined ? '—' : formatTime(v, analysisResults.discipline);
-              const beatsMark = (mark) => isThrows ? pb >= mark : pb <= mark;
-              const tierCounts = { all: analysisResults.standards.length, world: analysisResults.standards.filter(s => s.compTier === 'world').length, regional: analysisResults.standards.filter(s => s.compTier === 'regional').length, development: analysisResults.standards.filter(s => s.compTier === 'development').length };
               return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Flag className="w-4 h-4" style={{color: '#f97316'}} />
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Competition Standards</h3>
-                    </div>
-                    {compData?.wr && (
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.15)'}}>
-                        <span className="text-[9px] font-bold text-red-400 mono-font">WR</span>
-                        <span className="text-xs font-bold text-red-300 mono-font">{fmtMark(compData.wr.mark)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-                    {[
-                      { key: 'all', label: 'All', color: '#f97316' },
-                      { key: 'world', label: 'World', color: '#FFD700', icon: '🏅' },
-                      { key: 'regional', label: 'Regional', color: '#E84545', icon: '🌏' },
-                      { key: 'development', label: 'Development', color: '#A259FF', icon: '🎓' },
-                    ].filter(t => t.key === 'all' || tierCounts[t.key] > 0).map(t => (
-                      <button key={t.key} onClick={() => setStandardsTier(t.key)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold mono-font transition-all flex-shrink-0"
-                        style={{
-                          background: standardsTier === t.key ? `${t.color}18` : 'rgba(255,255,255,0.03)',
-                          border: standardsTier === t.key ? `1px solid ${t.color}40` : '1px solid rgba(255,255,255,0.06)',
-                          color: standardsTier === t.key ? t.color : '#64748b',
-                        }}
-                      >
-                        {t.icon && <span className="text-[10px]">{t.icon}</span>}
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    {filteredStandards.map((std, idx) => {
-                      const positionLabel = beatsMark(std.gold) ? 'Gold Level' : beatsMark(std.bronze) ? 'Medal Zone' : beatsMark(std.p8) ? 'Finalist' : 'Below';
-                      const positionColor = beatsMark(std.gold) ? '#FFD700' : beatsMark(std.bronze) ? '#CD7F32' : beatsMark(std.p8) ? '#10b981' : '#64748b';
-                      return (
-                        <div key={idx} className="flex items-center gap-3 py-2 px-3 rounded-lg" style={{background: 'rgba(255,255,255,0.02)', borderLeft: `3px solid ${std.color}`}}>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-semibold text-white landing-font">{std.label}</span>
-                              {std.ageGroup === 'u20' && <span className="text-[9px] font-bold px-1 py-0.5 rounded mono-font bg-purple-500/15 text-purple-400">U20</span>}
-                            </div>
-                            <div className="flex items-center gap-3 text-[10px] mono-font text-slate-500">
-                              <span><span style={{color: '#FFD700'}}>G</span> {fmtMark(std.gold)}</span>
-                              <span><span style={{color: '#CD7F32'}}>B</span> {fmtMark(std.bronze)}</span>
-                              <span><span style={{color: '#78909C'}}>8</span> {fmtMark(std.p8)}</span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded mono-font" style={{background: `${positionColor}18`, color: positionColor}}>{positionLabel}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <CompetitionStandardsLadder
+                  standards={analysisResults.standards}
+                  personalBest={parseFloat(analysisResults.personalBest)}
+                  discipline={analysisResults.discipline}
+                  gender={analysisResults.gender}
+                  wr={compData?.wr?.mark}
+                />
               );
             })()}
 
