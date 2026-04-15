@@ -4225,15 +4225,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     return (
                       <svg width={w} height={h} viewBox={isActive ? "0 0 280 100" : "0 0 64 48"}>
                         {bars.map((val, i) => {
-                          const barH = isActive ? val * 0.8 : val * 0.35;
+                          const barH = isActive ? val * 0.8 : val * 0.38;
                           const barW = isActive ? 28 : 6;
-                          const gap = isActive ? 12 : 3;
-                          const x = isActive ? 10 + i * (barW + gap) : 2 + i * (barW + gap);
-                          const y = (isActive ? 95 : 45) - barH;
+                          const gap = isActive ? 12 : 2;
+                          const x = isActive ? 10 + i * (barW + gap) : 4 + i * (barW + gap);
+                          const y = (isActive ? 95 : 44) - barH;
                           return (
                             <rect key={i} x={x} y={y} width={barW} height={barH} rx={isActive ? 4 : 1.5}
-                              fill={i === 4 ? ap.accent : 'rgba(148,163,184,0.15)'}
-                              style={{transformOrigin: `${x + barW/2}px ${isActive ? 95 : 45}px`, animation: isActive ? `barGrow 0.6s ease-out ${i * 0.06}s both` : 'none'}}
+                              fill={i === 4 ? ap.accent : 'rgba(148,163,184,0.28)'}
+                              style={{transformOrigin: `${x + barW/2}px ${isActive ? 95 : 44}px`, animation: isActive ? `barGrow 0.6s ease-out ${i * 0.06}s both` : 'none'}}
                             />
                           );
                         })}
@@ -4245,17 +4245,21 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     // Track — animated line chart (progression)
                     const points = isActive
                       ? [[10,75],[50,65],[95,55],[140,40],[185,32],[230,28],[270,24]]
-                      : [[2,38],[12,32],[22,26],[32,20],[42,16],[52,13],[62,11]];
+                      : [[4,38],[13,32],[22,26],[32,21],[42,17],[52,14],[60,11]];
                     const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
                     return (
                       <svg width={w} height={h} viewBox={isActive ? "0 0 280 100" : "0 0 64 48"}>
                         {isActive && [25,50,75].map(y => <line key={y} x1="10" y1={y} x2="270" y2={y} stroke="rgba(148,163,184,0.06)" strokeWidth="0.5" />)}
-                        <path d={path} fill="none" stroke={pillars[1].accent} strokeWidth={isActive ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round"
-                          strokeDasharray="400" style={{animation: isActive ? 'lineReveal 1.2s ease-out 0.2s both' : 'none'}} />
+                        {!isActive && <line x1="4" y1="42" x2="60" y2="42" stroke="rgba(148,163,184,0.12)" strokeWidth="0.5" />}
+                        <path d={path} fill="none" stroke={pillars[1].accent} strokeWidth={isActive ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round"
+                          style={{animation: isActive ? 'lineReveal 1.2s ease-out 0.2s both' : 'none', strokeDasharray: isActive ? 400 : 'none'}} />
                         {isActive && points.map((p, i) => (
                           <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill={pillars[1].accent} style={{animation: `fadeSlideUp 0.3s ease-out ${0.4 + i * 0.08}s both`}} />
                         ))}
-                        {!isActive && <circle cx={points[points.length-1][0]} cy={points[points.length-1][1]} r="2" fill={pillars[1].accent} />}
+                        {!isActive && points.filter((_, i) => i % 2 === 0).map((p, i) => (
+                          <circle key={i} cx={p[0]} cy={p[1]} r="1.4" fill={pillars[1].accent} opacity="0.7" />
+                        ))}
+                        {!isActive && <circle cx={points[points.length-1][0]} cy={points[points.length-1][1]} r="2.2" fill={pillars[1].accent} />}
                       </svg>
                     );
                   }
@@ -4275,8 +4279,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           </>
                         ) : (
                           <>
-                            <path d="M2,40 C15,35 28,25 42,18 S55,10 62,8" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="4" strokeLinecap="round" />
-                            <path d="M2,42 C18,36 30,28 45,20 S56,12 62,10" fill="none" stroke={pillars[2].accent} strokeWidth="1.5" strokeLinecap="round" />
+                            {/* Elite (green, solid) */}
+                            <path d="M3,38 C14,32 26,22 40,14 S56,6 61,5" fill="none" stroke={pillars[2].accent} strokeWidth="1.8" strokeLinecap="round" />
+                            <circle cx="61" cy="5" r="1.8" fill={pillars[2].accent} />
+                            {/* Your path (orange, dashed) */}
+                            <path d="M3,42 C16,38 28,30 42,22 S56,12 61,10" fill="none" stroke="#f97316" strokeWidth="1.3" strokeLinecap="round" strokeDasharray="2.5 2" opacity="0.75" />
+                            <circle cx="61" cy="10" r="1.5" fill="#f97316" opacity="0.9" />
                           </>
                         )}
                       </svg>
@@ -4308,17 +4316,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   }
                   return (
                     <svg width={64} height={48} viewBox="0 0 64 48">
-                      {days.slice(0, 14).map((d, i) => {
+                      {days.slice(0, 21).map((d, i) => {
                         const row = Math.floor(i / 7);
                         const col = i % 7;
                         return (
-                          <rect key={i} x={2 + col * 8.5} y={6 + row * 10} width={6} height={6} rx={1.5}
-                            fill={d ? pillars[3].accent : 'rgba(148,163,184,0.08)'}
-                            opacity={d ? 0.3 + (i / 14) * 0.7 : 1}
+                          <rect key={i} x={3 + col * 8} y={4 + row * 8} width={6} height={6} rx={1.2}
+                            fill={d ? pillars[3].accent : 'rgba(148,163,184,0.14)'}
+                            opacity={d ? 0.4 + (i / 21) * 0.6 : 1}
                           />
                         );
                       })}
-                      <text x="32" y="42" fill={pillars[3].accent} fontSize="10" fontWeight="700" textAnchor="center" style={{fontFamily: "'DM Mono', monospace"}}>18d</text>
+                      <text x="32" y="44" fill={pillars[3].accent} fontSize="9" fontWeight="700" textAnchor="middle" style={{fontFamily: "'DM Mono', monospace"}}>18d</text>
                     </svg>
                   );
                 };
