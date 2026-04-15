@@ -3125,10 +3125,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
         // Validate race values: each time must parse, be positive, and be within sane bounds.
         const isThrowsCheck = isFieldEvent(athleteData.discipline);
+        const isMarathonCheck = isMarathon(athleteData.discipline);
+        const maxRaceTime = isMarathonCheck ? 25200 : 10000;
         for (const r of validRaces) {
           const t = parseTimeInput(r.time);
           if (isNaN(t) || t <= 0) throw new Error(`Invalid race time: "${r.time}". Use mm:ss.ff (e.g. 8:06.05) for distance events or seconds for sprints.`);
-          if (!isThrowsCheck && t > 10000) throw new Error(`Race time "${r.time}" looks too large for a track event.`);
+          if (!isThrowsCheck && t > maxRaceTime) throw new Error(`Race time "${r.time}" looks too large for a track event.`);
           if (isThrowsCheck && t > 200) throw new Error(`Throw distance "${r.time}" looks too large — use metres.`);
           const rd = new Date(r.date);
           if (isNaN(rd.getTime())) throw new Error(`Invalid race date: "${r.date}".`);
@@ -3203,8 +3205,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           throw new Error('Personal best must be a positive number. Use mm:ss.ff (e.g. 8:06.05) for distance events.');
         }
         const isThrowsQ = isFieldEvent(quickAnalysisData.discipline);
-        if (!isThrowsQ && pb > 10000) {
-          throw new Error('Personal best looks too large for a track event — check the value.');
+        const isMarathonQ = isMarathon(quickAnalysisData.discipline);
+        const maxTime = isMarathonQ ? 25200 : 10000; // 7hr cap for marathon, ~2h46m for others
+        if (!isThrowsQ && pb > maxTime) {
+          throw new Error(isMarathonQ
+            ? 'Marathon time looks too large — enter as h:mm:ss (e.g., 3:15:11).'
+            : 'Personal best looks too large for a track event — check the value.');
         }
         if (isThrowsQ && pb > 200) {
           throw new Error('Throw distance looks too large — use metres (e.g. 65.50).');
@@ -5873,8 +5879,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Personal Best {isDistanceMode ? '(mm:ss.ff)' : getUnitLabel(quickAnalysisData.discipline)}</label>
-                    <input type={isDistanceMode ? "text" : "number"} step={isDistanceMode ? undefined : "0.01"} placeholder={isThrowsMode ? "e.g., 65.50" : isDistanceMode ? "e.g., 8:06.05" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
+                    <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Personal Best {isMarathon(quickAnalysisData.discipline) ? '(h:mm:ss)' : isDistanceMode ? '(mm:ss.ff)' : getUnitLabel(quickAnalysisData.discipline)}</label>
+                    <input type={isDistanceMode ? "text" : "number"} step={isDistanceMode ? undefined : "0.01"} placeholder={isThrowsMode ? "e.g., 65.50" : isMarathon(quickAnalysisData.discipline) ? "e.g., 2:09:52" : isDistanceMode ? "e.g., 8:06.05" : "e.g., 10.85"} value={quickAnalysisData.personalBest}
                       onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, personalBest: e.target.value })}
                       className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                   </div>
