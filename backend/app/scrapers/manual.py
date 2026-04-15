@@ -85,7 +85,7 @@ class ManualScraper(BaseScraper):
         Side effects:
             Updates race.wind_legal in place
         """
-        if discipline in ("400m", "800m", "1500m", "5000m", "10000m"):
+        if discipline in ("400m", "800m", "1500m", "5000m", "10000m", "Marathon"):
             # Wind not a factor for longer events
             race.wind_legal = True
         elif discipline in ("100m", "200m"):

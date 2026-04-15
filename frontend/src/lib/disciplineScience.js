@@ -54,6 +54,7 @@ const CALIBRATION = {
   '800m_M':   { mean: 106.5, std: 2.20, rocOptimal: 104.8, rocS90: 106.5, rocS80: 105.6, rocS70: 104.2 },
   '1500m_M':  { mean: 217.0, std: 4.50, rocOptimal: 213.0, rocS90: 217.0, rocS80: 215.0, rocS70: 212.0 },
   '5000m_M':  { mean: 800.0, std: 18.0, rocOptimal: 782.0, rocS90: 800.0, rocS80: 790.0, rocS70: 778.0 },
+  'Marathon_M': { mean: 7865.12, std: 313.12, rocOptimal: 7792, rocS90: 7765, rocS80: 7715, rocS70: 7672 },
   '110mH_M':  { mean: 13.45, std: 0.28, rocOptimal: 13.15, rocS90: 13.35, rocS80: 13.25, rocS70: 13.10 },
   '400mH_M':  { mean: 49.0,  std: 1.10, rocOptimal: 48.0,  rocS90: 48.8,  rocS80: 48.4,  rocS70: 47.8  },
   'Long Jump_M':    { mean: 8.05, std: 0.22, rocOptimal: 8.30, rocS90: 8.05, rocS80: 8.15, rocS70: 8.30, higher: true },
@@ -72,6 +73,7 @@ const CALIBRATION = {
   '800m_F':   { mean: 121.0, std: 2.50, rocOptimal: 119.0, rocS90: 121.0, rocS80: 120.0, rocS70: 118.5 },
   '1500m_F':  { mean: 245.0, std: 5.00, rocOptimal: 241.0, rocS90: 245.0, rocS80: 243.0, rocS70: 240.0 },
   '5000m_F':  { mean: 905.0, std: 20.0, rocOptimal: 885.0, rocS90: 905.0, rocS80: 895.0, rocS70: 880.0 },
+  'Marathon_F': { mean: 8935.08, std: 494.65, rocOptimal: 8669, rocS90: 8669, rocS80: 8624, rocS70: 8587 },
   '100mH_F':  { mean: 12.75, std: 0.25, rocOptimal: 12.50, rocS90: 12.70, rocS80: 12.60, rocS70: 12.45 },
   '400mH_F':  { mean: 54.8,  std: 1.20, rocOptimal: 53.6,  rocS90: 54.6,  rocS80: 54.1,  rocS70: 53.3  },
   'Long Jump_F':    { mean: 6.85, std: 0.20, rocOptimal: 7.05, rocS90: 6.80, rocS80: 6.90, rocS70: 7.05, higher: true },
@@ -198,6 +200,15 @@ const REFERENCE_TIERS = {
     { label: 'Continental',   value: 785.0  },
     { label: 'Olympic Final', value: 770.0  },
     { label: 'World Record',  value: 755.36 }, // Cheptegei 2020
+  ],
+  'Marathon_M': [
+    { label: 'Novice',        value: 16200 }, // 4:30:00
+    { label: 'School',        value: 12600 }, // 3:30:00
+    { label: 'Club',          value: 10800 }, // 3:00:00
+    { label: 'National',      value: 9000  }, // 2:30:00
+    { label: 'Continental',   value: 8100  }, // 2:15:00
+    { label: 'Olympic Final', value: 7800  }, // 2:10:00
+    { label: 'World Record',  value: 7235  }, // Kiptum 2:00:35 (2023)
   ],
   '110mH_M': [
     { label: 'Novice',        value: 19.00 },
@@ -344,6 +355,15 @@ const REFERENCE_TIERS = {
     { label: 'Continental',   value: 885.0  },
     { label: 'Olympic Final', value: 865.0  },
     { label: 'World Record',  value: 840.21 }, // Gidey 2020
+  ],
+  'Marathon_F': [
+    { label: 'Novice',        value: 18000 }, // 5:00:00
+    { label: 'School',        value: 14400 }, // 4:00:00
+    { label: 'Club',          value: 12600 }, // 3:30:00
+    { label: 'National',      value: 10200 }, // 2:50:00
+    { label: 'Continental',   value: 9000  }, // 2:30:00
+    { label: 'Olympic Final', value: 8700  }, // 2:25:00
+    { label: 'World Record',  value: 7796  }, // Chepngetich 2:09:56 (2024)
   ],
   '100mH_F': [
     { label: 'Novice',        value: 18.00 },

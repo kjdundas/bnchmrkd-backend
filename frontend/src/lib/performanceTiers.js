@@ -74,7 +74,7 @@ const DIST_SHIFTS_JUNIOR = [-3.0, -0.3, +0.8, +1.4, +1.8, +1.0];
 const DIST_SHIFTS_SENIOR = [-2.5, -0.2, +1.0, +0.6, +0.8, +0.5, -0.2];
 
 // Disciplines where absolute times are in minutes (so need larger shift scale)
-const LONG_DISTANCE = new Set(['1500m', '3000m', '5000m', '10000m', '800m']);
+const LONG_DISTANCE = new Set(['1500m', '3000m', '5000m', '10000m', '800m', 'Marathon']);
 
 function applyShift(value, shift, isTime) {
   if (value == null) return null;

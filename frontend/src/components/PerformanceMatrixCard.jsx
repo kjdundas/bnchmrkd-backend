@@ -45,14 +45,23 @@ function saveHistorical(storageKey, data) {
   }
 }
 
-// For time disciplines, parse "4:28.5" or "12.45" or "268" into seconds.
+// For time disciplines, parse "2:09:52" or "4:28.5" or "12.45" or "268" into seconds.
 function parsePBInput(input, discipline) {
   if (input === '' || input == null) return null;
   const s = String(input).trim();
   if (!s) return null;
   const isTime = isTimeDiscipline(discipline);
   if (isTime && s.includes(':')) {
-    const [m, rest] = s.split(':');
+    const parts = s.split(':');
+    if (parts.length === 3) {
+      // h:mm:ss (Marathon)
+      const hh = parseFloat(parts[0]);
+      const mm = parseFloat(parts[1]);
+      const ss = parseFloat(parts[2]);
+      if (isNaN(hh) || isNaN(mm) || isNaN(ss)) return null;
+      return hh * 3600 + mm * 60 + ss;
+    }
+    const [m, rest] = parts;
     const mm = parseFloat(m);
     const ss = parseFloat(rest);
     if (isNaN(mm) || isNaN(ss)) return null;
@@ -65,6 +74,12 @@ function parsePBInput(input, discipline) {
 function formatForInput(value, discipline) {
   if (value == null) return '';
   const isTime = isTimeDiscipline(discipline);
+  if (isTime && value >= 3600) {
+    const h = Math.floor(value / 3600);
+    const m = Math.floor((value - h * 3600) / 60);
+    const s = (value - h * 3600 - m * 60).toFixed(2).padStart(5, '0');
+    return `${h}:${String(m).padStart(2, '0')}:${s}`;
+  }
   if (isTime && value >= 60) {
     const m = Math.floor(value / 60);
     const s = (value - m * 60).toFixed(2).padStart(5, '0');
@@ -76,6 +91,9 @@ function formatForInput(value, discipline) {
 
 function placeholderFor(discipline) {
   if (isTimeDiscipline(discipline)) {
+    if (discipline === 'Marathon') {
+      return '2:09:52';
+    }
     if (['800m', '1500m', '3000m', '5000m', '10000m'].includes(discipline)) {
       return '4:28.50';
     }
@@ -271,7 +289,8 @@ export default function PerformanceMatrixCard({
             </div>
 
             <p className="mono-font text-[9px] text-slate-600 mt-3">
-              Times: <span className="text-slate-500">mm:ss.ss</span> or{' '}
+              Times: <span className="text-slate-500">h:mm:ss</span>,{' '}
+              <span className="text-slate-500">mm:ss.ss</span> or{' '}
               <span className="text-slate-500">ss.ss</span>. Field marks in
               metres. Blank to remove.
             </p>

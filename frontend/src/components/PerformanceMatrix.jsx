@@ -30,6 +30,12 @@ function formatValue(value, discipline) {
   if (value == null) return '—';
   const isTime = isTimeDiscipline(discipline);
   if (!isTime) return `${value.toFixed(2)}m`;
+  if (discipline === 'Marathon' || value >= 3600) {
+    const hrs = Math.floor(value / 3600);
+    const mins = Math.floor((value - hrs * 3600) / 60);
+    const secs = Math.round(value - hrs * 3600 - mins * 60);
+    return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
   if (['800m', '1500m', '3000m', '5000m', '10000m'].includes(discipline)) {
     const mins = Math.floor(value / 60);
     const secs = (value - mins * 60).toFixed(1).padStart(4, '0');

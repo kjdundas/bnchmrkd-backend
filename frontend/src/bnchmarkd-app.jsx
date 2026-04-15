@@ -20,7 +20,7 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
 // ── Data stats constants (update when dataset changes) ──
-const STATS = { athletes: '7,360+', records: '915K+', events: '19', disciplines: '19', games: 'Sydney 2000 – Paris 2024' };
+const STATS = { athletes: '8,395+', records: '929K+', events: '21', disciplines: '20', games: 'Sydney 2000 – Paris 2024' };
 
 // ── CountUp: animated number that counts from 0 to target on scroll into view ──
 function CountUp({ target, suffix = '', duration = 2000, className = '' }) {
@@ -225,16 +225,23 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const isFieldEvent = (disc) => isThrowsDiscipline(disc) || isJumpsDiscipline(disc);
 
   // Distance discipline detection helpers
-  const DISTANCE_DISCIPLINES = ['800m', '1500m', '3000m Steeplechase', '5000m', '10000m'];
-  const DISTANCE_CODES = ['M800', 'F800', 'M1500', 'F1500', 'M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K'];
+  const DISTANCE_DISCIPLINES = ['800m', '1500m', '3000m Steeplechase', '5000m', '10000m', 'Marathon'];
+  const DISTANCE_CODES = ['M800', 'F800', 'M1500', 'F1500', 'M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K', 'MMAR', 'FMAR'];
   const isDistanceDiscipline = (disc) => DISTANCE_DISCIPLINES.includes(disc) || DISTANCE_CODES.includes(disc);
 
-  const getUnitLabel = (disc) => isFieldEvent(disc) ? 'Distance (m)' : isDistanceDiscipline(disc) ? 'Time (mm:ss)' : 'Time (s)';
+  const isMarathon = (disc) => disc === 'Marathon' || disc === 'MMAR' || disc === 'FMAR';
+  const getUnitLabel = (disc) => isFieldEvent(disc) ? 'Distance (m)' : isMarathon(disc) ? 'Time (h:mm:ss)' : isDistanceDiscipline(disc) ? 'Time (mm:ss)' : 'Time (s)';
 
-  // Format seconds to mm:ss.ff for distance events, or ss.ff for sprint/hurdle events
+  // Format seconds to h:mm:ss for marathon, mm:ss.ff for other distance events, or ss.ff for sprint/hurdle events
   const formatTime = (seconds, disc) => {
     if (seconds == null || isNaN(seconds)) return '—';
     if (isFieldEvent(disc)) return `${Number(seconds).toFixed(2)}m`;
+    if (isMarathon(disc) || seconds >= 3600) {
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${hrs}:${String(mins).padStart(2, '0')}:${secs.toFixed(2).padStart(5, '0')}`;
+    }
     if (seconds >= 60) {
       const mins = Math.floor(seconds / 60);
       const secs = seconds % 60;
@@ -243,15 +250,23 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     return seconds.toFixed(2);
   };
 
-  // Parse user time input — accepts mm:ss.ff, m:ss.ff, or raw seconds
-  // Examples: "8:06.05" → 486.05, "13:13.66" → 793.66, "26:43.14" → 1603.14, "10.85" → 10.85
+  // Parse user time input — accepts h:mm:ss.ff, mm:ss.ff, m:ss.ff, or raw seconds
+  // Examples: "2:09:52" → 7792, "8:06.05" → 486.05, "13:13.66" → 793.66, "26:43.14" → 1603.14, "10.85" → 10.85
   const parseTimeInput = (input) => {
     if (input == null) return NaN;
     const str = String(input).trim();
     if (!str) return NaN;
-    // Check for mm:ss or m:ss pattern (contains a colon)
+    // Check for time pattern (contains a colon)
     if (str.includes(':')) {
       const parts = str.split(':');
+      if (parts.length === 3) {
+        // h:mm:ss (marathon)
+        const hrs = parseFloat(parts[0]);
+        const mins = parseFloat(parts[1]);
+        const secs = parseFloat(parts[2]);
+        if (isNaN(hrs) || isNaN(mins) || isNaN(secs) || hrs < 0 || mins < 0 || mins >= 60 || secs < 0 || secs >= 60) return NaN;
+        return hrs * 3600 + mins * 60 + secs;
+      }
       if (parts.length !== 2) return NaN;
       const mins = parseFloat(parts[0]);
       const secs = parseFloat(parts[1]);
@@ -1401,6 +1416,75 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { name: 'Late Developer', pct_off_pb: [7.8, 21.4, 10.3, 4.9, 1.9, 0.0], peakAge: 22 }
       ]
     },
+    // ── Marathon ─────────────────────────────────────────────────────
+    // 1,035 athletes (549 M / 486 F), 13,727 race seasons, Sydney 2000 → Paris 2024
+    // Cluster anchor ages (older than track): 22, 24, 26, 28, 30, 32
+    MMAR: {
+      percentiles: {
+        21: { p10: 0.67, p25: 1.40, p50: 1.63, p75: 1.82, p90: 2.31 },
+        22: { p10: 0.34, p25: 0.59, p50: 1.48, p75: 2.25, p90: 2.53 },
+        23: { p10: 0.33, p25: 0.53, p50: 2.29, p75: 4.56, p90: 6.15 },
+        24: { p10: 1.03, p25: 1.67, p50: 2.40, p75: 3.82, p90: 6.03 },
+        25: { p10: 0.98, p25: 1.37, p50: 3.64, p75: 4.54, p90: 5.80 },
+        26: { p10: 0.00, p25: 0.88, p50: 2.15, p75: 4.17, p90: 5.96 },
+        27: { p10: 0.54, p25: 1.04, p50: 1.71, p75: 3.50, p90: 5.35 },
+        28: { p10: 0.00, p25: 0.82, p50: 1.94, p75: 3.08, p90: 4.16 },
+        29: { p10: 0.25, p25: 0.99, p50: 2.01, p75: 2.50, p90: 5.02 },
+        30: { p10: 0.08, p25: 0.98, p50: 1.55, p75: 2.84, p90: 3.66 },
+        31: { p10: 0.01, p25: 1.05, p50: 2.06, p75: 3.71, p90: 4.46 },
+        32: { p10: 0.04, p25: 0.60, p50: 1.87, p75: 3.82, p90: 5.16 },
+        33: { p10: 0.00, p25: 0.78, p50: 2.11, p75: 3.61, p90: 6.24 },
+        34: { p10: 0.36, p25: 0.85, p50: 2.55, p75: 4.17, p90: 8.84 },
+        35: { p10: 0.07, p25: 0.70, p50: 1.84, p75: 4.41, p90: 8.56 },
+        36: { p10: 0.88, p25: 2.17, p50: 3.31, p75: 6.29, p90: 8.04 },
+        37: { p10: 0.34, p25: 1.08, p50: 3.14, p75: 5.85, p90: 13.07 },
+        38: { p10: 1.17, p25: 2.28, p50: 3.52, p75: 4.82, p90: 6.34 },
+        39: { p10: 0.03, p25: 0.99, p50: 2.82, p75: 7.68, p90: 9.81 },
+        40: { p10: 1.46, p25: 1.88, p50: 3.52, p75: 4.50, p90: 10.90 }
+      },
+      rocThresholds: { optimal: 7792.00, s90: 7765.00, s80: 7715.00, s70: 7672.00 },
+      calibration: { mean: 7865.12, std: 313.12 },
+      improvement: { finalist_median: 0.1296, finalist_std: 3.0304, non_finalist_median: 0.0771, non_finalist_std: 4.1345 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [1.7, 5.9, 2.9, 1.3, 1.7, 6.0], peakAge: 28 },
+        { name: 'Standard', pct_off_pb: [1.8, 2.9, 5.6, 3.5, 2.8, 1.0], peakAge: 32 },
+        { name: 'Late Developer', pct_off_pb: [1.8, 2.3, 1.6, 2.1, 1.6, 1.6], peakAge: 26 }
+      ]
+    },
+    FMAR: {
+      percentiles: {
+        19: { p10: 1.13, p25: 2.82, p50: 5.63, p75: 8.32, p90: 9.93 },
+        20: { p10: 4.43, p25: 4.90, p50: 11.40, p75: 11.89, p90: 19.38 },
+        21: { p10: 2.27, p25: 3.70, p50: 6.81, p75: 8.01, p90: 9.14 },
+        22: { p10: 0.45, p25: 1.89, p50: 4.67, p75: 9.52, p90: 10.37 },
+        23: { p10: 0.00, p25: 2.26, p50: 5.28, p75: 6.77, p90: 7.91 },
+        24: { p10: 1.09, p25: 2.07, p50: 4.59, p75: 6.84, p90: 9.48 },
+        25: { p10: 0.06, p25: 1.23, p50: 4.22, p75: 8.43, p90: 13.19 },
+        26: { p10: 0.00, p25: 1.42, p50: 2.68, p75: 5.06, p90: 6.26 },
+        27: { p10: 0.01, p25: 1.11, p50: 2.36, p75: 4.53, p90: 14.56 },
+        28: { p10: 0.00, p25: 0.29, p50: 1.32, p75: 5.75, p90: 12.79 },
+        29: { p10: 0.00, p25: 0.11, p50: 1.83, p75: 5.12, p90: 10.05 },
+        30: { p10: 0.46, p25: 1.19, p50: 2.77, p75: 4.17, p90: 7.27 },
+        31: { p10: 0.00, p25: 0.71, p50: 2.92, p75: 4.96, p90: 7.56 },
+        32: { p10: 0.76, p25: 1.79, p50: 3.53, p75: 4.08, p90: 5.61 },
+        33: { p10: 0.00, p25: 0.80, p50: 2.33, p75: 3.50, p90: 5.31 },
+        34: { p10: 1.75, p25: 2.35, p50: 3.81, p75: 5.67, p90: 11.66 },
+        35: { p10: 0.38, p25: 1.96, p50: 3.58, p75: 7.01, p90: 8.00 },
+        36: { p10: 0.05, p25: 1.57, p50: 3.17, p75: 5.99, p90: 14.30 },
+        37: { p10: 1.66, p25: 2.33, p50: 4.19, p75: 8.03, p90: 14.42 },
+        38: { p10: 0.08, p25: 1.19, p50: 4.76, p75: 6.93, p90: 8.81 },
+        39: { p10: 2.29, p25: 3.94, p50: 5.53, p75: 7.93, p90: 10.15 },
+        40: { p10: 3.22, p25: 4.17, p50: 6.52, p75: 9.35, p90: 11.89 }
+      },
+      rocThresholds: { optimal: 8669.00, s90: 8669.00, s80: 8624.00, s70: 8587.00 },
+      calibration: { mean: 8935.08, std: 494.65 },
+      improvement: { finalist_median: -0.1259, finalist_std: 4.4762, non_finalist_median: -0.1455, non_finalist_std: 4.8192 },
+      clusters: [
+        { name: 'Early Peaker', pct_off_pb: [7.3, 3.2, 7.1, 9.1, 2.5, 3.8], peakAge: 30 },
+        { name: 'Standard', pct_off_pb: [8.4, 9.6, 2.5, 1.2, 8.7, 3.8], peakAge: 28 },
+        { name: 'Late Developer', pct_off_pb: [9.0, 4.2, 1.6, 1.0, 1.8, 4.5], peakAge: 28 }
+      ]
+    },
     // ═══════════════════════════════════════════════════════════════════
     // MIDDLE DISTANCE (800m, 1500m) — from md_out/ analysis
     // 62,769 WA race records + 962 Olympians (Sydney 2000 → Paris 2024)
@@ -2090,6 +2174,23 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 1877.82, bronze: 1905.00, p8: 1950.00, semi: null },
       ],
     },
+    // ── MARATHON ────────────────────────────────────────────────────
+    MMAR: {
+      wr: { mark: 7235.00, holder: 'Kelvin Kiptum', year: 2023 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 7690.00, gold: 7589.42, bronze: 7638.00, p8: 7712.00, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 7690.00, gold: 7710.00, bronze: 7730.00, p8: 7820.00, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 8040.00, bronze: 8160.00, p8: 8340.00, semi: null },
+      ],
+    },
+    FMAR: {
+      wr: { mark: 7796.00, holder: 'Ruth Chepngetich', year: 2024 },
+      competitions: [
+        { id: 'oly24', label: 'Olympics 2024', tier: 'world', ageGroup: 'senior', color: '#FFD700', qual: 8810.00, gold: 8555.90, bronze: 8623.00, p8: 8740.00, semi: null },
+        { id: 'wch25', label: 'Worlds 2025', tier: 'world', ageGroup: 'senior', color: '#E87D2A', qual: 8810.00, gold: 8680.00, bronze: 8740.00, p8: 8880.00, semi: null },
+        { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 9120.00, bronze: 9300.00, p8: 9540.00, semi: null },
+      ],
+    },
     // ── MIDDLE DISTANCE: 800m ───────────────────────────────────────
     M800: {
       wr: { mark: 100.91, holder: 'David Rudisha', year: 2012 },
@@ -2280,6 +2381,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     if (discipline === '3000m Steeplechase') return `${genderCode}3SC`;
     if (discipline === '5000m') return `${genderCode}5K`;
     if (discipline === '10000m') return `${genderCode}10K`;
+    if (discipline === 'Marathon') return `${genderCode}MAR`;
     if (discipline === 'High Jump') return `${genderCode}HJ`;
     if (discipline === 'Long Jump') return `${genderCode}LJ`;
     if (discipline === 'Triple Jump') return `${genderCode}TJ`;
@@ -2316,6 +2418,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     F5K: { gold: 870.0, silver: 876.0, bronze: 882.0, mqt: 900.0, asianGold: 925.0, u20Gold: 885.0 },
     M10K: { gold: 1610.0, silver: 1615.0, bronze: 1620.0, mqt: 1640.0, asianGold: 1700.0, u20Gold: null },
     F10K: { gold: 1845.0, silver: 1855.0, bronze: 1865.0, mqt: 1880.0, asianGold: 1900.0, u20Gold: null },
+    MMAR: { gold: 7590.0, silver: 7620.0, bronze: 7640.0, mqt: 7690.0, asianGold: 8040.0, u20Gold: null },
+    FMAR: { gold: 8556.0, silver: 8600.0, bronze: 8625.0, mqt: 8810.0, asianGold: 9120.0, u20Gold: null },
     M800: { gold: 102.80, silver: 103.01, bronze: 103.27, mqt: 104.70, asianGold: 105.70, u20Gold: 104.85 },
     F800: { gold: 115.74, silver: 116.51, bronze: 116.93, mqt: 119.30, asianGold: 122.50, u20Gold: 120.60 },
     M1500: { gold: 215.32, silver: 215.64, bronze: 215.70, mqt: 213.00, asianGold: 222.00, u20Gold: 219.00 },
@@ -4992,13 +5096,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-rose-400 transition-colors">Long Distance</h3>
-                <p className="text-sm text-slate-500 mb-3 landing-font">3000m SC, 5000m, 10,000m</p>
+                <p className="text-sm text-slate-500 mb-3 landing-font">3000m SC, 5000m, 10,000m, Marathon</p>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(244,63,94,0.15)', color: '#fb7185'}}>
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
                     Live
                   </span>
-                  <span className="text-xs text-slate-500 mono-font">6 events</span>
+                  <span className="text-xs text-slate-500 mono-font">8 events</span>
                 </div>
                 <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-rose-400 transition-colors" />
               </button>
@@ -5531,6 +5635,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             <option value="3000m Steeplechase">3000m Steeplechase</option>
                             <option value="5000m">5000m</option>
                             <option value="10000m">10000m</option>
+                            <option value="Marathon">Marathon</option>
                           </optgroup>
                         </>
                       ) : (
@@ -5673,7 +5778,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <option value="800m">800m</option><option value="1500m">1500m</option>
                         </optgroup>
                         <optgroup label="Distance">
-                          <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
+                          <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option><option value="Marathon">Marathon</option>
                         </optgroup>
                       </>
                     ) : (
@@ -5729,7 +5834,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             <option value="800m">800m</option><option value="1500m">1500m</option>
                           </optgroup>
                           <optgroup label="Distance">
-                            <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option>
+                            <option value="3000m Steeplechase">3000m Steeplechase</option><option value="5000m">5000m</option><option value="10000m">10000m</option><option value="Marathon">Marathon</option>
                           </optgroup>
                         </>
                       ) : (
@@ -6262,12 +6367,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             })()}
 
             {/* ── SIMILAR ATHLETES ── */}
-            {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-4 h-4" style={{color: '#f97316'}} />
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Similar Athletes</h3>
-                </div>
+            <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-4 h-4" style={{color: '#f97316'}} />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Similar Athletes</h3>
+              </div>
+              {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {analysisResults.similarAthletes.map((athlete, idx) => (
                     <div key={idx} className="relative bg-slate-700/40 rounded-xl border border-slate-700/50 p-3 sm:p-4">
@@ -6307,8 +6412,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-xl border border-dashed border-orange-900/40 bg-orange-950/10 p-5 sm:p-6 text-center">
+                  <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-400/80 mb-2">Dataset still being built</div>
+                  <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+                    We're progressively loading athlete histories for <span className="text-white font-semibold">{analysisResults.discipline}</span>. Peer matches aren't available for this event yet — the full benchmark still applies.
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-2 mono-font">Currently live: 100m, 200m, 400m, 110mH/100mH, 400mH</p>
+                </div>
+              )}
+            </div>
 
             {/* ── IMPROVEMENT SCENARIOS ── */}
             {analysisResults.improvementScenarios && (
@@ -7402,18 +7515,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             </div>
 
             {/* ── SIMILAR ATHLETES (in Benchmarks tab) ── */}
-            {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <div className="mb-6">
-                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
-                    <Users className="w-3 h-3" />
-                    Career Twins
-                  </p>
-                  <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight mb-1">
-                    Similar athletes
-                  </h3>
-                  <p className="text-sm text-slate-400">Olympic athletes who recorded similar marks at a comparable age — see how their careers developed</p>
-                </div>
+            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+              <div className="mb-6">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <Users className="w-3 h-3" />
+                  Career Twins
+                </p>
+                <h3 className="landing-font text-xl sm:text-2xl font-semibold text-white tracking-tight mb-1">
+                  Similar athletes
+                </h3>
+                <p className="text-sm text-slate-400">Olympic athletes who recorded similar marks at a comparable age — see how their careers developed</p>
+              </div>
+              {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {analysisResults.similarAthletes.map((athlete, idx) => (
                     <div key={idx} className="relative bg-gradient-to-br from-slate-800 to-slate-800/80 rounded-xl border border-slate-700 p-4 sm:p-5 hover:shadow-md transition-shadow">
@@ -7451,8 +7564,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-xl border border-dashed border-orange-900/40 bg-orange-950/10 p-6 sm:p-8 text-center">
+                  <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-400/80 mb-2">Dataset still being built</div>
+                  <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
+                    Olympic peer histories for <span className="text-white font-semibold">{analysisResults.discipline}</span> are still being migrated into the platform. Your benchmark results above are unaffected — this section will populate as soon as the dataset lands.
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-3 mono-font">Currently live: 100m, 200m, 400m, 110mH/100mH, 400mH</p>
+                </div>
+              )}
+            </div>
 
             </>)}
 
