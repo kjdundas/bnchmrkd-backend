@@ -14,6 +14,8 @@ import { analytics } from './lib/analytics';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PerformanceMatrixCard from './components/PerformanceMatrixCard';
 import CompetitionStandardsLadder from './components/CompetitionStandardsLadder';
+import InfoTooltip from './components/InfoTooltip';
+import { getTier, TIER_COLORS, TIER_NAMES, TIER_SHORT } from './lib/performanceTiers';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
@@ -5886,57 +5888,184 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
             )}
 
-            {/* ── SNAPSHOT GRID — Ultrahuman-style status cards ── */}
-            <div className={`grid grid-cols-2 sm:grid-cols-3 ${analysisResults.performanceLevel ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-2 sm:gap-3 mb-6 sm:mb-8`}>
-              {[
-                ...(analysisResults.performanceLevel ? [{
-                  label: `Level · ${analysisResults.performanceLevel.ageGroup}`,
-                  value: `L${analysisResults.performanceLevel.level}`,
-                  status: analysisResults.performanceLevel.name,
-                  statusColor: analysisResults.performanceLevel.color,
-                  sub: analysisResults.performanceLevel.gap !== null
-                    ? `${analysisResults.performanceLevel.gap.toFixed(2)}m to L${analysisResults.performanceLevel.nextLevel}`
-                    : analysisResults.performanceLevel.level >= analysisResults.performanceLevel.maxLevel ? 'Max level reached' : null,
-                }] : []),
-                {
-                  label: 'Percentile',
-                  value: `P${analysisResults.percentileAtCurrentAge}`,
-                  status: analysisResults.percentileAtCurrentAge >= 90 ? 'Elite' : analysisResults.percentileAtCurrentAge >= 75 ? 'National' : analysisResults.percentileAtCurrentAge >= 50 ? 'Competitive' : 'Developing',
-                  statusColor: analysisResults.percentileAtCurrentAge >= 90 ? '#10b981' : analysisResults.percentileAtCurrentAge >= 75 ? '#3b82f6' : analysisResults.percentileAtCurrentAge >= 50 ? '#f59e0b' : '#64748b',
-                },
-                {
-                  label: 'Finalist',
-                  value: `${analysisResults.finalistProbability}%`,
-                  status: analysisResults.finalistProbability >= 60 ? 'Likely' : analysisResults.finalistProbability >= 30 ? 'Possible' : 'Developing',
-                  statusColor: analysisResults.finalistProbability >= 60 ? '#10b981' : analysisResults.finalistProbability >= 30 ? '#f59e0b' : '#64748b',
-                },
-                {
-                  label: 'Semi-Final',
-                  value: `${analysisResults.semiFinalistProbability}%`,
-                  status: analysisResults.semiFinalistProbability >= 60 ? 'Likely' : analysisResults.semiFinalistProbability >= 30 ? 'Possible' : 'Developing',
-                  statusColor: analysisResults.semiFinalistProbability >= 60 ? '#10b981' : analysisResults.semiFinalistProbability >= 30 ? '#f59e0b' : '#64748b',
-                },
-                {
-                  label: 'Qualifier',
-                  value: `${analysisResults.qualifierProbability}%`,
-                  status: analysisResults.qualifierProbability >= 60 ? 'Likely' : analysisResults.qualifierProbability >= 30 ? 'Possible' : 'Developing',
-                  statusColor: analysisResults.qualifierProbability >= 60 ? '#10b981' : analysisResults.qualifierProbability >= 30 ? '#f59e0b' : '#64748b',
-                },
-                {
-                  label: 'Standards Met',
-                  value: analysisResults.standards ? `${analysisResults.standards.filter(s => s.met).length}/${analysisResults.standards.length}` : '—',
-                  status: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? 'All Clear' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? 'In Progress' : 'None Yet',
-                  statusColor: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? '#10b981' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? '#f59e0b' : '#64748b',
-                },
-              ].map((card, i) => (
-                <div key={i} className="bento-card rounded-xl p-3 sm:p-4" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: `1px solid ${i === 0 && analysisResults.performanceLevel ? analysisResults.performanceLevel.color + '30' : 'rgba(255,255,255,0.06)'}`}}>
-                  <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font mb-2">{card.label}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1.5">{card.value}</p>
-                  <p className="text-[10px] sm:text-xs font-semibold" style={{color: card.statusColor}}>{card.status}</p>
-                  {card.sub && <p className="text-[9px] text-slate-600 mono-font mt-1">{card.sub}</p>}
+            {/* ── SNAPSHOT GRID — age-aware T1-T7 tier system (4 tiles) ── */}
+            {(() => {
+              const pb = parseFloat(analysisResults.personalBest);
+              const ageGroup = analysisResults.performanceLevel?.ageGroup || getAgeGroup(analysisResults.age);
+              const tierInfo = getTier(analysisResults.discipline, analysisResults.gender, ageGroup, pb);
+              const isTime = isTimeDiscipline(analysisResults.discipline);
+              const unit = isTime ? 's' : 'm';
+
+              // ── PEER RANK — "Top X%" capped so never 0% or 100% ──
+              const pct = Math.min(99, Math.max(1, analysisResults.percentileAtCurrentAge || 1));
+              const topPct = Math.max(1, 100 - pct);
+
+              // ── NEXT TIER — derive label + gap ──
+              const atMax = tierInfo && tierInfo.tier >= tierInfo.maxTier;
+              const nextGapStr = tierInfo && tierInfo.gap != null
+                ? `+${Math.abs(tierInfo.gap).toFixed(2)}${unit}`
+                : null;
+
+              // ── MILESTONE — age-appropriate ──
+              const stds = analysisResults.standards || [];
+              const cleared = stds.filter(s => s.met);
+              // pick highest cleared comp (world tier first, then any)
+              const topCleared = (() => {
+                if (!cleared.length) return null;
+                const world = cleared.filter(s => s.compTier === 'world');
+                const pool = world.length ? world : cleared;
+                // highest tier cleared per standard: gold > bronze > p8 > semi > qual
+                const rank = (s) => s.gold && (isTime ? pb <= s.gold : pb >= s.gold) ? 5
+                  : s.bronze && (isTime ? pb <= s.bronze : pb >= s.bronze) ? 4
+                  : s.p8 && (isTime ? pb <= s.p8 : pb >= s.p8) ? 3
+                  : s.semi && (isTime ? pb <= s.semi : pb >= s.semi) ? 2
+                  : 1;
+                return pool.slice().sort((a, b) => rank(b) - rank(a))[0];
+              })();
+              const topClearedRank = topCleared ? (() => {
+                const s = topCleared;
+                if (s.gold && (isTime ? pb <= s.gold : pb >= s.gold)) return { label: 'Gold', color: '#FFD700' };
+                if (s.bronze && (isTime ? pb <= s.bronze : pb >= s.bronze)) return { label: 'Bronze', color: '#CD7F32' };
+                if (s.p8 && (isTime ? pb <= s.p8 : pb >= s.p8)) return { label: 'Finalist', color: '#10b981' };
+                if (s.semi && (isTime ? pb <= s.semi : pb >= s.semi)) return { label: 'Semi', color: '#3b82f6' };
+                return { label: 'Entry', color: '#8b5cf6' };
+              })() : null;
+
+              const maxTier = tierInfo?.maxTier || (ageGroup === 'Senior' ? 7 : 6);
+              const currentTier = tierInfo?.tier || 0;
+              const tierColor = currentTier > 0 ? TIER_COLORS[currentTier] : '#334155';
+
+              return (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+
+                  {/* ── TILE 1 · TIER ── */}
+                  <div
+                    className="bento-card rounded-xl p-3 sm:p-4 relative overflow-hidden"
+                    style={{
+                      background: `linear-gradient(135deg, ${tierColor}18 0%, rgba(255,255,255,0.01) 70%)`,
+                      border: `1px solid ${tierColor}40`,
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Tier · {ageGroup}</p>
+                      <InfoTooltip title="Performance Tier" side="bottom" tone="orange">
+                        A 6-tier ladder for juniors and 7-tier ladder for seniors, derived from 25 years of Olympic outcomes. Your tier comes from your PB vs. age-group thresholds — from <strong>T1 Emerging</strong> up to <strong>T7 World Class</strong>. Unlike percentiles, this scales with age: a T4 U17 athlete is on an Olympic-qualifier trajectory for their age.
+                      </InfoTooltip>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold mono-font leading-none mb-1" style={{ color: tierColor }}>
+                      {currentTier > 0 ? TIER_SHORT[currentTier] : '—'}
+                    </p>
+                    <p className="text-[10px] sm:text-xs font-semibold mb-2.5" style={{ color: tierColor }}>
+                      {currentTier > 0 ? TIER_NAMES[currentTier] : 'Below Emerging'}
+                    </p>
+                    {/* Tier progress rail */}
+                    <div className="flex gap-[2px] mt-2">
+                      {Array.from({ length: maxTier }, (_, i) => i + 1).map(t => (
+                        <div
+                          key={t}
+                          className="flex-1 rounded-sm"
+                          style={{
+                            height: '4px',
+                            background: t <= currentTier ? TIER_COLORS[t] : 'rgba(255,255,255,0.05)',
+                            boxShadow: t === currentTier ? `0 0 8px ${TIER_COLORS[t]}80` : 'none',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── TILE 2 · PEER RANK ── */}
+                  <div className="bento-card rounded-xl p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Peer rank</p>
+                      <InfoTooltip title="Peer Rank" side="bottom" tone="orange">
+                        How your PB compares against athletes <strong>at your age</strong> in our Olympic pipeline dataset. "Top 5%" means your mark beats roughly 95 out of every 100 age-matched peers we've seen. Because it's age-scoped, it's fair for young athletes — a 14-year-old doesn't get judged against senior finalists.
+                      </InfoTooltip>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1">
+                      Top {topPct}%
+                    </p>
+                    <p className="text-[10px] sm:text-xs font-semibold" style={{
+                      color: pct >= 90 ? '#10b981' : pct >= 75 ? '#3b82f6' : pct >= 50 ? '#f59e0b' : '#64748b',
+                    }}>
+                      of {ageGroup} peers
+                    </p>
+                    <p className="text-[9px] text-slate-600 mono-font mt-1">P{pct} at age {analysisResults.age}</p>
+                  </div>
+
+                  {/* ── TILE 3 · NEXT TIER ── */}
+                  <div className="bento-card rounded-xl p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Next tier</p>
+                      <InfoTooltip title="Next Tier Gap" side="bottom" tone="orange">
+                        The exact improvement you need to step up to the next tier on the age-group ladder. For time events we subtract (faster); for field events we add (further/higher). This is a concrete, targetable number — unlike probability percentages, which compare you to senior Olympic benchmarks.
+                      </InfoTooltip>
+                    </div>
+                    {atMax ? (
+                      <>
+                        <p className="text-xl sm:text-2xl font-bold mono-font leading-none mb-1" style={{ color: '#fb923c' }}>
+                          Apex
+                        </p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-orange-400">Top tier reached</p>
+                        <p className="text-[9px] text-slate-600 mono-font mt-1">No tier above {TIER_SHORT[currentTier]}</p>
+                      </>
+                    ) : nextGapStr && tierInfo.nextTier ? (
+                      <>
+                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1 tabular-nums">
+                          {nextGapStr}
+                        </p>
+                        <p className="text-[10px] sm:text-xs font-semibold" style={{ color: TIER_COLORS[tierInfo.nextTier] }}>
+                          to {TIER_SHORT[tierInfo.nextTier]} · {tierInfo.nextTierName}
+                        </p>
+                        <p className="text-[9px] text-slate-600 mono-font mt-1 tabular-nums">
+                          threshold {isTime ? tierInfo.nextCut.toFixed(2) : tierInfo.nextCut.toFixed(2)}{unit}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1">—</p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500">No data</p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* ── TILE 4 · MILESTONE (standards) ── */}
+                  <div className="bento-card rounded-xl p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Milestones</p>
+                      <InfoTooltip title="Competition Standards" side="bottom" tone="orange">
+                        How many published competition standards you've met so far (entry / semi / 8th / bronze / gold marks across world, regional, and development comps). The highlighted badge shows your highest cleared category — e.g. "Finalist-caliber" means your PB beats the 8th-place mark at a world-class meet.
+                      </InfoTooltip>
+                    </div>
+                    {stds.length > 0 ? (
+                      <>
+                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1 tabular-nums">
+                          {cleared.length}<span className="text-slate-500 text-lg">/{stds.length}</span>
+                        </p>
+                        {topClearedRank ? (
+                          <p className="text-[10px] sm:text-xs font-semibold" style={{ color: topClearedRank.color }}>
+                            Highest: {topClearedRank.label}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] sm:text-xs font-semibold text-slate-500">None cleared yet</p>
+                        )}
+                        {topCleared && (
+                          <p className="text-[9px] text-slate-600 mono-font mt-1 truncate">
+                            {topCleared.label}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1">—</p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500">No standards</p>
+                      </>
+                    )}
+                  </div>
+
                 </div>
-              ))}
-            </div>
+              );
+            })()}
 
             {/* ── COMPETITION STANDARDS — Gap Ladder ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
