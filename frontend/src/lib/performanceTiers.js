@@ -61,17 +61,14 @@ export const AGE_GROUPS = ['U13', 'U15', 'U17', 'U20', 'Senior'];
 const JUNIOR_SOURCE_IDX = [0, 2, 3, 5, 6, 8];        // L1, L3, L4, L6, L7, L9
 const SENIOR_SOURCE_IDX = [0, 2, 4, 7, 9, 10, 11];   // L1, L3, L5, L8, L10, L11, L12
 
-// Systematic offsets applied on top of the source value so bnchmrkd.'s
-// numbers don't read as a copy of UKA's. Units:
-//   Time disciplines: seconds (positive offset = harder / faster required)
-//   Field disciplines: metres (positive offset = harder / longer required)
-const TIME_SHIFTS_JUNIOR  = [-0.25, -0.02, +0.06, +0.11, +0.14, +0.08];
-const TIME_SHIFTS_SENIOR  = [-0.20, -0.02, +0.08, +0.05, +0.07, +0.05, -0.02];
-const FIELD_SHIFTS_JUNIOR = [-0.30, +0.10, +0.20, +0.30, +0.25, +0.20];
-const FIELD_SHIFTS_SENIOR = [-0.40, +0.15, +0.35, +0.25, +0.30, +0.20, +0.20];
-// For long-distance (values in seconds but with bigger absolute ranges), shifts scale.
-const DIST_SHIFTS_JUNIOR = [-3.0, -0.3, +0.8, +1.4, +1.8, +1.0];
-const DIST_SHIFTS_SENIOR = [-2.5, -0.2, +1.0, +0.6, +0.8, +0.5, -0.2];
+// No offsets — bnchmrkd.'s Performance Levels spreadsheet is the single
+// source of truth. Tiers map directly to the calibrated L1–L12 values.
+const TIME_SHIFTS_JUNIOR  = [0, 0, 0, 0, 0, 0];
+const TIME_SHIFTS_SENIOR  = [0, 0, 0, 0, 0, 0, 0];
+const FIELD_SHIFTS_JUNIOR = [0, 0, 0, 0, 0, 0];
+const FIELD_SHIFTS_SENIOR = [0, 0, 0, 0, 0, 0, 0];
+const DIST_SHIFTS_JUNIOR  = [0, 0, 0, 0, 0, 0];
+const DIST_SHIFTS_SENIOR  = [0, 0, 0, 0, 0, 0, 0];
 
 // Disciplines where absolute times are in minutes (so need larger shift scale)
 const LONG_DISTANCE = new Set(['1500m', '3000m', '5000m', '10000m', '800m', 'Marathon']);
