@@ -6366,7 +6366,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
                     We're progressively loading athlete histories for <span className="text-white font-semibold">{analysisResults.discipline}</span>. Peer matches aren't available for this event yet — the full benchmark still applies.
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-2 mono-font">Currently live: 100m, 200m, 400m, 110mH/100mH, 400mH</p>
+                  <p className="text-[11px] text-slate-500 mt-2 mono-font">Currently live: Sprints, Hurdles, Throws, Jumps, 800m, 1500m, 3000m SC, 5000m, 10000m, Marathon</p>
                 </div>
               )}
             </div>
@@ -7534,7 +7534,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
                     Olympic peer histories for <span className="text-white font-semibold">{analysisResults.discipline}</span> are still being migrated into the platform. Your benchmark results above are unaffected — this section will populate as soon as the dataset lands.
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-3 mono-font">Currently live: 100m, 200m, 400m, 110mH/100mH, 400mH</p>
+                  <p className="text-[11px] text-slate-500 mt-3 mono-font">Currently live: Sprints, Hurdles, Throws, Jumps, 800m, 1500m, 3000m SC, 5000m, 10000m, Marathon</p>
                 </div>
               )}
             </div>
