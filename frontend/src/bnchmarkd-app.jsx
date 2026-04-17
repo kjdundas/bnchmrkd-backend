@@ -8,9 +8,10 @@ import {
   Activity, Timer, TrendingUp, Target, Award, ChevronRight, Plus, Trash2,
   Link, Upload, BarChart3, Zap, Calendar, ArrowUpRight, AlertTriangle, Users,
   Percent, Layers, BarChart2, CheckCircle2, Circle, Flag, Database, Info, ArrowRight, ChevronLeft,
-  Search, User, Globe, Medal, Lock
+  Search, User, Globe, Medal, Lock, Download, FileText
 } from 'lucide-react';
 import { analytics } from './lib/analytics';
+import { exportQuickAnalysisPDF } from './lib/pdfExport';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PerformanceMatrixCard from './components/PerformanceMatrixCard';
 import CompetitionStandardsLadder from './components/CompetitionStandardsLadder';
@@ -327,6 +328,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     ]
   });
   const [quickAnalysisData, setQuickAnalysisData] = useState({
+    name: '',
     discipline: '100m',
     gender: 'Male',
     age: '',
@@ -1941,6 +1943,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 10.07, bronze: 10.22, p8: 10.45, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 10.19, bronze: 10.26, p8: 10.51, semi: 10.58 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 10.07, bronze: 10.10, p8: 10.24, semi: 10.38 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 10.38, bronze: 10.4, p8: 10.72, semi: 10.72 },
       ],
     },
     F100: {
@@ -1951,6 +1954,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 11.37, bronze: 11.54, p8: 11.85, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 11.08, bronze: 11.17, p8: 11.45, semi: 11.55 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 10.87, bronze: 11.02, p8: 11.25, semi: 11.35 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 11.8, bronze: 11.93, p8: 12.1, semi: 12.1 },
       ],
     },
     M200: {
@@ -1961,6 +1965,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 20.12, bronze: 20.40, p8: 20.90, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 20.52, bronze: 20.81, p8: 21.30, semi: 21.55 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 19.84, bronze: 19.96, p8: 20.55, semi: 20.75 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 20.95, bronze: 21.24, p8: 21.76, semi: 21.76 },
       ],
     },
     F200: {
@@ -1971,6 +1976,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 22.97, bronze: 23.00, p8: 23.60, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 22.55, bronze: 22.80, p8: 23.40, semi: 23.65 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 21.98, bronze: 22.25, p8: 22.80, semi: 23.00 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 23.99, bronze: 24.31, p8: 24.67, semi: 24.67 },
       ],
     },
     M400: {
@@ -1981,6 +1987,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 45.33, bronze: 45.55, p8: 46.50, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 45.69, bronze: 46.30, p8: 47.10, semi: 47.40 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 44.84, bronze: 45.75, p8: 46.17, semi: 46.50 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 48.11, bronze: 48.3, p8: 49.5, semi: 49.5 },
       ],
     },
     F400: {
@@ -1991,6 +1998,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 52.17, bronze: 52.79, p8: 54.20, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 50.55, bronze: 51.85, p8: 52.80, semi: 53.10 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 49.62, bronze: 50.15, p8: 51.20, semi: 51.50 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 57.27, bronze: 58.01, p8: 61.34, semi: 61.34 },
       ],
     },
     M110H: {
@@ -2001,6 +2009,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 13.22, bronze: 13.45, p8: 13.85, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 13.12, bronze: 13.32, p8: 13.68, semi: 13.80 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 13.05, bronze: 13.28, p8: 13.65, semi: 13.80 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 13.42, bronze: 13.5, p8: 13.93, semi: 13.93 },
       ],
     },
     F100H: {
@@ -2011,6 +2020,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 12.96, bronze: 13.07, p8: 13.40, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 12.82, bronze: 12.96, p8: 13.25, semi: 13.35 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 12.81, bronze: 12.98, p8: 13.20, semi: 13.35 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 13.71, bronze: 13.8, p8: 14.56, semi: 14.56 },
       ],
     },
     M400H: {
@@ -2021,6 +2031,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 48.00, bronze: 48.80, p8: 50.30, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 49.26, bronze: 49.80, p8: 51.20, semi: 51.60 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 47.49, bronze: 48.66, p8: 50.83, semi: 51.20 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 52.24, bronze: 53.63, p8: 55.17, semi: 55.17 },
       ],
     },
     F400H: {
@@ -2031,6 +2042,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 55.31, bronze: 56.46, p8: 58.50, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 55.59, bronze: 56.50, p8: 58.20, semi: 58.80 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 52.46, bronze: 53.50, p8: 55.20, semi: 55.80 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 59.55, bronze: 61.59, p8: 68.73, semi: 68.73 },
       ],
     },
     MSP: {
@@ -2041,6 +2053,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 19.25, bronze: 18.90, p8: 18.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 21.56, bronze: 20.80, p8: 19.80, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 21.95, bronze: 21.50, p8: 20.80, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 20.23, bronze: 18.59, p8: null, semi: null },
       ],
     },
     FSP: {
@@ -2051,6 +2064,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 18.26, bronze: 17.90, p8: 17.20, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 18.35, bronze: 17.80, p8: 16.90, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 19.60, bronze: 19.00, p8: 18.30, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 18.47, bronze: 16.58, p8: null, semi: null },
       ],
     },
     MDT: {
@@ -2061,6 +2075,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 63.47, bronze: 61.50, p8: 57.80, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 68.50, bronze: 65.20, p8: 61.00, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 68.80, bronze: 66.50, p8: 63.00, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 63.33, bronze: 58.85, p8: null, semi: null },
       ],
     },
     FDT: {
@@ -2071,6 +2086,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 61.50, bronze: 59.00, p8: 55.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 64.20, bronze: 61.00, p8: 57.00, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 65.82, bronze: 63.50, p8: 60.80, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 53.81, bronze: 41.3, p8: null, semi: null },
       ],
     },
     MJT: {
@@ -2081,6 +2097,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 86.40, bronze: 83.75, p8: 79.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 81.50, bronze: 78.00, p8: 73.00, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 82.00, bronze: 79.00, p8: 74.00, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 67.57, bronze: 61.96, p8: null, semi: null },
       ],
     },
     FJT: {
@@ -2091,6 +2108,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 63.29, bronze: 58.94, p8: 55.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 62.50, bronze: 60.00, p8: 56.00, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 63.50, bronze: 61.50, p8: 58.00, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 54.04, bronze: 49.76, p8: null, semi: null },
       ],
     },
     MHT: {
@@ -2101,6 +2119,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 74.50, bronze: 71.50, p8: 67.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 79.50, bronze: 76.00, p8: 72.00, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 76.50, bronze: 74.00, p8: 70.00, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 79.11, bronze: 70.83, p8: null, semi: null },
       ],
     },
     FHT: {
@@ -2111,6 +2130,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 72.98, bronze: 64.25, p8: 60.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 72.00, bronze: 68.00, p8: 63.00, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 74.50, bronze: 72.00, p8: 68.50, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 67.71, bronze: 56.47, p8: null, semi: null },
       ],
     },
     // ── DISTANCE: 3000m STEEPLECHASE ────────────────────────────────
@@ -2200,6 +2220,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 105.70, bronze: 107.20, p8: 110.50, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 104.85, bronze: 105.90, p8: 108.20, semi: 108.80 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 105.86, bronze: 106.71, p8: 107.44, semi: 108.00 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 113.31, bronze: 113.41, p8: 118.7, semi: 118.7 },
       ],
     },
     F800: {
@@ -2210,6 +2231,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 122.50, bronze: 124.00, p8: 127.50, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 120.60, bronze: 121.80, p8: 124.50, semi: 125.00 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 118.13, bronze: 119.03, p8: 121.00, semi: 121.60 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 134.86, bronze: 137.87, p8: null, semi: null },
       ],
     },
     // ── MIDDLE DISTANCE: 1500m ──────────────────────────────────────
@@ -2221,6 +2243,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 222.00, bronze: 223.50, p8: 228.50, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 219.00, bronze: 220.50, p8: 224.00, semi: 224.50 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 227.26, bronze: 227.42, p8: 227.74, semi: 229.50 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 237.9, bronze: 239.47, p8: null, semi: null },
       ],
     },
     F1500: {
@@ -2231,6 +2254,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 252.00, bronze: 254.50, p8: 261.00, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 247.50, bronze: 250.00, p8: 255.50, semi: 256.00 },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 247.94, bronze: 249.31, p8: 251.03, semi: 252.50 },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 298.35, bronze: 299.85, p8: null, semi: null },
       ],
     },
     MHJ: {
@@ -2241,6 +2265,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 2.28, bronze: 2.24, p8: 2.16, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 2.24, bronze: 2.19, p8: 2.11, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 2.26, bronze: 2.21, p8: 2.15, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 2.05, bronze: 2.03, p8: null, semi: null },
       ],
     },
     FHJ: {
@@ -2251,6 +2276,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 1.92, bronze: 1.85, p8: 1.76, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 1.86, bronze: 1.82, p8: 1.77, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 1.92, bronze: 1.84, p8: 1.78, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 1.73, bronze: 1.65, p8: null, semi: null },
       ],
     },
     MLJ: {
@@ -2261,6 +2287,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 8.10, bronze: 7.78, p8: 7.50, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 7.80, bronze: 7.65, p8: 7.35, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 8.24, bronze: 7.85, p8: 7.60, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 7.73, bronze: 7.3, p8: null, semi: null },
       ],
     },
     FLJ: {
@@ -2271,6 +2298,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 6.75, bronze: 6.50, p8: 6.22, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 6.40, bronze: 6.27, p8: 6.02, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 6.82, bronze: 6.55, p8: 6.38, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 6.26, bronze: 5.66, p8: null, semi: null },
       ],
     },
     MTJ: {
@@ -2281,6 +2309,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 17.02, bronze: 16.45, p8: 15.85, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 16.40, bronze: 16.12, p8: 15.60, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 17.10, bronze: 16.45, p8: 16.00, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 15.53, bronze: 14.97, p8: null, semi: null },
       ],
     },
     FTJ: {
@@ -2291,6 +2320,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 14.20, bronze: 13.75, p8: 13.15, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 13.60, bronze: 13.30, p8: 12.85, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 14.15, bronze: 13.62, p8: 13.20, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 13.39, bronze: 12.35, p8: null, semi: null },
       ],
     },
     MPV: {
@@ -2301,6 +2331,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         { id: 'asian25', label: 'Asian Champs 2025', tier: 'regional', ageGroup: 'senior', color: '#E84545', qual: null, gold: 5.75, bronze: 5.55, p8: 5.30, semi: null },
         { id: 'u20wc24', label: 'World U20 2024', tier: 'development', ageGroup: 'u20', color: '#A259FF', qual: null, gold: 5.50, bronze: 5.30, p8: 5.10, semi: null },
         { id: 'ncaa25', label: 'NCAA D1 2025', tier: 'development', ageGroup: 'senior', color: '#43C6AC', qual: null, gold: 5.85, bronze: 5.60, p8: 5.40, semi: null },
+        { id: 'asianU18_25', label: 'Asian U18 2025', tier: 'development', ageGroup: 'u18', color: '#FF6B6B', qual: null, gold: 4.2, bronze: 4.2, p8: null, semi: null },
       ],
     },
     FPV: {
@@ -2824,14 +2855,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     const standards = compData ? compData.competitions.map(comp => {
       // For backward compat, pick the most meaningful "target" mark: entry standard if available, else p8
       const targetMark = comp.qual || comp.p8;
+      const hasMark = targetMark != null;
       return {
         tier: comp.tier === 'world' ? 'E1' : comp.tier === 'regional' ? 'E2' : 'E3',
         label: comp.label,
         time: targetMark,
         source: comp.label,
         color: comp.color,
-        met: isThrows ? pb >= targetMark : pb <= targetMark,
-        gap: isThrows ? parseFloat((targetMark - pb).toFixed(2)) : parseFloat((pb - targetMark).toFixed(2)),
+        met: hasMark ? (isThrows ? pb >= targetMark : pb <= targetMark) : false,
+        gap: hasMark ? (isThrows ? parseFloat((targetMark - pb).toFixed(2)) : parseFloat((pb - targetMark).toFixed(2))) : null,
         compId: comp.id,
         compTier: comp.tier,
         ageGroup: comp.ageGroup,
@@ -2919,16 +2951,50 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       return p;
     };
 
-    const _absolutePercentile = (athleteTime, a) => {
-      const expected = _expectedTimeAtAge(a);
-      const std = Math.max(0.05, benchmarkData.calibration.std) * (1 + 0.02 * Math.abs(a - 25));
-      const z = (athleteTime - expected) / std;
-      return isThrows
-        ? Math.max(0, Math.min(100, 100 * _normCdf(z)))
-        : Math.max(0, Math.min(100, 100 * (1 - _normCdf(z))));
+    const _peerPercentile = (athletePB, athleteAge) => {
+      const ageGrp = getAgeGroup(athleteAge);
+      const lvls = PERFORMANCE_LEVELS[eventCode];
+      if (!lvls || !lvls[ageGrp]) return 50;
+      const ageLvls = lvls[ageGrp];
+      // Build ordered array of thresholds from L1 (lowest) to highest available
+      const keys = Object.keys(ageLvls).filter(k => k.startsWith('L')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+      if (keys.length === 0) return 50;
+      const thresholds = keys.map(k => ageLvls[k]);
+      const lowerBetter = isTimeDiscipline(discipline);
+      // For time events, L1 is worst (highest time), higher levels are better (lower time)
+      // For field events, L1 is worst (lowest distance), higher levels are better (higher distance)
+      // Find where PB sits in the threshold range
+      let position = 0;
+      if (lowerBetter) {
+        // Time: L1 = slow (bad), L9/L12 = fast (good). PB <= best threshold = top
+        if (athletePB <= thresholds[thresholds.length - 1]) position = 1;
+        else if (athletePB >= thresholds[0]) position = 0;
+        else {
+          for (let i = 0; i < thresholds.length - 1; i++) {
+            if (athletePB <= thresholds[i] && athletePB > thresholds[i + 1]) {
+              position = (i + (thresholds[i] - athletePB) / (thresholds[i] - thresholds[i + 1])) / (thresholds.length - 1);
+              break;
+            }
+          }
+        }
+      } else {
+        // Field: L1 = short (bad), L9/L12 = far (good). PB >= best threshold = top
+        if (athletePB >= thresholds[thresholds.length - 1]) position = 1;
+        else if (athletePB <= thresholds[0]) position = 0;
+        else {
+          for (let i = 0; i < thresholds.length - 1; i++) {
+            if (athletePB >= thresholds[i] && athletePB < thresholds[i + 1]) {
+              position = (i + (athletePB - thresholds[i]) / (thresholds[i + 1] - thresholds[i])) / (thresholds.length - 1);
+              break;
+            }
+          }
+        }
+      }
+      // Map 0..1 position to percentile range 10..90
+      return Math.round(10 + position * 80);
     };
 
-    const _correctedPercentile = Math.round(_absolutePercentile(pb, age));
+    const _correctedPercentile = _peerPercentile(pb, age);
 
     // Age-aware finalist probability via direct ROC threshold logic.
     const _logitProb = (val, thr, scale) => {
@@ -2967,6 +3033,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       age,
       personalBest: pb,
       eventCode,
+      competitionStandards: COMPETITION_STANDARDS[eventCode] || null,
       isThrows,
       careerPBAge: annualSeries.length > 0 ? annualSeries.reduce((best, r) => isThrows ? (r.time > best.time ? r : best) : (r.time < best.time ? r : best), annualSeries[0]).age : age,
       trajectoryType: _correctedTrajectory,
@@ -3217,7 +3284,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         }
 
         const results = await runAnalysis({
-          name: 'Quick Analysis',
+          name: quickAnalysisData.name.trim() || 'Quick Analysis',
           discipline: quickAnalysisData.discipline,
           gender: quickAnalysisData.gender,
           age, pb,
@@ -4913,26 +4980,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
-                  <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {/* Ground line */}
-                    <line x1="4" y1="41" x2="44" y2="41" stroke="#f97316" strokeWidth="1" opacity="0.25" strokeDasharray="2 2" />
-                    {/* Hurdle */}
-                    <line x1="30" y1="28" x2="42" y2="28" stroke="#f97316" strokeWidth="2" strokeLinecap="round" opacity="0.75" />
-                    <line x1="32" y1="28" x2="30" y2="41" stroke="#f97316" strokeWidth="1.3" opacity="0.5" />
-                    <line x1="40" y1="28" x2="42" y2="41" stroke="#f97316" strokeWidth="1.3" opacity="0.5" />
-                    {/* Hurdler mid-leap (stick figure) */}
-                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
-                      <animateTransform attributeName="transform" type="translate" values="0,0; 1,-1.5; 0,0" dur="2.2s" repeatCount="indefinite" />
-                      <circle cx="14" cy="10" r="2.4" fill="#f1f5f9" />
-                      <line x1="14" y1="12.4" x2="17" y2="23" />
-                      <line x1="17" y1="23" x2="32" y2="22" />
-                      <line x1="17" y1="23" x2="10" y2="32" />
-                      <line x1="10" y1="32" x2="5" y2="38" />
-                      <line x1="15.5" y1="15" x2="8" y2="18" />
-                      <line x1="15.5" y1="15" x2="24" y2="11" />
-                    </g>
-                  </svg>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
+                  <Zap className="w-6 h-6 text-orange-400" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">Sprints & Hurdles</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">100m, 200m, 400m, 100mH, 110mH, 400mH</p>
@@ -4952,32 +5001,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
-                  <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {/* Ground line */}
-                    <line x1="4" y1="41" x2="44" y2="41" stroke="#f97316" strokeWidth="1" opacity="0.25" strokeDasharray="2 2" />
-                    {/* Discus thrower */}
-                    <g>
-                      <animateTransform attributeName="transform" type="rotate" values="0 24 24; 2 24 24; 0 24 24" dur="2.6s" repeatCount="indefinite" />
-                      <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
-                        {/* Head */}
-                        <circle cx="22" cy="10" r="2.4" fill="#f1f5f9" />
-                        {/* Torso with slight twist */}
-                        <line x1="22" y1="12.4" x2="22" y2="26" />
-                        {/* Throwing arm extended up/out with disc */}
-                        <line x1="22" y1="15" x2="36" y2="10" />
-                        {/* Off-arm across body */}
-                        <line x1="22" y1="15" x2="12" y2="19" />
-                        {/* Legs in wide stance */}
-                        <line x1="22" y1="26" x2="14" y2="40" />
-                        <line x1="22" y1="26" x2="30" y2="40" />
-                      </g>
-                      {/* Disc at end of throwing arm */}
-                      <circle cx="38" cy="10" r="3" fill="none" stroke="#f97316" strokeWidth="2">
-                        <animate attributeName="r" values="2.6;3.4;2.6" dur="2.6s" repeatCount="indefinite" />
-                      </circle>
-                    </g>
-                  </svg>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
+                  <Target className="w-6 h-6 text-orange-400" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">Throws</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">Shot Put, Discus, Hammer, Javelin</p>
@@ -4997,28 +5022,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(16,185,129,0.15)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
-                  <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {/* Uprights + bar */}
-                    <line x1="8" y1="24" x2="8" y2="41" stroke="#10b981" strokeWidth="1.3" opacity="0.5" />
-                    <line x1="40" y1="24" x2="40" y2="41" stroke="#10b981" strokeWidth="1.3" opacity="0.5" />
-                    <line x1="8" y1="26" x2="40" y2="26" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-                    {/* Ground */}
-                    <line x1="4" y1="41" x2="44" y2="41" stroke="#10b981" strokeWidth="1" opacity="0.2" strokeDasharray="2 2" />
-                    {/* Fosbury-flop figure arched over bar */}
-                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
-                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1.5; 0,0" dur="2.5s" repeatCount="indefinite" />
-                      {/* Arched body */}
-                      <path d="M14 22 Q 24 12 36 20" strokeWidth="2.2" />
-                      {/* Head at left end (goes over first) */}
-                      <circle cx="14" cy="22" r="2.4" fill="#f1f5f9" />
-                      {/* Legs kicking up on right */}
-                      <line x1="36" y1="20" x2="42" y2="12" />
-                      <line x1="36" y1="20" x2="38" y2="10" />
-                      {/* Trailing arm */}
-                      <line x1="18" y1="19" x2="10" y2="18" />
-                    </g>
-                  </svg>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
+                  <TrendingUp className="w-6 h-6 text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-emerald-400 transition-colors">Jumps</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">High Jump, Long Jump, Triple Jump, Pole Vault</p>
@@ -5038,31 +5043,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(168,85,247,0.15)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
-                  <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {/* Subtle curved track */}
-                    <path d="M4 42 Q 24 38 44 42" stroke="#a855f7" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" fill="none" />
-                    {/* Mid-stride runner */}
-                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
-                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1; 0,0" dur="1.4s" repeatCount="indefinite" />
-                      {/* Head */}
-                      <circle cx="22" cy="10" r="2.4" fill="#f1f5f9" />
-                      {/* Torso, slight forward lean */}
-                      <line x1="22" y1="12.4" x2="24" y2="24" />
-                      {/* Front leg (thigh) */}
-                      <line x1="24" y1="24" x2="32" y2="28" />
-                      {/* Front shin */}
-                      <line x1="32" y1="28" x2="34" y2="38" />
-                      {/* Back leg thigh (lifted) */}
-                      <line x1="24" y1="24" x2="16" y2="28" />
-                      {/* Back shin folded under */}
-                      <line x1="16" y1="28" x2="20" y2="34" />
-                      {/* Forward arm */}
-                      <line x1="23" y1="15" x2="30" y2="18" />
-                      {/* Back arm */}
-                      <line x1="23" y1="15" x2="16" y2="12" />
-                    </g>
-                  </svg>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
+                  <Activity className="w-6 h-6 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-purple-400 transition-colors">Middle Distance</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">800m, 1500m</p>
@@ -5082,32 +5064,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(244,63,94,0.15)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
-                  <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {/* Water below with wave animation */}
-                    <path d="M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42" stroke="#f43f5e" strokeWidth="1.5" fill="none" opacity="0.55">
-                      <animate attributeName="d" values="M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42;M4 42 Q 10 43 16 42 T 28 42 T 40 42 T 48 42;M4 42 Q 10 40 16 42 T 28 42 T 40 42 T 48 42" dur="2.5s" repeatCount="indefinite" />
-                    </path>
-                    {/* Barrier */}
-                    <line x1="8" y1="30" x2="8" y2="42" stroke="#f43f5e" strokeWidth="1.4" opacity="0.5" />
-                    <line x1="6" y1="30" x2="20" y2="30" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" opacity="0.65" />
-                    {/* Leaping figure */}
-                    <g stroke="#f1f5f9" strokeWidth="2" strokeLinecap="round" fill="none">
-                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-2; 0,0" dur="2.2s" repeatCount="indefinite" />
-                      {/* Head */}
-                      <circle cx="26" cy="14" r="2.4" fill="#f1f5f9" />
-                      {/* Torso */}
-                      <line x1="26" y1="16.4" x2="28" y2="26" />
-                      {/* Front leg extended forward/down */}
-                      <line x1="28" y1="26" x2="38" y2="32" />
-                      {/* Back leg trailing up and back */}
-                      <line x1="28" y1="26" x2="20" y2="22" />
-                      {/* Front arm forward */}
-                      <line x1="27" y1="19" x2="34" y2="16" />
-                      {/* Back arm */}
-                      <line x1="27" y1="19" x2="20" y2="17" />
-                    </g>
-                  </svg>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
+                  <Flag className="w-6 h-6 text-rose-400" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-rose-400 transition-colors">Long Distance</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">3000m SC, 5000m, 10,000m, Marathon</p>
@@ -5123,34 +5081,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               {/* ── COMBINED EVENTS (COMPILING DATA) ── */}
               <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(245,158,11,0.08)'}}>
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0 overflow-hidden" style={{width: '48px', height: '48px',background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)'}}>
-                  <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    {/* Sparkles around figure — the "all-around" vibe */}
-                    <circle cx="8" cy="10" r="1" fill="#f59e0b" opacity="0.5">
-                      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.4s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="40" cy="14" r="1" fill="#f59e0b" opacity="0.4">
-                      <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.4s" begin="0.6s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="10" cy="26" r="1" fill="#f59e0b" opacity="0.4">
-                      <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="42" cy="28" r="1" fill="#f59e0b" opacity="0.45">
-                      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.4s" begin="0.3s" repeatCount="indefinite" />
-                    </circle>
-                    {/* Victory-pose figure (muted while compiling data) */}
-                    <g stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.75">
-                      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1; 0,0" dur="3s" repeatCount="indefinite" />
-                      <circle cx="24" cy="14" r="2.4" fill="#cbd5e1" />
-                      <line x1="24" y1="16.4" x2="24" y2="28" />
-                      {/* Arms raised in V */}
-                      <line x1="24" y1="17" x2="14" y2="8" />
-                      <line x1="24" y1="17" x2="34" y2="8" />
-                      {/* Legs — planted */}
-                      <line x1="24" y1="28" x2="19" y2="40" />
-                      <line x1="24" y1="28" x2="29" y2="40" />
-                    </g>
-                  </svg>
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)'}}>
+                  <Layers className="w-6 h-6 text-amber-400/50" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-300 mb-1 landing-font">Combined Events</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">Decathlon, Heptathlon</p>
@@ -5164,18 +5096,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed sm:col-span-2 lg:col-span-3" style={{background: 'linear-gradient(135deg, rgba(6,182,212,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(6,182,212,0.08)'}}>
                 <div className="flex items-center gap-6">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.12)'}}>
-                    <svg viewBox="0 0 48 48" className="w-7 h-7">
-                      <line x1="10" y1="38" x2="16" y2="26" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round">
-                        <animate attributeName="x2" values="16;14;16" dur="1s" repeatCount="indefinite" />
-                      </line>
-                      <line x1="16" y1="26" x2="22" y2="38" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round">
-                        <animate attributeName="x2" values="22;24;22" dur="1s" repeatCount="indefinite" />
-                      </line>
-                      <circle cx="16" cy="18" r="4" fill="none" stroke="#06b6d4" strokeWidth="2" />
-                      <path d="M30 38 L42 38" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3">
-                        <animate attributeName="stroke-dashoffset" values="0;-12" dur="1.5s" repeatCount="indefinite" />
-                      </path>
-                    </svg>
+                    <Globe className="w-6 h-6 text-cyan-400/50" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-300 mb-1 landing-font">Race Walks & Road Events</h3>
@@ -5829,6 +5750,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {activeTab === 'quick' && (
               <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                 <p className="text-sm sm:text-base text-slate-400 mb-4 sm:mb-6">{isThrowsMode ? "Don't have full competition data? Get insights with just the essentials." : "Don't have full race data? Get insights with just the essentials."}</p>
+                <div className="mb-4 sm:mb-6">
+                  <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Name (optional)</label>
+                  <input type="text" placeholder="e.g., Keenan Dundas" value={quickAnalysisData.name}
+                    onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, name: e.target.value })}
+                    className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Discipline</label>
@@ -5941,9 +5868,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
                 <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <button onClick={() => setCurrentView('input')} className="text-sm text-slate-500 hover:text-orange-400 transition-colors landing-font">
-                Full Analysis &rarr;
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export PDF</span>
+                </button>
+                <button onClick={() => setCurrentView('input')} className="text-sm text-slate-500 hover:text-orange-400 transition-colors landing-font">
+                  Full Analysis &rarr;
+                </button>
+              </div>
             </div>
           </nav>
 
@@ -6016,7 +5949,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const unit = isTime ? 's' : 'm';
 
               // ── PEER RANK — "Top X%" capped so never 0% or 100% ──
-              const pct = Math.min(99, Math.max(1, analysisResults.percentileAtCurrentAge || 1));
+              const rawPct = analysisResults.percentileAtCurrentAge;
+              const pct = Math.min(99, Math.max(1, rawPct != null && rawPct > 0 ? rawPct : 50));
               const topPct = Math.max(1, 100 - pct);
 
               // ── NEXT TIER — derive label + gap ──
@@ -6519,11 +6453,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
             </div>
 
-            {/* Back button */}
-            <div className="text-center">
+            {/* Back + Export buttons */}
+            <div className="flex items-center justify-center gap-4">
               <button onClick={handleBack}
                 className="px-8 py-3 text-white font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
                 &larr; Back to Home
+              </button>
+              <button onClick={() => exportQuickAnalysisPDF(analysisResults)}
+                className="px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center gap-2" style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316'}}>
+                <Download className="w-4 h-4" />
+                Export PDF
               </button>
             </div>
           </main>
@@ -6550,10 +6489,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
                 <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <button onClick={handleBack} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
-                <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Home</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export PDF</span>
+                </button>
+                <button onClick={handleBack} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium">Home</span>
+                </button>
+              </div>
             </div>
           </nav>
 
@@ -6611,7 +6556,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <span className="text-[10px] font-medium text-purple-400 bg-purple-500/15 px-1.5 py-0.5 rounded mono-font">Youth</span>
                     )}
                   </div>
-                  <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">{analysisResults.name}</h2>
+                  {analysisResults.name && analysisResults.name !== 'Quick Analysis' && (
+                    <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">{analysisResults.name}</h2>
+                  )}
+                  {(!analysisResults.name || analysisResults.name === 'Quick Analysis') && (
+                    <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">Quick Analysis</h2>
+                  )}
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
                     {!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
@@ -7660,10 +7610,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             </>)}
 
-            <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-4 mb-12">
               <button onClick={handleBack}
                 className="px-8 py-3 text-white font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
                 &larr; Analyze Another Athlete
+              </button>
+              <button onClick={() => exportQuickAnalysisPDF(analysisResults)}
+                className="px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center gap-2" style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316'}}>
+                <Download className="w-4 h-4" />
+                Export PDF
               </button>
             </div>
           </main>
