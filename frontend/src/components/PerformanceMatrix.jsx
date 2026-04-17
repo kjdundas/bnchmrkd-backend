@@ -106,6 +106,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
   }
 
   const gridTemplate = `40px repeat(${TOTAL_COLS}, minmax(0,1fr))`;
+  const gridTemplateCompact = `32px repeat(${TOTAL_COLS}, minmax(52px,1fr))`;
 
   return (
     <div
@@ -125,17 +126,17 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
       />
 
       {/* Header */}
-      <div className="relative flex items-start justify-between gap-6 mb-6">
+      <div className="relative flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-6 mb-4 sm:mb-6">
         <div className="flex-1 min-w-0">
           <div className="mono-font text-[10px] uppercase tracking-[0.3em] text-orange-400/80 mb-2">
             Performance Matrix
           </div>
-          <h3 className="landing-font text-2xl sm:text-3xl font-semibold text-white tracking-tight leading-none">
+          <h3 className="landing-font text-xl sm:text-2xl md:text-3xl font-semibold text-white tracking-tight leading-none">
             {discipline}
             <span className="text-orange-400/60 mx-2">·</span>
             <span className="text-slate-300 font-normal">{gender}</span>
           </h3>
-          <p className="mt-3 text-[13px] text-slate-400 leading-relaxed max-w-xl">
+          <p className="mt-2 sm:mt-3 text-[12px] sm:text-[13px] text-slate-400 leading-relaxed max-w-xl">
             Rows are age groups. Columns are competitive tiers, benchmarked against
             25 years of Olympic outcomes. A career is the path you trace across this grid.
           </p>
@@ -166,16 +167,17 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
       </div>
 
       {/* ═══ GRID ═══════════════════════════════════════════════════════ */}
-      <div className="relative">
+      <div className="relative overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="min-w-[420px]">
         {/* Top axis — tier numbers T1…T7 (age-agnostic) */}
-        <div className="grid mb-3" style={{ gridTemplateColumns: gridTemplate }}>
+        <div className="grid mb-3" style={{ gridTemplateColumns: gridTemplateCompact }}>
           <div />
           {Array.from({ length: TOTAL_COLS }).map((_, ci) => {
             const isSeniorOnly = ci === 6;
             return (
               <div key={ci} className="text-center">
                 <div
-                  className="mono-font text-[11px] font-semibold tracking-widest"
+                  className="mono-font text-[9px] sm:text-[11px] font-semibold tracking-widest"
                   style={{
                     color: isSeniorOnly
                       ? 'rgba(251,146,60,0.95)'
@@ -195,10 +197,10 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
             <div
               key={row.ageGroup}
               className="grid gap-[5px] mb-[5px]"
-              style={{ gridTemplateColumns: gridTemplate }}
+              style={{ gridTemplateColumns: gridTemplateCompact }}
             >
               {/* Row label */}
-              <div className="flex items-center justify-end pr-3 mono-font text-[11px] font-semibold tracking-wider text-slate-400">
+              <div className="flex items-center justify-end pr-1.5 sm:pr-3 mono-font text-[9px] sm:text-[11px] font-semibold tracking-wider text-slate-400">
                 {row.ageGroup}
               </div>
               {Array.from({ length: TOTAL_COLS }).map((_, ci) => {
@@ -242,8 +244,8 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                         : isVisited
                         ? `inset 0 0 0 1.5px rgba(${textIsDark ? '10,6,4' : '255,255,255'}, ${0.15 + progress * 0.25})`
                         : 'none',
-                      minHeight: 56,
-                      padding: '10px 6px',
+                      minHeight: 44,
+                      padding: '6px 4px',
                     }}
                     title={
                       reachable
@@ -260,7 +262,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                           style={{
                             color: textIsDark ? '#0a0604' : '#f8fafc',
                             fontSize:
-                              TIER_OPACITY[tier] >= 0.8 ? '13.5px' : '12.5px',
+                              TIER_OPACITY[tier] >= 0.8 ? '11px' : '10px',
                             letterSpacing: '-0.01em',
                             textShadow:
                               TIER_OPACITY[tier] < 0.4
@@ -347,7 +349,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
           {/* hairline tethering strip to senior row */}
           <div
             className="grid"
-            style={{ gridTemplateColumns: gridTemplate }}
+            style={{ gridTemplateColumns: gridTemplateCompact }}
             aria-hidden
           >
             <div />
@@ -365,9 +367,9 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
 
           <div
             className="grid pt-2 pb-1"
-            style={{ gridTemplateColumns: gridTemplate }}
+            style={{ gridTemplateColumns: gridTemplateCompact }}
           >
-            <div className="flex items-center justify-end pr-3 mono-font text-[8.5px] uppercase tracking-[0.2em] text-slate-600">
+            <div className="flex items-center justify-end pr-1.5 sm:pr-3 mono-font text-[7px] sm:text-[8.5px] uppercase tracking-[0.2em] text-slate-600">
               Senior →
             </div>
             {Array.from({ length: TOTAL_COLS }).map((_, ci) => {
@@ -384,7 +386,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                       color: isApex
                         ? BRAND
                         : `rgba(251, 146, 60, ${Math.max(TIER_OPACITY[ci + 1], 0.55)})`,
-                      fontSize: isApex ? '12.5px' : '11.5px',
+                      fontSize: isApex ? '10px' : '9px',
                     }}
                   >
                     {TIER_NAMES[ci + 1]}
@@ -398,6 +400,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
             Tier names describe the Senior-level competitive standard at each column.
           </p>
         </div>
+        </div>{/* end min-w wrapper */}
       </div>
     </div>
   );

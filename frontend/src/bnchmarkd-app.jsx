@@ -5758,7 +5758,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <p className="text-sm sm:text-base text-slate-400 mb-4 sm:mb-6">{isThrowsMode ? "Don't have full competition data? Get insights with just the essentials." : "Don't have full race data? Get insights with just the essentials."}</p>
                 <div className="mb-4 sm:mb-6">
                   <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Name (optional)</label>
-                  <input type="text" placeholder="e.g., Keenan Dundas" value={quickAnalysisData.name}
+                  <input type="text" placeholder="e.g., John Doe" value={quickAnalysisData.name}
                     onChange={(e) => setQuickAnalysisData({ ...quickAnalysisData, name: e.target.value })}
                     className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                 </div>
@@ -6387,13 +6387,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <p className="text-sm text-slate-400 mb-5">
                   Projected {isFieldEvent(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {formatTime(analysisResults.personalBest, analysisResults.discipline)}{!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) ? 's' : ''}
                 </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <table className="w-full text-sm" style={{ minWidth: '400px' }}>
                     <thead>
                       <tr className="border-b-2 border-slate-600">
-                        <th className="text-left py-2 px-1.5 sm:py-2.5 sm:px-2 font-semibold text-slate-300 sticky left-0 bg-slate-800/90 text-xs sm:text-sm">Rate</th>
+                        <th className="text-left py-1.5 px-1.5 sm:py-2.5 sm:px-2 font-semibold text-slate-300 sticky left-0 z-10 text-[10px] sm:text-sm whitespace-nowrap" style={{ background: 'inherit' }}>Rate</th>
                         {analysisResults.improvementScenarios[0] && Object.keys(analysisResults.improvementScenarios[0].times).map(futAge => (
-                          <th key={futAge} className={`text-center py-2 px-1 sm:py-2.5 sm:px-2 font-semibold text-xs sm:text-sm min-w-[44px] sm:min-w-[56px] ${
+                          <th key={futAge} className={`text-center py-1.5 px-0.5 sm:py-2.5 sm:px-2 font-semibold text-[10px] sm:text-sm min-w-[40px] sm:min-w-[56px] ${
                             parseInt(futAge) === analysisResults.age ? 'text-orange-400' : 'text-slate-300'
                           }`}>{futAge}</th>
                         ))}
@@ -6402,14 +6402,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <tbody>
                       {analysisResults.improvementScenarios.map((row, idx) => (
                         <tr key={idx} className={`border-b border-slate-700/50 ${idx === 0 ? 'bg-slate-700/30' : 'hover:bg-slate-700/20'}`}>
-                          <td className={`py-2 px-2 font-bold sticky left-0 ${idx === 0 ? 'bg-slate-700/30 text-orange-400' : 'bg-slate-800/90 text-slate-400'}`}>
+                          <td className={`py-1.5 px-1.5 sm:py-2 sm:px-2 font-bold sticky left-0 z-10 text-[10px] sm:text-sm whitespace-nowrap ${idx === 0 ? 'text-orange-400' : 'text-slate-400'}`} style={{ background: idx === 0 ? 'rgba(51,65,85,0.3)' : 'rgba(15,23,42,0.9)' }}>
                             {row.rate}
                           </td>
                           {Object.entries(row.times).map(([futAge, time]) => {
                             const meetsFinalist = isFieldEvent(analysisResults.discipline) ? time >= analysisResults.thresholds.finalist : time <= analysisResults.thresholds.finalist;
                             const meetsMQT = analysisResults.championshipData && (isFieldEvent(analysisResults.discipline) ? time >= analysisResults.championshipData.mqt : time <= analysisResults.championshipData.mqt);
                             return (
-                              <td key={futAge} className={`py-2 px-2 text-center text-xs ${
+                              <td key={futAge} className={`py-1.5 px-0.5 sm:py-2 sm:px-2 text-center text-[10px] sm:text-xs ${
                                 parseInt(futAge) === analysisResults.age ? 'font-bold text-orange-300' : ''
                               } ${meetsFinalist ? 'text-green-400 font-bold' : meetsMQT ? 'text-blue-400 font-semibold' : 'text-slate-400'}`}>
                                 {formatTime(time, analysisResults.discipline)}
@@ -6421,7 +6421,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     </tbody>
                   </table>
                 </div>
-                <div className="flex gap-4 mt-3 text-xs text-slate-500">
+                <div className="flex flex-wrap gap-2 sm:gap-4 mt-3 text-[10px] sm:text-xs text-slate-500">
                   <div className="flex items-center gap-1.5"><span className="font-bold text-green-400">Green</span> = Finalist threshold</div>
                   <div className="flex items-center gap-1.5"><span className="font-bold text-blue-400">Blue</span> = Olympic MQT</div>
                 </div>
