@@ -247,7 +247,7 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
   const meta = MARK_META[row.type];
   return (
     <div
-      className="relative flex items-center gap-3 py-1.5 pl-1 pr-2 rounded-lg transition-all"
+      className="relative flex items-center gap-1.5 sm:gap-3 py-1.5 pl-1 pr-1 sm:pr-2 rounded-lg transition-all"
       style={{
         background: isNext ? 'rgba(249,115,22,0.05)' : 'transparent',
         border: `1px solid ${isNext ? 'rgba(249,115,22,0.28)' : 'transparent'}`,
@@ -292,7 +292,7 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
           background: `${meta.color}15`,
           color: meta.color,
           border: `1px solid ${meta.color}30`,
-          minWidth: '48px',
+          minWidth: '40px',
           textAlign: 'center',
         }}
       >
@@ -319,17 +319,17 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
 
       {/* Mark value */}
       <span
-        className={`mono-font text-[11px] sm:text-xs tabular-nums flex-shrink-0 ${cleared ? 'text-slate-500' : 'text-white/90'}`}
-        style={{ minWidth: '52px', textAlign: 'right' }}
+        className={`mono-font text-[10px] sm:text-xs tabular-nums flex-shrink-0 ${cleared ? 'text-slate-500' : 'text-white/90'}`}
+        style={{ minWidth: '42px', textAlign: 'right' }}
       >
         {fmtMark(row.value)}
       </span>
 
       {/* Gap / status */}
       <span
-        className="mono-font text-[10px] tabular-nums flex-shrink-0"
+        className="mono-font text-[9px] sm:text-[10px] tabular-nums flex-shrink-0"
         style={{
-          minWidth: '62px',
+          minWidth: '48px',
           textAlign: 'right',
           color: cleared ? '#10b981' : (isNext ? '#f97316' : '#64748b'),
           fontWeight: isNext ? 700 : 400,

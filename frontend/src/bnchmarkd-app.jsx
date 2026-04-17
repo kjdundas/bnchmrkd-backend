@@ -3737,7 +3737,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* LANDING PAGE                                                    */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'landing' && (
-        <div className="min-h-screen" style={{background: 'linear-gradient(165deg, #0a0a0f 0%, #0d1117 30%, #111318 60%, #0a0a0f 100%)'}}>
+        <div className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(165deg, #0a0a0f 0%, #0d1117 30%, #111318 60%, #0a0a0f 100%)'}}>
 
           {/* ── INJECT GOOGLE FONTS + KEYFRAMES ── */}
           <style>{`
@@ -4733,8 +4733,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 { value: STATS.disciplines, label: 'Disciplines', sub: 'Sprints, hurdles, distance, throws & jumps' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
-                <div key={i} className="bento-card rounded-xl p-5 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <p className="text-2xl sm:text-3xl font-bold mono-font" style={{color: '#f97316'}}>{stat.value}</p>
+                <div key={i} className="bento-card rounded-xl p-3 sm:p-5 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <p className="text-xl sm:text-3xl font-bold mono-font" style={{color: '#f97316'}}>{stat.value}</p>
                   <p className="text-sm font-semibold text-white mt-1 landing-font">{stat.label}</p>
                   <p className="text-xs text-slate-600 mt-0.5 landing-font">{stat.sub}</p>
                 </div>
@@ -4956,20 +4956,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           {/* Header */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-            <div className="max-w-6xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
-              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
+              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Home</span>
+                <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
-              <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+              <div className="flex items-center gap-2">
+                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <div className="w-20"></div>
+              <div className="w-8 sm:w-20"></div>
             </div>
           </nav>
 
-          <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-8 sm:py-12">
             <div className="stagger-2 mb-4">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mono-font tracking-wide" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c'}}>
                 SELECT DISCIPLINE
@@ -4983,7 +4983,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {/* ── SPRINTS & HURDLES (ACTIVE) ── */}
               <button
                 onClick={() => { setDisciplineCategory('sprints'); setAthleteData(d => ({...d, discipline: '100m'})); setQuickAnalysisData(d => ({...d, discipline: '100m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
-                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
@@ -5004,7 +5004,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {/* ── THROWS (ACTIVE) ── */}
               <button
                 onClick={() => { setDisciplineCategory('throws'); setAthleteData(d => ({...d, discipline: 'Discus Throw'})); setQuickAnalysisData(d => ({...d, discipline: 'Discus Throw'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
-                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(249,115,22,0.15)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
@@ -5025,7 +5025,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {/* ── JUMPS (ACTIVE) ── */}
               <button
                 onClick={() => { setDisciplineCategory('jumps'); setAthleteData(d => ({...d, discipline: 'High Jump'})); setQuickAnalysisData(d => ({...d, discipline: 'High Jump'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
-                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(16,185,129,0.15)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
@@ -5046,7 +5046,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {/* ── MIDDLE DISTANCE (ACTIVE) ── */}
               <button
                 onClick={() => { setDisciplineCategory('distance'); setAthleteData(d => ({...d, discipline: '800m'})); setQuickAnalysisData(d => ({...d, discipline: '800m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
-                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(168,85,247,0.15)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
@@ -5067,7 +5067,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               {/* ── LONG DISTANCE (ACTIVE) ── */}
               <button
                 onClick={() => { setDisciplineCategory('distance'); setAthleteData(d => ({...d, discipline: '3000m Steeplechase'})); setQuickAnalysisData(d => ({...d, discipline: '3000m Steeplechase'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
-                className="group relative bento-card rounded-xl p-6 text-left cursor-pointer"
+                className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
                 style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.06) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(244,63,94,0.15)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
@@ -5134,20 +5134,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           {/* Nav */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-            <div className="max-w-6xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
-              <button onClick={() => { setCurrentView('landing'); setSelectedAthlete(null); setAthleteProfile(null); setAthleteTrajectory(null); setExplorerSearch(''); setExplorerResults([]); }} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
+              <button onClick={() => { setCurrentView('landing'); setSelectedAthlete(null); setAthleteProfile(null); setAthleteTrajectory(null); setExplorerSearch(''); setExplorerResults([]); }} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Home</span>
+                <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
-              <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+              <div className="flex items-center gap-2">
+                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <div className="w-20"></div>
+              <div className="w-8 sm:w-20"></div>
             </div>
           </nav>
 
-          <main className="relative z-10 flex-1 max-w-6xl mx-auto w-full px-6 sm:px-10 py-8">
+          <main className="relative z-10 flex-1 max-w-6xl mx-auto w-full px-3 sm:px-6 md:px-10 py-6 sm:py-8">
             <div className="stagger-2 mb-4">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mono-font tracking-wide" style={{background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#60a5fa'}}>
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
@@ -5481,20 +5481,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           </div>
 
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-            <div className="max-w-6xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
-              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
+              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Home</span>
+                <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
-              <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+              <div className="flex items-center gap-2">
+                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <div className="w-20"></div>
+              <div className="w-8 sm:w-20"></div>
             </div>
           </nav>
 
-          <main className="relative z-10 flex-1 max-w-4xl mx-auto w-full px-6 sm:px-10 py-10">
+          <main className="relative z-10 flex-1 max-w-4xl mx-auto w-full px-3 sm:px-6 md:px-10 py-6 sm:py-10">
             <div className="flex gap-1 sm:gap-2 mb-6 sm:mb-8 stagger-2 overflow-x-auto" style={{borderBottom: '1px solid rgba(255,255,255,0.06)'}}>
               {[
                 { key: 'manual', icon: Upload, label: 'Manual Entry', shortLabel: 'Manual', requiresAuth: true },
@@ -5865,34 +5865,34 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           {/* Nav */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-            <div className="max-w-5xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
-              <button onClick={handleBack} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+            <div className="max-w-5xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
+              <button onClick={handleBack} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Home</span>
+                <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
-              <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+              <div className="flex items-center gap-2">
+                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
-                  <Download className="w-4 h-4" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Export PDF</span>
                 </button>
-                <button onClick={() => setCurrentView('input')} className="text-sm text-slate-500 hover:text-orange-400 transition-colors landing-font">
+                <button onClick={() => setCurrentView('input')} className="hidden sm:block text-sm text-slate-500 hover:text-orange-400 transition-colors landing-font">
                   Full Analysis &rarr;
                 </button>
               </div>
             </div>
           </nav>
 
-          <main className="relative z-10 flex-1 max-w-5xl mx-auto w-full px-6 sm:px-10 py-10">
+          <main className="relative z-10 flex-1 max-w-5xl mx-auto w-full px-3 sm:px-6 md:px-10 py-6 sm:py-10">
 
             {/* ── HERO HEADER — PB as anchor (Quick Results) ── */}
             <div className="bento-card rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6 stagger-2" style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(249,115,22,0.1)'}}>
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-8">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
                     <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font" style={{color: '#fb923c'}}>Quick Snapshot</span>
                     <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font text-slate-500">&middot; {analysisResults.discipline} &middot; {analysisResults.gender} &middot; Age {analysisResults.age}</span>
                     {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
@@ -5900,9 +5900,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     )}
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
+                    <span className="text-3xl sm:text-4xl md:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
                     {!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
-                      <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">s</span>
+                      <span className="text-base sm:text-lg md:text-2xl font-medium text-slate-500 mono-font">s</span>
                     )}
                   </div>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
@@ -5913,8 +5913,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   )}
                 </div>
                 {/* Readiness Ring */}
-                <div className="flex items-center gap-4 sm:gap-5">
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0">
                     <svg className="w-full h-full" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                       <circle cx="50" cy="50" r="42" fill="none"
@@ -6393,7 +6393,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <tr className="border-b-2 border-slate-600">
                         <th className="text-left py-2 px-1.5 sm:py-2.5 sm:px-2 font-semibold text-slate-300 sticky left-0 bg-slate-800/90 text-xs sm:text-sm">Rate</th>
                         {analysisResults.improvementScenarios[0] && Object.keys(analysisResults.improvementScenarios[0].times).map(futAge => (
-                          <th key={futAge} className={`text-center py-2.5 px-2 font-semibold min-w-[56px] ${
+                          <th key={futAge} className={`text-center py-2 px-1 sm:py-2.5 sm:px-2 font-semibold text-xs sm:text-sm min-w-[44px] sm:min-w-[56px] ${
                             parseInt(futAge) === analysisResults.age ? 'text-orange-400' : 'text-slate-300'
                           }`}>{futAge}</th>
                         ))}
@@ -6460,13 +6460,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             </div>
 
             {/* Back + Export buttons */}
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
               <button onClick={handleBack}
-                className="px-8 py-3 text-white font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 text-white font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font text-center" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
                 &larr; Back to Home
               </button>
               <button onClick={() => exportQuickAnalysisPDF(analysisResults)}
-                className="px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center gap-2" style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316'}}>
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center justify-center gap-2" style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316'}}>
                 <Download className="w-4 h-4" />
                 Export PDF
               </button>
@@ -6490,25 +6490,25 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           {/* Nav */}
           <nav className="relative z-20" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
-            <div className="max-w-7xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
-                  <Download className="w-4 h-4" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Export PDF</span>
                 </button>
-                <button onClick={handleBack} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+                <button onClick={handleBack} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
                   <ChevronLeft className="w-4 h-4" />
-                  <span className="text-sm font-medium">Home</span>
+                  <span className="hidden sm:inline text-sm font-medium">Home</span>
                 </button>
               </div>
             </div>
           </nav>
 
-          <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-6 sm:px-10 py-10">
+          <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-10 py-6 sm:py-10">
             {/* ── DISCIPLINE TABS (for multi-discipline scrape results) ── */}
             {multiResults && (
               <div className="bento-card rounded-xl p-4 mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -6569,16 +6569,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">Quick Analysis</h2>
                   )}
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
+                    <span className="text-3xl sm:text-4xl md:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
                     {!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
-                      <span className="text-lg sm:text-2xl font-medium text-slate-500 mono-font">s</span>
+                      <span className="text-base sm:text-lg md:text-2xl font-medium text-slate-500 mono-font">s</span>
                     )}
                   </div>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
                 </div>
                 {/* Readiness Ring — compact */}
-                <div className="flex items-center gap-4 sm:gap-5">
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0">
                     <svg className="w-full h-full" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                       <circle cx="50" cy="50" r="42" fill="none"
@@ -6605,7 +6605,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             </div>
 
             {/* ── SNAPSHOT GRID — 3 tiles: Tier / Trajectory / Standards ── */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
               {[
                 {
                   label: 'Tier',

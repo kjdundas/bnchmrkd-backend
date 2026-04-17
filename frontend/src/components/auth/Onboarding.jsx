@@ -229,19 +229,21 @@ export default function Onboarding({ onSkip }) {
               </p>
             </button>
 
-            {/* Athlete Card */}
-            <button
-              onClick={() => { setAccountType('athlete'); setStep(2) }}
-              className="bg-gray-900 border-2 border-gray-800 hover:border-emerald-500 rounded-2xl p-6 text-left transition-all group"
+            {/* Athlete Card — paused / coming soon */}
+            <div
+              className="bg-gray-900/60 border-2 border-gray-800 rounded-2xl p-6 text-left opacity-50 cursor-not-allowed relative"
             >
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-500/30 transition-colors">
-                <User className="w-6 h-6 text-emerald-400" />
+              <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wider bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
+                Coming Soon
+              </span>
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4">
+                <User className="w-6 h-6 text-emerald-700" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">I'm an Athlete</h3>
-              <p className="text-sm text-gray-400">
+              <h3 className="text-lg font-bold text-gray-500 mb-1">I'm an Athlete</h3>
+              <p className="text-sm text-gray-600">
                 Track your performance, log competitions and training, and see your trajectory compared to elite athletes.
               </p>
-            </button>
+            </div>
           </div>
 
           {onSkip && (

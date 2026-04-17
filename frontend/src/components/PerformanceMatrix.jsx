@@ -105,11 +105,11 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
     );
   }
 
-  const gridTemplate = `56px repeat(${TOTAL_COLS}, minmax(0,1fr))`;
+  const gridTemplate = `40px repeat(${TOTAL_COLS}, minmax(0,1fr))`;
 
   return (
     <div
-      className="relative rounded-2xl border border-orange-900/40 bg-[#0a0604] p-6 sm:p-8 overflow-hidden"
+      className="relative rounded-2xl border border-orange-900/40 bg-[#0a0604] p-3 sm:p-6 md:p-8 overflow-hidden"
       style={{
         boxShadow: '0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(251,146,60,0.05) inset',
       }}
