@@ -2827,19 +2827,25 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         : 'Prioritize recovery, adapt training to changing physiology, and leverage decades of competitive experience. Consider mentoring roles alongside your competitive career.'
     });
 
-    // ── Find similar athletes (from live API) ──
+    // ── Find similar athletes (direct Supabase RPC — no backend needed) ──
     let similarAthletes = [];
     try {
-      const simResp = await fetch(`${API_BASE}/api/v1/similar-athletes?discipline=${eventCode}&pb=${pb}&age=${age}&limit=3`);
+      const sbUrl = import.meta.env.VITE_SUPABASE_URL;
+      const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const simResp = await fetch(`${sbUrl}/rest/v1/rpc/find_similar_athletes`, {
+        method: 'POST',
+        headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_discipline_code: eventCode, p_pb: pb, p_age: age, p_limit: 3 }),
+      });
       if (simResp.ok) {
         const simData = await simResp.json();
-        similarAthletes = (simData.athletes || []).map(a => ({
-          name: a.name,
+        similarAthletes = (simData || []).map(a => ({
+          name: a.athlete_name,
           nationality: a.country || 'N/A',
           pb: parseFloat(a.pb_time),
-          peakAge: a.closest_age,
+          peakAge: a.closest_age || age,
           timeAtSimilarAge: parseFloat(a.time_at_similar_age),
-          closestAge: a.closest_age,
+          closestAge: a.closest_age || age,
           timeDiff: parseFloat(a.time_diff),
           ageDiff: a.age_diff,
           similarity: parseFloat(a.similarity),
@@ -2847,7 +2853,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         }));
       }
     } catch (e) {
-      console.warn('Similar athletes API unavailable, skipping:', e.message);
+      console.warn('Similar athletes unavailable, skipping:', e.message);
     }
 
     // ── Build performance standards with met/not-met (from new competition data) ──

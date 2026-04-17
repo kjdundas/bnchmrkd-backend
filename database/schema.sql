@@ -290,6 +290,7 @@ RETURNS TABLE (
     country VARCHAR,
     pb_time NUMERIC,
     time_at_similar_age NUMERIC,
+    closest_age INT,
     time_diff NUMERIC,
     age_diff INT,
     similarity NUMERIC
@@ -302,6 +303,7 @@ BEGIN
         a.country,
         pb.pb_time,
         sb.best_time,
+        sb.age_years,
         ABS(sb.best_time - p_pb),
         ABS(sb.age_years - p_age),
         (ABS(sb.best_time - p_pb) * 2 + ABS(sb.age_years - p_age) * 0.3)
