@@ -105,8 +105,8 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
     );
   }
 
-  const gridTemplate = `40px repeat(${TOTAL_COLS}, minmax(0,1fr))`;
-  const gridTemplateCompact = `32px repeat(${TOTAL_COLS}, minmax(52px,1fr))`;
+  const gridTemplate = `48px repeat(${TOTAL_COLS}, minmax(0,1fr))`;
+  const gridTemplateCompact = `44px repeat(${TOTAL_COLS}, minmax(52px,1fr))`;
 
   return (
     <div

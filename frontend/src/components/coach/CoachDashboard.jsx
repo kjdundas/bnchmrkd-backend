@@ -555,7 +555,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         <header className="sticky top-0 z-50" style={{ background: 'rgba(2,6,23,0.7)', backdropFilter: 'blur(24px) saturate(1.4)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={onBack} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-white hover:bg-white/5 transition-all">
+              <button onClick={onBack} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-all">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="flex items-center gap-2.5">
@@ -564,7 +564,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 </div>
                 <div>
                   <p className="text-[13px] font-semibold text-white leading-none landing-font">Dashboard</p>
-                  <p className="text-[10px] text-slate-600 leading-none mt-0.5 mono-font">{profile?.full_name || user?.email}</p>
+                  <p className="text-[10px] text-slate-400 leading-none mt-0.5 mono-font">{profile?.full_name || user?.email}</p>
                 </div>
               </div>
             </div>
@@ -593,7 +593,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 onClick={() => { setActiveSection(key); if (key === 'add') setAddMethod(null) }}
                 className="relative flex items-center gap-1.5 px-4 py-2.5 text-[11px] sm:text-[12px] font-semibold transition-all landing-font"
                 style={{
-                  color: activeSection === key ? '#f97316' : '#475569',
+                  color: activeSection === key ? '#f97316' : '#94a3b8',
                   borderBottom: activeSection === key ? '2px solid #f97316' : '2px solid transparent',
                 }}
               >
@@ -645,7 +645,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="text-[10px] font-bold mono-font" style={{ color: '#f97316' }}>01</span>
-                          <span className="text-[10px] text-slate-600 mono-font">RECOMMENDED</span>
+                          <span className="text-[10px] text-slate-400 mono-font">RECOMMENDED</span>
                         </div>
                         <p className="text-[14px] font-semibold text-white landing-font">Import from World Athletics</p>
                         <p className="text-[11px] text-slate-500 landing-font mt-1.5 leading-relaxed">Paste an athlete's World Athletics profile URL and we'll pull their full race history automatically.</p>
@@ -669,7 +669,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="text-[10px] font-bold mono-font" style={{ color: '#3b82f6' }}>02</span>
-                          <span className="text-[10px] text-slate-600 mono-font">BULK IMPORT</span>
+                          <span className="text-[10px] text-slate-400 mono-font">BULK IMPORT</span>
                         </div>
                         <p className="text-[14px] font-semibold text-white landing-font">Upload a CSV</p>
                         <p className="text-[11px] text-slate-500 landing-font mt-1.5 leading-relaxed">Got a spreadsheet of athletes? Upload a CSV with names, DOBs, disciplines, and race results.</p>
@@ -693,7 +693,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="text-[10px] font-bold mono-font" style={{ color: '#8b5cf6' }}>03</span>
-                          <span className="text-[10px] text-slate-600 mono-font">MANUAL</span>
+                          <span className="text-[10px] text-slate-400 mono-font">MANUAL</span>
                         </div>
                         <p className="text-[14px] font-semibold text-white landing-font">Add manually</p>
                         <p className="text-[11px] text-slate-500 landing-font mt-1.5 leading-relaxed">Enter an athlete's details and race history by hand. Best for athletes without a World Athletics profile.</p>
@@ -721,7 +721,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                               <Icon className="w-5 h-5" style={{ color }} />
                             </div>
                             <p className="text-[12px] font-semibold text-white landing-font mb-1">{label}</p>
-                            <p className="text-[10px] text-slate-600 landing-font leading-relaxed">{desc}</p>
+                            <p className="text-[10px] text-slate-400 landing-font leading-relaxed">{desc}</p>
                           </div>
                         </div>
                       ))}
@@ -778,7 +778,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <div className="absolute top-0 right-0 w-16 h-16 rounded-full" style={{ background: `radial-gradient(circle, ${kpi.color}08 0%, transparent 70%)`, transform: 'translate(30%, -30%)' }} />
                     <p className="text-3xl font-bold text-white mono-font leading-none">{kpi.value}</p>
                     <p className="text-[11px] font-semibold mt-1.5 landing-font" style={{ color: kpi.color }}>{kpi.label}</p>
-                    <p className="text-[10px] text-slate-600 landing-font">{kpi.sub}</p>
+                    <p className="text-[10px] text-slate-400 landing-font">{kpi.sub}</p>
                   </div>
                 ))}
               </div>
@@ -813,7 +813,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3 landing-font">Performance Alerts</p>
                   <div className="space-y-2">
                     {rosterWithAge.filter(a => a.trend !== 'stable').length === 0 && (
-                      <p className="text-[11px] text-slate-700 landing-font py-4 text-center">No alerts yet — add athletes to start tracking</p>
+                      <p className="text-[11px] text-slate-400 landing-font py-4 text-center">No alerts yet — add athletes to start tracking</p>
                     )}
                     {rosterWithAge.filter(a => a.trend !== 'stable').map((a, i) => (
                       <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg transition-all hover:bg-white/[0.02]" style={{ border: '1px solid rgba(255,255,255,0.03)' }}>
@@ -823,7 +823,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                             <p className="text-[13px] text-white font-medium landing-font truncate">{a.name}</p>
                             <TierDot tier={a.tier} size={5} />
                           </div>
-                          <p className="text-[10px] text-slate-600 landing-font">{a.discipline} · {a.trend === 'up' ? 'Improving' : 'Declining'} · Last: {a.last_result || '—'}</p>
+                          <p className="text-[10px] text-slate-400 landing-font">{a.discipline} · {a.trend === 'up' ? 'Improving' : 'Declining'} · Last: {a.last_result || '—'}</p>
                         </div>
                         <ArrowUpRight className={`w-3.5 h-3.5 flex-shrink-0 ${a.trend === 'up' ? 'text-emerald-500' : 'text-red-500 rotate-90'}`} />
                       </div>
@@ -836,7 +836,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3 landing-font">Recent Results</p>
                   <div className="space-y-0">
                     {rosterWithAge.length === 0 && (
-                      <p className="text-[11px] text-slate-700 landing-font py-4 text-center">No results yet</p>
+                      <p className="text-[11px] text-slate-400 landing-font py-4 text-center">No results yet</p>
                     )}
                     {[...rosterWithAge].filter(a => a.last_date).sort((a, b) => new Date(b.last_date) - new Date(a.last_date)).map((a, i) => (
                       <div key={i} className="flex items-center gap-3 py-2.5" style={{ borderBottom: i < rosterWithAge.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
@@ -845,11 +845,11 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] text-white landing-font">{a.name}</p>
-                          <p className="text-[10px] text-slate-600 mono-font">{a.discipline}</p>
+                          <p className="text-[10px] text-slate-400 mono-font">{a.discipline}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-[12px] font-bold text-white mono-font">{a.last_result || '—'}</p>
-                          <p className="text-[9px] text-slate-600 mono-font">{a.last_date ? new Date(a.last_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
+                          <p className="text-[9px] text-slate-400 mono-font">{a.last_date ? new Date(a.last_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                         </div>
                       </div>
                     ))}
@@ -866,18 +866,18 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3" style={stagger(0)}>
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="text" placeholder="Search athletes..."
                     value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                   />
                 </div>
                 <div className="flex gap-1">
                   {['all', 'U13', 'U15', 'U17', 'U20', 'Senior'].map(ag => (
                     <button key={ag} onClick={() => setFilterAgeGroup(ag)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all mono-font ${filterAgeGroup === ag ? 'text-white' : 'text-slate-700 hover:text-slate-500'}`}
+                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all mono-font ${filterAgeGroup === ag ? 'text-white' : 'text-slate-400 hover:text-slate-300'}`}
                       style={filterAgeGroup === ag ? { background: 'rgba(255,255,255,0.08)' } : {}}>
                       {ag === 'all' ? 'All' : ag}
                     </button>
@@ -887,8 +887,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
               {rosterLoading ? (
                 <div className="text-center py-20">
-                  <Loader2 className="w-6 h-6 mx-auto mb-2 text-slate-600 animate-spin" />
-                  <p className="text-[11px] text-slate-700 landing-font">Loading roster...</p>
+                  <Loader2 className="w-6 h-6 mx-auto mb-2 text-slate-400 animate-spin" />
+                  <p className="text-[11px] text-slate-400 landing-font">Loading roster...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -900,13 +900,13 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                         <button
                           onClick={(e) => { e.stopPropagation(); openEditModal(a) }}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-slate-700 hover:text-orange-400 hover:bg-orange-500/10"
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-slate-500 hover:text-orange-400 hover:bg-orange-500/10"
                         >
                           <Pencil className="w-3 h-3" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteConfirm(deleteConfirm === a.id ? null : a.id) }}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-slate-700 hover:text-red-500 hover:bg-red-500/10"
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-500/10"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -928,12 +928,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                               {a.name.split(' ').map(n => n[0]).join('')}
                             </div>
                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: '#0f172a', border: '2px solid #0f172a' }}>
-                              <div className={`w-2 h-2 rounded-full ${a.trend === 'up' ? 'bg-emerald-500' : a.trend === 'down' ? 'bg-red-500' : 'bg-slate-600'}`} />
+                              <div className={`w-2 h-2 rounded-full ${a.trend === 'up' ? 'bg-emerald-500' : a.trend === 'down' ? 'bg-red-500' : 'bg-slate-400'}`} />
                             </div>
                           </div>
                           <div>
                             <p className="text-[13px] font-semibold text-white landing-font group-hover:text-orange-400 transition-colors">{a.name}</p>
-                            <p className="text-[10px] text-slate-600 landing-font">{a.gender || '?'} · {a.age != null ? `${a.age}y` : '—'}</p>
+                            <p className="text-[10px] text-slate-400 landing-font">{a.gender || '?'} · {a.age != null ? `${a.age}y` : '—'}</p>
                           </div>
                         </div>
                       </div>
@@ -952,7 +952,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                       )}
                       {!Array.isArray(a.disciplines) && (
-                        <p className="text-[10px] text-slate-600 landing-font mb-2">{a.discipline || '—'}</p>
+                        <p className="text-[10px] text-slate-400 landing-font mb-2">{a.discipline || '—'}</p>
                       )}
                       {/* Level sticker */}
                       {(() => {
@@ -967,8 +967,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                                 <span className="px-1.5 py-0.5 rounded text-[9px] font-bold mono-font" style={{ background: `${pl.color}18`, color: pl.color, border: `1px solid ${pl.color}30` }}>
                                   L{pl.level}
                                 </span>
-                                <span className="text-[9px] text-slate-500 landing-font">{pl.name}</span>
-                                <span className="text-[8px] text-slate-700 mono-font ml-auto">{pl.ageGroup}</span>
+                                <span className="text-[9px] text-slate-400 landing-font">{pl.name}</span>
+                                <span className="text-[8px] text-slate-500 mono-font ml-auto">{pl.ageGroup}</span>
                               </div>
                             );
                           }
@@ -979,11 +979,11 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <div className="flex gap-2 mb-3">
                         <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
                           <p className="text-[14px] font-bold text-white mono-font">{a.pb || '—'}</p>
-                          <p className="text-[8px] text-slate-600 uppercase tracking-wider landing-font">PB</p>
+                          <p className="text-[8px] text-slate-400 uppercase tracking-wider landing-font">PB</p>
                         </div>
                         <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                          <p className="text-[14px] font-bold text-slate-400 mono-font">{a.last_result || '—'}</p>
-                          <p className="text-[8px] text-slate-600 uppercase tracking-wider landing-font">Last</p>
+                          <p className="text-[14px] font-bold text-slate-300 mono-font">{a.last_result || '—'}</p>
+                          <p className="text-[8px] text-slate-400 uppercase tracking-wider landing-font">Last</p>
                         </div>
                       </div>
                       {/* Footer */}
@@ -993,8 +993,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                           <span className="text-[10px] landing-font" style={{ color: tierConfig[a.tier]?.color || '#64748b' }}>{tierConfig[a.tier]?.label || 'Developing'}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {a.races?.length > 0 && <span className="text-[9px] text-slate-700 mono-font">{a.races.length} races</span>}
-                          <span className="text-[10px] text-slate-700 group-hover:text-orange-500 transition-colors landing-font flex items-center gap-0.5">
+                          {a.races?.length > 0 && <span className="text-[9px] text-slate-500 mono-font">{a.races.length} races</span>}
+                          <span className="text-[10px] text-slate-500 group-hover:text-orange-500 transition-colors landing-font flex items-center gap-0.5">
                             View <ChevronRight className="w-3 h-3" />
                           </span>
                         </div>
@@ -1005,8 +1005,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               )}
               {!rosterLoading && displayRoster.length === 0 && (
                 <div className="text-center py-20">
-                  <Users className="w-8 h-8 mx-auto mb-2 text-slate-800" />
-                  <p className="text-[12px] text-slate-700 landing-font">{roster.length === 0 ? 'No athletes in your roster yet — add one to get started' : 'No athletes match your search'}</p>
+                  <Users className="w-8 h-8 mx-auto mb-2 text-slate-500" />
+                  <p className="text-[12px] text-slate-400 landing-font">{roster.length === 0 ? 'No athletes in your roster yet — add one to get started' : 'No athletes match your search'}</p>
                   {roster.length === 0 && (
                     <button onClick={() => { setActiveSection('add'); setAddMethod('url') }} className="mt-3 text-[11px] font-bold text-orange-500 hover:text-orange-400 landing-font">+ Import from World Athletics</button>
                   )}
@@ -1021,7 +1021,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               <div className="w-full max-w-md rounded-2xl p-6 mx-4" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-[15px] font-bold text-white landing-font">Edit Athlete</h3>
-                  <button onClick={() => setEditingAthlete(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-white hover:bg-white/5">
+                  <button onClick={() => setEditingAthlete(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -1046,7 +1046,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <div className="flex gap-2">
                       {['Male', 'Female'].map(g => (
                         <button key={g} onClick={() => setEditForm(f => ({ ...f, gender: g }))}
-                          className={`flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all landing-font ${editForm.gender === g ? 'text-white' : 'text-slate-600 hover:text-slate-400'}`}
+                          className={`flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all landing-font ${editForm.gender === g ? 'text-white' : 'text-slate-400 hover:text-slate-400'}`}
                           style={editForm.gender === g ? { background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' } : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                           {g}
                         </button>
@@ -1058,7 +1058,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Primary Discipline</label>
                     <input type="text" value={editForm.discipline} onChange={e => setEditForm(f => ({ ...f, discipline: e.target.value }))}
                       placeholder="e.g. 100m, Discus Throw"
-                      className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
                   </div>
                   {/* Nationality */}
@@ -1066,7 +1066,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Nationality</label>
                     <input type="text" value={editForm.nationality} onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))}
                       placeholder="e.g. NZL"
-                      className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
                   </div>
                 </div>
@@ -1112,7 +1112,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         <Icon className="w-5 h-5" style={{ color }} />
                       </div>
                       <h3 className="text-[14px] font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">{title}</h3>
-                      <p className="text-[11px] text-slate-600 leading-relaxed landing-font">{desc}</p>
+                      <p className="text-[11px] text-slate-400 leading-relaxed landing-font">{desc}</p>
                     </button>
                   ))}
                 </div>
@@ -1124,14 +1124,14 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <Globe className="w-4 h-4 text-emerald-500" />
                       <h3 className="text-[12px] font-semibold text-white uppercase tracking-wider landing-font">Import from World Athletics</h3>
                     </div>
-                    <button onClick={() => { setAddMethod(null); setUrlInput('') }} className="text-slate-700 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
+                    <button onClick={() => { setAddMethod(null); setUrlInput('') }} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
                   </div>
-                  <p className="text-[11px] text-slate-600 mb-4 landing-font">Paste an athlete profile URL below. We'll import their full competition history automatically.</p>
+                  <p className="text-[11px] text-slate-400 mb-4 landing-font">Paste an athlete profile URL below. We'll import their full competition history automatically.</p>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
+                      <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                       <input type="url" placeholder="https://worldathletics.org/athletes/..." value={urlInput} onChange={(e) => { setUrlInput(e.target.value); setUrlError('') }}
-                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
                         style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${urlError ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.06)'}` }}
                         onKeyDown={(e) => e.key === 'Enter' && !urlLoading && handleUrlImport()}
                         disabled={urlLoading} />
@@ -1163,14 +1163,14 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <FileSpreadsheet className="w-4 h-4 text-blue-400" />
                       <h3 className="text-[12px] font-semibold text-white uppercase tracking-wider landing-font">Bulk Upload</h3>
                     </div>
-                    <button onClick={() => { setAddMethod(null); setCsvFile(null); setCsvPreview(null) }} className="text-slate-700 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
+                    <button onClick={() => { setAddMethod(null); setCsvFile(null); setCsvPreview(null) }} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
                   </div>
                   {!csvPreview ? (
                     <div onClick={() => fileInputRef.current?.click()}
                       className="border border-dashed border-slate-800 hover:border-blue-500/30 rounded-xl p-10 text-center cursor-pointer transition-all group">
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-slate-700 group-hover:text-blue-500 transition-colors" />
+                      <Upload className="w-6 h-6 mx-auto mb-2 text-slate-500 group-hover:text-blue-500 transition-colors" />
                       <p className="text-[12px] text-slate-500 landing-font mb-0.5">Drop CSV or Excel here</p>
-                      <p className="text-[10px] text-slate-700 landing-font">Required: Name, Date of Birth · Optional: Discipline, Gender, PB</p>
+                      <p className="text-[10px] text-slate-500 landing-font">Required: Name, Date of Birth · Optional: Discipline, Gender, PB</p>
                       <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleCsvUpload} className="hidden" />
                     </div>
                   ) : (
@@ -1183,7 +1183,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <div className="overflow-x-auto mb-4 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.04)' }}>
                         <table className="w-full text-[11px]">
                           <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                            {csvPreview.headers.map((h, i) => <th key={i} className="text-left py-2 px-3 text-[9px] text-slate-600 uppercase tracking-wider landing-font">{h}</th>)}
+                            {csvPreview.headers.map((h, i) => <th key={i} className="text-left py-2 px-3 text-[9px] text-slate-400 uppercase tracking-wider landing-font">{h}</th>)}
                           </tr></thead>
                           <tbody>{csvPreview.rows.map((row, i) => (
                             <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
@@ -1211,7 +1211,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <UserPlus className="w-4 h-4 text-orange-400" />
                       <h3 className="text-[12px] font-semibold text-white uppercase tracking-wider landing-font">Manual Entry</h3>
                     </div>
-                    <button onClick={() => setAddMethod(null)} className="text-slate-700 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
+                    <button onClick={() => setAddMethod(null)} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
@@ -1219,19 +1219,19 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       { label: 'Date of Birth', type: 'date', placeholder: '' },
                     ].map((f, i) => (
                       <div key={i}>
-                        <label className="block text-[10px] text-slate-600 mb-1 landing-font">{f.label} *</label>
-                        <input type={f.type} placeholder={f.placeholder} className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                        <label className="block text-[10px] text-slate-400 mb-1 landing-font">{f.label} *</label>
+                        <input type={f.type} placeholder={f.placeholder} className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
                       </div>
                     ))}
                     <div>
-                      <label className="block text-[10px] text-slate-600 mb-1 landing-font">Discipline *</label>
+                      <label className="block text-[10px] text-slate-400 mb-1 landing-font">Discipline *</label>
                       <select className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <option value="">Select</option>
                         {['100m','200m','400m','110m Hurdles','100m Hurdles','400m Hurdles','Discus Throw','Shot Put','Javelin Throw','Hammer Throw'].map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] text-slate-600 mb-1 landing-font">Gender *</label>
+                      <label className="block text-[10px] text-slate-400 mb-1 landing-font">Gender *</label>
                       <select className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <option value="">Select</option>
                         <option value="M">Male</option>
@@ -1239,12 +1239,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] text-slate-600 mb-1 landing-font">Personal Best</label>
-                      <input type="text" placeholder="e.g. 10.85 or 65.40" className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                      <label className="block text-[10px] text-slate-400 mb-1 landing-font">Personal Best</label>
+                      <input type="text" placeholder="e.g. 10.85 or 65.40" className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-slate-600 mb-1 landing-font">Nationality</label>
-                      <input type="text" placeholder="e.g. UAE" className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                      <label className="block text-[10px] text-slate-400 mb-1 landing-font">Nationality</label>
+                      <input type="text" placeholder="e.g. UAE" className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
                     </div>
                   </div>
                   <button className="mt-4 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110 transition-all" style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
@@ -1265,7 +1265,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 </div>
                 <div className="flex-1">
                   <p className="text-[12px] font-semibold text-white landing-font">Results Scanner</p>
-                  <p className="text-[9px] text-slate-600 landing-font">
+                  <p className="text-[9px] text-slate-400 landing-font">
                     {scanStage === 'input' && 'Paste results text, or upload a PDF / image'}
                     {scanStage === 'review' && 'Review extracted results — uncheck any that look wrong'}
                     {scanStage === 'done' && 'Done'}
@@ -1300,7 +1300,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       onChange={(e) => setScanText(e.target.value)}
                       placeholder="Paste competition results text here (any format — heats, finals, PDFs copied as text, etc.)"
                       rows={10}
-                      className="w-full px-3.5 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-700 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30 resize-y"
+                      className="w-full px-3.5 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30 resize-y"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                     />
                   )}
@@ -1466,7 +1466,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <p className="text-[12px] font-semibold text-white landing-font">{cand.roster_athlete_name}</p>
-                            <p className="text-[9px] text-slate-600 landing-font">
+                            <p className="text-[9px] text-slate-400 landing-font">
                               Matched as "{cand.extracted_name}" · confidence {cand.confidence}%
                             </p>
                           </div>
@@ -1494,7 +1494,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                                     <span>{r.event}</span>
                                     <span>·</span>
                                     <span className="text-white">{r.mark_raw || r.value}</span>
-                                    {r.competition && <span className="text-slate-600">· {r.competition}</span>}
+                                    {r.competition && <span className="text-slate-400">· {r.competition}</span>}
                                     {r.duplicate && <span className="text-[9px] text-amber-500 landing-font">duplicate</span>}
                                   </span>
                                   {r.event_source_quote && (

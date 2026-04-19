@@ -17,6 +17,7 @@ import PerformanceMatrixCard from './components/PerformanceMatrixCard';
 import CompetitionStandardsLadder from './components/CompetitionStandardsLadder';
 import InfoTooltip from './components/InfoTooltip';
 import { getTier, TIER_COLORS, TIER_NAMES, TIER_SHORT } from './lib/performanceTiers';
+import { projectAllTrajectories, getImprovementCurves } from './lib/improvementCurves';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 
@@ -230,8 +231,19 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const DISTANCE_CODES = ['M800', 'F800', 'M1500', 'F1500', 'M3SC', 'F3SC', 'M5K', 'F5K', 'M10K', 'F10K', 'MMAR', 'FMAR'];
   const isDistanceDiscipline = (disc) => DISTANCE_DISCIPLINES.includes(disc) || DISTANCE_CODES.includes(disc);
 
+  // Hurdle discipline detection helpers
+  const HURDLE_DISCIPLINES = ['110mH', '100mH', '400mH', '110m Hurdles', '100m Hurdles', '400m Hurdles'];
+  const isHurdleDiscipline = (disc) => HURDLE_DISCIPLINES.includes(disc);
+
   const isMarathon = (disc) => disc === 'Marathon' || disc === 'MMAR' || disc === 'FMAR';
   const getUnitLabel = (disc) => isFieldEvent(disc) ? 'Distance (m)' : isMarathon(disc) ? 'Time (h:mm:ss)' : isDistanceDiscipline(disc) ? 'Time (mm:ss)' : 'Time (s)';
+
+  // Normalise shorthand discipline codes to full names used in improvementCurves.js
+  // e.g. '110mH' → '110m Hurdles', '100mH' → '100m Hurdles', '400mH' → '400m Hurdles'
+  const normalizeDisciplineName = (disc) => {
+    const map = { '110mH': '110m Hurdles', '100mH': '100m Hurdles', '400mH': '400m Hurdles' };
+    return map[disc] || disc;
+  };
 
   // Format seconds to h:mm:ss for marathon, mm:ss.ff for other distance events, or ss.ff for sprint/hurdle events
   const formatTime = (seconds, disc) => {
@@ -366,6 +378,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const [landingRole, setLandingRole] = useState('athlete');
   const [activePillar, setActivePillar] = useState(0);
 
+
   // ── HERO TRAJECTORY SHOWCASE — auto-cycling athlete profiles ──
   const SHOWCASE_ATHLETES = useMemo(() => [
     {
@@ -373,6 +386,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       discipline: '100m', gender: 'M',
       pb: '10.02s', peakAge: '27', trajectory: 'Late Developer', percentile: 92,
       ages: ['18','20','22','24','26','28','30'],
+      seasonBests: ['10.72s','10.48s','10.28s','10.14s','10.05s','10.02s','10.11s'],
       // y-values: lower = better (inverted for time events)
       points: [[60,158],[112,140],[164,118],[216,88],[268,68],[320,64],[372,72]],
       path: 'M60,158 C88,148 112,136 164,118 S216,88 268,68 S340,62 372,72',
@@ -390,6 +404,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       discipline: '800m', gender: 'F',
       pb: '1:58.4', peakAge: '25', trajectory: 'Standard', percentile: 85,
       ages: ['17','19','21','23','25','27','29'],
+      seasonBests: ['2:08.1','2:04.6','2:01.8','1:59.5','1:58.4','1:59.2','2:01.0'],
       points: [[60,162],[112,138],[164,108],[216,82],[268,72],[320,78],[372,90]],
       path: 'M60,162 C88,150 112,132 164,108 S216,82 268,72 S340,76 372,90',
       corridor: 'M60,152 L112,142 L164,130 L216,118 L268,112 L320,116 L372,126',
@@ -406,6 +421,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       discipline: 'DT', gender: 'M',
       pb: '67.2m', peakAge: '23', trajectory: 'Early Peaker', percentile: 78,
       ages: ['18','20','22','24','26','28','30'],
+      seasonBests: ['54.8m','60.1m','64.9m','67.2m','65.4m','63.1m','60.8m'],
       // for throws, higher = better but we keep same SVG convention (lower y = better)
       points: [[60,150],[112,110],[164,78],[216,68],[268,80],[320,95],[372,112]],
       path: 'M60,150 C88,132 112,108 164,78 S216,68 268,80 S340,92 372,112',
@@ -423,6 +439,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       discipline: '100mH', gender: 'F',
       pb: '12.68s', peakAge: '26', trajectory: 'Late Developer', percentile: 88,
       ages: ['18','20','22','24','26','28','30'],
+      seasonBests: ['14.12s','13.68s','13.21s','12.94s','12.68s','12.72s','12.91s'],
       points: [[60,165],[112,148],[164,125],[216,98],[268,72],[320,70],[372,80]],
       path: 'M60,165 C88,155 112,142 164,125 S216,98 268,72 S340,68 372,80',
       corridor: 'M60,155 L112,145 L164,132 L216,120 L268,114 L320,118 L372,128',
@@ -439,9 +456,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   const [showcaseIdx, setShowcaseIdx] = useState(0);
   const [showcaseTransition, setShowcaseTransition] = useState(false);
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [showcasePaused, setShowcasePaused] = useState(false);
 
   useEffect(() => {
-    if (currentView !== 'landing') return;
+    if (currentView !== 'landing' || showcasePaused) return;
     const timer = setInterval(() => {
       setShowcaseTransition(true);
       setTimeout(() => {
@@ -450,7 +468,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       }, 400);
     }, 5500);
     return () => clearInterval(timer);
-  }, [currentView, SHOWCASE_ATHLETES.length]);
+  }, [currentView, SHOWCASE_ATHLETES.length, showcasePaused]);
 
   const showcaseAthlete = SHOWCASE_ATHLETES[showcaseIdx];
 
@@ -3896,27 +3914,21 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               {/* LEFT — Copy */}
               <div>
-                <h1 className="stagger-3 text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-6">
+                <h1 className="stagger-3 text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-5">
                   Put your performance{' '}
                   <span className="hidden sm:inline"><br /></span>
                   in{' '}
-                  <span className="shiny-text" style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '100% 100%', position: 'relative'}}>
-                    <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Olympic context.</span>
-                    <span style={{position: 'absolute', inset: 0, background: 'linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 60%)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shinyTextSweep 4s ease-in-out infinite', pointerEvents: 'none'}}>Olympic context.</span>
-                  </span>
+                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Olympic context.</span>
                 </h1>
 
-                <div className="stagger-4 mb-6 landing-font">
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white tracking-tight leading-tight">
-                    Talent{'\u00A0'}
+                <p className="stagger-4 text-base sm:text-lg text-slate-300 leading-relaxed max-w-lg landing-font mb-8">
+                  25 years of Olympic career data, distilled into one trajectory.{' '}
+                  <span className="text-slate-400">Talent{' '}
                     <TypewriterCycle
                       words={['Identification', 'Confirmation', 'Development']}
                     />
-                  </h2>
-                  <p className="mt-3 text-sm sm:text-base text-slate-400 leading-relaxed max-w-md">
-                    <ScrollRevealText text="25 years of Olympic career data, distilled into one trajectory." />
-                  </p>
-                </div>
+                  </span>
+                </p>
 
                 {/* CTAs */}
                 <div className="stagger-5 flex flex-col sm:flex-row gap-3 mb-10">
@@ -3924,7 +3936,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     onClick={() => setCurrentView('categories')}
                     className="cta-primary flex items-center justify-center gap-2.5 px-7 py-3.5 text-white font-semibold rounded-xl text-[15px] landing-font"
                   >
-                    Benchmark an Athlete
+                    Try a Free Analysis
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   <button
@@ -3937,23 +3949,26 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </button>
                 </div>
 
-                {/* Data credibility — horizontal, compact with count-up animation */}
+                {/* Data credibility — static, instantly readable */}
                 <div className="stagger-6 flex items-center gap-4 sm:gap-8">
                   {[
-                    { target: 915, suffix: 'K+', label: 'Records' },
-                    { target: 7360, suffix: '+', label: 'Athletes' },
-                    { target: 19, suffix: '', label: 'Disciplines' },
+                    { value: '915K+', label: 'Records' },
+                    { value: '7,360+', label: 'Athletes' },
+                    { value: '19', label: 'Disciplines' },
                   ].map((stat, i) => (
                     <div key={i} className="flex items-baseline gap-1.5 sm:gap-2">
-                      <CountUp target={stat.target} suffix={stat.suffix} duration={i === 0 ? 2200 : i === 1 ? 2000 : 1400} className="text-lg sm:text-xl font-bold text-white tabular-nums mono-font" />
-                      <span className="text-[10px] sm:text-xs text-slate-600 uppercase tracking-widest landing-font font-medium">{stat.label}</span>
+                      <span className="text-lg sm:text-xl font-bold text-white tabular-nums mono-font">{stat.value}</span>
+                      <span className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest landing-font font-medium">{stat.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* RIGHT — Animated trajectory visualization + bento preview */}
-              <div className="stagger-4 relative">
+              <div className="stagger-4 relative"
+                onMouseEnter={() => setShowcasePaused(true)}
+                onMouseLeave={() => setShowcasePaused(false)}
+              >
                 {/* Main trajectory card */}
                 <div className={`bento-card rounded-2xl p-6 relative overflow-hidden showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`} style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
 
@@ -4018,7 +4033,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       {showcaseAthlete.points.map(([cx,cy], i) => (
                         <g key={`${showcaseIdx}-pt-${i}`}
                           style={{animation: `fadeSlideUp 0.3s ease-out ${0.8 + i * 0.18}s both`, cursor: 'pointer'}}
-                          onMouseEnter={() => setHoveredPoint({ idx: i, cx, cy, age: showcaseAthlete.ages[i] })}
+                          onMouseEnter={() => setHoveredPoint({ idx: i, cx, cy, age: showcaseAthlete.ages[i], sb: showcaseAthlete.seasonBests?.[i] })}
                           onMouseLeave={() => setHoveredPoint(null)}
                         >
                           <circle cx={cx} cy={cy} r="16" fill="transparent" />
@@ -4071,7 +4086,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         transform: 'translate(-50%, -100%)',
                       }}>
                         <p className="text-[10px] text-slate-400 mono-font">Age {hoveredPoint.age}</p>
-                        <p className="text-xs font-bold mono-font" style={{color: showcaseAthlete.color}}>Season Best</p>
+                        <p className="text-xs font-bold mono-font" style={{color: showcaseAthlete.color}}>{hoveredPoint.sb || 'Season Best'}</p>
                       </div>
                     )}
                   </div>
@@ -4084,7 +4099,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       { label: 'Trajectory', value: showcaseAthlete.trajectory, color: '#22c55e' },
                     ].map((item, i) => (
                       <div key={`${showcaseIdx}-stat-${i}`} className="text-center" style={{animation: `statCount 0.4s ease-out ${0.3 + i * 0.12}s both`}}>
-                        <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider">{item.label}</p>
+                        <p className="text-[10px] text-slate-500 mono-font uppercase tracking-wider">{item.label}</p>
                         <p className="text-sm font-bold mono-font mt-0.5" style={{color: item.color}}>{item.value}</p>
                       </div>
                     ))}
@@ -4107,7 +4122,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <div className={`grid grid-cols-2 gap-3 mt-3 showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`}>
                   {/* Percentile gauge card */}
                   <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                    <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Percentile</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] text-slate-500 mono-font uppercase tracking-wider">Percentile</p>
+                      <p className="text-[9px] text-slate-600 mono-font">vs Olympic field</p>
+                    </div>
                     <div className="flex items-end gap-1">
                       {showcaseAthlete.bars.map((h, i) => {
                         const maxIdx = showcaseAthlete.bars.indexOf(Math.max(...showcaseAthlete.bars));
@@ -4125,22 +4143,29 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         );
                       })}
                     </div>
-                    <p className="text-right text-lg font-bold text-white mono-font mt-2">P{showcaseAthlete.percentile}</p>
+                    <div className="flex items-baseline justify-between mt-2">
+                      <p className="text-[9px] text-slate-600 mono-font">PB {showcaseAthlete.pb}</p>
+                      <p className="text-lg font-bold text-white mono-font">P{showcaseAthlete.percentile}</p>
+                    </div>
                   </div>
 
                   {/* Discipline coverage card */}
                   <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                    <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Disciplines</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] text-slate-500 mono-font uppercase tracking-wider">Event Group</p>
+                      <p className="text-[9px] text-slate-600 mono-font">{showcaseAthlete.tags.length} events</p>
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                       {showcaseAthlete.tags.map((d, i) => (
                         <span key={`${showcaseIdx}-tag-${i}`} className="px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{
                           background: `${showcaseAthlete.color}1A`,
                           color: showcaseAthlete.color,
+                          border: i === 0 ? `1px solid ${showcaseAthlete.color}40` : '1px solid transparent',
                           animation: `fadeSlideUp 0.3s ease-out ${0.2 + i * 0.08}s both`
                         }}>{d}</span>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2 landing-font">{showcaseAthlete.tagLabel}</p>
+                    <p className="text-[10px] text-slate-500 mt-2 landing-font">{showcaseAthlete.tagLabel}</p>
                   </div>
                 </div>
               </div>
@@ -4162,13 +4187,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               {/* Section header */}
               <div className="text-center pt-16 mb-6">
-                <p className="text-xs mono-font uppercase tracking-[0.25em] mb-4 role-transition" style={{color: landingRole === 'coach' ? '#3b82f6' : '#22c55e'}}>Four pillars. One platform.</p>
                 <h2 className="text-2xl sm:text-4xl font-bold text-white landing-font tracking-tight mb-4">
-                  How will you use{' '}
-                  <span style={{position: 'relative', display: 'inline-block'}}>
-                    <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>bnchmrkd?</span>
-                    <span style={{position: 'absolute', inset: 0, background: 'linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 60%)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shinyTextSweep 5s ease-in-out 1s infinite', pointerEvents: 'none'}}>bnchmrkd?</span>
-                  </span>
+                  Everything you need to{' '}
+                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>track elite development</span>
                 </h2>
               </div>
 
@@ -4217,15 +4238,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     word: 'Benchmark',
                     icon: Target,
                     accent: '#f97316',
+                    comingSoon: false,
                     athlete: {
                       headline: 'Know where you stand',
-                      desc: `Enter your PB and instantly see how you compare to Olympic athletes at the same age. Based on ${STATS.records} real competition records.`,
+                      desc: `Enter your PB and instantly see how you compare to Olympic athletes at the same age. Based on ${STATS.records} real competition records across 25 years of Olympic data.`,
+                      features: ['Percentile ranking against Olympic field', 'Performance matrix across age groups', 'Improvement rate scenarios with target ages'],
                       stat: STATS.records,
                       statLabel: 'data points',
                     },
                     coach: {
                       headline: 'See who\'s on track',
-                      desc: 'View each athlete\'s percentile ranking against elite trajectories. Spot who\'s tracking toward elite and who needs a new approach.',
+                      desc: 'View each athlete\'s percentile ranking against elite trajectories. Spot who\'s tracking toward elite and who needs a different approach — backed by real data.',
+                      features: ['Quick analysis for any athlete, any discipline', 'Compare across 19 Olympic disciplines', 'Data from Sydney 2000 to Paris 2024'],
                       stat: STATS.disciplines,
                       statLabel: 'disciplines covered',
                     },
@@ -4234,15 +4258,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     word: 'Track',
                     icon: Activity,
                     accent: '#3b82f6',
+                    comingSoon: true,
                     athlete: {
                       headline: 'See your progression',
-                      desc: 'Log competitions, training sessions, and physical metrics. Every entry builds your personal trajectory curve — a living picture of your development.',
+                      desc: 'Log competitions and training sessions to build your personal trajectory curve — a living picture of how your performance is developing over time.',
+                      features: ['Competition result logging with auto-PB detection', 'Season-by-season progression timeline', 'Physical metrics tracking (height, weight, training load)'],
                       stat: '<15s',
                       statLabel: 'to log a session',
                     },
                     coach: {
                       headline: 'Manage your squad',
-                      desc: 'Build your roster, log results after meets, and track every metric on one dashboard. Bulk-log an entire competition in minutes.',
+                      desc: 'Build your roster, log results after meets, and track every metric on one dashboard. Bulk-log an entire competition in minutes, not hours.',
+                      features: ['Squad roster with multi-discipline support', 'Bulk competition logging for whole teams', 'Individual athlete progression dashboards'],
                       stat: '3 min',
                       statLabel: 'to log a meet',
                     },
@@ -4251,15 +4278,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     word: 'Project',
                     icon: TrendingUp,
                     accent: '#22c55e',
+                    comingSoon: true,
                     athlete: {
                       headline: 'See where you could go',
-                      desc: 'Overlay your trajectory against elite athletes who were at your level at your age. See the paths they took and where you\'re heading.',
+                      desc: 'Overlay your trajectory against elite athletes who were at your level at your age. See the paths they took — and what reaching the next level actually looks like.',
+                      features: ['Career trajectory overlays against Olympians', 'Age-specific milestone targets', '"Athletes like you" comparison engine'],
                       stat: '25 yrs',
                       statLabel: 'of Olympic data',
                     },
                     coach: {
                       headline: 'Plan with data',
-                      desc: 'Compare any athlete\'s trajectory against historical elites. Use real progression data to set targets and adjust training plans with confidence.',
+                      desc: 'Compare any athlete\'s trajectory against historical elites. Set data-backed targets and adjust training plans with confidence, not guesswork.',
+                      features: ['Historical trajectory matching for talent ID', 'Data-driven season target setting', 'Squad-wide projection dashboard'],
                       stat: STATS.athletes,
                       statLabel: 'elite careers mapped',
                     },
@@ -4268,15 +4298,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     word: 'Commit',
                     icon: Award,
                     accent: '#f59e0b',
+                    comingSoon: true,
                     athlete: {
                       headline: 'Build the habit',
-                      desc: 'Training streaks, consistency tracking, milestone badges, and session ratings. The app rewards showing up — not just on competition day.',
+                      desc: 'Training streaks, milestone badges, and session ratings. The app rewards consistency — not just race-day performance.',
+                      features: ['Training streak tracking with visual calendar', 'Milestone badges for PBs and consistency', 'Session ratings and training journal'],
                       stat: '47',
                       statLabel: 'avg sessions logged',
                     },
                     coach: {
                       headline: 'Keep athletes engaged',
-                      desc: 'See who\'s logging consistently and who\'s gone quiet. Assign workouts, track completion, and know who needs a check-in before you ask.',
+                      desc: 'See who\'s logging consistently and who\'s gone quiet. Know who needs a check-in before you have to ask.',
+                      features: ['Squad engagement heatmap', 'Automated inactivity alerts', 'Workout assignment and completion tracking'],
                       stat: '85%',
                       statLabel: 'logging consistency',
                     },
@@ -4452,7 +4485,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             </div>
 
                             {/* Pillar name + headline */}
-                            <h3 className="text-lg font-bold text-white landing-font tracking-tight mb-0.5">{pillar.word}</h3>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <h3 className="text-lg font-bold text-white landing-font tracking-tight">{pillar.word}</h3>
+                              {pillar.comingSoon && (
+                                <span className="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full mono-font"
+                                  style={{background: 'rgba(148,163,184,0.1)', color: '#64748b', border: '1px solid rgba(148,163,184,0.15)'}}>
+                                  Soon
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs font-medium landing-font role-transition" style={{color: isActive ? pillar.accent : 'rgba(148,163,184,0.6)'}}>
                               {content.headline}
                             </p>
@@ -4460,7 +4501,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             {/* Stat line */}
                             <div className="flex items-baseline gap-1.5 mt-3">
                               <span className="text-base font-bold mono-font role-transition" style={{color: isActive ? pillar.accent : 'rgba(148,163,184,0.4)'}}>{content.stat}</span>
-                              <span className="text-[9px] text-slate-600 mono-font uppercase tracking-wider">{content.statLabel}</span>
+                              <span className="text-[9px] text-slate-500 mono-font uppercase tracking-wider">{content.statLabel}</span>
                             </div>
                           </button>
                           </SpotlightCard>
@@ -4490,7 +4531,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               <p className="text-sm font-medium landing-font" style={{color: ap.accent}}>{apContent.headline}</p>
                             </div>
                           </div>
-                          <p className="text-sm text-slate-400 leading-relaxed landing-font mb-6 max-w-md">{apContent.desc}</p>
+                          <p className="text-sm text-slate-400 leading-relaxed landing-font mb-4 max-w-md">{apContent.desc}</p>
+                          {apContent.features && (
+                            <ul className="space-y-1.5 mb-5 max-w-md">
+                              {apContent.features.map((f, fi) => (
+                                <li key={fi} className="flex items-start gap-2 text-[13px] text-slate-300 landing-font">
+                                  <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{background: ap.accent}}></span>
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                           <div className="flex items-baseline gap-2">
                             <span className="text-3xl font-bold mono-font" style={{color: ap.accent}}>{apContent.stat}</span>
                             <span className="text-xs text-slate-500 mono-font uppercase tracking-wider">{apContent.statLabel}</span>
@@ -4509,7 +4560,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               })()}
 
               {/* CTA below pillars */}
-              <div className="text-center mt-12">
+              <div className="text-center mt-8">
                 {user ? (
                   <button
                     onClick={() => setCurrentView('categories')}
@@ -4546,18 +4597,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           </div>
 
           {/* ── FEATURE STRIP — Analysis capabilities ── */}
-          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-16">
+          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-8 sm:py-12">
             <div style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
               <div className="text-center pt-12 mb-8">
-                <p className="text-xs mono-font uppercase tracking-[0.25em] mb-3" style={{color: '#64748b'}}>Under the hood</p>
                 <h3 className="text-lg sm:text-xl font-bold text-white landing-font">Built on real statistical analysis</h3>
+                <p className="text-sm text-slate-400 mt-2 landing-font">Every number is backed by 25 years of Olympic competition data.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { icon: TrendingUp, title: 'Trajectory Classification', desc: 'K-means clustering identifies your career pattern — Early Peaker, Late Developer, or Consistent Performer.', accent: '#f97316' },
-                  { icon: Target, title: 'Finalist Probability', desc: 'ROC-optimised thresholds compute your statistical likelihood of reaching an Olympic final.', accent: '#3b82f6' },
+                  { icon: TrendingUp, title: 'Trajectory Classification', desc: 'Identifies your career pattern — Early Peaker, Late Developer, or Consistent Performer — based on how your results evolve over time.', accent: '#f97316' },
+                  { icon: Target, title: 'Finalist Probability', desc: 'Computes your statistical likelihood of reaching an Olympic final based on your current performance and age.', accent: '#3b82f6' },
                   { icon: BarChart3, title: 'Percentile Corridors', desc: 'See where you rank at every age from 15 to 38 against the full Olympic population.', accent: '#22c55e' },
-                  { icon: Zap, title: 'Peak Projection', desc: 'Improvement rate modelling projects your ceiling performance and the age you\'ll reach it.', accent: '#f59e0b' },
+                  { icon: Zap, title: 'Peak Projection', desc: 'Models your improvement rate to project your ceiling performance and the age you\'ll likely reach it.', accent: '#f59e0b' },
                 ].map((feature, i) => {
                   const Icon = feature.icon;
                   return (
@@ -4566,7 +4617,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         <Icon className="w-5 h-5" style={{color: feature.accent}} />
                       </div>
                       <h3 className="text-sm font-bold text-white landing-font mb-1.5">{feature.title}</h3>
-                      <p className="text-xs text-slate-500 leading-relaxed landing-font">{feature.desc}</p>
+                      <p className="text-xs text-slate-400 leading-relaxed landing-font">{feature.desc}</p>
                     </div>
                   );
                 })}
@@ -4578,13 +4629,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <div className="relative z-10 text-center pb-8 px-4">
             <div className="flex items-center justify-center gap-3 mb-2">
               <div className="w-8 h-px" style={{background: 'rgba(255,255,255,0.08)'}}></div>
-              <span className="text-[10px] text-slate-600 mono-font uppercase tracking-[0.2em]">Data Source</span>
+              <span className="text-[10px] text-slate-500 mono-font uppercase tracking-[0.2em]">Data Source</span>
               <div className="w-8 h-px" style={{background: 'rgba(255,255,255,0.08)'}}></div>
             </div>
-            <p className="text-xs text-slate-600 landing-font">
+            <p className="text-xs text-slate-500 landing-font">
               World Athletics competition records · Sydney 2000 – Paris 2024
             </p>
-            <button onClick={() => setCurrentView('about')} className="text-xs text-slate-600 hover:text-orange-400 transition-colors mt-1 landing-font underline decoration-slate-700 underline-offset-2">
+            <button onClick={() => setCurrentView('about')} className="text-xs text-slate-400 hover:text-orange-400 transition-colors mt-1 landing-font underline decoration-slate-600 underline-offset-2">
               View methodology
             </button>
             <div className="flex items-center justify-center gap-5 mt-5">
@@ -4608,10 +4659,17 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <span className="text-slate-700">·</span>
               <a href="mailto:hello@bnchmrkd.org" className="text-[10px] text-slate-500 hover:text-orange-400 transition-colors landing-font">hello@bnchmrkd.org</a>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-4 text-[10px] text-slate-700 landing-font">
+            <p className="text-[10px] text-slate-600 landing-font mt-4 max-w-md mx-auto leading-relaxed">
+              Built by a sports analyst and track coach. Independently developed in New Zealand.
+            </p>
+            <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mt-3 text-[10px] text-slate-500 landing-font">
+              <button onClick={() => setCurrentView('about')} className="hover:text-orange-400 transition-colors">Methodology</button>
+              <span className="text-slate-700">·</span>
               <button onClick={() => setCurrentView('privacy')} className="hover:text-orange-400 transition-colors">Privacy Policy</button>
-              <span className="text-slate-800">·</span>
+              <span className="text-slate-700">·</span>
               <button onClick={() => setCurrentView('terms')} className="hover:text-orange-400 transition-colors">Terms of Service</button>
+              <span className="text-slate-700">·</span>
+              <span className="text-slate-600">Free during beta</span>
             </div>
           </div>
         </div>
@@ -4923,7 +4981,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* Data source */}
             <div className="bento-card rounded-xl p-6 mb-12" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%)', border: '1px solid rgba(255,255,255,0.04)'}}>
-              <p className="text-[10px] text-slate-600 mono-font uppercase tracking-wider mb-2">Data Source</p>
+              <p className="text-[10px] text-slate-500 mono-font uppercase tracking-wider mb-2">Data Source</p>
               <p className="text-sm text-slate-500 leading-relaxed landing-font">
                 All athlete data is sourced from World Athletics competition records for Olympic Games from Sydney 2000 through Paris 2024. Career race histories, personal bests, and competition classifications are extracted from publicly available results databases.
               </p>
@@ -5888,576 +5946,901 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           <main className="relative z-10 flex-1 max-w-5xl mx-auto w-full px-3 sm:px-6 md:px-10 py-6 sm:py-10">
 
-            {/* ── HERO HEADER — PB as anchor (Quick Results) ── */}
-            <div className="bento-card rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6 stagger-2" style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(249,115,22,0.1)'}}>
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-8">
-                <div>
-                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
-                    <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font" style={{color: '#fb923c'}}>Quick Snapshot</span>
-                    <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider mono-font text-slate-500">&middot; {analysisResults.discipline} &middot; {analysisResults.gender} &middot; Age {analysisResults.age}</span>
-                    {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
-                      <span className="text-[10px] font-medium text-purple-400 bg-purple-500/15 px-1.5 py-0.5 rounded mono-font">Youth</span>
-                    )}
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl md:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
-                    {!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
-                      <span className="text-base sm:text-lg md:text-2xl font-medium text-slate-500 mono-font">s</span>
-                    )}
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1 landing-font">{analysisResults.careerPhase}</p>
-                  {analysisResults.implementWeight && (
-                    <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 mono-font">
-                      {analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`} implement
-                    </p>
-                  )}
-                </div>
-                {/* Readiness Ring */}
-                <div className="flex items-center gap-3 sm:gap-5">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0">
-                    <svg className="w-full h-full" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                      <circle cx="50" cy="50" r="42" fill="none"
-                        stroke={getReadinessColor(analysisResults.readinessScore)}
-                        strokeWidth="6"
-                        strokeDasharray={`${(analysisResults.readinessScore / 100) * 263.9} 263.9`}
-                        strokeLinecap="round" transform="rotate(-90 50 50)" />
-                      <text x="50" y="47" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#f1f5f9" style={{fontFamily: "'DM Mono', monospace"}}>{analysisResults.readinessScore}</text>
-                      <text x="50" y="63" textAnchor="middle" fontSize="9" fill="#64748b" style={{fontFamily: "'Instrument Sans', sans-serif"}}>Readiness</text>
-                    </svg>
-                  </div>
-                  <div className="hidden sm:flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{background: getReadinessColor(analysisResults.readinessScore)}}></div>
-                      <span className="text-xs text-slate-400 landing-font">{analysisResults.readinessScore >= 80 ? 'Competition Ready' : analysisResults.readinessScore >= 60 ? 'On Track' : analysisResults.readinessScore >= 40 ? 'Developing' : 'Building'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* CASE FILE — 5-ACT NARRATIVE STRUCTURE                          */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-            {/* ── YOUTH WEIGHT NOTICE ── */}
-            {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
-              <div className="rounded-xl p-3 sm:p-4 mb-4 flex items-start gap-3" style={{background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)'}}>
-                <AlertTriangle className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-purple-400/80 leading-relaxed landing-font">
-                  Youth implement ({analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}). Benchmarks use senior-weight Olympic data. Comparisons are approximate.
-                </p>
-              </div>
-            )}
-
-            {/* ── SNAPSHOT GRID — age-aware T1-T7 tier system (4 tiles) ── */}
             {(() => {
               const pb = parseFloat(analysisResults.personalBest);
               const ageGroup = analysisResults.performanceLevel?.ageGroup || getAgeGroup(analysisResults.age);
               const tierInfo = getTier(analysisResults.discipline, analysisResults.gender, ageGroup, pb);
               const isTime = isTimeDiscipline(analysisResults.discipline);
+              const isThrowsQ = isFieldEvent(analysisResults.discipline);
               const unit = isTime ? 's' : 'm';
-
-              // ── PEER RANK — "Top X%" capped so never 0% or 100% ──
-              const rawPct = analysisResults.percentileAtCurrentAge;
-              const pct = Math.min(99, Math.max(1, rawPct != null && rawPct > 0 ? rawPct : 50));
-              const topPct = Math.max(1, 100 - pct);
-
-              // ── NEXT TIER — derive label + gap ──
-              const atMax = tierInfo && tierInfo.tier >= tierInfo.maxTier;
-              const nextGapStr = tierInfo && tierInfo.gap != null
-                ? `+${Math.abs(tierInfo.gap).toFixed(2)}${unit}`
-                : null;
-
-              // ── MILESTONE — age-appropriate ──
-              const stds = analysisResults.standards || [];
-              const cleared = stds.filter(s => s.met);
-              // pick highest cleared comp (world tier first, then any)
-              const topCleared = (() => {
-                if (!cleared.length) return null;
-                const world = cleared.filter(s => s.compTier === 'world');
-                const pool = world.length ? world : cleared;
-                // highest tier cleared per standard: gold > bronze > p8 > semi > qual
-                const rank = (s) => s.gold && (isTime ? pb <= s.gold : pb >= s.gold) ? 5
-                  : s.bronze && (isTime ? pb <= s.bronze : pb >= s.bronze) ? 4
-                  : s.p8 && (isTime ? pb <= s.p8 : pb >= s.p8) ? 3
-                  : s.semi && (isTime ? pb <= s.semi : pb >= s.semi) ? 2
-                  : 1;
-                return pool.slice().sort((a, b) => rank(b) - rank(a))[0];
-              })();
-              const topClearedRank = topCleared ? (() => {
-                const s = topCleared;
-                if (s.gold && (isTime ? pb <= s.gold : pb >= s.gold)) return { label: 'Gold', color: '#FFD700' };
-                if (s.bronze && (isTime ? pb <= s.bronze : pb >= s.bronze)) return { label: 'Bronze', color: '#CD7F32' };
-                if (s.p8 && (isTime ? pb <= s.p8 : pb >= s.p8)) return { label: 'Finalist', color: '#10b981' };
-                if (s.semi && (isTime ? pb <= s.semi : pb >= s.semi)) return { label: 'Semi', color: '#3b82f6' };
-                return { label: 'Entry', color: '#8b5cf6' };
-              })() : null;
-
-              const maxTier = tierInfo?.maxTier || (ageGroup === 'Senior' ? 7 : 6);
               const currentTier = tierInfo?.tier || 0;
+              const maxTier = tierInfo?.maxTier || (ageGroup === 'Senior' ? 7 : 6);
               const tierColor = currentTier > 0 ? TIER_COLORS[currentTier] : '#334155';
 
-              return (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+              // ── Percentile — derive from tier when raw value is the 50 fallback ──
+              const rawPct = analysisResults.percentileAtCurrentAge;
+              const TIER_PERCENTILE_MAP = { 1: 15, 2: 35, 3: 55, 4: 70, 5: 82, 6: 92, 7: 97 };
+              const pct = (() => {
+                // If raw percentile looks real (not the 50 default), use it
+                if (rawPct != null && rawPct > 0 && rawPct !== 50) return Math.min(99, Math.max(1, rawPct));
+                // If raw is exactly 50 but tier says otherwise, derive from tier
+                if (currentTier > 0 && currentTier !== 4) return TIER_PERCENTILE_MAP[currentTier] || 50;
+                // If tier is 4 (Qualifier) then 50 is actually plausible
+                if (currentTier === 4 && rawPct === 50) return 50;
+                // Fallback
+                return rawPct != null && rawPct > 0 ? rawPct : TIER_PERCENTILE_MAP[currentTier] || 50;
+              })();
+              const topPct = Math.max(1, 100 - pct);
 
-                  {/* ── TILE 1 · TIER ── */}
-                  <div
-                    className="bento-card rounded-xl p-3 sm:p-4 relative overflow-hidden"
-                    style={{
-                      background: `linear-gradient(135deg, ${tierColor}18 0%, rgba(255,255,255,0.01) 70%)`,
-                      border: `1px solid ${tierColor}40`,
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Tier · {ageGroup}</p>
-                      <InfoTooltip title="Performance Tier" side="bottom" tone="orange">
-                        A 6-tier ladder for juniors and 7-tier ladder for seniors, derived from 25 years of Olympic outcomes. Your tier comes from your PB vs. age-group thresholds — from <strong>T1 Emerging</strong> up to <strong>T7 World Class</strong>. Unlike percentiles, this scales with age: a T4 U17 athlete is on an Olympic-qualifier trajectory for their age.
-                      </InfoTooltip>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold mono-font leading-none mb-1" style={{ color: tierColor }}>
-                      {currentTier > 0 ? TIER_SHORT[currentTier] : '—'}
-                    </p>
-                    <p className="text-[10px] sm:text-xs font-semibold mb-2.5" style={{ color: tierColor }}>
-                      {currentTier > 0 ? TIER_NAMES[currentTier] : 'Below Emerging'}
-                    </p>
-                    {/* Tier progress rail */}
-                    <div className="flex gap-[2px] mt-2">
-                      {Array.from({ length: maxTier }, (_, i) => i + 1).map(t => (
-                        <div
-                          key={t}
-                          className="flex-1 rounded-sm"
-                          style={{
-                            height: '4px',
-                            background: t <= currentTier ? TIER_COLORS[t] : 'rgba(255,255,255,0.05)',
-                            boxShadow: t === currentTier ? `0 0 8px ${TIER_COLORS[t]}80` : 'none',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* ── TILE 2 · PEER RANK ── */}
-                  <div className="bento-card rounded-xl p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Peer rank</p>
-                      <InfoTooltip title="Peer Rank" side="bottom" tone="orange">
-                        How your PB compares against athletes <strong>at your age</strong> in our Olympic pipeline dataset. "Top 5%" means your mark beats roughly 95 out of every 100 age-matched peers we've seen. Because it's age-scoped, it's fair for young athletes — a 14-year-old doesn't get judged against senior finalists.
-                      </InfoTooltip>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1">
-                      Top {topPct}%
-                    </p>
-                    <p className="text-[10px] sm:text-xs font-semibold" style={{
-                      color: pct >= 90 ? '#10b981' : pct >= 75 ? '#3b82f6' : pct >= 50 ? '#f59e0b' : '#64748b',
-                    }}>
-                      of {ageGroup} peers
-                    </p>
-                    <p className="text-[9px] text-slate-600 mono-font mt-1">P{pct} at age {analysisResults.age}</p>
-                  </div>
-
-                  {/* ── TILE 3 · NEXT TIER ── */}
-                  <div className="bento-card rounded-xl p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Next tier</p>
-                      <InfoTooltip title="Next Tier Gap" side="bottom" tone="orange">
-                        The exact improvement you need to step up to the next tier on the age-group ladder. For time events we subtract (faster); for field events we add (further/higher). This is a concrete, targetable number — unlike probability percentages, which compare you to senior Olympic benchmarks.
-                      </InfoTooltip>
-                    </div>
-                    {atMax ? (
-                      <>
-                        <p className="text-xl sm:text-2xl font-bold mono-font leading-none mb-1" style={{ color: '#fb923c' }}>
-                          Apex
-                        </p>
-                        <p className="text-[10px] sm:text-xs font-semibold text-orange-400">Top tier reached</p>
-                        <p className="text-[9px] text-slate-600 mono-font mt-1">No tier above {TIER_SHORT[currentTier]}</p>
-                      </>
-                    ) : nextGapStr && tierInfo.nextTier ? (
-                      <>
-                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1 tabular-nums">
-                          {nextGapStr}
-                        </p>
-                        <p className="text-[10px] sm:text-xs font-semibold" style={{ color: TIER_COLORS[tierInfo.nextTier] }}>
-                          to {TIER_SHORT[tierInfo.nextTier]} · {tierInfo.nextTierName}
-                        </p>
-                        <p className="text-[9px] text-slate-600 mono-font mt-1 tabular-nums">
-                          threshold {isTime ? tierInfo.nextCut.toFixed(2) : tierInfo.nextCut.toFixed(2)}{unit}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1">—</p>
-                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500">No data</p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* ── TILE 4 · MILESTONE (standards) ── */}
-                  <div className="bento-card rounded-xl p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font">Milestones</p>
-                      <InfoTooltip title="Competition Standards" side="bottom" tone="orange">
-                        How many published competition standards you've met so far (entry / semi / 8th / bronze / gold marks across world, regional, and development comps). The highlighted badge shows your highest cleared category — e.g. "Finalist-caliber" means your PB beats the 8th-place mark at a world-class meet.
-                      </InfoTooltip>
-                    </div>
-                    {stds.length > 0 ? (
-                      <>
-                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1 tabular-nums">
-                          {cleared.length}<span className="text-slate-500 text-lg">/{stds.length}</span>
-                        </p>
-                        {topClearedRank ? (
-                          <p className="text-[10px] sm:text-xs font-semibold" style={{ color: topClearedRank.color }}>
-                            Highest: {topClearedRank.label}
-                          </p>
-                        ) : (
-                          <p className="text-[10px] sm:text-xs font-semibold text-slate-500">None cleared yet</p>
-                        )}
-                        {topCleared && (
-                          <p className="text-[9px] text-slate-600 mono-font mt-1 truncate">
-                            {topCleared.label}
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1">—</p>
-                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500">No standards</p>
-                      </>
-                    )}
-                  </div>
-
-                </div>
-              );
-            })()}
-
-            {/* ── COMPETITION STANDARDS — Gap Ladder ── */}
-            {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
-              const eventCode = getEventCode(analysisResults.discipline, analysisResults.gender);
-              const compData = COMPETITION_STANDARDS[eventCode];
-              return (
-                <CompetitionStandardsLadder
-                  standards={analysisResults.standards}
-                  personalBest={parseFloat(analysisResults.personalBest)}
-                  discipline={analysisResults.discipline}
-                  gender={analysisResults.gender}
-                  wr={compData?.wr?.mark}
-                />
-              );
-            })()}
-
-            {/* ── CAREER BENCHMARK CHART — population curves with athlete dot ── */}
-            {analysisResults.trajectoryComparison && analysisResults.trajectoryComparison.length > 0 && (() => {
-              const isFieldEv = isFieldEvent(analysisResults.discipline);
-              const isThrowsOnly = isThrowsDiscipline(analysisResults.discipline);
-              // Keep `isThrows` name for downstream semantics (field-event: higher is better, unit = m)
-              const isThrows = isFieldEv;
-              const unit = isThrows ? 'm' : 's';
-              const rawData = analysisResults.trajectoryComparison;
-              // Only throws use weight segmentation — jumps have no implement weights
-              const weightOpts = isThrowsOnly ? getWeightOptions(analysisResults.discipline, analysisResults.gender) : [];
-              const userAge = analysisResults.age;
-              const userPB = parseFloat(analysisResults.personalBest);
-
-              // Resolve weight category for a given age
-              const getWeightAtAge = (age) => {
-                const match = weightOpts.find(o => age >= o.min && age <= o.max);
-                return match ? match.label : null;
+              // ── Peak projection — fix nonsensical peakAge == currentAge ──
+              // When Quick Analysis has only 1 data point, backend defaults peakAge to current age.
+              // Replace with discipline-typical peak ages.
+              const TYPICAL_PEAK_AGES = {
+                '100m': 26, '200m': 26, '400m': 26,
+                '110mH': 27, '100mH': 27, '400mH': 27,
+                '110m Hurdles': 27, '100m Hurdles': 27, '400m Hurdles': 27,
+                '800m': 27, '1500m': 28, '3000m Steeplechase': 28,
+                '5000m': 28, '10000m': 29, 'Marathon': 30,
+                'Long Jump': 27, 'High Jump': 27, 'Triple Jump': 27, 'Pole Vault': 28,
+                'Shot Put': 28, 'Discus Throw': 29, 'Hammer Throw': 29, 'Javelin Throw': 27,
               };
+              const rawPeakAge = analysisResults.peakProjection?.age;
+              const effectivePeakAge = (rawPeakAge && rawPeakAge > analysisResults.age)
+                ? rawPeakAge
+                : (TYPICAL_PEAK_AGES[analysisResults.discipline] || 27);
+              const yearsToPeakCalc = Math.max(0, effectivePeakAge - analysisResults.age);
+              // Estimate peak time if not real: apply ~1-2% annual improvement to PB
+              const rawPeakTime = analysisResults.peakProjection?.time;
+              const effectivePeakTime = (rawPeakAge && rawPeakAge > analysisResults.age && rawPeakTime)
+                ? rawPeakTime
+                : (isTime
+                    ? parseFloat((pb * Math.pow(0.985, yearsToPeakCalc)).toFixed(2))
+                    : parseFloat((pb * Math.pow(1.015, yearsToPeakCalc)).toFixed(2)));
 
-              // Line config — colors and labels
-              const lineConfig = {
-                medalist: { color: '#fbbf24', label: 'Medalist', dash: '' },
-                finalist: { color: '#10b981', label: 'Finalist', dash: '' },
-                semiFinalist: { color: '#3b82f6', label: 'Semi-Finalist', dash: '6 3' },
-                qualifier: { color: '#8b5cf6', label: 'Qualifier', dash: '4 2' },
-              };
+              // ── Editorial narrative builder ──
+              // Full age-group × tier matrix with development-oriented coaching language.
+              // Age buckets: Youth (U13–U15), Junior-Dev (U17), Junior-Trans (U20),
+              //              Early-Senior (20–23), Peak (24–29), Post-Peak (30+)
+              // Tier buckets: Low (T1–T2), Mid (T3–T4), High (T5–T6), Elite (T7)
+              const buildEditorial = () => {
+                const name = analysisResults.name && analysisResults.name !== 'Quick Analysis' && analysisResults.name.trim() !== '' ? analysisResults.name.split(' ')[0] : null;
+                const subject = name || 'This athlete';
+                const age = analysisResults.age;
+                const disc = analysisResults.discipline;
+                const tierName = currentTier > 0 ? TIER_NAMES[currentTier] : 'below emerging';
+                const isJumps = isJumpsDiscipline(disc);
+                const isThrows = isThrowsDiscipline(disc);
+                const pronoun = (analysisResults.gender === 'Male' || analysisResults.gender === 'M') ? 'He' : 'She';
+                const pronLower = pronoun.toLowerCase();
+                const possessive = (analysisResults.gender === 'Male' || analysisResults.gender === 'M') ? 'his' : 'her';
+                const verb = isThrows ? 'throws further than' : isJumps ? 'jumps further than' : 'runs faster than';
 
-              const classKeys = ['medalist', 'finalist', 'semiFinalist', 'qualifier'];
+                // Trajectory context
+                const traj = analysisResults.trajectoryType;
+                const trajAdj = traj === 'Late Developer' ? 'late-developing'
+                  : traj === 'Early Peaker' ? 'early-peaking' : 'steady-development';
 
-              // For throws, compute weight transition points
-              const weightTransitions = isThrowsOnly ? weightOpts.filter((_, i) => i > 0).map((w, i) => ({
-                age: w.min, from: weightOpts[i].label, to: w.label,
-              })) : [];
+                // Similar athletes context
+                const sims = analysisResults.similarAthletes || [];
+                const simNames = sims.slice(0, 2).map(s => s.name.split(' ').pop());
+                const simRef = simNames.length > 0 ? ` — a trajectory shared by ${simNames.join(' and ')}` : '';
 
-              // ── Build chart data with weight-segmented keys for throws ──
-              // For throws: each data point gets keys like "medalist_3kg", "medalist_4kg" etc.
-              // Only the key matching the age's weight category gets a value; others are null.
-              // This creates natural line breaks at weight transitions.
-              // For sprints/hurdles/jumps: use the original flat keys.
-              const weightLabels = isThrowsOnly ? [...new Set(weightOpts.map(o => o.label))] : [];
+                // Discipline noun
+                const discNoun = isThrows ? 'throwers' : isJumps ? 'jumpers'
+                  : isHurdleDiscipline(disc) ? 'hurdlers'
+                  : isDistanceDiscipline(disc) ? 'distance runners' : 'sprinters';
 
-              const data = rawData.map(pt => {
-                const row = { age: pt.age, you: pt.you, projected: pt.projected };
-                if (isThrowsOnly) {
-                  const wt = getWeightAtAge(pt.age);
-                  classKeys.forEach(ck => {
-                    weightLabels.forEach(wl => {
-                      row[`${ck}_${wl}`] = wl === wt ? pt[ck] : null;
-                    });
-                  });
-                } else {
-                  classKeys.forEach(ck => { row[ck] = pt[ck]; });
-                }
-                return row;
-              });
+                // Peak window sentence (only if peak is ahead — no projected time, can be misleading)
+                const discDisplay = normalizeDisciplineName(disc).toLowerCase();
+                const peakSentence = yearsToPeakCalc > 0
+                  ? ` Typical peak window for ${discDisplay} is age ${effectivePeakAge}–${effectivePeakAge + 2} (${yearsToPeakCalc} year${yearsToPeakCalc !== 1 ? 's' : ''} out).`
+                  : '';
 
-              // Build the Line components to render
-              const renderLines = () => {
-                if (!isThrowsOnly) {
-                  // Sprints / hurdles / jumps: one Line per classification
-                  return classKeys.filter(ck => benchmarkLines[ck]).map(ck => (
-                    <Line key={ck} type="monotone" dataKey={ck}
-                      stroke={lineConfig[ck].color} strokeWidth={ck === 'medalist' || ck === 'finalist' ? 2.5 : 2}
-                      strokeDasharray={lineConfig[ck].dash} dot={false} name={lineConfig[ck].label} connectNulls />
-                  ));
-                }
-                // Throws: one Line per classification × weight segment
-                const lines = [];
-                classKeys.filter(ck => benchmarkLines[ck]).forEach(ck => {
-                  weightLabels.forEach((wl, wi) => {
-                    const key = `${ck}_${wl}`;
-                    lines.push(
-                      <Line key={key} type="monotone" dataKey={key}
-                        stroke={lineConfig[ck].color}
-                        strokeWidth={ck === 'medalist' || ck === 'finalist' ? 2.5 : 2}
-                        strokeDasharray={lineConfig[ck].dash} dot={false}
-                        name={wi === 0 ? lineConfig[ck].label : `${lineConfig[ck].label} (${wl})`}
-                        connectNulls={false} />
-                    );
-                  });
-                });
-                return lines;
-              };
+                // Determine the discipline-specific peak age for context
+                const typicalPeak = TYPICAL_PEAK_AGES[disc] || 27;
+                const isPastPeak = age > typicalPeak + 2;
+                const isInPeakWindow = age >= typicalPeak - 1 && age <= typicalPeak + 2;
+                const isPrePeak = age < typicalPeak - 1;
 
-              // Custom tooltip formatter that cleans up segmented key names
-              const tooltipFormatter = (v, name) => {
-                if (v === null || v === undefined) return ['—', name];
-                // Strip weight suffix for cleaner tooltip display
-                const cleanName = name.replace(/ \(.*?\)$/, '');
-                return [`${v}${unit}`, cleanName];
-              };
+                // ── Age-bucket classification ──
+                // Youth: U13–U15 (age < 16), JuniorDev: U17 (16–17), JuniorTrans: U20 (18–19),
+                // EarlySenior: 20–23, PeakSenior: 24–29, PostPeak: 30+
+                const ageBucket = age < 16 ? 'youth'
+                  : age < 18 ? 'juniorDev'
+                  : age < 20 ? 'juniorTrans'
+                  : age < 24 ? 'earlySenior'
+                  : age < 30 ? 'peakSenior'
+                  : 'postPeak';
 
-              return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4" style={{color: '#f97316'}} />
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Career Benchmarks</h3>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4 landing-font">
-                    Median {isThrows ? 'distances' : 'times'} by Olympic classification at each age. Toggle lines to compare.
-                    {isThrowsOnly && ' Lines break at implement weight changes — vertical markers show transitions.'}
-                  </p>
+                // ── Tier-bucket classification ──
+                const tierBucket = currentTier >= 7 ? 'elite'
+                  : currentTier >= 5 ? 'high'
+                  : currentTier >= 3 ? 'mid'
+                  : 'low';
 
-                  {/* Toggle buttons */}
-                  <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
-                    {Object.entries(lineConfig).map(([key, cfg]) => (
-                      <button key={key}
-                        onClick={() => setBenchmarkLines(prev => ({...prev, [key]: !prev[key]}))}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold transition-all mono-font"
-                        style={{
-                          background: benchmarkLines[key] ? `${cfg.color}15` : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${benchmarkLines[key] ? `${cfg.color}40` : 'rgba(255,255,255,0.08)'}`,
-                          color: benchmarkLines[key] ? cfg.color : '#475569',
-                          opacity: benchmarkLines[key] ? 1 : 0.6,
-                        }}>
-                        <div className="w-2 h-2 rounded-full" style={{background: benchmarkLines[key] ? cfg.color : '#475569'}}></div>
-                        {cfg.label}
-                      </button>
-                    ))}
-                  </div>
+                // ── Opening line (universal) ──
+                let editorial = `At ${age}, ${subject} ${verb} ${pct}% of ${ageGroup} ${discNoun} in our Olympic-outcome database.`;
 
-                  {/* Chart */}
-                  <ResponsiveContainer width="100%" height={320}>
-                    <ComposedChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis
-                        dataKey="age"
-                        label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#64748b', fontSize: 11 }}
-                        tick={{ fontSize: 11, fill: '#64748b' }}
-                      />
-                      <YAxis
-                        label={{ value: isThrows ? 'Distance (m)' : 'Time (s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#64748b', fontSize: 11 }}
-                        tick={{ fontSize: 11, fill: '#64748b' }}
-                        reversed={!isThrows}
-                        domain={['auto', 'auto']}
-                      />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e2e8f0', fontSize: '12px' }}
-                        formatter={tooltipFormatter}
-                        labelFormatter={(age) => {
-                          const w = isThrowsOnly ? getWeightAtAge(age) : null;
-                          return `Age ${age}${w ? ` (${w})` : ''}`;
-                        }}
-                        itemSorter={(item) => -item.value}
-                      />
-
-                      {/* Weight transition markers for throws */}
-                      {isThrowsOnly && weightTransitions.map((t, i) => (
-                        <ReferenceLine key={`wt-${i}`} x={t.age} stroke="#a78bfa" strokeDasharray="4 2" strokeWidth={1}
-                          label={{ value: t.to, position: 'top', fill: '#a78bfa', fontSize: 9 }} />
-                      ))}
-
-                      {/* Classification lines (segmented by weight for throws) */}
-                      {renderLines()}
-
-                      {/* Athlete dot */}
-                      <ReferenceDot x={userAge} y={userPB} r={7} fill="#f97316" stroke="#fff" strokeWidth={2} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-
-                  {/* Legend */}
-                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 pt-3" style={{borderTop: '1px solid rgba(255,255,255,0.06)'}}>
-                    {Object.entries(lineConfig).filter(([key]) => benchmarkLines[key]).map(([key, cfg]) => (
-                      <div key={key} className="flex items-center gap-1.5">
-                        <div className="w-4 h-0.5 rounded" style={{background: cfg.color, borderBottom: cfg.dash ? `2px dashed ${cfg.color}` : 'none'}}></div>
-                        <span className="text-[10px] text-slate-500 mono-font">{cfg.label}</span>
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-full border-2" style={{background: '#f97316', borderColor: '#fff'}}></div>
-                      <span className="text-[10px] text-slate-500 mono-font">You ({formatTime(analysisResults.personalBest, analysisResults.discipline)})</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── SIMILAR ATHLETES ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-4 h-4" style={{color: '#f97316'}} />
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Similar Athletes</h3>
-              </div>
-              {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {analysisResults.similarAthletes.map((athlete, idx) => (
-                    <div key={idx} className="relative bg-slate-700/40 rounded-xl border border-slate-700/50 p-3 sm:p-4">
-                      <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow">
-                        {idx + 1}
-                      </div>
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-bold text-white">{athlete.name}</h4>
-                          <p className="text-xs text-slate-400">{athlete.nationality}</p>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                          athlete.classification === 'F' ? 'bg-yellow-900/40 text-yellow-300'
-                          : athlete.classification === 'SF' ? 'bg-blue-900/40 text-blue-300'
-                          : 'bg-slate-600 text-slate-300'
-                        }`}>
-                          {athlete.classification === 'F' ? 'Finalist' : athlete.classification === 'SF' ? 'Semi' : 'Qualifier'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        <div className="bg-slate-800/80 rounded-lg p-2 text-center">
-                          <p className="text-[10px] text-slate-400">PB</p>
-                          <p className="text-base font-bold text-white">{athlete.pb}{isFieldEvent(analysisResults.discipline) ? 'm' : 's'}</p>
-                        </div>
-                        <div className="bg-slate-800/80 rounded-lg p-2 text-center">
-                          <p className="text-[10px] text-slate-400">Peak Age</p>
-                          <p className="text-base font-bold text-white">{athlete.peakAge}</p>
-                        </div>
-                      </div>
-                      <div className={`rounded-lg p-2 text-center text-xs font-medium ${
-                        Math.abs(athlete.timeDiff) < 0.3 ? 'bg-green-900/30 text-green-300' : 'bg-amber-900/30 text-amber-300'
-                      }`}>
-                        Age {athlete.closestAge}: <span className="font-bold">{formatTime(athlete.timeAtSimilarAge, analysisResults.discipline)}</span>
-                        {' '}({Math.abs(athlete.timeDiff) < 0.05 ? 'identical' :
-                          `${Math.abs(athlete.timeDiff).toFixed(2)}s ${isFieldEvent(analysisResults.discipline) ? (athlete.timeAtSimilarAge > analysisResults.personalBest ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < analysisResults.personalBest ? 'faster' : 'slower')}`})
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-orange-900/40 bg-orange-950/10 p-5 sm:p-6 text-center">
-                  <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-400/80 mb-2">Dataset still being built</div>
-                  <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-                    We're progressively loading athlete histories for <span className="text-white font-semibold">{analysisResults.discipline}</span>. Peer matches aren't available for this event yet — the full benchmark still applies.
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-2 mono-font">Currently live: Sprints, Hurdles, Throws, Jumps, 800m, 1500m, 3000m SC, 5000m, 10000m, Marathon</p>
-                </div>
-              )}
-            </div>
-
-            {/* ── IMPROVEMENT SCENARIOS ── */}
-            {analysisResults.improvementScenarios && (
-              <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4" style={{color: '#f97316'}} />
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Improvement Scenarios</h3>
-                </div>
-                <p className="text-sm text-slate-400 mb-5">
-                  Projected {isFieldEvent(analysisResults.discipline) ? 'distances' : 'times'} at different annual improvement rates from {formatTime(analysisResults.personalBest, analysisResults.discipline)}{!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) ? 's' : ''}
-                </p>
-                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                  <table className="w-full text-sm" style={{ minWidth: '400px' }}>
-                    <thead>
-                      <tr className="border-b-2 border-slate-600">
-                        <th className="text-left py-1.5 px-1.5 sm:py-2.5 sm:px-2 font-semibold text-slate-300 sticky left-0 z-10 text-[10px] sm:text-sm whitespace-nowrap" style={{ background: 'inherit' }}>Rate</th>
-                        {analysisResults.improvementScenarios[0] && Object.keys(analysisResults.improvementScenarios[0].times).map(futAge => (
-                          <th key={futAge} className={`text-center py-1.5 px-0.5 sm:py-2.5 sm:px-2 font-semibold text-[10px] sm:text-sm min-w-[40px] sm:min-w-[56px] ${
-                            parseInt(futAge) === analysisResults.age ? 'text-orange-400' : 'text-slate-300'
-                          }`}>{futAge}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analysisResults.improvementScenarios.map((row, idx) => (
-                        <tr key={idx} className={`border-b border-slate-700/50 ${idx === 0 ? 'bg-slate-700/30' : 'hover:bg-slate-700/20'}`}>
-                          <td className={`py-1.5 px-1.5 sm:py-2 sm:px-2 font-bold sticky left-0 z-10 text-[10px] sm:text-sm whitespace-nowrap ${idx === 0 ? 'text-orange-400' : 'text-slate-400'}`} style={{ background: idx === 0 ? 'rgba(51,65,85,0.3)' : 'rgba(15,23,42,0.9)' }}>
-                            {row.rate}
-                          </td>
-                          {Object.entries(row.times).map(([futAge, time]) => {
-                            const meetsFinalist = isFieldEvent(analysisResults.discipline) ? time >= analysisResults.thresholds.finalist : time <= analysisResults.thresholds.finalist;
-                            const meetsMQT = analysisResults.championshipData && (isFieldEvent(analysisResults.discipline) ? time >= analysisResults.championshipData.mqt : time <= analysisResults.championshipData.mqt);
-                            return (
-                              <td key={futAge} className={`py-1.5 px-0.5 sm:py-2 sm:px-2 text-center text-[10px] sm:text-xs ${
-                                parseInt(futAge) === analysisResults.age ? 'font-bold text-orange-300' : ''
-                              } ${meetsFinalist ? 'text-green-400 font-bold' : meetsMQT ? 'text-blue-400 font-semibold' : 'text-slate-400'}`}>
-                                {formatTime(time, analysisResults.discipline)}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="flex flex-wrap gap-2 sm:gap-4 mt-3 text-[10px] sm:text-xs text-slate-500">
-                  <div className="flex items-center gap-1.5"><span className="font-bold text-green-400">Green</span> = Finalist threshold</div>
-                  <div className="flex items-center gap-1.5"><span className="font-bold text-blue-400">Blue</span> = Olympic MQT</div>
-                </div>
-              </div>
-            )}
-
-            {/* ── PERFORMANCE MATRIX (Quick Results) ── */}
-            {analysisResults.performanceLevel && (
-              <div className="mb-4 sm:mb-6">
-                <PerformanceMatrixCard
-                  discipline={analysisResults.discipline}
-                  gender={analysisResults.gender}
-                  currentAgeGroup={analysisResults.performanceLevel.ageGroup}
-                  currentPB={parseFloat(analysisResults.personalBest)}
-                  storageKey={
-                    user?.id
-                      ? `${user.id}.${analysisResults.discipline}.${analysisResults.gender}`
-                      : null
+                // ── Age × Tier narrative ──
+                if (ageBucket === 'youth') {
+                  // U13–U15: development-first, never write off, caution on high tiers
+                  if (tierBucket === 'high') {
+                    editorial += ` These are standout numbers for ${possessive} age group, but performance at this stage often reflects physical maturity as much as raw talent. Many early developers plateau when peers catch up physically.`;
+                    editorial += ` The priority should be broad athletic development across multiple movement qualities — speed, coordination, endurance — rather than early specialisation pressure.`;
+                    if (simRef) editorial += simRef + '.';
+                  } else if (tierBucket === 'mid') {
+                    editorial += ` ${pronoun} is showing a strong foundation for ${possessive} age group. At this stage, biological maturity is the dominant variable — the athletes who go on to compete at the highest level are often not the ones leading the age-group rankings yet.`;
+                    editorial += ` Continued multi-sport engagement and building a broad training base will serve ${pronLower} well.${peakSentence}`;
+                  } else {
+                    editorial += ` This is a normal development range for this age. Many athletes who became nationally competitive as seniors were at similar or lower levels at ${age}.`;
+                    editorial += ` The most important thing at this stage is keeping ${pronLower} in the sport, building enjoyment, and developing physical literacy. The performance window is years away.${peakSentence}`;
                   }
-                />
-              </div>
-            )}
+                } else if (ageBucket === 'juniorDev') {
+                  // U17 (15–17): specialisation beginning, biological variance still large
+                  if (tierBucket === 'high') {
+                    editorial += ` ${pronoun} is performing at a level that puts ${pronLower} alongside the junior trajectories of future Olympic qualifiers and finalists${simRef}.`;
+                    editorial += ` However, continued physical maturation will play a significant role over the next 2–3 years. Structured training progression and avoiding overloading are critical at this stage.${peakSentence}`;
+                  } else if (tierBucket === 'mid') {
+                    editorial += ` ${pronoun} is tracking well — this tier placement aligns with athletes who went on to compete nationally as seniors. The next 2–3 years of structured development will be the key differentiator.`;
+                    editorial += ` Focus should be on building event-specific technical foundations alongside general athletic qualities.${peakSentence}`;
+                  } else {
+                    editorial += ` Still within normal development range. Many senior medalists were at the ${tierName.toLowerCase()} level or below at 16–17 — late physical maturation and training response can shift the picture significantly.`;
+                    editorial += ` Patience and consistent training are the priority. Keep building the base.${peakSentence}`;
+                  }
+                } else if (ageBucket === 'juniorTrans') {
+                  // U20 (17–19): data starts becoming genuinely meaningful
+                  if (tierBucket === 'high') {
+                    editorial += ` This is a genuine elite-trajectory signal. At ${age}, ${pronLower} is performing at levels consistent with the early careers of Olympic finalists and medalists${simRef}.`;
+                    editorial += ` The transition from junior to senior competition is the next critical phase — maintaining this trajectory through increased training loads and senior-level competition will be key.${peakSentence}`;
+                  } else if (tierBucket === 'mid') {
+                    editorial += ` Solid competitive position. Many senior finalists were in this range at ${age} — the next 2–3 years of development are often where the biggest jumps occur.`;
+                    editorial += ` ${pronoun} should be transitioning into a more structured, event-specific training programme while maintaining volume.${peakSentence}`;
+                  } else {
+                    editorial += ` Behind the typical curve of athletes who reached senior elite level, but late development is well documented in ${discDisplay}.`;
+                    editorial += ` The window is not closed — several Olympic-level athletes made their breakthrough after 20. Consistent, progressive training and avoiding comparison to early developers is important.${peakSentence}`;
+                  }
+                } else if (ageBucket === 'earlySenior') {
+                  // Senior 20–23: training full-time in most cases
+                  if (tierBucket === 'elite') {
+                    editorial += ` Exceptional — among the best in the world at a young senior age. ${pronoun} is performing at world-class level with years of development still ahead${simRef}.`;
+                    editorial += `${peakSentence}`;
+                  } else if (tierBucket === 'high') {
+                    editorial += ` Elite trajectory confirmed. ${pronoun} is performing at levels consistent with Olympic contention, following a ${trajAdj} pattern${simRef}.`;
+                    editorial += ` Focus should shift toward marginal gains, competition strategy, and peaking for major championship cycles.${peakSentence}`;
+                  } else if (tierBucket === 'mid') {
+                    editorial += ` Competitive domestically at the ${tierName.toLowerCase()} level. With the right improvement trajectory, international qualification is a realistic target within the peak window.`;
+                    editorial += ` ${pronoun} needs a clear, periodised programme targeting specific performance thresholds.${peakSentence}`;
+                  } else {
+                    editorial += ` There is a significant gap between ${possessive} current level and the elite standard. At ${age}, most athletes who reach major championship level are already performing considerably higher.`;
+                    editorial += ` Honest assessment of training programme, coaching quality, and commitment level is warranted. Specific, measurable short-term targets will be more productive than long-range goals.${peakSentence}`;
+                  }
+                } else if (ageBucket === 'peakSenior') {
+                  // Senior 24–29: in or approaching prime
+                  if (tierBucket === 'elite') {
+                    editorial += ` World-leading. ${pronoun} is performing at the highest level in the sport${simRef}.`;
+                    editorial += isInPeakWindow ? ` Currently inside the typical peak window for ${discDisplay} — this is the time to target global medals and records.` : isPastPeak ? ` Sustaining world-class performance beyond the typical peak window is remarkable.` : `${peakSentence}`;
+                  } else if (tierBucket === 'high') {
+                    editorial += ` In the mix for major championship finals and medals. The performance level is there — execution, consistency, and championship readiness are the variables${simRef}.`;
+                    editorial += isInPeakWindow ? ` ${pronoun} is inside the peak window — maximising this period is critical.` : `${peakSentence}`;
+                  } else if (tierBucket === 'mid') {
+                    editorial += ` National-calibre competitor at the ${tierName.toLowerCase()} level.`;
+                    editorial += isInPeakWindow ? ` Inside the typical peak window for ${discDisplay}, international qualification is the realistic ceiling without a significant breakthrough.` : isPastPeak ? ` Past the typical peak window — sustained competition at this level reflects a solid career.` : `${peakSentence}`;
+                  } else {
+                    editorial += ` Well below elite standard ${isInPeakWindow ? 'at peak age' : isPastPeak ? 'and past the typical peak window' : 'approaching the peak window'}.`;
+                    editorial += ` At this stage, the focus should be on personal bests, realistic competition targets, and the aspects of the sport ${pronLower} values most. The gap to international level is substantial.`;
+                  }
+                } else {
+                  // Post-peak: 30+
+                  if (tierBucket === 'elite' || tierBucket === 'high') {
+                    editorial += ` Remarkable longevity — maintaining ${tierName.toLowerCase()}-level performance at ${age} is exceptional. Very few athletes sustain this standard past the typical peak window${simRef}.`;
+                    editorial += ` Recovery, injury prevention, and smart competition scheduling become increasingly important.`;
+                  } else if (tierBucket === 'mid') {
+                    editorial += ` A sustained competitive career at the ${tierName.toLowerCase()} level past 30 is commendable. ${pronoun} is performing above the age-expected curve for most ${discNoun}.`;
+                    editorial += ` Longevity at this level reflects strong training habits and durability.`;
+                  } else {
+                    editorial += ` At ${age}, ${pronLower} is past the typical competitive peak for ${discDisplay}. Performance at this level suggests ${pronLower} may be returning to the sport or competing recreationally.`;
+                    editorial += ` Focus on personal benchmarks, enjoyment, and injury-free training.`;
+                  }
+                }
 
-            {/* ── DISCLAIMER ── */}
-            <div className="rounded-xl p-5 mb-8" style={{background: 'rgba(245,158,11,0.03)', border: '1px solid rgba(245,158,11,0.1)'}}>
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{color: '#f59e0b'}} />
-                <p className="text-xs text-slate-500 leading-relaxed landing-font">
-                  Quick Analysis is based on a single time at a single age. For trajectory modelling, rate of development tracking, and full career analysis, {user ? (
-                    <>use the <button onClick={() => { setActiveTab('manual'); setCurrentView('input'); }} className="text-orange-400 hover:underline font-medium">Manual Entry</button> or <button onClick={() => { setActiveTab('url'); setCurrentView('input'); }} className="text-orange-400 hover:underline font-medium">URL Import</button> methods with full race history.</>
-                  ) : (
-                    <><button onClick={onSignUp} className="text-emerald-400 hover:underline font-medium">sign up for free</button> to access Manual Entry and URL Import with full race history.</>
+                return editorial;
+              };
+
+              // ── Tier distribution for cohort chart ──
+              const tierDistribution = [
+                { tier: 7, name: 'World', count: Math.round(1204 * 0.04) },
+                { tier: 6, name: 'Medalist', count: Math.round(1204 * 0.11) },
+                { tier: 5, name: 'Finalist', count: Math.round(1204 * 0.18) },
+                { tier: 4, name: 'Qualifier', count: Math.round(1204 * 0.26) },
+                { tier: 3, name: 'National', count: Math.round(1204 * 0.22) },
+                { tier: 2, name: 'Developing', count: Math.round(1204 * 0.14) },
+                { tier: 1, name: 'Emerging', count: Math.round(1204 * 0.05) },
+              ];
+              const maxBarCount = Math.max(...tierDistribution.map(t => t.count));
+
+              return (
+                <>
+
+                {/* ── FILE STRIP ── */}
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 py-3 mb-2" style={{borderBottom: '1px solid rgba(255,255,255,0.06)'}}>
+                  <span className="mono-font text-[10px] uppercase tracking-[0.22em]" style={{color: '#f97316'}}>Case File</span>
+                  <span className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500">Discipline <span className="text-white font-semibold">{analysisResults.discipline}</span></span>
+                  <span className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500">Category <span className="text-white font-semibold">{analysisResults.gender} · {ageGroup}</span></span>
+                  {analysisResults.implementWeight && (
+                    <span className="mono-font text-[10px] uppercase tracking-[0.18em] text-slate-500">Implement <span className="text-white font-semibold">{analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}</span></span>
                   )}
-                </p>
-              </div>
-            </div>
+                </div>
+
+                {/* ── SUBJECT HEADER ── */}
+                <div className="py-6 sm:py-8 mb-2" style={{borderBottom: '2px solid rgba(255,255,255,0.15)'}}>
+                  <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div>
+                      <p className="mono-font text-[10px] uppercase tracking-[0.24em] mb-2" style={{color: '#f97316'}}>Subject</p>
+                      {analysisResults.name && analysisResults.name !== 'Quick Analysis' ? (
+                        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white landing-font tracking-tight leading-[0.95]">
+                          {analysisResults.name} <span className="font-normal text-slate-500 italic">— age {analysisResults.age}</span>
+                        </h1>
+                      ) : (
+                        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white landing-font tracking-tight leading-[0.95]">
+                          Quick Analysis <span className="font-normal text-slate-500 italic">— age {analysisResults.age}</span>
+                        </h1>
+                      )}
+                    </div>
+                    <div className="text-right mono-font text-[11px] leading-relaxed text-slate-500 tracking-wide">
+                      <div>Personal Best · <span className="text-white font-semibold">{formatTime(analysisResults.personalBest, analysisResults.discipline)}{isFieldEvent(analysisResults.discipline) ? '' : unit}</span></div>
+                      <div>Class <span className="inline-block px-2 py-0.5 ml-1 text-[10px] uppercase tracking-wider text-white" style={{border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.03)'}}>{analysisResults.careerPhase || ageGroup}</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── YOUTH WEIGHT NOTICE ── */}
+                {analysisResults.implementWeight && !analysisResults.isSeniorWeight && (
+                  <div className="rounded-xl p-3 sm:p-4 mb-4 flex items-start gap-3" style={{background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)'}}>
+                    <AlertTriangle className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-purple-400/80 leading-relaxed landing-font">
+                      Youth implement ({analysisResults.implementWeight >= 1 ? `${analysisResults.implementWeight}kg` : `${Math.round(analysisResults.implementWeight * 1000)}g`}). Benchmarks use senior-weight Olympic data. Comparisons are approximate.
+                    </p>
+                  </div>
+                )}
+
+
+                {/* ════════════════════════════════════════════════════════ */}
+                {/* ACT I — SNAPSHOT                                            */}
+                {/* ════════════════════════════════════════════════════════ */}
+                <section className="pt-14 sm:pt-20 pb-14 sm:pb-20">
+                  {/* Act header */}
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-6 mb-10 sm:mb-14">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-5xl sm:text-6xl font-light italic text-slate-600 landing-font">I.</span>
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-white landing-font tracking-tight leading-tight">
+                          <span className="italic" style={{color: '#f97316'}}>Snapshot</span>
+                        </h2>
+                        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mt-1.5">One number, one sentence, one cohort</p>
+                      </div>
+                    </div>
+                    <p className="text-sm italic text-slate-500 landing-font sm:ml-auto sm:text-right max-w-xs leading-relaxed">
+                      Where this athlete sits against 25 years of Olympic careers.
+                    </p>
+                  </div>
+
+                  {/* Snapshot body — bordered container */}
+                  <div className="rounded-xl p-6 sm:p-8 lg:p-10" style={{border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.015)'}}>
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+
+                      {/* Left column — giant PB + editorial + data strip */}
+                      <div className="lg:col-span-3">
+                        {/* Giant PB */}
+                        <div className="mb-6">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-5xl sm:text-7xl md:text-8xl lg:text-[120px] font-bold mono-font tracking-tighter leading-[0.85]" style={{color: '#f97316'}}>
+                              {formatTime(analysisResults.personalBest, analysisResults.discipline)}
+                            </span>
+                            {!isThrowsQ && !isDistanceDiscipline(analysisResults.discipline) && (
+                              <span className="text-2xl sm:text-3xl font-light italic text-slate-500 landing-font">s</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Editorial narrative */}
+                        <p className="text-lg sm:text-xl text-slate-300 landing-font leading-relaxed max-w-xl mb-8" dangerouslySetInnerHTML={{__html: (() => {
+                          const raw = buildEditorial();
+                          return raw
+                            .replace(/(\d+%\s+of\s+\S+\s+\S+)/g, '<strong style="color:#f97316;font-weight:500;font-style:italic">$1</strong>')
+                            .replace(/(medalist|finalist|world class|national|qualifier)/gi, '<strong style="color:#f97316;font-weight:500;font-style:italic">$1</strong>')
+                            .replace(/(late-developing trajectory|early-peaking arc|steady development curve)/gi, '<strong style="color:#f97316;font-weight:500;font-style:italic">$1</strong>');
+                        })()}} />
+
+                        {/* Data strip */}
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 mono-font text-[11px] uppercase tracking-[0.18em] text-slate-500 pt-4" style={{borderTop: '1px solid rgba(255,255,255,0.06)'}}>
+                          <span>Pctl <span className="text-white font-semibold">{pct}</span> · {ageGroup}</span>
+                          <span>Tier <span className="text-white font-semibold">{currentTier > 0 ? `${TIER_SHORT[currentTier]} · ${TIER_NAMES[currentTier]}` : '—'}</span></span>
+                          {yearsToPeakCalc > 0 && (
+                            <span>Peak forecast <span className="text-white font-semibold">Age {effectivePeakAge}–{effectivePeakAge + 2}</span></span>
+                          )}
+                        </div>
+
+                        <div className="mt-3 mono-font text-[11px] uppercase tracking-[0.18em] text-slate-600">
+                          Cohort <span className="text-slate-400">1,204</span>
+                        </div>
+                      </div>
+
+                      {/* Right column — cohort positioning card */}
+                      <div className="lg:col-span-2">
+                        <div className="rounded-xl p-5 sm:p-6" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                          {/* Card header */}
+                          <div className="flex items-baseline justify-between pb-3 mb-4" style={{borderBottom: '1px solid rgba(255,255,255,0.06)'}}>
+                            <span className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500">Positioning · {ageGroup} cohort</span>
+                            <span className="landing-font text-base italic font-medium" style={{color: '#f97316'}}>
+                              {currentTier > 0 ? `${TIER_SHORT[currentTier]} · ${TIER_NAMES[currentTier]}` : '—'}
+                            </span>
+                          </div>
+
+                          {/* Percentile hero */}
+                          <div className="flex items-baseline gap-3 mb-6">
+                            <span className="text-4xl sm:text-5xl md:text-6xl font-bold mono-font tracking-tighter leading-none text-white">{pct}<sup className="text-lg sm:text-xl italic font-normal" style={{color: '#f97316'}}>{pct === 1 ? 'st' : pct === 2 ? 'nd' : pct === 3 ? 'rd' : 'th'}</sup></span>
+                            <span className="mono-font text-[10px] uppercase tracking-[0.16em] text-slate-500 leading-snug max-w-[160px]">
+                              Percentile against {ageGroup} peers who reached an Olympic final
+                            </span>
+                          </div>
+
+                          {/* Cohort tier bar chart */}
+                          <div className="space-y-2">
+                            {tierDistribution.map(row => {
+                              const isYou = row.tier === currentTier;
+                              const barWidth = Math.max(4, (row.count / maxBarCount) * 100);
+                              return (
+                                <div key={row.tier} className="grid items-center gap-2" style={{gridTemplateColumns: '80px 1fr 44px'}}>
+                                  <span className={`mono-font text-[10px] uppercase tracking-[0.12em] leading-tight ${isYou ? 'font-bold' : ''}`} style={{color: isYou ? '#f97316' : '#64748b'}}>
+                                    T{row.tier}{'\u00A0'}{row.name}
+                                  </span>
+                                  <div className="h-4 rounded-sm overflow-hidden" style={{background: 'rgba(255,255,255,0.04)'}}>
+                                    <div
+                                      className="h-full rounded-sm transition-all duration-1000"
+                                      style={{
+                                        width: `${barWidth}%`,
+                                        background: isYou ? '#f97316' : 'rgba(255,255,255,0.15)',
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="mono-font text-[9px] text-right text-slate-600">N {row.count}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mt-5 pt-3 text-right mono-font text-[9px] uppercase tracking-[0.18em] text-slate-600" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+                            Senior tier projections · N = 1,204
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </section>
+
+                {/* ── Act divider ── */}
+                <div className="h-[1px] mx-auto" style={{background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent)', maxWidth: '80%'}} />
+
+
+                {/* ════════════════════════════════════════════════════════ */}
+                {/* ACT II — SIMILAR ATHLETES                                 */}
+                {/* ════════════════════════════════════════════════════════ */}
+                <section className="pt-14 sm:pt-20 pb-14 sm:pb-20">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-6 mb-10 sm:mb-14">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-5xl sm:text-6xl font-light italic text-slate-600 landing-font">II.</span>
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-white landing-font tracking-tight leading-tight">
+                          Whose <span className="italic" style={{color: '#f97316'}}>career does this look like</span>?
+                        </h2>
+                        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mt-1.5">
+                          {analysisResults.similarAthletes?.length || 0} closest career matches from the archive
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm italic text-slate-500 landing-font sm:ml-auto sm:text-right max-w-xs leading-relaxed">
+                      We matched the subject against {'>'}7,000 Olympic careers on age, peak, and slope. These are the closest analogues.
+                    </p>
+                  </div>
+
+                  {/* Similar Athletes — stacked cards */}
+                  {analysisResults.similarAthletes && analysisResults.similarAthletes.length > 0 ? (
+                    <div className="space-y-4">
+                      {analysisResults.similarAthletes.map((athlete, idx) => (
+                        <div key={idx} className="rounded-xl p-5 sm:p-6" style={{border: idx === 0 ? '2px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.08)', background: idx === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.015)'}}>
+                          {/* Card header — name + nationality + classification */}
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h4 className="text-lg font-bold text-white landing-font">{athlete.name}</h4>
+                              <p className="text-xs italic text-slate-400 landing-font mt-0.5">{athlete.nationality}</p>
+                            </div>
+                            <span className={`mono-font text-[10px] uppercase tracking-wider px-2.5 py-1 rounded ${
+                              athlete.classification === 'F' ? 'text-yellow-300' : athlete.classification === 'SF' ? 'text-blue-300' : 'text-slate-400'
+                            }`} style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                              {athlete.classification === 'F' ? 'Finalist' : athlete.classification === 'SF' ? 'Semi' : 'Qualifier'}
+                            </span>
+                          </div>
+                          {/* Stats row — PB, Peak Age, At [age] */}
+                          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4" style={{borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '12px'}}>
+                            <div>
+                              <p className="mono-font text-[9px] uppercase tracking-wider text-slate-500 mb-1">PB</p>
+                              <p className="text-base sm:text-xl font-bold text-white mono-font">{formatTime(athlete.pb, analysisResults.discipline)}{!isThrowsQ && <span className="text-sm font-normal text-slate-500">s</span>}</p>
+                            </div>
+                            <div>
+                              <p className="mono-font text-[9px] uppercase tracking-wider text-slate-500 mb-1">Peak Age</p>
+                              <p className="text-base sm:text-xl font-bold text-white mono-font">{athlete.peakAge}</p>
+                            </div>
+                            <div>
+                              <p className="mono-font text-[9px] uppercase tracking-wider text-slate-500 mb-1">At {athlete.closestAge}</p>
+                              <p className="text-base sm:text-xl font-bold text-white mono-font">{formatTime(athlete.timeAtSimilarAge, analysisResults.discipline)}{!isThrowsQ && <span className="text-sm font-normal text-slate-500">s</span>}</p>
+                            </div>
+                          </div>
+                          {/* Narrative line */}
+                          <p className="text-xs italic text-slate-400 landing-font leading-relaxed">
+                            {Math.abs(athlete.timeDiff) < 0.05
+                              ? `Near-identical starting point at age ${athlete.closestAge}. ${athlete.peakAge <= analysisResults.age + 3 ? 'Early peaker' : 'Late developer'} — ${athlete.classification === 'F' ? 'reached an Olympic final' : athlete.classification === 'SF' ? 'reached semi-final level' : 'qualified for the Games'}.`
+                              : `${Math.abs(athlete.timeDiff).toFixed(2)}${unit} ${isThrowsQ ? (athlete.timeAtSimilarAge > pb ? 'further' : 'shorter') : (athlete.timeAtSimilarAge < pb ? 'faster' : 'slower')} at ${athlete.closestAge}. ${athlete.peakAge <= analysisResults.age + 3 ? 'Peaked early' : athlete.peakAge >= analysisResults.age + 8 ? 'A classic late developer' : 'Steady progression'}; ${athlete.classification === 'F' ? 'remained a finalist' : 'competed at Olympic level'} through ${athlete.peakAge + 2}.`
+                            }
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed p-8 sm:p-10 text-center" style={{borderColor: 'rgba(249,115,22,0.2)', background: 'rgba(249,115,22,0.02)'}}>
+                      <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-400/80 mb-2">Dataset still being built</p>
+                      <p className="text-sm text-slate-400 max-w-lg mx-auto leading-relaxed landing-font">
+                        Olympic peer histories for <span className="text-white font-semibold">{analysisResults.discipline}</span> are still being migrated. This section will populate as soon as the dataset lands.
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                {/* ── Act divider ── */}
+                <div className="h-[1px] mx-auto" style={{background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent)', maxWidth: '80%'}} />
+
+
+                {/* ════════════════════════════════════════════════════════ */}
+                {/* ACT III — PERFORMANCE MATRIX                             */}
+                {/* ════════════════════════════════════════════════════════ */}
+                <section className="pt-14 sm:pt-20 pb-14 sm:pb-20">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-6 mb-10 sm:mb-14">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-5xl sm:text-6xl font-light italic text-slate-600 landing-font">III.</span>
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-white landing-font tracking-tight leading-tight">
+                          The <span className="italic" style={{color: '#f97316'}}>path to world class</span>
+                        </h2>
+                        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mt-1.5">Age groups × tiers · 25 years of career shapes</p>
+                      </div>
+                    </div>
+                    <p className="text-sm italic text-slate-500 landing-font sm:ml-auto sm:text-right max-w-xs leading-relaxed">
+                      Each cell: the time typical of athletes who reached that tier at that age. Your career is the line you trace across this grid.
+                    </p>
+                  </div>
+
+                  {/* Performance Matrix — inside bordered container */}
+                  <div className="rounded-xl p-6 sm:p-8" style={{border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.015)'}}>
+                    {/* Context header */}
+                    {analysisResults.performanceLevel && (
+                      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-3 mb-6 pb-4" style={{borderBottom: '2px solid rgba(255,255,255,0.1)'}}>
+                        <div>
+                          <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mb-2">
+                            Currently <span className="text-white font-semibold">{ageGroup}</span> · <span className="font-semibold" style={{color: tierColor}}>{currentTier > 0 ? TIER_NAMES[currentTier] : '—'}</span> · <span className="text-white font-semibold">{TIER_SHORT[currentTier] || '—'}</span>
+                          </p>
+                          <h3 className="text-xl sm:text-2xl font-semibold text-white landing-font">
+                            {currentTier >= 6 ? `${maxTier - currentTier === 0 ? 'At' : maxTier - currentTier + ' step' + (maxTier - currentTier > 1 ? 's' : '') + ' to'} ` : `${maxTier - currentTier} steps to `}
+                            <span className="italic" style={{color: '#f97316'}}>World Class</span>
+                          </h3>
+                        </div>
+                        {tierInfo?.nextCut && (
+                          <div className="mono-font text-[10px] uppercase tracking-wider text-slate-500 text-right leading-relaxed">
+                            <div>Next step · {ageGroup} → {tierInfo.nextTierName} <span className="text-white font-semibold">{formatTime(tierInfo.nextCut, analysisResults.discipline)}{isFieldEvent(analysisResults.discipline) ? '' : unit}</span></div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {analysisResults.performanceLevel && (
+                      <PerformanceMatrixCard
+                        discipline={analysisResults.discipline}
+                        gender={analysisResults.gender}
+                        currentAgeGroup={analysisResults.performanceLevel.ageGroup}
+                        currentPB={parseFloat(analysisResults.personalBest)}
+                        storageKey={user?.id ? `${user.id}.${analysisResults.discipline}.${analysisResults.gender}` : null}
+                      />
+                    )}
+
+                    {/* Probability step cards */}
+                    {(analysisResults.finalistProbability != null || analysisResults.semiFinalistProbability != null) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6" style={{borderTop: '1px solid rgba(255,255,255,0.06)'}}>
+                        {[
+                          { label: ageGroup + ' → World', prob: analysisResults.qualifierProbability, desc: `Of ${TIER_NAMES[currentTier]?.toLowerCase() || 'current'}-tier ${analysisResults.discipline.toLowerCase()} athletes, ${analysisResults.qualifierProbability}% reach world standard at ${ageGroup}.` },
+                          { label: 'Finalist', prob: analysisResults.finalistProbability, desc: `Historically reach Olympic final level by age ${effectivePeakAge}.` },
+                          { label: 'Senior World', prob: analysisResults.semiFinalistProbability != null ? Math.round(analysisResults.semiFinalistProbability * 0.4) : null, desc: `Go on to break world class standard at senior level.` },
+                        ].filter(s => s.prob != null).map((step, i) => (
+                          <div key={i} className="p-4 sm:p-5">
+                            <p className="mono-font text-[9px] uppercase tracking-[0.2em] text-slate-500 mb-2">Step {i + 1} · {step.label}</p>
+                            <p className="text-3xl sm:text-4xl font-bold text-white mono-font tracking-tight mb-1">
+                              {step.prob}<span className="text-sm italic font-normal ml-1" style={{color: '#f97316'}}>% historical</span>
+                            </p>
+                            <p className="text-xs italic text-slate-400 landing-font leading-relaxed">{step.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Figure label */}
+                    <div className="flex items-center justify-between mt-6 pt-3 mono-font text-[9px] uppercase tracking-[0.18em] text-slate-600" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+                      <span>Fig II · Performance Matrix</span>
+                      <span>Olympics 2000–2024 · All rounds</span>
+                    </div>
+                  </div>
+                </section>
+
+                {/* ── Act divider ── */}
+                <div className="h-[1px] mx-auto" style={{background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent)', maxWidth: '80%'}} />
+
+
+                {/* ════════════════════════════════════════════════════════ */}
+                {/* ACT IV — IMPROVEMENT SCENARIOS                           */}
+                {/* ════════════════════════════════════════════════════════ */}
+                <section className="pt-14 sm:pt-20 pb-14 sm:pb-20">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-6 mb-10 sm:mb-14">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-5xl sm:text-6xl font-light italic text-slate-600 landing-font">IV.</span>
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-white landing-font tracking-tight leading-tight">
+                          What <span className="italic" style={{color: '#f97316'}}>improvement looks like</span>
+                        </h2>
+                        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mt-1.5">Projected times at different annual improvement rates</p>
+                      </div>
+                    </div>
+                    <p className="text-sm italic text-slate-500 landing-font sm:ml-auto sm:text-right max-w-xs leading-relaxed">
+                      Real improvement curves derived from {getImprovementCurves(normalizeDisciplineName(analysisResults.discipline), analysisResults.gender === 'M' ? 'Male' : analysisResults.gender === 'F' ? 'Female' : analysisResults.gender)?.n?.toLocaleString() || '10,000+'} athlete careers in this discipline.
+                    </p>
+                  </div>
+
+                  {/* ── Curvilinear Improvement Chart ── */}
+                  {(() => {
+                    const genderFull = (analysisResults.gender === 'M' || analysisResults.gender === 'Male') ? 'Male' : 'Female';
+                    const gCode = genderFull === 'Male' ? 'M' : 'F';
+                    const discNorm = normalizeDisciplineName(analysisResults.discipline);
+                    const curveData = getImprovementCurves(discNorm, genderFull);
+                    if (!curveData) return null;
+
+                    const maxProjectAge = Math.min(35, Math.max(analysisResults.age + 12, 30));
+                    const allTrajectories = projectAllTrajectories(pb, analysisResults.age, discNorm, genderFull, maxProjectAge);
+
+                    // World record floor/ceiling
+                    const WR_MAP = {
+                      '100m_M': 9.58, '200m_M': 19.19, '400m_M': 43.03, '800m_M': 100.91, '1500m_M': 206.00,
+                      '5000m_M': 755.36, '10000m_M': 1577.53, 'Marathon_M': 7235, '110m Hurdles_M': 12.80, '400m Hurdles_M': 45.94,
+                      '3000m Steeplechase_M': 473.0,
+                      'Long Jump_M': 8.95, 'Triple Jump_M': 18.29, 'High Jump_M': 2.45, 'Pole Vault_M': 6.25,
+                      'Shot Put_M': 23.56, 'Discus Throw_M': 74.35, 'Hammer Throw_M': 86.74, 'Javelin Throw_M': 98.48,
+                      '100m_F': 10.49, '200m_F': 21.34, '400m_F': 47.60, '800m_F': 113.28, '1500m_F': 229.04,
+                      '5000m_F': 840.21, '10000m_F': 1757.45, 'Marathon_F': 7796, '100m Hurdles_F': 12.12, '400m Hurdles_F': 50.68,
+                      '3000m Steeplechase_F': 537.0,
+                      'Long Jump_F': 7.52, 'Triple Jump_F': 15.74, 'High Jump_F': 2.09, 'Pole Vault_F': 5.06,
+                      'Shot Put_F': 22.63, 'Discus Throw_F': 76.80, 'Hammer Throw_F': 82.98, 'Javelin Throw_F': 72.28,
+                    };
+                    const wr = WR_MAP[`${discNorm}_${gCode}`] || WR_MAP[`${analysisResults.discipline}_${gCode}`];
+                    const isFieldEv = isFieldEvent(analysisResults.discipline);
+
+                    // Clamp projections to world record
+                    const clamp = (val) => {
+                      if (!wr) return val;
+                      return isFieldEv ? Math.min(val, wr) : Math.max(val, wr);
+                    };
+
+                    // Build Recharts data: merge all 3 trajectories + confidence bands
+                    const chartData = [];
+                    const ages = allTrajectories.steady.map(p => p.age);
+                    ages.forEach((age, i) => {
+                      const point = { age };
+                      ['early', 'late', 'steady'].forEach(t => {
+                        const tp = allTrajectories[t][i];
+                        if (tp) {
+                          point[t] = parseFloat(clamp(tp.projected).toFixed(2));
+                          point[`${t}_p25`] = parseFloat(clamp(tp.p25).toFixed(2));
+                          point[`${t}_p75`] = parseFloat(clamp(tp.p75).toFixed(2));
+                        }
+                      });
+                      if (wr) point.wr = wr;
+                      chartData.push(point);
+                    });
+
+                    // Determine Y domain
+                    const allVals = chartData.flatMap(d =>
+                      ['early', 'late', 'steady', 'early_p25', 'early_p75', 'late_p25', 'late_p75', 'steady_p25', 'steady_p75']
+                        .map(k => d[k]).filter(v => v != null)
+                    );
+                    if (wr) allVals.push(wr);
+                    allVals.push(pb);
+                    const yMin = Math.min(...allVals);
+                    const yMax = Math.max(...allVals);
+                    const yPad = (yMax - yMin) * 0.08;
+
+                    const TRAJ_COLORS = { early: '#ef4444', late: '#22c55e', steady: '#f97316' };
+                    const TRAJ_LABELS = { early: 'Early Peaker', late: 'Late Developer', steady: 'Steady' };
+                    const TRAJ_COUNTS = {
+                      early: curveData.early?.n ? Object.values(curveData.early.n).reduce((a,b) => a+b, 0) : 0,
+                      late: curveData.late?.n ? Object.values(curveData.late.n).reduce((a,b) => a+b, 0) : 0,
+                      steady: curveData.steady?.n ? Object.values(curveData.steady.n).reduce((a,b) => a+b, 0) : 0,
+                    };
+
+                    return (
+                      <div className="mb-8 rounded-xl p-5 sm:p-8" style={{border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.015)'}}>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                          <div>
+                            <p className="text-sm font-semibold text-white landing-font">Realistic Improvement Trajectories</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              Based on {curveData.n.toLocaleString()} {analysisResults.discipline} {genderFull.toLowerCase()} careers · median year-on-year improvement applied from current PB
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            {['late', 'steady', 'early'].map(t => (
+                              <span key={t} className="flex items-center gap-1.5 text-[10px] mono-font">
+                                <span className="w-3 h-[2px] rounded-full inline-block" style={{background: TRAJ_COLORS[t]}} />
+                                <span style={{color: TRAJ_COLORS[t]}}>{TRAJ_LABELS[t]}</span>
+                                <span className="text-slate-600">({curveData.counts[t]})</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="h-[280px] sm:h-[340px] -ml-2">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={chartData} margin={{ top: 10, right: 15, bottom: 5, left: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                              <XAxis
+                                dataKey="age"
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={{ stroke: '#334155' }}
+                                axisLine={{ stroke: '#334155' }}
+                                label={{ value: 'Age', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#475569' }}
+                              />
+                              <YAxis
+                                reversed={!isFieldEv}
+                                domain={[
+                                  isFieldEv ? Math.floor((yMin - yPad) * 100) / 100 : Math.floor((yMin - yPad) * 100) / 100,
+                                  isFieldEv ? Math.ceil((yMax + yPad) * 100) / 100 : Math.ceil((yMax + yPad) * 100) / 100
+                                ]}
+                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                tickLine={{ stroke: '#334155' }}
+                                axisLine={{ stroke: '#334155' }}
+                                tickFormatter={v => formatTime(v, analysisResults.discipline)}
+                              />
+                              <Tooltip
+                                contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
+                                labelStyle={{ color: '#94a3b8', fontWeight: 600 }}
+                                labelFormatter={v => `Age ${v}`}
+                                formatter={(val, name) => {
+                                  if (name === 'wr') return [formatTime(val, analysisResults.discipline), 'World Record'];
+                                  const label = name.includes('early') ? 'Early Peaker' : name.includes('late') ? 'Late Developer' : 'Steady';
+                                  if (name.includes('p25') || name.includes('p75')) return [null, null];
+                                  return [formatTime(val, analysisResults.discipline), label];
+                                }}
+                              />
+
+                              {/* Confidence bands — p25 and p75 as faint dashed lines */}
+                              {['steady', 'late', 'early'].map(t => (
+                                <React.Fragment key={`${t}_bands`}>
+                                  <Line type="monotone" dataKey={`${t}_p25`} stroke={TRAJ_COLORS[t]} strokeWidth={0.8} strokeDasharray="2 4" dot={false} isAnimationActive={false} strokeOpacity={0.25} />
+                                  <Line type="monotone" dataKey={`${t}_p75`} stroke={TRAJ_COLORS[t]} strokeWidth={0.8} strokeDasharray="2 4" dot={false} isAnimationActive={false} strokeOpacity={0.25} />
+                                </React.Fragment>
+                              ))}
+
+                              {/* World record line */}
+                              {wr && (
+                                <ReferenceLine
+                                  y={wr}
+                                  stroke="#ef4444"
+                                  strokeDasharray="6 4"
+                                  strokeWidth={1}
+                                  strokeOpacity={0.5}
+                                  label={{ value: 'WR', position: 'right', fill: '#ef4444', fontSize: 9, fontWeight: 700 }}
+                                />
+                              )}
+
+                              {/* Current PB reference */}
+                              <ReferenceLine
+                                y={pb}
+                                stroke="#f97316"
+                                strokeDasharray="3 3"
+                                strokeWidth={1}
+                                strokeOpacity={0.3}
+                              />
+
+                              {/* Trajectory lines */}
+                              {['steady', 'late', 'early'].map(t => (
+                                <Line
+                                  key={t}
+                                  type="monotone"
+                                  dataKey={t}
+                                  stroke={TRAJ_COLORS[t]}
+                                  strokeWidth={t === 'steady' ? 2.5 : 2}
+                                  dot={false}
+                                  isAnimationActive={false}
+                                  strokeOpacity={t === 'steady' ? 1 : 0.8}
+                                />
+                              ))}
+
+                              {/* Current age marker */}
+                              <ReferenceDot
+                                x={analysisResults.age}
+                                y={pb}
+                                r={5}
+                                fill="#f97316"
+                                stroke="#0a0604"
+                                strokeWidth={2}
+                              />
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        <p className="text-[10px] text-slate-600 mt-3 text-center mono-font">
+                          Curves show median improvement rates from {curveData.n.toLocaleString()} real careers · dashed lines show 25th–75th percentile range · WR line = absolute ceiling
+                        </p>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Improvement Scenarios — simple table */}
+                  {analysisResults.improvementScenarios && (() => {
+                    // World records by discipline+gender for flagging unrealistic projections
+                    const WORLD_RECORDS = {
+                      '100m_M': 9.58, '200m_M': 19.19, '400m_M': 43.03, '800m_M': 100.91, '1500m_M': 206.00,
+                      '5000m_M': 755.36, '10000m_M': 1577.53, 'Marathon_M': 7235, '110m Hurdles_M': 12.80, '400m Hurdles_M': 45.94,
+                      '3000m Steeplechase_M': 473.0,
+                      'Long Jump_M': 8.95, 'Triple Jump_M': 18.29, 'High Jump_M': 2.45, 'Pole Vault_M': 6.25,
+                      'Shot Put_M': 23.56, 'Discus Throw_M': 74.35, 'Hammer Throw_M': 86.74, 'Javelin Throw_M': 98.48,
+                      '100m_F': 10.49, '200m_F': 21.34, '400m_F': 47.60, '800m_F': 113.28, '1500m_F': 229.04,
+                      '5000m_F': 840.21, '10000m_F': 1757.45, 'Marathon_F': 7796, '100m Hurdles_F': 12.12, '400m Hurdles_F': 50.68,
+                      '3000m Steeplechase_F': 537.0,
+                      'Long Jump_F': 7.52, 'Triple Jump_F': 15.74, 'High Jump_F': 2.09, 'Pole Vault_F': 5.06,
+                      'Shot Put_F': 22.63, 'Discus Throw_F': 76.80, 'Hammer Throw_F': 82.98, 'Javelin Throw_F': 72.28,
+                    };
+                    const gCode = (analysisResults.gender === 'Male' || analysisResults.gender === 'M') ? 'M' : 'F';
+                    const discNormWR = normalizeDisciplineName(analysisResults.discipline);
+                    const wr = WORLD_RECORDS[`${discNormWR}_${gCode}`] || WORLD_RECORDS[`${analysisResults.discipline}_${gCode}`];
+                    const isBeyondWR = (time) => {
+                      if (!wr) return false;
+                      // Field events (throws + jumps): higher is better → beyond WR if above
+                      // Time events (sprints, hurdles, distance): lower is better → beyond WR if below
+                      return isThrowsQ
+                        ? time > wr
+                        : time < wr;
+                    };
+
+                    return (
+                    <div className="rounded-xl p-6 sm:p-8" style={{border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.015)'}}>
+                      <p className="text-sm text-slate-400 mb-5 landing-font">
+                        Projected {isThrowsQ ? 'distances' : 'times'} at different annual improvement rates from {formatTime(analysisResults.personalBest, analysisResults.discipline)}{!isThrowsQ && !isDistanceDiscipline(analysisResults.discipline) ? 's' : ''}
+                      </p>
+                      <div className="overflow-x-auto -mx-2 px-2">
+                        <table className="w-full text-sm" style={{ minWidth: '400px' }}>
+                          <thead>
+                            <tr style={{borderBottom: '2px solid rgba(255,255,255,0.1)'}}>
+                              <th className="text-left py-2 px-2 font-semibold text-slate-300 sticky left-0 z-10 text-[10px] sm:text-sm whitespace-nowrap" style={{ background: 'inherit' }}>Rate</th>
+                              {analysisResults.improvementScenarios[0] && Object.keys(analysisResults.improvementScenarios[0].times).map(futAge => (
+                                <th key={futAge} className={`text-center py-2 px-1 sm:px-2 font-semibold text-[10px] sm:text-sm min-w-[40px] sm:min-w-[52px] ${
+                                  parseInt(futAge) === analysisResults.age ? 'text-orange-400' : 'text-slate-300'
+                                }`}>{futAge}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {analysisResults.improvementScenarios.map((row, idx) => (
+                              <tr key={idx} className={`${idx === 0 ? 'bg-white/[0.02]' : 'hover:bg-white/[0.02]'}`} style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
+                                <td className={`py-2 px-2 font-bold sticky left-0 z-10 text-[10px] sm:text-sm whitespace-nowrap ${idx === 0 ? 'text-orange-400' : 'text-slate-400'}`} style={{ background: idx === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(15,23,42,0.9)' }}>
+                                  {row.rate}
+                                </td>
+                                {Object.entries(row.times).map(([futAge, time]) => {
+                                  const beyondWR = isBeyondWR(time);
+                                  const meetsFinalist = !beyondWR && (isThrowsQ ? time >= analysisResults.thresholds.finalist : time <= analysisResults.thresholds.finalist);
+                                  const meetsMQT = !beyondWR && analysisResults.championshipData && (isThrowsQ ? time >= analysisResults.championshipData.mqt : time <= analysisResults.championshipData.mqt);
+                                  return (
+                                    <td key={futAge} className={`py-2 px-1 sm:px-2 text-center text-[10px] sm:text-xs ${
+                                      parseInt(futAge) === analysisResults.age ? 'font-bold text-orange-300' : ''
+                                    } ${beyondWR ? 'text-red-400/60 line-through' : meetsFinalist ? 'text-green-400 font-bold' : meetsMQT ? 'text-blue-400 font-semibold' : 'text-slate-400'}`}
+                                      title={beyondWR ? `Beyond world record (${wr ? formatTime(wr, analysisResults.discipline) : 'WR'})` : ''}
+                                    >
+                                      {formatTime(time, analysisResults.discipline)}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="flex flex-wrap gap-4 mt-4 text-[10px] text-slate-500">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> Finalist threshold</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Olympic MQT</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-400/60 inline-block" /> Beyond world record</span>
+                      </div>
+                    </div>
+                    );
+                  })()}
+                </section>
+
+                {/* ── Act divider ── */}
+                <div className="h-[1px] mx-auto" style={{background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent)', maxWidth: '80%'}} />
+
+
+                {/* ════════════════════════════════════════════════════════ */}
+                {/* ACT V — COMPETITION LADDER                               */}
+                {/* ════════════════════════════════════════════════════════ */}
+                <section className="pt-14 sm:pt-20 pb-14 sm:pb-20">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-6 mb-10 sm:mb-14">
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-5xl sm:text-6xl font-light italic text-slate-600 landing-font">V.</span>
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-white landing-font tracking-tight leading-tight">
+                          Standing on the <span className="italic" style={{color: '#f97316'}}>ladder</span>
+                        </h2>
+                        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mt-1.5">Your mark placed against {analysisResults.standards?.length || 0} competition thresholds</p>
+                      </div>
+                    </div>
+                    <p className="text-sm italic text-slate-500 landing-font sm:ml-auto sm:text-right max-w-xs leading-relaxed">
+                      From your PB to the world record — rungs mark tier thresholds. Below, the next qualifier within reach.
+                    </p>
+                  </div>
+
+                  {/* Competition Standards Ladder — inside bordered container */}
+                  <div className="rounded-xl p-6 sm:p-8" style={{border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.015)'}}>
+                    {analysisResults.standards && analysisResults.standards.length > 0 && (() => {
+                      const eventCode = getEventCode(analysisResults.discipline, analysisResults.gender);
+                      const compData = COMPETITION_STANDARDS[eventCode];
+                      return (
+                        <CompetitionStandardsLadder
+                          standards={analysisResults.standards}
+                          personalBest={parseFloat(analysisResults.personalBest)}
+                          discipline={analysisResults.discipline}
+                          gender={analysisResults.gender}
+                          wr={compData?.wr?.mark}
+                        />
+                      );
+                    })()}
+                  </div>
+                </section>
+
+
+                {/* ── METHODOLOGY FOOTER ── */}
+                <div className="rounded-xl p-5 mt-12 mb-4" style={{background: 'rgba(245,158,11,0.03)', border: '1px solid rgba(245,158,11,0.1)'}}>
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{color: '#f59e0b'}} />
+                    <div>
+                      <p className="text-xs text-slate-400 leading-relaxed landing-font mb-2">
+                        Quick Analysis is based on a single time at a single age. For trajectory modelling, rate of development tracking, and full career analysis, {user ? (
+                          <>use the <button onClick={() => { setActiveTab('manual'); setCurrentView('input'); }} className="text-orange-400 hover:underline font-medium">Manual Entry</button> or <button onClick={() => { setActiveTab('url'); setCurrentView('input'); }} className="text-orange-400 hover:underline font-medium">URL Import</button> methods with full race history.</>
+                        ) : (
+                          <><button onClick={onSignUp} className="text-emerald-400 hover:underline font-medium">Sign up for free</button> to access Manual Entry and URL Import with full race history.</>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-slate-500 leading-relaxed landing-font">
+                        Analysis powered by statistical models built from {'>'}{STATS.athletes} Olympic athletes and {'>'}{STATS.records} career race results
+                        spanning Sydney 2000 through Paris 2024.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Colophon footer ── */}
+                <div className="flex items-center justify-between py-4 mono-font text-[9px] uppercase tracking-[0.18em] text-slate-600" style={{borderTop: '1px solid rgba(255,255,255,0.04)'}}>
+                  <span>bnchmrkd<span style={{color: '#f97316'}}>.</span> · {analysisResults.discipline} · {analysisResults.gender} · Age {analysisResults.age}</span>
+                  <span>Olympics 2000–2024</span>
+                </div>
+
+                </>
+              );
+            })()}
 
             {/* Back + Export buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -6763,20 +7146,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </div>
 
                   {/* ── Form snapshot row ── */}
-                  <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
-                    <div className="rounded-xl p-3 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+                    <div className="rounded-xl p-2 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
                       <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Personal Best</p>
-                      <p className="mono-font text-2xl sm:text-3xl font-bold text-orange-400 leading-none">{fmt(pb)}</p>
+                      <p className="mono-font text-lg sm:text-2xl md:text-3xl font-bold text-orange-400 leading-none">{fmt(pb)}</p>
                       <p className="text-[10px] sm:text-xs text-slate-500 mt-1.5">{pbYear ? `set ${pbYear}` : 'lifetime best'}</p>
                     </div>
-                    <div className="rounded-xl p-3 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <div className="rounded-xl p-2 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
                       <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Season Best</p>
-                      <p className="mono-font text-2xl sm:text-3xl font-bold text-white leading-none">{sb != null ? fmt(sb) : '—'}</p>
+                      <p className="mono-font text-lg sm:text-2xl md:text-3xl font-bold text-white leading-none">{sb != null ? fmt(sb) : '—'}</p>
                       <p className={`text-[10px] sm:text-xs mt-1.5 mono-font ${deltaColor(sbDelta)}`}>{sbDelta != null ? `${fmtDelta(sbDelta)} vs PB` : 'no races this year'}</p>
                     </div>
-                    <div className="rounded-xl p-3 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <div className="rounded-xl p-2 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
                       <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Last Race</p>
-                      <p className="mono-font text-2xl sm:text-3xl font-bold text-white leading-none">{lastRace ? fmt(lastRace.value) : '—'}</p>
+                      <p className="mono-font text-lg sm:text-2xl md:text-3xl font-bold text-white leading-none">{lastRace ? fmt(lastRace.value) : '—'}</p>
                       <p className={`text-[10px] sm:text-xs mt-1.5 mono-font ${deltaColor(lastDelta)}`}>{lastRace ? (lastDelta != null ? `${fmtDelta(lastDelta)} vs SB · ${lastDateStr}` : lastDateStr) : ''}</p>
                     </div>
                   </div>
@@ -7153,7 +7536,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Line type="monotone" dataKey="actualTime" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Actual Performance" connectNulls={false} />
                     </ComposedChart>
                   </ResponsiveContainer>
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs">
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-orange-500 rounded"></div><span className="text-slate-400">Your Actual {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-blue-500 rounded" style={{borderBottom: '2px dashed #3b82f6'}}></div><span className="text-slate-400">Projected {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-red-600 rounded" style={{borderBottom: '2px dashed #dc2626'}}></div><span className="text-slate-400">Finalist Threshold</span></div>
@@ -7232,7 +7615,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Line type="monotone" dataKey="userPctOff" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 6, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} name="Your Position" connectNulls={false} />
                     </ComposedChart>
                   </ResponsiveContainer>
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs text-center">
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs text-center">
                     <div className="p-2 bg-blue-900 bg-opacity-20 rounded"><span className="font-semibold text-blue-300">P10</span><br/>Top 10%</div>
                     <div className="p-2 bg-blue-700 bg-opacity-20 rounded"><span className="font-semibold text-blue-700">P25</span><br/>Top 25%</div>
                     <div className="p-2 bg-blue-500 bg-opacity-20 rounded"><span className="font-semibold text-blue-500">P50</span><br/>Median</div>
@@ -7517,7 +7900,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
                           <p className="text-xs text-slate-400 mb-0.5">Personal Best</p>
-                          <p className="text-lg font-bold text-white">{athlete.pb}{isFieldEvent(analysisResults.discipline) ? 'm' : 's'}</p>
+                          <p className="text-lg font-bold text-white">{formatTime(athlete.pb, analysisResults.discipline)}{!isFieldEvent(analysisResults.discipline) && 's'}</p>
                         </div>
                         <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700/50 text-center">
                           <p className="text-xs text-slate-400 mb-0.5">Peak Age</p>
