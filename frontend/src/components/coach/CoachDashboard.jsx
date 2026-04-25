@@ -7,7 +7,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { selectFrom, insertInto, deleteFrom, updateIn } from '../../lib/supabaseRest'
-import { getAgeGroup, getPerformanceLevel, LEVEL_COLORS } from '../../lib/performanceLevels'
+import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -279,8 +280,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const trendingUp = rosterWithAge.filter(a => a.trend === 'up').length
   const trendingDown = rosterWithAge.filter(a => a.trend === 'down').length
   const tierCounts = rosterWithAge.reduce((acc, a) => {
-    const t = a.tier || 'developing'
-    acc[t] = (acc[t] || 0) + 1
+    let tierKey = 2 // default: Developing
+    const age = a.age != null ? a.age : calcAge(a.dob)
+    const pbVal = a.pb_value
+    const disc = a.discipline
+    if (age != null && pbVal && disc) {
+      const genderCode = a.gender === 'Male' ? 'M' : 'F'
+      const ag = getAgeGroup(age)
+      const t = getTier(disc, genderCode, ag, pbVal)
+      if (t && t.tier > 0) tierKey = t.tier
+    }
+    acc[tierKey] = (acc[tierKey] || 0) + 1
     return acc
   }, {})
   const totalSessions = rosterWithAge.reduce((s, a) => s + (a.races?.length || 0), 0)
@@ -527,11 +537,20 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   // handleChatSend removed — replaced by AI Scanner
 
   // ── Shared components ──
+  // T1-T7 tier config — matches performanceTiers.js
   const tierConfig = {
-    finalist: { color: '#fbbf24', label: 'Finalist' },
-    'semi-finalist': { color: '#3b82f6', label: 'Semi-Finalist' },
-    qualifier: { color: '#8b5cf6', label: 'Qualifier' },
-    developing: { color: '#64748b', label: 'Developing' },
+    1: { color: TIER_COLORS[1], label: 'Emerging' },
+    2: { color: TIER_COLORS[2], label: 'Developing' },
+    3: { color: TIER_COLORS[3], label: 'National' },
+    4: { color: TIER_COLORS[4], label: 'Qualifier' },
+    5: { color: TIER_COLORS[5], label: 'Finalist' },
+    6: { color: TIER_COLORS[6], label: 'Medalist' },
+    7: { color: TIER_COLORS[7], label: 'World Class' },
+    // Legacy fallbacks
+    finalist: { color: TIER_COLORS[5], label: 'Finalist' },
+    'semi-finalist': { color: TIER_COLORS[4], label: 'Qualifier' },
+    qualifier: { color: TIER_COLORS[4], label: 'Qualifier' },
+    developing: { color: TIER_COLORS[2], label: 'Developing' },
   }
 
   const TierDot = ({ tier, size = 6 }) => (
@@ -954,21 +973,23 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       {!Array.isArray(a.disciplines) && (
                         <p className="text-[10px] text-slate-400 landing-font mb-2">{a.discipline || '—'}</p>
                       )}
-                      {/* Level sticker */}
+                      {/* Tier sticker (T1-T7) */}
                       {(() => {
                         const age = a.age != null ? a.age : calcAge(a.dob);
                         const pbVal = a.pb_value;
                         const disc = a.discipline;
                         if (age != null && pbVal && disc) {
-                          const pl = getPerformanceLevel(disc, a.gender, age, pbVal);
-                          if (pl) {
+                          const genderCode = a.gender === 'Male' ? 'M' : 'F';
+                          const ageGroup = getAgeGroup(age);
+                          const t = getTier(disc, genderCode, ageGroup, pbVal);
+                          if (t && t.tier > 0) {
                             return (
                               <div className="flex items-center gap-1.5 mb-2">
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold mono-font" style={{ background: `${pl.color}18`, color: pl.color, border: `1px solid ${pl.color}30` }}>
-                                  L{pl.level}
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold mono-font" style={{ background: `${t.color}18`, color: t.color, border: `1px solid ${t.color}30` }}>
+                                  T{t.tier}
                                 </span>
-                                <span className="text-[9px] text-slate-400 landing-font">{pl.name}</span>
-                                <span className="text-[8px] text-slate-500 mono-font ml-auto">{pl.ageGroup}</span>
+                                <span className="text-[9px] text-slate-400 landing-font">{t.tierName}</span>
+                                <span className="text-[8px] text-slate-500 mono-font ml-auto">{ageGroup}</span>
                               </div>
                             );
                           }
@@ -986,12 +1007,30 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                           <p className="text-[8px] text-slate-400 uppercase tracking-wider landing-font">Last</p>
                         </div>
                       </div>
-                      {/* Footer */}
+                      {/* Footer — compute tier from PB, fallback to stored tier */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <TierDot tier={a.tier} />
-                          <span className="text-[10px] landing-font" style={{ color: tierConfig[a.tier]?.color || '#64748b' }}>{tierConfig[a.tier]?.label || 'Developing'}</span>
-                        </div>
+                        {(() => {
+                          const age = a.age != null ? a.age : calcAge(a.dob);
+                          const pbVal = a.pb_value;
+                          const disc = a.discipline;
+                          let dotColor = tierConfig[a.tier]?.color || '#64748b';
+                          let dotLabel = tierConfig[a.tier]?.label || 'Developing';
+                          if (age != null && pbVal && disc) {
+                            const genderCode = a.gender === 'Male' ? 'M' : 'F';
+                            const ag = getAgeGroup(age);
+                            const t = getTier(disc, genderCode, ag, pbVal);
+                            if (t && t.tier > 0) {
+                              dotColor = t.color;
+                              dotLabel = t.tierName;
+                            }
+                          }
+                          return (
+                            <div className="flex items-center gap-1.5">
+                              <div className="rounded-full" style={{ width: 6, height: 6, background: dotColor }} />
+                              <span className="text-[10px] landing-font" style={{ color: dotColor }}>{dotLabel}</span>
+                            </div>
+                          );
+                        })()}
                         <div className="flex items-center gap-2">
                           {a.races?.length > 0 && <span className="text-[9px] text-slate-500 mono-font">{a.races.length} races</span>}
                           <span className="text-[10px] text-slate-500 group-hover:text-orange-500 transition-colors landing-font flex items-center gap-0.5">

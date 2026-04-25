@@ -2853,7 +2853,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       const simResp = await fetch(`${sbUrl}/rest/v1/rpc/find_similar_athletes`, {
         method: 'POST',
         headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_discipline_code: eventCode, p_pb: pb, p_age: age, p_limit: 3 }),
+        body: JSON.stringify({ p_discipline_code: eventCode, p_pb: pb, p_age: age, p_limit: 3, ...(isThrows && resolvedWeight ? { p_implement_weight: resolvedWeight } : {}) }),
       });
       if (simResp.ok) {
         const simData = await simResp.json();
