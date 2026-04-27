@@ -45,6 +45,7 @@ export function AlmanacCard({
     <View style={[styles.almanacCard, style]}>
       {/* Ambient glow bloom top-right */}
       <View
+        pointerEvents="none"
         style={[
           styles.glowOrb,
           {
@@ -96,6 +97,7 @@ export function HeroCard({ children, style }: HeroCardProps) {
     <View style={[styles.heroCard, style]}>
       {/* Drifting ambient orbs */}
       <View
+        pointerEvents="none"
         style={[
           styles.glowOrb,
           {
@@ -109,6 +111,7 @@ export function HeroCard({ children, style }: HeroCardProps) {
         ]}
       />
       <View
+        pointerEvents="none"
         style={[
           styles.glowOrb,
           {
@@ -122,7 +125,7 @@ export function HeroCard({ children, style }: HeroCardProps) {
         ]}
       />
       {/* Shimmer overlay */}
-      <View style={styles.shimmerOverlay} />
+      <View pointerEvents="none" style={styles.shimmerOverlay} />
       <View style={{ position: 'relative' }}>{children}</View>
     </View>
   )
@@ -148,6 +151,7 @@ export function GlassCard({ children, style, glowColor, noPadding }: GlassCardPr
     >
       {glowColor && (
         <View
+          pointerEvents="none"
           style={[
             styles.glowOrb,
             {

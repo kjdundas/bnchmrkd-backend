@@ -1,9 +1,9 @@
-// ═══════════════════════════════════════════════════════════════════════
-// APP NAVIGATOR — Auth-gated navigation with bottom tabs
-// Logged out → Login screen
-// Logged in  → Main tabs (Home, Log, Trajectory, Profile)
-// Coach role → Extra "Squad" tab (future)
-// ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// APP NAVIGATOR — Auth-gated, role-based navigation
+// Logged out  → Login screen
+// Athlete     → Home, Log, Trajectory, Profile
+// Coach       → Roster, Results, Analyse, Profile
+// ═══════════════════════════════════════════════════════════════════════════
 
 import React from 'react'
 import { Platform } from 'react-native'
@@ -14,13 +14,19 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { colors, spacing } from '../lib/theme'
 
-// Screens
+// Athlete screens
 import LoginScreen from '../screens/LoginScreen'
 import HomeScreen from '../screens/HomeScreen'
 import LogScreen from '../screens/LogScreen'
 import TrajectoryScreen from '../screens/TrajectoryScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import SplashScreen from '../components/SplashScreen'
+
+// Coach screens
+import CoachRosterScreen from '../screens/CoachRosterScreen'
+import CoachResultsScreen from '../screens/CoachResultsScreen'
+import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
+import AthleteDetailScreen from '../screens/AthleteDetailScreen'
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
@@ -44,30 +50,34 @@ const DarkTheme = {
   },
 }
 
-function MainTabs() {
-  const { profile } = useAuth()
+// Shared tab bar options
+const tabBarOptions = {
+  headerShown: false,
+  tabBarStyle: {
+    backgroundColor: colors.bg.secondary,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopWidth: 1,
+    height: Platform.OS === 'ios' ? 85 : 70,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    paddingTop: 8,
+    elevation: 0,
+  },
+  tabBarActiveTintColor: colors.orange[500],
+  tabBarInactiveTintColor: colors.text.dimmed,
+  tabBarLabelStyle: {
+    fontSize: 10,
+    letterSpacing: 0.5,
+    fontWeight: '600' as const,
+    marginTop: 2,
+  },
+}
 
+// ── Athlete Tab Navigator ───────────────────────────────────────────────────
+function AthleteTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.bg.secondary,
-          borderTopColor: 'rgba(255,255,255,0.06)',
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 85 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-          paddingTop: 8,
-          elevation: 0,
-        },
-        tabBarActiveTintColor: colors.orange[500],
-        tabBarInactiveTintColor: colors.text.dimmed,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          letterSpacing: 0.5,
-          fontWeight: '600',
-          marginTop: 2,
-        },
+        ...tabBarOptions,
         tabBarIcon: ({ color, size, focused }) => {
           let iconName: string = 'home-outline'
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline'
@@ -79,28 +89,62 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen
-        name="Log"
-        component={LogScreen}
-        options={{ tabBarLabel: 'Log' }}
-      />
+      <Tab.Screen name="Log" component={LogScreen} options={{ tabBarLabel: 'Log' }} />
       <Tab.Screen name="Trajectory" component={TrajectoryScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   )
 }
 
+// ── Coach Tab Navigator ─────────────────────────────────────────────────────
+function CoachTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        ...tabBarOptions,
+        tabBarIcon: ({ color, size, focused }) => {
+          let iconName: string = 'people-outline'
+          if (route.name === 'Roster') iconName = focused ? 'people' : 'people-outline'
+          else if (route.name === 'Results') iconName = focused ? 'document-text' : 'document-text-outline'
+          else if (route.name === 'Analyse') iconName = focused ? 'flash' : 'flash-outline'
+          else if (route.name === 'CoachProfile') iconName = focused ? 'person' : 'person-outline'
+          return <Ionicons name={iconName as any} size={size} color={color} />
+        },
+      })}
+    >
+      <Tab.Screen name="Roster" component={CoachRosterScreen} />
+      <Tab.Screen name="Results" component={CoachResultsScreen} />
+      <Tab.Screen name="Analyse" component={CoachAnalyseScreen} />
+      <Tab.Screen
+        name="CoachProfile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
+      />
+    </Tab.Navigator>
+  )
+}
+
+// ── Main App Navigator ──────────────────────────────────────────────────────
 export default function AppNavigator() {
-  const { session, loading } = useAuth()
+  const { session, profile, loading } = useAuth()
 
   if (loading) {
     return <SplashScreen />
   }
 
+  const isCoach = profile?.role === 'coach' || (profile as any)?.account_type === 'coach'
+
   return (
     <NavigationContainer theme={DarkTheme}>
       {session ? (
-        <MainTabs />
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen
+            name="MainTabs"
+            component={isCoach ? CoachTabs : AthleteTabs}
+          />
+          {/* Shared push screens */}
+          <Stack.Screen name="AthleteDetail" component={AthleteDetailScreen} />
+        </Stack.Navigator>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />

@@ -1,8 +1,8 @@
-// ═══════════════════════════════════════════════════════════════════════
-// TRAJECTORY SCREEN — Performance over time (premium brand)
-// Category filter → Per-metric trajectory cards with AlmanacCard pattern
-// Uses MonoKicker, AlmanacCard, glow effects, accent bars
-// ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// TRAJECTORY SCREEN — Race Performance Analysis (complete rewrite)
+// Discipline picker landing → discipline detail view with race trajectory analysis
+// Uses performance tiers, similar athletes, improvement scenarios, competition ladder
+// ═══════════════════════════════════════════════════════════════════════════
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import {
@@ -13,14 +13,14 @@ import {
   StyleSheet,
   RefreshControl,
   Dimensions,
-  Animated,
+  ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
-import { selectFrom } from '../lib/supabase'
+import { selectFrom, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import {
   AlmanacCard,
   HeroCard,
@@ -31,83 +31,544 @@ import {
   EmptyState,
   Divider,
 } from '../components/ui'
-import LineChart from '../components/LineChart'
 import { projectAllTrajectories } from '../lib/improvementCurves'
-import { isLowerBetter } from '../lib/disciplineScience'
+import {
+  isLowerBetter,
+  performancePercentile,
+  qualifierZones,
+  getCalibration,
+} from '../lib/disciplineScience'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
+import { getAgeGroup } from '../lib/performanceLevels'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
-// ── LOWER_IS_BETTER — synced with LogScreen catalog ──
-const LOWER_IS_BETTER = new Set([
-  'sprint_10m', 'sprint_20m', 'sprint_30m', 'sprint_40m', 'sprint_60m',
-  'sprint_100m', 'flying_10m', 'flying_20m', 'split_300m',
-  'resting_hr', 'rhr', 'body_fat', 'body_fat_pct',
-  'tt_1200m', 'tt_2km', 'bronco',
-])
+// ── Event code mapping: discipline + sex → RPC event code ──────────────────
+function getDisciplineEventCode(discipline: string, sex: string): string {
+  if (!discipline) return ''
 
-// ── Category mapping for filter pills — synced with LogScreen 58-metric catalog ──
-const CATEGORIES = [
-  { key: 'all', label: 'All', color: colors.text.secondary, icon: 'grid-outline' },
-  { key: 'speed', label: 'Speed', color: colors.category.speed, icon: 'flash-outline', prefixes: ['sprint_', 'flying_', 'split_', 'max_velocity'] },
-  { key: 'power', label: 'Power', color: colors.category.power, icon: 'rocket-outline', prefixes: ['cmj_', 'sj_height', 'eur', 'broad_jump', 'rsi_', 'imtp_rfd'] },
-  { key: 'strength', label: 'Strength', color: colors.category.strength, icon: 'barbell-outline', prefixes: ['back_squat', 'front_squat', 'deadlift', 'bench_press', 'power_clean', 'snatch_', 'hip_thrust', 'imtp_peak', 'imtp_rel', 'pullup_', 'weighted_'] },
-  { key: 'endurance', label: 'Endurance', color: colors.category.endurance, icon: 'heart-outline', prefixes: ['vo2', 'yoyo_', 'iftt_', 'mas', 'tt_', 'bronco', 'rhr', 'hrv_', 'hr_recovery'] },
-  { key: 'mobility', label: 'Mobility', color: colors.category.mobility, icon: 'body-outline', prefixes: ['sit_and_', 'knee_to_wall', 'thomas_', 'aslr_', 'shoulder_flex', 'overhead_squat', 'fms_total', 'adductor_'] },
-  { key: 'body', label: 'Body', color: colors.category.anthropometrics, icon: 'resize-outline', prefixes: ['body_mass', 'standing_height', 'sitting_height', 'wingspan', 'body_fat', 'sum_7_', 'lean_mass', 'fat_mass'] },
-]
+  const gender = sex === 'F' ? 'F' : 'M'
+  const d = discipline.toLowerCase().trim()
 
-function metricCategory(key: string): string {
-  for (const cat of CATEGORIES) {
-    if (cat.prefixes?.some((p) => key.startsWith(p) || key === p)) return cat.key
+  // Time events
+  if (d.includes('100m') && !d.includes('h')) return `${gender}100`
+  if (d.includes('200m') && !d.includes('h')) return `${gender}200`
+  if (d.includes('400m') && !d.includes('h')) return `${gender}400`
+  if (d.includes('60m')) return `${gender}60`
+  if (d.includes('75m')) return `${gender}75`
+
+  // Hurdles
+  if (d.includes('110mh') || d.includes('110 mh')) return `${gender}110H`
+  if (d.includes('100mh') || d.includes('100 mh')) return `${gender}100H`
+  if (d.includes('400mh') || d.includes('400 mh')) return `${gender}400H`
+
+  // Middle distance
+  if (d.includes('800m')) return `${gender}800`
+  if (d.includes('1500m')) return `${gender}1500`
+
+  // Long distance
+  if (d.includes('3000m') && d.includes('steeple')) return `${gender}3SC`
+  if (d.includes('3000m')) return `${gender}3000`
+  if (d.includes('5000m')) return `${gender}5K`
+  if (d.includes('10000m') || d.includes('10km')) return `${gender}10K`
+  if (d.includes('marathon')) return `${gender}MAR`
+
+  // Jumps
+  if (d.includes('long jump')) return `${gender}LJ`
+  if (d.includes('triple jump')) return `${gender}TJ`
+  if (d.includes('high jump')) return `${gender}HJ`
+  if (d.includes('pole vault')) return `${gender}PV`
+
+  // Throws
+  if (d.includes('shot put') || d === 'shot') return `${gender}SP`
+  if (d.includes('discus')) return `${gender}DT`
+  if (d.includes('hammer')) return `${gender}HT`
+  if (d.includes('javelin')) return `${gender}JT`
+
+  return ''
+}
+
+// ── Format performance values based on discipline ───────────────────────────
+function formatPerformance(value: number, discipline: string): string {
+  if (!value) return '—'
+
+  const lower = isLowerBetter(discipline)
+  const d = discipline.toLowerCase()
+
+  // Time disciplines: convert seconds to M:SS.xx or just S.xx
+  if (lower) {
+    if (d.includes('marathon') || d.includes('10000m') || d.includes('5000m') || d.includes('3000m') || d.includes('1500m')) {
+      const min = Math.floor(value / 60)
+      const sec = value % 60
+      return `${min}:${sec.toFixed(2).padStart(5, '0')}`
+    } else if (d.includes('800m')) {
+      const min = Math.floor(value / 60)
+      const sec = value % 60
+      return `${min}:${sec.toFixed(2).padStart(5, '0')}`
+    } else {
+      return value.toFixed(2)
+    }
   }
-  return 'all'
+
+  // Field disciplines: just meters to 2 decimals
+  return value.toFixed(2)
 }
 
-function metricColor(key: string): string {
-  const cat = CATEGORIES.find((c) => c.prefixes?.some((p) => key.startsWith(p) || key === p))
-  return cat?.color || colors.orange[400]
+// ── Landing: Discipline Picker ───────────────────────────────────────────────
+function DisciplinePicker({
+  performances,
+  onSelectDiscipline,
+}: {
+  performances: any[]
+  onSelectDiscipline: (discipline: string) => void
+}) {
+  const { profile } = useAuth()
+
+  // Group performances by discipline and get stats
+  const disciplineStats = useMemo(() => {
+    const grouped: Record<string, any[]> = {}
+    for (const p of performances) {
+      if (!grouped[p.discipline]) grouped[p.discipline] = []
+      grouped[p.discipline].push(p)
+    }
+
+    return Object.entries(grouped).map(([discipline, marks]) => {
+      const values = marks.map((m: any) => parseFloat(m.mark)).filter(Number.isFinite)
+      const lower = isLowerBetter(discipline)
+      const pb = lower ? Math.min(...values) : Math.max(...values)
+      const age = profile?.dob
+        ? Math.floor((Date.now() - new Date(profile.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        : null
+      const ageGroup = age ? getAgeGroup(age) : 'Senior'
+      const sex = (profile?.sex || 'M') as string
+      const tier = getTier(discipline, sex, ageGroup, pb)
+
+      return {
+        discipline,
+        pb,
+        count: marks.length,
+        tier,
+        age,
+        ageGroup,
+        sex,
+      }
+    })
+  }, [performances, profile])
+
+  if (disciplineStats.length === 0) {
+    return (
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <EmptyState
+          icon="🏃"
+          title="No competition data yet"
+          subtitle="Log your first race in the Log tab to see your trajectory analysis."
+        />
+      </ScrollView>
+    )
+  }
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      {disciplineStats.map((stat) => (
+        <TouchableOpacity
+          key={stat.discipline}
+          onPress={() => onSelectDiscipline(stat.discipline)}
+          activeOpacity={0.7}
+        >
+          <AlmanacCard
+            kicker={stat.ageGroup}
+            title={stat.discipline}
+            number={`${stat.count} race${stat.count !== 1 ? 's' : ''}`}
+            accent={stat.tier?.color || colors.orange[500]}
+          >
+            <View style={styles.disciplineCardContent}>
+              <View style={styles.pbSection}>
+                <Text style={styles.pbLabel}>PB</Text>
+                <Text style={[styles.pbValue, { color: stat.tier?.color || colors.orange[500] }]}>
+                  {formatPerformance(stat.pb, stat.discipline)}
+                </Text>
+              </View>
+
+              <View style={styles.tierSection}>
+                <View style={[styles.tierBadge, { backgroundColor: stat.tier?.color + '20' }]}>
+                  <Text style={[styles.tierLabel, { color: stat.tier?.color }]}>
+                    {stat.tier?.tierName || 'Unrated'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </AlmanacCard>
+        </TouchableOpacity>
+      ))}
+
+      <View style={{ height: 24 }} />
+    </ScrollView>
+  )
 }
 
-function metricCategoryLabel(key: string): string {
-  const cat = CATEGORIES.find((c) => c.prefixes?.some((p) => key.startsWith(p) || key === p))
-  return cat?.label || 'General'
+// ── Detail: Tier Positioning ─────────────────────────────────────────────────
+function TierPositioningSection({
+  discipline,
+  pb,
+  age,
+  sex,
+}: {
+  discipline: string
+  pb: number
+  age: number | null
+  sex: string
+}) {
+  const ageGroup = age ? getAgeGroup(age) : 'Senior'
+  const tier = getTier(discipline, sex, ageGroup, pb)
+  const percentile = performancePercentile(pb, discipline, sex)
+  const lower = isLowerBetter(discipline)
+
+  if (!tier) return null
+
+  return (
+    <HeroCard>
+      <View style={styles.tierSection}>
+        <Text style={styles.pbDisplay}>{formatPerformance(pb, discipline)}</Text>
+        <View style={[styles.tierBadgeLarge, { backgroundColor: tier.color + '20' }]}>
+          <Text style={[styles.tierNameLarge, { color: tier.color }]}>{tier.tierName}</Text>
+          <Text style={[styles.tierShortLarge, { color: tier.color }]}>{TIER_SHORT[tier.tier]}</Text>
+        </View>
+      </View>
+
+      <View style={styles.tierStats}>
+        <View style={styles.tierStat}>
+          <Text style={styles.tierStatLabel}>Percentile</Text>
+          <Text style={styles.tierStatValue}>{percentile}%</Text>
+        </View>
+        <View style={styles.tierStatDivider} />
+        <View style={styles.tierStat}>
+          <Text style={styles.tierStatLabel}>Age Group</Text>
+          <Text style={styles.tierStatValue}>{ageGroup}</Text>
+        </View>
+        {tier.nextTier && (
+          <>
+            <View style={styles.tierStatDivider} />
+            <View style={styles.tierStat}>
+              <Text style={styles.tierStatLabel}>To {TIER_NAMES[tier.nextTier]}</Text>
+              <Text style={[styles.tierStatValue, { color: tier.nextCut ? colors.orange[500] : colors.text.muted }]}>
+                {tier.gap ? `${lower ? '+' : '-'}${Math.abs(tier.gap).toFixed(2)}` : '—'}
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Tier visual ladder */}
+      <View style={styles.tierLadderContainer}>
+        <View style={styles.tierLadder}>
+          {[1, 2, 3, 4, 5, 6, ...(ageGroup === 'Senior' ? [7] : [])].map((t) => (
+            <View
+              key={t}
+              style={[
+                styles.tierRung,
+                {
+                  backgroundColor: tier.tier >= t ? TIER_COLORS[t] : 'rgba(255,255,255,0.05)',
+                  opacity: tier.tier >= t ? 1 : 0.3,
+                },
+              ]}
+            />
+          ))}
+        </View>
+        <View style={styles.tierLadderLabels}>
+          <Text style={styles.tierLadderLabel}>T1</Text>
+          <Text style={styles.tierLadderLabel}>{ageGroup === 'Senior' ? 'T7' : 'T6'}</Text>
+        </View>
+      </View>
+    </HeroCard>
+  )
 }
 
+// ── Similar Athletes ─────────────────────────────────────────────────────────
+function SimilarAthletesSection({
+  discipline,
+  pb,
+  age,
+  sex,
+}: {
+  discipline: string
+  pb: number
+  age: number | null
+  sex: string
+}) {
+  const [similar, setSimilar] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const loadSimilarAthletes = async () => {
+      if (!age) return
+      setLoading(true)
+      try {
+        const eventCode = getDisciplineEventCode(discipline, sex)
+        if (!eventCode) {
+          setSimilar([])
+          setLoading(false)
+          return
+        }
+
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/rpc/find_similar_athletes`,
+          {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              p_discipline_code: eventCode,
+              p_pb: pb,
+              p_age: age,
+              p_limit: 3,
+            }),
+          }
+        )
+
+        if (response.ok) {
+          const data = await response.json()
+          setSimilar(data || [])
+        }
+      } catch (e) {
+        console.warn('Similar athletes load:', e)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSimilarAthletes()
+  }, [discipline, pb, age, sex])
+
+  if (loading) {
+    return (
+      <AlmanacCard kicker="BENCHMARKS" title="Similar Athletes" accent={colors.orange[500]}>
+        <ActivityIndicator color={colors.orange[500]} />
+      </AlmanacCard>
+    )
+  }
+
+  if (similar.length === 0) {
+    return null
+  }
+
+  return (
+    <AlmanacCard kicker="BENCHMARKS" title="Similar Athletes" accent={colors.orange[500]}>
+      {similar.map((athlete: any, idx: number) => (
+        <View key={idx} style={styles.similarAthleteRow}>
+          <View>
+            <Text style={styles.similarAthleteName}>{athlete.athlete_name || 'Athlete'}</Text>
+            <Text style={styles.similarAthleteCountry}>{athlete.country || '—'}</Text>
+          </View>
+          <View style={styles.similarAthletePb}>
+            <Text style={styles.similarAthletePbValue}>{formatPerformance(athlete.pb, discipline)}</Text>
+            {athlete.age && (
+              <Text style={styles.similarAthleteAge}>Age {athlete.age}</Text>
+            )}
+          </View>
+        </View>
+      ))}
+    </AlmanacCard>
+  )
+}
+
+// ── Improvement Scenarios ────────────────────────────────────────────────────
+function ImprovementScenariosSection({
+  discipline,
+  pb,
+  age,
+  sex,
+}: {
+  discipline: string
+  pb: number
+  age: number | null
+  sex: string
+}) {
+  const projections = useMemo(() => {
+    if (!pb || !age) return null
+    try {
+      const result = projectAllTrajectories(
+        pb,
+        age,
+        discipline,
+        sex === 'F' ? 'female' : 'male'
+      )
+      if (!result?.steady?.length || result.steady.length < 2) return null
+      return result
+    } catch {
+      return null
+    }
+  }, [pb, age, discipline, sex])
+
+  if (!projections) return null
+
+  const lower = isLowerBetter(discipline)
+
+  const scenarios = [
+    {
+      name: 'Conservative',
+      label: 'Late Bloomer',
+      data: projections.late,
+      color: '#a78bfa',
+    },
+    {
+      name: 'Steady',
+      label: 'Consistent Progress',
+      data: projections.steady,
+      color: colors.orange[400],
+    },
+    {
+      name: 'Aggressive',
+      label: 'Early Peaker',
+      data: projections.early,
+      color: '#22d3ee',
+    },
+  ]
+
+  return (
+    <AlmanacCard kicker="FUTURE" title="Improvement Scenarios" accent={colors.orange[500]}>
+      {scenarios.map((scenario) => {
+        const peakPoint = scenario.data.reduce((best: any, pt: any) =>
+          !best ? pt : (lower ? (pt.projected < best.projected ? pt : best) : (pt.projected > best.projected ? pt : best)),
+          null
+        )
+
+        if (!peakPoint) return null
+
+        return (
+          <View key={scenario.name} style={styles.scenarioCard}>
+            <View style={styles.scenarioHeader}>
+              <View>
+                <Text style={[styles.scenarioName, { color: scenario.color }]}>{scenario.label}</Text>
+                <Text style={styles.scenarioAge}>Peak at age {peakPoint.age}</Text>
+              </View>
+              <Text style={[styles.scenarioPb, { color: scenario.color }]}>
+                {formatPerformance(peakPoint.projected, discipline)}
+              </Text>
+            </View>
+
+            {peakPoint && (
+              <View style={styles.scenarioStats}>
+                <View style={styles.scenarioStat}>
+                  <Text style={styles.scenarioStatLabel}>Improvement</Text>
+                  <Text style={[styles.scenarioStatValue, { color: colors.green }]}>
+                    {lower
+                      ? `-${(pb - peakPoint.projected).toFixed(2)}`
+                      : `+${(peakPoint.projected - pb).toFixed(2)}`}
+                  </Text>
+                </View>
+                <View style={styles.scenarioStatDivider} />
+                <View style={styles.scenarioStat}>
+                  <Text style={styles.scenarioStatLabel}>Peak Tier</Text>
+                  <Text style={styles.scenarioStatValue}>
+                    {getTier(discipline, sex, getAgeGroup(peakPoint.age), peakPoint.projected)?.tierName || '—'}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )
+      })}
+    </AlmanacCard>
+  )
+}
+
+// ── Competition Ladder ───────────────────────────────────────────────────────
+function CompetitionLadderSection({
+  discipline,
+  pb,
+  sex,
+}: {
+  discipline: string
+  pb: number
+  sex: string
+}) {
+  const zones = qualifierZones(discipline, sex)
+  const lower = isLowerBetter(discipline)
+
+  const rungs = [
+    { label: 'Development', threshold: zones.qualifier, target: zones.qualifier },
+    { label: 'Qualifier', threshold: zones.semifinalist, target: zones.semifinalist },
+    { label: 'Semifinalist', threshold: zones.finalist, target: zones.finalist },
+    { label: 'Finalist', threshold: zones.optimal, target: zones.optimal },
+  ]
+
+  return (
+    <AlmanacCard kicker="COMPETITIONS" title="Competition Ladder" accent={colors.orange[500]}>
+      {rungs.map((rung, idx) => {
+        const isMet = lower ? pb <= rung.threshold : pb >= rung.threshold
+        const gap = lower
+          ? rung.threshold - pb
+          : pb - rung.threshold
+
+        return (
+          <View key={idx} style={styles.ladderRung}>
+            <View style={styles.ladderRungleft}>
+              <View
+                style={[
+                  styles.ladderCheckmark,
+                  { backgroundColor: isMet ? colors.green : 'rgba(255,255,255,0.1)' },
+                ]}
+              >
+                {isMet && <Ionicons name="checkmark" size={16} color="white" />}
+              </View>
+              <Text style={[styles.ladderLabel, isMet && { color: colors.orange[500], fontWeight: '700' }]}>
+                {rung.label}
+              </Text>
+            </View>
+            <View style={styles.ladderRight}>
+              <Text style={styles.ladderThreshold}>{formatPerformance(rung.threshold, discipline)}</Text>
+              {!isMet && gap !== 0 && (
+                <Text style={styles.ladderGap}>
+                  {lower ? '+' : '-'}{Math.abs(gap).toFixed(2)} away
+                </Text>
+              )}
+              {isMet && <Text style={{ color: colors.green, fontSize: 12, fontWeight: '600' }}>Achieved</Text>}
+            </View>
+          </View>
+        )
+      })}
+    </AlmanacCard>
+  )
+}
+
+// ── Main Screen ──────────────────────────────────────────────────────────────
 export default function TrajectoryScreen() {
   const { user, profile } = useAuth()
-  const [allLogs, setAllLogs] = useState<any[]>([])
   const [performances, setPerformances] = useState<any[]>([])
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
   const loadData = async () => {
     if (!user) return
     try {
-      const [logs, perfs] = await Promise.all([
-        selectFrom('athlete_metrics', {
-          filter: `athlete_id=eq.${user.id}`,
-          order: 'recorded_at.desc',
-          limit: '1000',
-        }),
-        selectFrom('performances', {
-          filter: `user_id=eq.${user.id}`,
-          order: 'competition_date.desc',
-          limit: '50',
-        }).catch(() => []),
-      ])
-      setAllLogs(logs || [])
+      const perfs = await selectFrom('performances', {
+        filter: `user_id=eq.${user.id}`,
+        order: 'competition_date.desc',
+        limit: '100',
+      }).catch(() => [])
       setPerformances(perfs || [])
     } catch (e) {
       console.warn('Trajectory load:', e)
     }
   }
 
-  useEffect(() => { loadData() }, [user])
+  useEffect(() => {
+    loadData()
+  }, [user])
 
-  // Reload when tab comes into focus
   const navigation = useNavigation()
   useEffect(() => {
-    const unsub = navigation.addListener('focus', () => { loadData() })
+    const unsub = navigation.addListener('focus', () => {
+      loadData()
+    })
     return unsub
   }, [navigation])
 
@@ -117,667 +578,229 @@ export default function TrajectoryScreen() {
     setRefreshing(false)
   }
 
-  // Group by metric_key
-  const grouped = useMemo(() => {
-    const g: Record<string, any[]> = {}
-    for (const log of allLogs) {
-      if (!g[log.metric_key]) g[log.metric_key] = []
-      g[log.metric_key].push(log)
-    }
-    return g
-  }, [allLogs])
+  const selectedPerformances = useMemo(
+    () => performances.filter((p) => p.discipline === selectedDiscipline),
+    [performances, selectedDiscipline]
+  )
 
-  // Filter by active category
-  const filteredKeys = useMemo(() => {
-    const keys = Object.keys(grouped).sort()
-    if (activeFilter === 'all') return keys
-    return keys.filter((k) => metricCategory(k) === activeFilter)
-  }, [grouped, activeFilter])
-
-  // Summary stats
-  const totalMetrics = Object.keys(grouped).length
-  const totalEntries = allLogs.length
-  // Compute PB count client-side (is_pb not in DB)
-  const pbKeys = new Set<string>()
-  const pbTracker: Record<string, number> = {}
-  for (const l of allLogs) {
-    const k = l.metric_key
-    const v = parseFloat(l.value)
-    const lower = LOWER_IS_BETTER.has(k)
-    if (!(k in pbTracker) || (lower ? v < pbTracker[k] : v > pbTracker[k])) {
-      pbTracker[k] = v
-    }
-  }
-  const pbCount = Object.keys(pbTracker).length
-
-  const activeCat = CATEGORIES.find((c) => c.key === activeFilter)
-
-  // ── Improvement Curve Projection ──
-  const discipline = profile?.primary_discipline || performances[0]?.discipline || null
-  const sex = (profile?.sex || 'M') as string
-  const dob = profile?.dob || profile?.date_of_birth || null
-  const currentAge = dob
-    ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : null
-
-  // Get PB from performances
-  const competitionPb = useMemo(() => {
-    if (!performances.length || !discipline) return null
-    const marks = performances
-      .filter((p: any) => p.discipline === discipline)
-      .map((p: any) => parseFloat(p.mark))
+  const selectedPb = useMemo(() => {
+    if (!selectedPerformances.length) return null
+    const values = selectedPerformances
+      .map((p) => parseFloat(p.mark))
       .filter(Number.isFinite)
-    if (!marks.length) return null
-    const lower = isLowerBetter(discipline)
-    return lower ? Math.min(...marks) : Math.max(...marks)
-  }, [performances, discipline])
+    if (!values.length) return null
+    const lower = isLowerBetter(selectedDiscipline!)
+    return lower ? Math.min(...values) : Math.max(...values)
+  }, [selectedPerformances, selectedDiscipline])
 
-  const projections = useMemo(() => {
-    if (!competitionPb || !currentAge || !discipline) return null
-    try {
-      const result = projectAllTrajectories(competitionPb, currentAge, discipline, sex === 'F' ? 'female' : 'male')
-      // Verify we got useful data
-      if (!result.steady?.length || result.steady.length < 2) return null
-      return result
-    } catch {
-      return null
-    }
-  }, [competitionPb, currentAge, discipline, sex])
+  const sex = (profile?.sex || 'M') as string
+  const age = profile?.dob
+    ? Math.floor((Date.now() - new Date(profile.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : null
 
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <MonoKicker>PERFORMANCE OVER TIME</MonoKicker>
-        <Text style={styles.title}>Trajectory</Text>
+        {selectedDiscipline && (
+          <TouchableOpacity onPress={() => setSelectedDiscipline(null)} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+        )}
+        <View style={{ flex: 1 }}>
+          <MonoKicker>
+            {selectedDiscipline ? 'PERFORMANCE ANALYSIS' : 'YOUR PERFORMANCE STORY'}
+          </MonoKicker>
+          <Text style={styles.title}>{selectedDiscipline || 'Trajectory'}</Text>
+        </View>
       </View>
 
-      {/* Category pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.pillRow}
-      >
-        {CATEGORIES.map((cat) => {
-          const isActive = activeFilter === cat.key
-          return (
-            <TouchableOpacity
-              key={cat.key}
-              style={[
-                styles.pill,
-                isActive && {
-                  backgroundColor: cat.color + '15',
-                  borderColor: cat.color + '50',
-                },
-              ]}
-              onPress={() => setActiveFilter(cat.key)}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={(cat as any).icon as any}
-                size={13}
-                color={isActive ? cat.color : colors.text.dimmed}
-              />
-              <Text
-                style={[
-                  styles.pillText,
-                  isActive && { color: cat.color },
-                ]}
-              >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          )
-        })}
-      </ScrollView>
+      {/* Content */}
+      {selectedDiscipline && selectedPb ? (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.orange[500]} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <TierPositioningSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.orange[500]} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Summary strip */}
-        {totalEntries > 0 && (
-          <HeroCard style={{ marginBottom: spacing.md }}>
-            <View style={styles.summaryRow}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{totalMetrics}</Text>
-                <Text style={styles.summaryLabel}>METRICS</Text>
-              </View>
-              <View style={styles.summaryDivider} />
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{totalEntries}</Text>
-                <Text style={styles.summaryLabel}>ENTRIES</Text>
-              </View>
-              <View style={styles.summaryDivider} />
-              <View style={styles.summaryItem}>
-                <Text style={[styles.summaryValue, { color: colors.green }]}>{pbCount}</Text>
-                <Text style={styles.summaryLabel}>PBs</Text>
-              </View>
-            </View>
-          </HeroCard>
-        )}
+          <SimilarAthletesSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
 
-        {/* Improvement Curve Projections */}
-        {projections && discipline && (
-          <ProjectionCard
-            projections={projections}
-            discipline={discipline}
-            currentAge={currentAge!}
-            currentPb={competitionPb!}
-          />
-        )}
+          <ImprovementScenariosSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
 
-        {/* Metric trajectory cards */}
-        {filteredKeys.length === 0 ? (
-          <AlmanacCard kicker="NO DATA" title="Start logging" accent={colors.text.muted}>
-            <EmptyState
-              icon="📈"
-              title="No trajectory data yet"
-              subtitle={
-                activeFilter === 'all'
-                  ? "Your trajectory builds from logged data. Start logging metrics to see your trends emerge."
-                  : `No ${activeCat?.label || activeFilter} metrics logged yet. Tap the Log tab to start.`
-              }
-            />
-          </AlmanacCard>
-        ) : (
-          filteredKeys.map((key) => (
-            <MetricTrajectoryCard
-              key={key}
-              metricKey={key}
-              logs={grouped[key]}
-            />
-          ))
-        )}
+          <CompetitionLadderSection discipline={selectedDiscipline} pb={selectedPb} sex={sex} />
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
+          <View style={{ height: 24 }} />
+        </ScrollView>
+      ) : (
+        <DisciplinePicker
+          performances={performances}
+          onSelectDiscipline={(d) => setSelectedDiscipline(d)}
+        />
+      )}
     </SafeAreaView>
   )
 }
 
-// ── Improvement Curve Projection Card ──
-function ProjectionCard({
-  projections,
-  discipline,
-  currentAge,
-  currentPb,
-}: {
-  projections: { early: any[]; steady: any[]; late: any[] }
-  discipline: string
-  currentAge: number
-  currentPb: number
-}) {
-  const [activeType, setActiveType] = useState<'early' | 'steady' | 'late'>('steady')
-  const fadeAnim = useState(new Animated.Value(0))[0]
-  const lower = isLowerBetter(discipline)
-  const chartW = SCREEN_W - 80
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start()
-  }, [])
-
-  const discLabel = discipline.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-
-  const trajectoryColors = {
-    early: '#22d3ee',   // cyan
-    steady: colors.orange[400],
-    late: '#a78bfa',    // purple
-  }
-
-  const trajectoryLabels = {
-    early: 'Early Peaker',
-    steady: 'Steady Progression',
-    late: 'Late Bloomer',
-  }
-
-  const activeData = projections[activeType] || []
-  const peakPoint = activeData.reduce((best: any, pt: any) =>
-    !best ? pt : (lower ? (pt.projected < best.projected ? pt : best) : (pt.projected > best.projected ? pt : best)),
-    null
-  )
-
-  // Build SVG path for all 3 trajectories
-  const buildPath = (data: any[]) => {
-    if (!data.length) return ''
-    const minAge = data[0].age
-    const maxAge = data[data.length - 1].age
-    const allValues = [...projections.early, ...projections.steady, ...projections.late].map((d) => d.projected)
-    const minVal = Math.min(...allValues)
-    const maxVal = Math.max(...allValues)
-    const valRange = maxVal - minVal || 1
-    const ageRange = maxAge - minAge || 1
-    const chartH = 120
-    const padX = 10
-
-    return data.map((pt, i) => {
-      const x = padX + ((pt.age - minAge) / ageRange) * (chartW - padX * 2)
-      const yNorm = (pt.projected - minVal) / valRange
-      const y = lower ? yNorm * chartH : (1 - yNorm) * chartH
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${(y + 10).toFixed(1)}`
-    }).join(' ')
-  }
-
-  // Confidence band for active trajectory
-  const buildBand = (data: any[]) => {
-    if (!data.length) return ''
-    const minAge = data[0].age
-    const maxAge = data[data.length - 1].age
-    const allValues = [...projections.early, ...projections.steady, ...projections.late].map((d) => d.projected)
-    const minVal = Math.min(...allValues)
-    const maxVal = Math.max(...allValues)
-    const valRange = maxVal - minVal || 1
-    const ageRange = maxAge - minAge || 1
-    const chartH = 120
-    const padX = 10
-
-    const topPoints = data.map((pt) => {
-      const x = padX + ((pt.age - minAge) / ageRange) * (chartW - padX * 2)
-      const yNorm = ((pt.p75 || pt.projected) - minVal) / valRange
-      const y = lower ? yNorm * chartH : (1 - yNorm) * chartH
-      return `${x.toFixed(1)},${(y + 10).toFixed(1)}`
-    })
-    const bottomPoints = [...data].reverse().map((pt) => {
-      const x = padX + ((pt.age - minAge) / ageRange) * (chartW - padX * 2)
-      const yNorm = ((pt.p25 || pt.projected) - minVal) / valRange
-      const y = lower ? yNorm * chartH : (1 - yNorm) * chartH
-      return `${x.toFixed(1)},${(y + 10).toFixed(1)}`
-    })
-    return `M${topPoints.join(' L')} L${bottomPoints.join(' L')} Z`
-  }
-
-  // Age labels for x-axis
-  const ages = activeData.length > 0
-    ? [activeData[0].age, activeData[Math.floor(activeData.length / 2)]?.age, activeData[activeData.length - 1].age]
-    : []
-
-  return (
-    <Animated.View style={{ opacity: fadeAnim }}>
-      <AlmanacCard
-        kicker="CAREER PROJECTION"
-        title={`${discLabel} — Where Are You Headed?`}
-        accent={trajectoryColors[activeType]}
-      >
-        {/* Trajectory toggle */}
-        <View style={projStyles.toggleRow}>
-          {(['early', 'steady', 'late'] as const).map((type) => {
-            const isActive = activeType === type
-            return (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  projStyles.toggleBtn,
-                  isActive && { backgroundColor: trajectoryColors[type] + '20', borderColor: trajectoryColors[type] + '60' },
-                ]}
-                onPress={() => setActiveType(type)}
-                activeOpacity={0.7}
-              >
-                <View style={[projStyles.toggleDot, { backgroundColor: trajectoryColors[type] }]} />
-                <Text style={[projStyles.toggleLabel, isActive && { color: trajectoryColors[type] }]}>
-                  {type === 'early' ? 'Early' : type === 'steady' ? 'Steady' : 'Late'}
-                </Text>
-              </TouchableOpacity>
-            )
-          })}
-        </View>
-
-        {/* SVG Chart */}
-        <View style={projStyles.chartContainer}>
-          <svg width={chartW} height={145} viewBox={`0 0 ${chartW} 145`}>
-            {/* Confidence band for active trajectory */}
-            <path d={buildBand(activeData)} fill={trajectoryColors[activeType] + '12'} />
-
-            {/* All 3 trajectory lines */}
-            {(['early', 'steady', 'late'] as const).map((type) => (
-              <path
-                key={type}
-                d={buildPath(projections[type])}
-                fill="none"
-                stroke={trajectoryColors[type]}
-                strokeWidth={type === activeType ? 2.5 : 1}
-                strokeOpacity={type === activeType ? 1 : 0.25}
-                strokeDasharray={type === activeType ? undefined : '4,4'}
-              />
-            ))}
-
-            {/* Current PB dot */}
-            {activeData.length > 0 && (() => {
-              const minAge = activeData[0].age
-              const maxAge = activeData[activeData.length - 1].age
-              const allValues = [...projections.early, ...projections.steady, ...projections.late].map((d) => d.projected)
-              const minVal = Math.min(...allValues)
-              const maxVal = Math.max(...allValues)
-              const valRange = maxVal - minVal || 1
-              const ageRange = maxAge - minAge || 1
-              const padX = 10
-              const x = padX + ((currentAge - minAge) / ageRange) * (chartW - padX * 2)
-              const yNorm = (currentPb - minVal) / valRange
-              const y = lower ? yNorm * 120 : (1 - yNorm) * 120
-              return (
-                <>
-                  <circle cx={x} cy={y + 10} r={5} fill={colors.orange[400]} stroke="white" strokeWidth={2} />
-                  <text x={x} y={y} fill="white" fontSize={9} textAnchor="middle" fontWeight="bold">NOW</text>
-                </>
-              )
-            })()}
-          </svg>
-
-          {/* Age labels */}
-          <View style={projStyles.ageRow}>
-            {ages.map((age, i) => (
-              <Text key={i} style={projStyles.ageLabel}>Age {age}</Text>
-            ))}
-          </View>
-        </View>
-
-        {/* Stats row */}
-        <View style={projStyles.statsRow}>
-          <View style={projStyles.statBox}>
-            <Text style={projStyles.statKicker}>CURRENT PB</Text>
-            <Text style={[projStyles.statVal, { color: colors.orange[400] }]}>{currentPb}</Text>
-          </View>
-          {peakPoint && (
-            <View style={projStyles.statBox}>
-              <Text style={projStyles.statKicker}>PROJECTED PEAK</Text>
-              <Text style={[projStyles.statVal, { color: trajectoryColors[activeType] }]}>
-                {peakPoint.projected.toFixed(2)}
-              </Text>
-              <Text style={projStyles.statSub}>Age {peakPoint.age}</Text>
-            </View>
-          )}
-          {peakPoint && (
-            <View style={projStyles.statBox}>
-              <Text style={projStyles.statKicker}>IMPROVEMENT</Text>
-              <Text style={[projStyles.statVal, { color: colors.green }]}>
-                {lower
-                  ? `-${(currentPb - peakPoint.projected).toFixed(2)}`
-                  : `+${(peakPoint.projected - currentPb).toFixed(2)}`}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Insight blurb */}
-        <View style={projStyles.insightRow}>
-          <Ionicons name="bulb-outline" size={14} color={trajectoryColors[activeType]} />
-          <Text style={projStyles.insightText}>
-            {activeType === 'early'
-              ? 'Early peakers see rapid gains in their early 20s but plateau sooner. Typical for athletes with a natural talent base.'
-              : activeType === 'steady'
-              ? 'Steady progression follows a consistent improvement curve with gradual gains over a longer career arc.'
-              : 'Late bloomers often accelerate in their mid-to-late 20s, improving through accumulated training volume and technical mastery.'}
-          </Text>
-        </View>
-      </AlmanacCard>
-    </Animated.View>
-  )
-}
-
-const projStyles = StyleSheet.create({
-  toggleRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: spacing.md,
-  },
-  toggleBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
-  },
-  toggleDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  toggleLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.text.secondary,
-    letterSpacing: 0.5,
-  },
-  chartContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  ageRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 10,
-    marginTop: 4,
-  },
-  ageLabel: {
-    fontSize: 9,
-    color: colors.text.dimmed,
-    fontWeight: '600',
-    letterSpacing: 1,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.04)',
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statKicker: {
-    fontSize: 8,
-    letterSpacing: 1.5,
-    color: colors.text.dimmed,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  statVal: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text.primary,
-  },
-  statSub: {
-    fontSize: 10,
-    color: colors.text.muted,
-    marginTop: 1,
-  },
-  insightRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginTop: spacing.md,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.04)',
-  },
-  insightText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.text.secondary,
-    lineHeight: 17,
-  },
-})
-
-// ── Per-metric trajectory card ──
-function MetricTrajectoryCard({ metricKey, logs }: { metricKey: string; logs: any[] }) {
-  const lower = LOWER_IS_BETTER.has(metricKey)
-  const color = metricColor(metricKey)
-  const label = metricKey.replace(/_/g, ' ')
-  const catLabel = metricCategoryLabel(metricKey)
-  const unit = logs[0]?.unit || ''
-
-  const values = logs.map((l) => parseFloat(l.value))
-  const latest = values[0]
-  const oldest = values[values.length - 1]
-  const trend = latest - (values[1] ?? latest)
-
-  // Overall change
-  const overallChange = latest - oldest
-  const overallPct = oldest !== 0 ? ((overallChange / oldest) * 100) : 0
-  const isImproving = lower ? overallChange < 0 : overallChange > 0
-
-  // Best value
-  const best = lower ? Math.min(...values) : Math.max(...values)
-
-  // Chart data (chronological)
-  const chartData = [...logs]
-    .reverse()
-    .map((l) => ({
-      value: parseFloat(l.value),
-      date: l.recorded_at,
-      isPB: false, // computed visually from best value
-    }))
-
-  return (
-    <AlmanacCard
-      kicker={catLabel}
-      title={label}
-      number={`${logs.length}`}
-      accent={color}
-    >
-      {/* Latest + Best row */}
-      <View style={styles.cardStatsRow}>
-        <View>
-          <Text style={styles.cardStatLabel}>LATEST</Text>
-          <Text style={[styles.cardStatValue, { color }]}>
-            {latest}
-            <Text style={styles.cardStatUnit}> {unit}</Text>
-          </Text>
-        </View>
-        <TrendArrow value={trend} inverted={lower} />
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={styles.cardStatLabel}>BEST</Text>
-          <Text style={[styles.cardStatValue, { color: colors.green }]}>
-            {best}
-            <Text style={styles.cardStatUnit}> {unit}</Text>
-          </Text>
-        </View>
-      </View>
-
-      {/* Chart */}
-      {chartData.length >= 2 && (
-        <View style={styles.chartWrap}>
-          <LineChart
-            data={chartData}
-            color={color}
-            height={100}
-            width={SCREEN_W - 80}
-            showArea
-            showDots={chartData.length <= 20}
-            showPBs
-            lowerIsBetter={lower}
-          />
-        </View>
-      )}
-
-      {/* Overall change */}
-      {logs.length >= 2 && (
-        <View style={styles.overallRow}>
-          <View style={styles.overallLeft}>
-            <Ionicons
-              name={isImproving ? 'trending-up' : 'trending-down'}
-              size={14}
-              color={isImproving ? colors.green : colors.red}
-            />
-            <Text style={styles.overallLabel}>Overall</Text>
-          </View>
-          <Text
-            style={[
-              styles.overallValue,
-              { color: isImproving ? colors.green : colors.red },
-            ]}
-          >
-            {overallChange >= 0 ? '+' : ''}{overallChange.toFixed(2)} {unit} ({overallPct >= 0 ? '+' : ''}{overallPct.toFixed(1)}%)
-          </Text>
-        </View>
-      )}
-    </AlmanacCard>
-  )
-}
-
-// ── Styles ──────────────────────────────────────────────────────────────
+// ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg.primary },
-  header: { padding: spacing.lg, paddingBottom: spacing.sm },
+  header: {
+    padding: spacing.lg,
+    paddingBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  backBtn: {
+    padding: spacing.sm,
+    marginLeft: -spacing.sm,
+  },
   title: { fontSize: 26, fontWeight: '700', color: colors.text.primary, marginTop: 4 },
 
-  pillRow: { paddingHorizontal: spacing.lg, gap: 8, paddingBottom: spacing.md },
-  pill: {
+  content: { padding: spacing.lg, paddingTop: spacing.md },
+
+  // Discipline picker
+  disciplineCardContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    gap: spacing.md,
   },
-  pillText: { fontSize: 12, fontWeight: '600', color: colors.text.secondary },
+  pbSection: { alignItems: 'center' },
+  pbLabel: { fontSize: 10, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
+  pbValue: { fontSize: 20, fontWeight: '700' },
 
-  content: { padding: spacing.lg, paddingTop: 0 },
+  tierSection: { alignItems: 'center' },
+  tierBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+  },
+  tierLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
 
-  // Summary row
-  summaryRow: { flexDirection: 'row', alignItems: 'center' },
-  summaryItem: { flex: 1, alignItems: 'center' },
-  summaryValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text.primary,
-    letterSpacing: -0.5,
+  // Tier positioning
+  pbDisplay: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: colors.orange[500],
+    letterSpacing: -2,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
   },
-  summaryLabel: {
-    fontSize: 8,
-    letterSpacing: 2,
-    color: 'rgba(255,255,255,0.45)',
-    fontWeight: '600',
-    marginTop: 3,
+  tierBadgeLarge: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
-  summaryDivider: {
+  tierNameLarge: { fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
+  tierShortLarge: { fontSize: 14, fontWeight: '600', marginTop: spacing.xs },
+
+  tierStats: {
+    flexDirection: 'row',
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.04)',
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+    marginBottom: spacing.lg,
+  },
+  tierStat: { flex: 1, alignItems: 'center' },
+  tierStatLabel: { fontSize: 9, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
+  tierStatValue: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
+  tierStatDivider: {
     width: 1,
-    height: 24,
+    height: 32,
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
 
-  // Trajectory card stats
-  cardStatsRow: {
+  tierLadderContainer: { marginTop: spacing.md },
+  tierLadder: { flexDirection: 'row', gap: 4, marginBottom: spacing.sm },
+  tierRung: {
+    flex: 1,
+    height: 8,
+    borderRadius: radius.full,
+  },
+  tierLadderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  tierLadderLabel: { fontSize: 9, color: colors.text.dimmed, fontWeight: '600' },
+
+  // Similar athletes
+  similarAthleteRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+  },
+  similarAthleteName: { fontSize: 14, fontWeight: '700', color: colors.text.primary, marginBottom: 2 },
+  similarAthleteCountry: { fontSize: 12, color: colors.text.dimmed },
+  similarAthletePb: { alignItems: 'flex-end' },
+  similarAthletePbValue: { fontSize: 16, fontWeight: '700', color: colors.orange[500] },
+  similarAthleteAge: { fontSize: 10, color: colors.text.muted, marginTop: 2 },
+
+  // Improvement scenarios
+  scenarioCard: {
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.04)',
+  },
+  scenarioHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
-  cardStatLabel: {
-    fontSize: 9,
-    letterSpacing: 1.5,
-    color: colors.text.dimmed,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  cardStatValue: { fontSize: 22, fontWeight: '700', color: colors.text.primary },
-  cardStatUnit: { fontSize: 12, fontWeight: '400', color: colors.text.muted },
+  scenarioName: { fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  scenarioAge: { fontSize: 12, color: colors.text.muted },
+  scenarioPb: { fontSize: 18, fontWeight: '700', textAlign: 'right' },
 
-  chartWrap: { marginVertical: spacing.sm, alignItems: 'center' },
-
-  overallRow: {
+  scenarioStats: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.04)',
-    marginTop: spacing.sm,
   },
-  overallLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  overallLabel: { color: colors.text.muted, fontSize: 12, fontWeight: '600' },
-  overallValue: { fontSize: 13, fontWeight: '700' },
+  scenarioStat: { flex: 1, alignItems: 'center' },
+  scenarioStatLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
+  scenarioStatValue: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
+  scenarioStatDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+
+  // Competition ladder
+  ladderRung: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+  },
+  ladderRungleft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  ladderCheckmark: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ladderLabel: { fontSize: 14, color: colors.text.secondary, fontWeight: '600' },
+  ladderRight: { alignItems: 'flex-end' },
+  ladderThreshold: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
+  ladderGap: { fontSize: 11, color: colors.text.muted, marginTop: 2 },
 })

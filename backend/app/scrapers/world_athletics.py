@@ -294,9 +294,10 @@ class WorldAthleticsScraper(BaseScraper):
         """Scrape the current results table and return list of row dicts."""
         rows_data = []
         try:
+            # Use partial class match — the hash suffix changes on each WA deployment
             table = WebDriverWait(self._driver, 10).until(
                 EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "table.profileStatistics_table__1o71p")
+                    (By.CSS_SELECTOR, "table[class*='profileStatistics_table']")
                 )
             )
             rows = table.find_elements(By.TAG_NAME, "tr")
@@ -338,21 +339,21 @@ class WorldAthleticsScraper(BaseScraper):
         try:
             current_year_element = wait.until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, "athletesSelectInput__single-value")
+                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__single-value']")
                 )
             )
             current_year = current_year_element.text.strip()
 
             dropdown_arrow = wait.until(
                 EC.element_to_be_clickable(
-                    (By.CLASS_NAME, "athletesSelectInput__dropdown-indicator")
+                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__dropdown-indicator']")
                 )
             )
             dropdown_arrow.click()
             time.sleep(1)
 
             year_elements = self._driver.find_elements(
-                By.CLASS_NAME, "athletesSelectInput__option"
+                By.CSS_SELECTOR, "[class*='athletesSelectInput__option']"
             )
             all_years = [y.text.strip() for y in year_elements]
 
@@ -368,15 +369,16 @@ class WorldAthleticsScraper(BaseScraper):
         try:
             dropdown_arrow = wait.until(
                 EC.element_to_be_clickable(
-                    (By.CLASS_NAME, "athletesSelectInput__dropdown-indicator")
+                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__dropdown-indicator']")
                 )
             )
             dropdown_arrow.click()
             WebDriverWait(self._driver, 5).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, "athletesSelectInput__menu")
+                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__menu']")
                 )
             )
+            # Use partial class match — hash suffix changes on WA redeployment
             year_option = self._driver.find_element(
                 By.XPATH,
                 f"//div[contains(@class,'athletesSelectInput__option') and text()='{year}']",

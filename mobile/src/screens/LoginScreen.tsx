@@ -27,6 +27,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [role, setRole] = useState<'athlete' | 'coach'>('athlete')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -54,7 +55,7 @@ export default function LoginScreen() {
         if (e) setError(e.message)
       } else {
         if (!fullName.trim()) { setError('Name is required'); setLoading(false); return }
-        const { error: e } = await signUp(email.trim(), password, fullName.trim())
+        const { error: e } = await signUp(email.trim(), password, fullName.trim(), role)
         if (e) setError(e.message)
         else setError('Check your email for a verification link.')
       }
@@ -108,17 +109,36 @@ export default function LoginScreen() {
             ]}
           >
             {mode === 'signup' && (
-              <View style={styles.inputWrap}>
-                <Text style={styles.inputLabel}>FULL NAME</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your name"
-                  placeholderTextColor={colors.text.dimmed}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  autoCapitalize="words"
-                />
-              </View>
+              <>
+                <View style={styles.inputWrap}>
+                  <Text style={styles.inputLabel}>FULL NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your name"
+                    placeholderTextColor={colors.text.dimmed}
+                    value={fullName}
+                    onChangeText={setFullName}
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View style={styles.inputWrap}>
+                  <Text style={styles.inputLabel}>I AM A</Text>
+                  <View style={styles.roleRow}>
+                    {(['athlete', 'coach'] as const).map((r) => (
+                      <TouchableOpacity
+                        key={r}
+                        style={[styles.roleBtn, role === r && styles.roleBtnActive]}
+                        onPress={() => setRole(r)}
+                      >
+                        <Text style={[styles.roleText, role === r && styles.roleTextActive]}>
+                          {r === 'athlete' ? '🏃 Athlete' : '📋 Coach'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </>
             )}
 
             <View style={styles.inputWrap}>
@@ -329,5 +349,32 @@ const styles = StyleSheet.create({
   toggleHighlight: {
     color: colors.orange[400],
     fontWeight: '600',
+  },
+
+  // Role picker
+  roleRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  roleBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+  },
+  roleBtnActive: {
+    backgroundColor: colors.orange[500] + '15',
+    borderColor: colors.orange[500] + '40',
+  },
+  roleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.muted,
+  },
+  roleTextActive: {
+    color: colors.orange[500],
   },
 })

@@ -143,6 +143,17 @@ export default function ProfileScreen() {
   }
 
   const handleSignOut = () => {
+    if (typeof window !== 'undefined' && !window.confirm) {
+      // Fallback: just sign out directly on web if confirm unavailable
+      signOut()
+      return
+    }
+    if (typeof window !== 'undefined' && window.confirm) {
+      if (window.confirm('Are you sure you want to sign out?')) {
+        signOut()
+      }
+      return
+    }
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: signOut },
