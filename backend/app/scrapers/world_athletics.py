@@ -173,18 +173,29 @@ class WorldAthleticsScraper(BaseScraper):
         )
 
     def _create_driver(self):
-        """Create a headless Chrome instance."""
+        """Create a headless Chrome instance with anti-detection measures."""
         options = Options()
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
-        options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        # Anti-detection: prevent WA from identifying headless Chrome
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_argument(
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        )
         driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()),
             options=options,
         )
+        # Remove navigator.webdriver flag that headless Chrome sets
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        })
         driver.set_page_load_timeout(30)
         return driver
 
@@ -294,12 +305,20 @@ class WorldAthleticsScraper(BaseScraper):
         """Scrape the current results table and return list of row dicts."""
         rows_data = []
         try:
-            # Use partial class match — the hash suffix changes on each WA deployment
-            table = WebDriverWait(self._driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "table[class*='profileStatistics_table']")
+            # Try exact class first (matches working notebook), fall back to partial match
+            try:
+                table = WebDriverWait(self._driver, 5).until(
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "table.profileStatistics_table__1o71p")
+                    )
                 )
-            )
+            except TimeoutException:
+                # Hash may have changed — try partial match or any table in the section
+                table = WebDriverWait(self._driver, 10).until(
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "table[class*='profileStatistics_table'], table[class*='Table']")
+                    )
+                )
             rows = table.find_elements(By.TAG_NAME, "tr")
             if not rows:
                 return []
@@ -339,21 +358,21 @@ class WorldAthleticsScraper(BaseScraper):
         try:
             current_year_element = wait.until(
                 EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__single-value']")
+                    (By.CLASS_NAME, "athletesSelectInput__single-value")
                 )
             )
             current_year = current_year_element.text.strip()
 
             dropdown_arrow = wait.until(
                 EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__dropdown-indicator']")
+                    (By.CLASS_NAME, "athletesSelectInput__dropdown-indicator")
                 )
             )
             dropdown_arrow.click()
             time.sleep(1)
 
             year_elements = self._driver.find_elements(
-                By.CSS_SELECTOR, "[class*='athletesSelectInput__option']"
+                By.CLASS_NAME, "athletesSelectInput__option"
             )
             all_years = [y.text.strip() for y in year_elements]
 
@@ -369,13 +388,13 @@ class WorldAthleticsScraper(BaseScraper):
         try:
             dropdown_arrow = wait.until(
                 EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__dropdown-indicator']")
+                    (By.CLASS_NAME, "athletesSelectInput__dropdown-indicator")
                 )
             )
             dropdown_arrow.click()
             WebDriverWait(self._driver, 5).until(
                 EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "[class*='athletesSelectInput__menu']")
+                    (By.CLASS_NAME, "athletesSelectInput__menu")
                 )
             )
             # Use partial class match — hash suffix changes on WA redeployment
@@ -424,7 +443,7 @@ class WorldAthleticsScraper(BaseScraper):
             # ── Load profile ──
             await emit("loading", "Loading athlete profile...", 0.05)
             self._driver.get(url)
-            time.sleep(2)
+            time.sleep(4)  # Extra wait for headless — page renders slower without GPU
 
             self._close_cookie_banner(wait)
 
