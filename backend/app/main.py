@@ -5,6 +5,7 @@ Configures the FastAPI app with CORS, routes, database lifecycle,
 and health check endpoint.
 """
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -33,10 +34,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS middleware (allow all origins for development)
+# Configure CORS middleware.
+# Origins are read from the ALLOWED_ORIGINS env var (comma-separated).
+# Defaults to local dev origins so nothing breaks locally; set ALLOWED_ORIGINS
+# in production to your real domains, e.g.
+#   ALLOWED_ORIGINS=https://bnchmrkd.com,https://app.bnchmrkd.com
+_default_origins = "http://localhost:5173,http://localhost:3000,http://localhost:19006"
+allowed_origins = [
+    o.strip()
+    for o in os.environ.get("ALLOWED_ORIGINS", _default_origins).split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -10,6 +10,7 @@ import { PERFORMANCE_LEVELS, isTimeDiscipline } from './performanceLevels';
 export const TIER_COUNT_JUNIOR = 6;
 export const TIER_COUNT_SENIOR = 7;
 
+/** @type {Record<number, string>} */
 export const TIER_NAMES = {
   1: 'Emerging',      // Entry — age-group ~25th percentile
   2: 'Developing',    // Solid age-group competitor — ~60th percentile
@@ -20,12 +21,14 @@ export const TIER_NAMES = {
   7: 'World Class',   // Senior only — world-record-adjacent
 };
 
+/** @type {Record<number, string>} */
 export const TIER_SHORT = {
   1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7',
 };
 
 // Monochrome orange density. T1 dim ember → T7 blazing brand orange.
 // Intensity carries tier, hue stays constant — proprietary & brand-cohesive.
+/** @type {Record<number, string>} */
 export const TIER_COLORS = {
   1: '#3a1f0e',   // deepest bronze, almost black
   2: '#5a2d0f',
@@ -37,6 +40,7 @@ export const TIER_COLORS = {
 };
 
 // Opacity stops for building layered orange washes (used by cell backgrounds).
+/** @type {Record<number, number>} */
 export const TIER_OPACITY = {
   1: 0.08,
   2: 0.16,

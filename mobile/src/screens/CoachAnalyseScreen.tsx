@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
+import { useTheme } from '../contexts/ThemeContext'
 import { isLowerBetter } from '../lib/disciplineScience'
 import FullAnalysis from '../components/FullAnalysis'
 
@@ -132,6 +133,7 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachAnalyseScreen() {
+  const { colors: c } = useTheme()
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null)
   const [markInput, setMarkInput] = useState('')
   const [ageInput, setAgeInput] = useState('')
@@ -157,7 +159,7 @@ export default function CoachAnalyseScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
         {(selectedDiscipline || result) && (

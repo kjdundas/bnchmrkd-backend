@@ -1,18 +1,19 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// APP NAVIGATOR — Auth-gated, role-based navigation
+// APP NAVIGATOR — Auth-gated, role-based navigation with theme support
 // Logged out  → Login screen
 // Athlete     → Home, Log, Trajectory, Profile
 // Coach       → Roster, Results, Analyse, Profile
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Platform } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
-import { colors, spacing } from '../lib/theme'
+import { useTheme } from '../contexts/ThemeContext'
+import { spacing } from '../lib/theme'
 
 // Athlete screens
 import LoginScreen from '../screens/LoginScreen'
@@ -31,49 +32,30 @@ import AthleteDetailScreen from '../screens/AthleteDetailScreen'
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
 
-// Dark theme for NavigationContainer
-const DarkTheme = {
-  dark: true,
-  colors: {
-    primary: colors.orange[500],
-    background: colors.bg.primary,
-    card: colors.bg.secondary,
-    text: colors.text.primary,
-    border: 'rgba(255,255,255,0.06)',
-    notification: colors.orange[500],
-  },
-  fonts: {
-    regular: { fontFamily: 'System', fontWeight: '400' as const },
-    medium: { fontFamily: 'System', fontWeight: '500' as const },
-    bold: { fontFamily: 'System', fontWeight: '700' as const },
-    heavy: { fontFamily: 'System', fontWeight: '900' as const },
-  },
-}
-
-// Shared tab bar options
-const tabBarOptions = {
-  headerShown: false,
-  tabBarStyle: {
-    backgroundColor: colors.bg.secondary,
-    borderTopColor: 'rgba(255,255,255,0.06)',
-    borderTopWidth: 1,
-    height: Platform.OS === 'ios' ? 85 : 70,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-    paddingTop: 8,
-    elevation: 0,
-  },
-  tabBarActiveTintColor: colors.orange[500],
-  tabBarInactiveTintColor: colors.text.dimmed,
-  tabBarLabelStyle: {
-    fontSize: 10,
-    letterSpacing: 0.5,
-    fontWeight: '600' as const,
-    marginTop: 2,
-  },
-}
-
 // ── Athlete Tab Navigator ───────────────────────────────────────────────────
 function AthleteTabs() {
+  const { colors } = useTheme()
+  const tabBarOptions = useMemo(() => ({
+    headerShown: false,
+    tabBarStyle: {
+      backgroundColor: colors.tabBar.bg,
+      borderTopColor: colors.tabBar.border,
+      borderTopWidth: 1,
+      height: Platform.OS === 'ios' ? 85 : 70,
+      paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+      paddingTop: 8,
+      elevation: 0,
+    },
+    tabBarActiveTintColor: colors.tabBar.active,
+    tabBarInactiveTintColor: colors.tabBar.inactive,
+    tabBarLabelStyle: {
+      fontSize: 10,
+      letterSpacing: 0.5,
+      fontWeight: '600' as const,
+      marginTop: 2,
+    },
+  }), [colors])
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -98,6 +80,28 @@ function AthleteTabs() {
 
 // ── Coach Tab Navigator ─────────────────────────────────────────────────────
 function CoachTabs() {
+  const { colors } = useTheme()
+  const tabBarOptions = useMemo(() => ({
+    headerShown: false,
+    tabBarStyle: {
+      backgroundColor: colors.tabBar.bg,
+      borderTopColor: colors.tabBar.border,
+      borderTopWidth: 1,
+      height: Platform.OS === 'ios' ? 85 : 70,
+      paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+      paddingTop: 8,
+      elevation: 0,
+    },
+    tabBarActiveTintColor: colors.tabBar.active,
+    tabBarInactiveTintColor: colors.tabBar.inactive,
+    tabBarLabelStyle: {
+      fontSize: 10,
+      letterSpacing: 0.5,
+      fontWeight: '600' as const,
+      marginTop: 2,
+    },
+  }), [colors])
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -127,6 +131,25 @@ function CoachTabs() {
 // ── Main App Navigator ──────────────────────────────────────────────────────
 export default function AppNavigator() {
   const { session, profile, loading } = useAuth()
+  const { colors, isDark } = useTheme()
+
+  const navTheme = useMemo(() => ({
+    dark: isDark,
+    colors: {
+      primary: colors.orange[500],
+      background: colors.bg.primary,
+      card: colors.bg.secondary,
+      text: colors.text.primary,
+      border: colors.glass.border,
+      notification: colors.orange[500],
+    },
+    fonts: {
+      regular: { fontFamily: 'System', fontWeight: '400' as const },
+      medium: { fontFamily: 'System', fontWeight: '500' as const },
+      bold: { fontFamily: 'System', fontWeight: '700' as const },
+      heavy: { fontFamily: 'System', fontWeight: '900' as const },
+    },
+  }), [colors, isDark])
 
   if (loading) {
     return <SplashScreen />
@@ -135,7 +158,7 @@ export default function AppNavigator() {
   const isCoach = profile?.role === 'coach' || (profile as any)?.account_type === 'coach'
 
   return (
-    <NavigationContainer theme={DarkTheme}>
+    <NavigationContainer theme={navTheme}>
       {session ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen

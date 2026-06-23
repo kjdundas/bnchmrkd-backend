@@ -15,6 +15,12 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.
 // AI Scanner is gated to Keenan during testing
 const SCANNER_BETA_UUID = 'e4a344cd-1175-40f2-8b0d-94593eaedd53'
 
+// Feature flags — CSV bulk upload and manual entry are not wired to a backend
+// yet (CSV "import" was a no-op stub, manual entry had no submit handler).
+// Flip these to true once the real import path lands (roadmap Phase 2A/2B).
+const BULK_IMPORT_ENABLED = false
+const MANUAL_ENTRY_ENABLED = false
+
 // Discipline type helpers
 const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
 const isThrowsDiscipline = (d) => THROWS.some(t => d?.toLowerCase().includes(t.toLowerCase()))
@@ -677,10 +683,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
                     {/* Step 2: CSV Upload */}
                     <button
-                      onClick={() => { setActiveSection('add'); setAddMethod('csv'); }}
-                      className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
+                      onClick={() => { if (BULK_IMPORT_ENABLED) { setActiveSection('add'); setAddMethod('csv'); } }}
+                      disabled={!BULK_IMPORT_ENABLED}
+                      className={`group relative overflow-hidden rounded-xl p-5 text-left transition-all ${BULK_IMPORT_ENABLED ? 'hover:scale-[1.02]' : 'cursor-not-allowed opacity-50'}`}
                       style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
+                      {!BULK_IMPORT_ENABLED && <span className="absolute top-3 right-3 z-10 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#64748b15', color: '#94a3b8', border: '1px solid #64748b25' }}>Coming soon</span>}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 100%)' }} />
                       <div className="relative z-10">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.15)' }}>
@@ -701,10 +709,12 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
                     {/* Step 3: Manual Entry */}
                     <button
-                      onClick={() => { setActiveSection('add'); setAddMethod('manual'); }}
-                      className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
+                      onClick={() => { if (MANUAL_ENTRY_ENABLED) { setActiveSection('add'); setAddMethod('manual'); } }}
+                      disabled={!MANUAL_ENTRY_ENABLED}
+                      className={`group relative overflow-hidden rounded-xl p-5 text-left transition-all ${MANUAL_ENTRY_ENABLED ? 'hover:scale-[1.02]' : 'cursor-not-allowed opacity-50'}`}
                       style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
+                      {!MANUAL_ENTRY_ENABLED && <span className="absolute top-3 right-3 z-10 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#64748b15', color: '#94a3b8', border: '1px solid #64748b25' }}>Coming soon</span>}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, transparent 100%)' }} />
                       <div className="relative z-10">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.15)' }}>
@@ -1139,18 +1149,19 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               {!addMethod ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { key: 'url', icon: Globe, title: 'World Athletics', desc: 'Paste a profile URL — we\'ll import their full history, PBs, and progressions automatically.', color: '#22c55e', tag: 'Recommended' },
-                    { key: 'csv', icon: FileSpreadsheet, title: 'Bulk Upload', desc: 'Upload a CSV or Excel with athlete names and dates of birth to onboard your whole squad at once.', color: '#3b82f6', tag: null },
-                    { key: 'manual', icon: UserPlus, title: 'Manual Entry', desc: 'Add a single athlete by hand — name, DOB, discipline, and personal best.', color: '#f97316', tag: null },
-                  ].map(({ key, icon: Icon, title, desc, color, tag }, i) => (
-                    <button key={key} onClick={() => setAddMethod(key)}
-                      className="relative rounded-xl p-5 text-left transition-all group hover:translate-y-[-2px]"
+                    { key: 'url', icon: Globe, title: 'World Athletics', desc: 'Paste a profile URL — we\'ll import their full history, PBs, and progressions automatically.', color: '#22c55e', tag: 'Recommended', enabled: true },
+                    { key: 'csv', icon: FileSpreadsheet, title: 'Bulk Upload', desc: 'Upload a CSV or Excel with athlete names and dates of birth to onboard your whole squad at once.', color: '#3b82f6', tag: null, enabled: BULK_IMPORT_ENABLED },
+                    { key: 'manual', icon: UserPlus, title: 'Manual Entry', desc: 'Add a single athlete by hand — name, DOB, discipline, and personal best.', color: '#f97316', tag: null, enabled: MANUAL_ENTRY_ENABLED },
+                  ].map(({ key, icon: Icon, title, desc, color, tag, enabled }, i) => (
+                    <button key={key} onClick={() => enabled && setAddMethod(key)} disabled={!enabled}
+                      aria-disabled={!enabled}
+                      className={`relative rounded-xl p-5 text-left transition-all group ${enabled ? 'hover:translate-y-[-2px] cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
                       style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(i) }}>
-                      {tag && <span className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>{tag}</span>}
+                      {(!enabled || tag) && <span className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: `${(!enabled ? '#64748b' : color)}15`, color: (!enabled ? '#94a3b8' : color), border: `1px solid ${(!enabled ? '#64748b' : color)}25` }}>{!enabled ? 'Coming soon' : tag}</span>}
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${color}10` }}>
                         <Icon className="w-5 h-5" style={{ color }} />
                       </div>
-                      <h3 className="text-[14px] font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">{title}</h3>
+                      <h3 className={`text-[14px] font-bold text-white mb-1 landing-font transition-colors ${enabled ? 'group-hover:text-orange-400' : ''}`}>{title}</h3>
                       <p className="text-[11px] text-slate-400 leading-relaxed landing-font">{desc}</p>
                     </button>
                   ))}

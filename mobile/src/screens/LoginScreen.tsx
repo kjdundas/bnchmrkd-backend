@@ -18,11 +18,13 @@ import {
 } from 'react-native'
 import { colors, spacing, radius, fonts } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 
 export default function LoginScreen() {
   const { signIn, signUp } = useAuth()
+  const { colors: c } = useTheme()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -66,7 +68,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.bg.primary }]}>
       {/* Background glow effects */}
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />

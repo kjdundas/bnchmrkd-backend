@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { getCachedToken } from '../lib/supabase'
 import { isTimeDiscipline } from '../lib/performanceLevels'
@@ -290,6 +291,7 @@ function ScanDoneStage({ savedCount, onReset }: { savedCount: number; onReset: (
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachResultsScreen() {
   const { user } = useAuth()
+  const { colors: c } = useTheme()
   const [stage, setStage] = useState<'input' | 'review' | 'done'>('input')
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState('')
@@ -396,7 +398,7 @@ export default function CoachResultsScreen() {
   const stepIndex = stage === 'input' ? 0 : stage === 'review' ? 1 : 2
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flex: 1 }}>

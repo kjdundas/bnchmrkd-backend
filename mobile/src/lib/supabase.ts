@@ -69,6 +69,25 @@ export async function insertInto(table: string, data: any) {
   return Array.isArray(rows) ? rows[0] : rows
 }
 
+/**
+ * Upsert (insert or merge on primary key / unique constraint).
+ * Uses PostgREST's `resolution=merge-duplicates` so a repeat write to the
+ * same key updates the existing row instead of erroring.
+ */
+export async function upsertInto(table: string, data: any) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { ...headers(), Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`upsertInto ${table} failed: ${res.status} ${body}`)
+  }
+  const rows = await res.json()
+  return Array.isArray(rows) ? rows[0] : rows
+}
+
 export async function updateIn(table: string, filter: string, data: any) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
     method: 'PATCH',

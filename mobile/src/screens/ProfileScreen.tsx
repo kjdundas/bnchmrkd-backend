@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
 import { updateIn, selectFrom } from '../lib/supabase'
 import {
   HeroCard,
@@ -38,6 +39,7 @@ import {
 
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile } = useAuth()
+  const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
   const [form, setForm] = useState({
@@ -83,7 +85,7 @@ export default function ProfileScreen() {
   }, [metrics])
 
   const dnaAxes = RADAR_AXES.map((axis: any) => {
-    const data = dnaProfile[axis.key]
+    const data = (dnaProfile as Record<string, any>)[axis.key]
     const score = data?.score ?? null
     const tier = score != null ? scoreToTier(score) : null
     return { key: axis.key, label: axis.label, score, tier }
@@ -161,7 +163,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ════════════════════════════════════════════════════════════════
             AVATAR HERO — Gradient card with identity
@@ -175,8 +177,8 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={styles.displayName}>{profile?.full_name || 'Athlete'}</Text>
-            {profile?.club && <Text style={styles.clubText}>{profile.club}</Text>}
+            <Text style={[styles.displayName, { color: c.text.primary }]}>{profile?.full_name || 'Athlete'}</Text>
+            {profile?.club && <Text style={[styles.clubText, { color: c.text.secondary }]}>{profile.club}</Text>}
 
             <View style={styles.badges}>
               <View style={styles.roleBadge}>
@@ -195,21 +197,21 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             STATS GRID
             ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard kicker="CAREER STATS" accent={colors.orange[500]}>
+        <AlmanacCard kicker="CAREER STATS" accent={c.orange[500]}>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>{totalLogs}</Text>
-              <Text style={styles.statLabel}>LOGS</Text>
+              <Text style={[styles.statNum, { color: c.text.primary }]}>{totalLogs}</Text>
+              <Text style={[styles.statLabel, { color: c.text.muted }]}>LOGS</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: c.glass.border }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statNum, { color: colors.green }]}>{pbCount}</Text>
-              <Text style={styles.statLabel}>PBs</Text>
+              <Text style={[styles.statNum, { color: c.green }]}>{pbCount}</Text>
+              <Text style={[styles.statLabel, { color: c.text.muted }]}>PBs</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: c.glass.border }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statNum, { color: colors.blue }]}>{uniqueMetrics}</Text>
-              <Text style={styles.statLabel}>METRICS</Text>
+              <Text style={[styles.statNum, { color: c.blue }]}>{uniqueMetrics}</Text>
+              <Text style={[styles.statLabel, { color: c.text.muted }]}>METRICS</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -296,15 +298,49 @@ export default function ProfileScreen() {
         </AlmanacCard>
 
         {/* ════════════════════════════════════════════════════════════════
+            APPEARANCE
+            ════════════════════════════════════════════════════════════ */}
+        <AlmanacCard>
+          <MonoKicker>Appearance</MonoKicker>
+          <View style={styles.themeRow}>
+            <View style={styles.themeLabel}>
+              <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={16} color={c.text.muted} />
+              <Text style={[styles.themeLabelText, { color: c.text.primary }]}>Theme</Text>
+            </View>
+            <View style={[styles.themeToggle, { backgroundColor: c.glass.bg, borderColor: c.glass.border }]}>
+              {(['dark', 'light', 'system'] as ThemeMode[]).map(m => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.themeOption, themeMode === m && { backgroundColor: c.orange[500] + '15' }]}
+                  onPress={() => setThemeMode(m)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={m === 'dark' ? 'moon' : m === 'light' ? 'sunny' : 'phone-portrait-outline'}
+                    size={14}
+                    color={themeMode === m ? c.orange[500] : c.text.dimmed}
+                  />
+                  <Text style={[styles.themeOptionText, { color: c.text.dimmed },
+                    themeMode === m && { color: c.orange[500] }]}>
+                    {m === 'system' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </AlmanacCard>
+
+        {/* ════════════════════════════════════════════════════════════════
             SIGN OUT
             ════════════════════════════════════════════════════════════ */}
-        <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.7}>
-          <Ionicons name="log-out-outline" size={18} color={colors.red} />
-          <Text style={styles.signOutText}>Sign Out</Text>
+        <TouchableOpacity style={[styles.signOutBtn, { borderColor: c.red + '20', backgroundColor: c.red + '04' }]}
+          onPress={handleSignOut} activeOpacity={0.7}>
+          <Ionicons name="log-out-outline" size={18} color={c.red} />
+          <Text style={[styles.signOutText, { color: c.red }]}>Sign Out</Text>
         </TouchableOpacity>
 
         {/* Version */}
-        <Text style={styles.version}>bnchmrkd. v0.1.0</Text>
+        <Text style={[styles.version, { color: c.text.dimmed }]}>bnchmrkd. v0.1.0</Text>
 
         <View style={{ height: 30 }} />
       </ScrollView>
@@ -519,6 +555,51 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(251,113,133,0.04)',
   },
   signOutText: { color: colors.red, fontSize: 15, fontWeight: '600' },
+
+  // Theme toggle
+  themeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  themeLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  themeLabelText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text.primary,
+  },
+  themeToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    padding: 3,
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.md - 2,
+  },
+  themeOptionActive: {
+    backgroundColor: colors.orange[500] + '15',
+  },
+  themeOptionText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.text.dimmed,
+  },
+  themeOptionTextActive: {
+    color: colors.orange[500],
+  },
 
   // Version
   version: {

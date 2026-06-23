@@ -74,6 +74,17 @@ export async function insertInto(table, payload) {
   return Array.isArray(data) ? data[0] : data
 }
 
+// UPSERT a row (insert, or merge on the primary key / unique constraint).
+// Uses PostgREST's resolution=merge-duplicates so repeat writes update in place.
+export async function upsertInto(table, payload) {
+  const data = await rawFetch(`/${table}`, {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(payload),
+  })
+  return Array.isArray(data) ? data[0] : data
+}
+
 // UPDATE rows matching a filter, returning the updated row(s)
 export async function updateIn(table, filter, payload) {
   const data = await rawFetch(`/${table}?${filter}`, {

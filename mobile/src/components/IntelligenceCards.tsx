@@ -79,11 +79,12 @@ export function DnaShiftCard({ beforeMetrics, afterMetrics, visible }: DnaShiftP
     const result: { axis: string; label: string; before: number; after: number; delta: number; tier: string; tierColor: string }[] = []
 
     for (const axis of RADAR_AXES) {
-      const bScore = before[axis.key]?.score ?? null
-      const aScore = after[axis.key]?.score ?? null
+      const bScore = (before as Record<string, any>)[axis.key]?.score ?? null
+      const aScore = (after as Record<string, any>)[axis.key]?.score ?? null
       if (aScore == null) continue
       const delta = bScore != null ? aScore - bScore : 0
       const tier = scoreToTier(aScore)
+      if (!tier) continue
       result.push({
         axis: axis.key,
         label: axis.label,
@@ -398,13 +399,14 @@ export function NextMilestone({ dnaProfile, discipline, pb, sex }: MilestoneProp
         const data = dnaProfile[axis.key]
         if (!data?.score) continue
         const tier = scoreToTier(data.score)
+        if (!tier) continue
         if (tier.toNext != null && (!weakest || tier.toNext < weakest.toNext)) {
           weakest = {
             axis: axis.key,
             label: axis.label,
             score: data.score,
             toNext: tier.toNext,
-            nextLabel: tier.nextTier || 'next tier',
+            nextLabel: tier.nextTier?.label || 'next tier',
           }
         }
       }

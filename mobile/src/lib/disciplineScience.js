@@ -539,7 +539,8 @@ export function performancePosition(pb, discipline, sex = 'M') {
 // ══════════════════════════════════════════════════════════════════════
 // Reference ranges: [development, club, good, elite, world]
 // Scores map linearly so: development→40, club→55, good→70, elite→85, world→98
-const REFERENCE_RANGES = {
+/** @type {Record<string, any>} */
+export const REFERENCE_RANGES = {
   // Lower is better for splits and times → ranges listed worst→best
   sprint_10m:   { worst: 2.10, best: 1.50, lowerBetter: true },
   sprint_30m:   { worst: 4.60, best: 3.70, lowerBetter: true },

@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom } from '../lib/supabase'
 import {
   AlmanacCard,
@@ -40,6 +41,7 @@ import {
 } from '../components/HomeSections'
 import { XPBar, StreakChip as GamStreakChip } from '../components/GamificationUI'
 import { calculateStreak, type UserStats } from '../lib/gamification'
+import { loadProgress } from '../lib/progress'
 import {
   RADAR_AXES,
   buildDnaProfile,
@@ -131,8 +133,10 @@ function deriveCompetitionFromMetrics(
 
 export default function HomeScreen() {
   const { profile, user } = useAuth()
+  const { colors: c } = useTheme()
   const [metrics, setMetrics] = useState<any[]>([])
   const [performances, setPerformances] = useState<any[]>([])
+  const [persistedXP, setPersistedXP] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [fadeAnim] = useState(new Animated.Value(0))
 
@@ -202,6 +206,17 @@ export default function HomeScreen() {
   const streakData = useMemo(() => calculateStreak(logDateStrings), [logDateStrings.length])
   const streak = streakData.current
 
+  // Pull the persisted XP total (source of truth, written by LogScreen) so the
+  // Home XP bar matches what the athlete actually earned across devices.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    loadProgress(user.id).then((p) => {
+      if (!cancelled && p && p.bootstrapped) setPersistedXP(p.totalXP)
+    })
+    return () => { cancelled = true }
+  }, [user, metrics.length])
+
   // ── XP + Gamification stats ──
   const gamStats = useMemo((): UserStats => {
     const uniqueKeys = new Set(metrics.map((m) => m.metric_key))
@@ -222,12 +237,14 @@ export default function HomeScreen() {
       currentStreak: streakData.current,
       longestStreak: streakData.longest,
       categoriesLogged: catSet.size,
-      totalXP: metrics.length * 25 + Object.keys(pbMap).length * 10, // approximate — real XP tracked on save
+      // Prefer the persisted total; fall back to an approximation until the
+      // athlete_progress row loads (or for brand-new users).
+      totalXP: persistedXP ?? (metrics.length * 25 + Object.keys(pbMap).length * 10),
       daysActive: new Set(metrics.map((m) => m.recorded_at?.slice(0, 10))).size,
       logsToday,
       uniqueMetrics: uniqueKeys.size,
     }
-  }, [metrics, pbMap, streakData])
+  }, [metrics, pbMap, streakData, persistedXP])
 
   // Build DNA profile
   const metricsForDna = metrics.map((m) => ({
@@ -240,7 +257,7 @@ export default function HomeScreen() {
   const dnaProfile = buildDnaProfile(metricsForDna)
 
   const dnaAxes = RADAR_AXES.map((axis: any) => {
-    const data = dnaProfile[axis.key]
+    const data = (dnaProfile as Record<string, any>)[axis.key]
     const score = data?.score ?? null
     const tier = score != null ? scoreToTier(score) : undefined
     return { key: axis.key, label: axis.label, score, tier }
@@ -300,7 +317,7 @@ export default function HomeScreen() {
   const firstName = profile?.full_name?.split(' ')[0] || 'Athlete'
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       <Animated.ScrollView
         style={[styles.scroll, { opacity: fadeAnim }]}
         contentContainerStyle={styles.content}
@@ -389,8 +406,8 @@ export default function HomeScreen() {
                   Score: <Text style={{ color: colors.amber, fontWeight: '700' }}>{limitingFactor.score}</Text>
                 </Text>
                 <Text style={styles.limitingDesc}>
-                  {limitingFactor.impactSeconds
-                    ? `Improving this axis could save ~${limitingFactor.impactSeconds.toFixed(2)}s in sprints.`
+                  {limitingFactor.estImpactSec
+                    ? `Improving this axis could save ~${limitingFactor.estImpactSec.toFixed(2)}s in sprints.`
                     : 'Your weakest axis — focus training here for the biggest gains.'}
                 </Text>
               </View>

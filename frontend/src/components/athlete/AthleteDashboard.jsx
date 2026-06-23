@@ -15,6 +15,12 @@ import {
   TrajectoryHero, RivalCard, WhereYouStand, AthleteDNALadder, LimitingFactorCard, ScienceSpotlight, SinceLastVisit,
   TierUpCelebration, useTierTracker, WeeklyRecap,
 } from './HomeSections'
+import { XPBar, StreakChip, LogCelebration } from './GamificationUI'
+import {
+  calculateLogXP, calculateStreak, getLevelFromXP,
+  getEarnedBadges, getNewBadges, getMotivationalMessage,
+} from '../../lib/gamification'
+import { loadProgress, saveProgress, bootstrapXPFromRaces } from '../../lib/progress'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -84,6 +90,13 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   const [tab, setTab] = useState('home') // 'home' | 'log' | 'trajectory'
   const [showProfile, setShowProfile] = useState(false)
 
+  // ── Gamification (XP / streak / badges) — persisted in athlete_progress ──
+  const [totalXP, setTotalXP] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const [badgesEarned, setBadgesEarned] = useState([])
+  const [longestStreak, setLongestStreak] = useState(0)
+  const [celebration, setCelebration] = useState(null) // { total, breakdown, ... }
+
   // ── Load athlete_profiles row ───────────────────────────────────────
   const loadAthlete = useCallback(async () => {
     if (!user?.id) return
@@ -103,6 +116,40 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   }, [user?.id])
 
   useEffect(() => { loadAthlete() }, [loadAthlete])
+
+  // ── Load / backfill persisted progress once the athlete row is in ──────
+  useEffect(() => {
+    if (!user?.id || !athleteRow) return
+    let cancelled = false
+    ;(async () => {
+      const races = athleteRow.races || []
+      const dates = races.map((r) => r.date).filter(Boolean)
+      const s = calculateStreak(dates)
+      if (!cancelled) setStreak(s.current)
+
+      const persisted = await loadProgress(user.id)
+      if (cancelled) return
+      if (persisted && persisted.bootstrapped) {
+        setTotalXP(persisted.totalXP)
+        setBadgesEarned(persisted.badgesEarned)
+        setLongestStreak(Math.max(persisted.longestStreak, s.longest))
+      } else {
+        const boot = bootstrapXPFromRaces(races, isThrowsDiscipline)
+        const seedXP = persisted ? Math.max(persisted.totalXP, boot.totalXP) : boot.totalXP
+        setTotalXP(seedXP)
+        setBadgesEarned(boot.badgesEarned)
+        setLongestStreak(Math.max(boot.longestStreak, s.longest))
+        saveProgress(user.id, {
+          totalXP: seedXP,
+          longestStreak: Math.max(boot.longestStreak, s.longest),
+          badgesEarned: boot.badgesEarned,
+          lastLogDate: dates.length ? String([...dates].sort().reverse()[0]).slice(0, 10) : null,
+          bootstrapped: true,
+        })
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user?.id, athleteRow])
 
   // ── Refresh from World Athletics ────────────────────────────────────
   const handleRefresh = async () => {
@@ -133,6 +180,12 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       const sorted = races.filter(r => r.date && r.value).sort((a, b) => new Date(b.date) - new Date(a.date))
       const last = sorted[0]
 
+      // Scrape succeeded but the profile had no usable results — tell the
+      // athlete instead of silently dropping them back on the empty state.
+      if (races.length === 0) {
+        setError("We reached your World Athletics profile but couldn't find any results on it yet. Check the URL on your profile, or log a result manually.")
+      }
+
       const updated = await updateIn('athlete_profiles', `id=eq.${user.id}`, {
         nationality: scraped.nationality || athleteRow.nationality,
         discipline: scraped.discipline || athleteRow.discipline,
@@ -158,16 +211,42 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     }
   }
 
+  // Count how many PBs were set across a race history (replay per discipline).
+  const countPBs = (races) => {
+    const best = {}
+    let n = 0
+    const ordered = [...races]
+      .filter((r) => r.date && r.value != null)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+    for (const r of ordered) {
+      const d = r.discipline || '_'
+      const t = isThrowsDiscipline(r.discipline)
+      if (best[d] == null || (t ? r.value > best[d] : r.value < best[d])) { best[d] = r.value; n++ }
+    }
+    return n
+  }
+
   // ── Append a manual log entry ───────────────────────────────────────
   const handleLogEntry = async ({ date, competition, mark, discipline }) => {
     const isThrows = isThrowsDiscipline(discipline)
     const value = parseMarkInput(mark, isThrows)
     if (value == null) throw new Error('Could not parse that mark — try e.g. 45.23 or 10.45 or 1:52.30')
 
+    const oldRaces = athleteRow?.races || []
     const newRace = { date, competition, value, manual: true, discipline }
-    const allRaces = [...(athleteRow?.races || []), newRace]
+    const allRaces = [...oldRaces, newRace]
 
-    // Recompute PB
+    // Prior PB for this discipline (before this race) — to detect a new PB.
+    let prevPB = null
+    for (const r of oldRaces) {
+      if (r.value == null) continue
+      const matches = !discipline || !r.discipline || r.discipline === discipline
+      if (!matches) continue
+      if (prevPB == null || (isThrows ? r.value > prevPB : r.value < prevPB)) prevPB = r.value
+    }
+    const isPB = prevPB == null || (isThrows ? value > prevPB : value < prevPB)
+
+    // Recompute PB (incl. new race)
     let pbVal = null
     for (const r of allRaces) {
       if (r.value == null) continue
@@ -193,6 +272,71 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     const updated = await updateIn('athlete_profiles', `id=eq.${user.id}`, patch)
     setAthleteRow(updated)
     if (updated?.discipline) setActiveDiscipline(updated.discipline)
+
+    // ── Gamification: award XP, update streak/badges, persist, celebrate ──
+    try {
+      const day = String(date).slice(0, 10)
+      const oldDates = oldRaces.map((r) => r.date).filter(Boolean)
+      const newDates = allRaces.map((r) => r.date).filter(Boolean)
+      const prevStreak = calculateStreak(oldDates)
+      const newStreak = calculateStreak(newDates)
+      const logsToday = newDates.filter((d) => String(d).slice(0, 10) === day).length
+
+      const xpResult = calculateLogXP({
+        isPB,
+        hasNotes: false,
+        isFirstEver: oldRaces.length === 0,
+        isNewCategory: false,
+        logsToday,
+        currentStreak: newStreak.current,
+      })
+      const newTotalXP = totalXP + xpResult.total
+
+      const oldStats = {
+        totalLogs: oldRaces.length, totalPBs: countPBs(oldRaces),
+        currentStreak: prevStreak.current, longestStreak: Math.max(longestStreak, prevStreak.longest),
+        categoriesLogged: 0, totalXP, daysActive: new Set(oldDates.map((d) => String(d).slice(0, 10))).size,
+        logsToday: logsToday - 1, uniqueMetrics: 0,
+      }
+      const newStats = {
+        ...oldStats, totalLogs: oldRaces.length + 1, totalPBs: countPBs(allRaces),
+        currentStreak: newStreak.current, longestStreak: Math.max(longestStreak, newStreak.longest),
+        totalXP: newTotalXP, logsToday,
+      }
+      const newBadges = getNewBadges(oldStats, newStats)
+
+      const oldLevel = getLevelFromXP(totalXP)
+      const newLevel = getLevelFromXP(newTotalXP)
+      const leveledUp = newLevel.level > oldLevel.level
+
+      const newLongest = Math.max(longestStreak, newStreak.longest)
+      setTotalXP(newTotalXP)
+      setStreak(newStreak.current)
+      setLongestStreak(newLongest)
+      setBadgesEarned(getEarnedBadges(newStats).map((b) => b.id))
+
+      saveProgress(user.id, {
+        totalXP: newTotalXP,
+        longestStreak: newLongest,
+        badgesEarned: getEarnedBadges(newStats).map((b) => b.id),
+        lastLogDate: day,
+        bootstrapped: true,
+      })
+
+      const pbText = isPB ? `New PB · ${formatMark(value, discipline)}` : null
+      setCelebration({
+        total: xpResult.total,
+        breakdown: xpResult.breakdown,
+        message: getMotivationalMessage(isPB, newStreak.current),
+        newBadges,
+        leveledUp,
+        newLevel: leveledUp ? newLevel : null,
+        isPB,
+        pbText,
+      })
+    } catch (e) {
+      console.warn('[gamification] award failed:', e)
+    }
   }
 
   // ── Save profile edits ──────────────────────────────────────────────
@@ -487,6 +631,8 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
             athleteId={user?.id}
             onRefresh={handleRefresh}
             refreshing={refreshing}
+            totalXP={totalXP}
+            streak={streak}
           />
         )}
         {tab === 'log' && (
@@ -513,6 +659,8 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       </main>
 
       <BottomNav />
+
+      <LogCelebration show={!!celebration} data={celebration} onClose={() => setCelebration(null)} />
     </div>
   )
 }
@@ -520,7 +668,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
 // ═══════════════════════════════════════════════════════════════════════
 // HOME VIEW — Hero PB + recent results
 // ═══════════════════════════════════════════════════════════════════════
-function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing }) {
+function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing, totalXP = 0, streak = 0 }) {
   // Fetch athlete_metrics once and share across all home sections
   const [metrics, setMetrics] = useState([])
   useEffect(() => {
@@ -548,6 +696,16 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing 
   return (
     <>
       <TierUpCelebration celebrating={celebrating} onDismiss={dismissTierUp} />
+
+      {/* XP / level + streak — engagement layer (parity with mobile) */}
+      <div className="flex items-stretch gap-2">
+        <div className="flex-1"><XPBar totalXP={totalXP} /></div>
+        {streak > 0 && (
+          <div className="flex items-center px-1">
+            <StreakChip streak={streak} />
+          </div>
+        )}
+      </div>
 
       <TrajectoryHero
         athleteId={athleteId}

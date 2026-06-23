@@ -235,7 +235,9 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
   const ageGroup = getAgeGroup(age)
   const lower = isLowerBetter(discipline)
   const tier = getTier(discipline, sex, ageGroup, mark)
-  const percentile = performancePercentile(mark, discipline, sex)
+  // mark is always a number here, so performancePercentile never returns null;
+  // the `?? 0` only satisfies the type checker (dead fallback).
+  const percentile = performancePercentile(mark, discipline, sex) ?? 0
   const zones = qualifierZones(discipline, sex)
   const peakAge = TYPICAL_PEAK_AGES[discipline] || 27
   const yearsToPeak = Math.max(0, peakAge - age)
@@ -638,8 +640,8 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
                   const futAge = futureAges[idx]
                   const isBase = futAge === age
                   const newTier = getTier(discipline, sex, getAgeGroup(futAge), val)
-                  const meetsFinalist = zones && (lower ? val <= zones.s80 : val >= zones.s80)
-                  const meetsQualifier = zones && (lower ? val <= zones.s90 : val >= zones.s90)
+                  const meetsFinalist = zones && (lower ? val <= zones.semifinalist : val >= zones.semifinalist)
+                  const meetsQualifier = zones && (lower ? val <= zones.qualifier : val >= zones.qualifier)
                   return (
                     <View key={futAge} style={[
                       s.scenTableCell,
@@ -688,8 +690,8 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
           {/* Build ladder rungs from zones */}
           {(() => {
             const rungs = [
-              { label: 'Olympic Qualifier', threshold: zones.s90, level: 'qualifier' },
-              { label: 'Semifinalist', threshold: zones.s80, level: 'semi' },
+              { label: 'Olympic Qualifier', threshold: zones.qualifier, level: 'qualifier' },
+              { label: 'Semifinalist', threshold: zones.semifinalist, level: 'semi' },
               { label: 'Top 8 (Finalist)', threshold: zones.optimal, level: 'finalist' },
             ]
             // Add calibration extras if available

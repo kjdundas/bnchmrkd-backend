@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import {
   AlmanacCard,
@@ -38,7 +39,7 @@ import {
   qualifierZones,
   getCalibration,
 } from '../lib/disciplineScience'
-import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, buildMatrix, AGE_GROUPS } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -540,8 +541,82 @@ function CompetitionLadderSection({
 }
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
+// ── Performance Matrix (age-group × tier grid) ───────────────────────────────
+// Shows the athlete's standing across ALL age groups, not just their own — the
+// cross-age "stepping stone" view (parity with the web PerformanceMatrix).
+function PerformanceMatrixSection({
+  discipline, pb, age, sex,
+}: { discipline: string; pb: number; age: number | null; sex: string }) {
+  const ageGroup = age ? getAgeGroup(age) : 'Senior'
+  const tier = getTier(discipline, sex, ageGroup, pb)
+  const matrix = useMemo(() => buildMatrix(discipline, sex), [discipline, sex])
+
+  if (!matrix?.rows) return null
+
+  return (
+    <AlmanacCard kicker="TRAJECTORY" title="Performance Matrix" accent={colors.orange[500]}>
+      <Text style={styles.matrixCaption}>
+        Where you stand across age groups. Your current position is highlighted.
+      </Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View>
+          {/* Header row */}
+          <View style={styles.matrixRow}>
+            <View style={[styles.matrixCell, styles.matrixHeaderCell]}>
+              <Text style={styles.matrixHeaderText}>Tier</Text>
+            </View>
+            {AGE_GROUPS.map((ag) => (
+              <View key={ag} style={[styles.matrixCell, styles.matrixHeaderCell, ag === ageGroup && styles.matrixActiveCol]}>
+                <Text style={[styles.matrixHeaderText, ag === ageGroup && { color: colors.orange[500] }]}>{ag}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Data rows, T7 down to T1 */}
+          {[7, 6, 5, 4, 3, 2, 1].map((t) => (
+            <View key={t} style={styles.matrixRow}>
+              <View style={[styles.matrixCell, styles.matrixLabelCell]}>
+                <View style={[styles.matrixTierDot, { backgroundColor: TIER_COLORS[t] }]} />
+                <Text style={styles.matrixTierLabel}>{TIER_SHORT[t]}</Text>
+              </View>
+              {matrix.rows.map((row: any) => {
+                const val = row.cuts[t - 1]
+                const isYou = !!tier && tier.tier === t && row.ageGroup === ageGroup
+                return (
+                  <View
+                    key={row.ageGroup}
+                    style={[
+                      styles.matrixCell,
+                      row.ageGroup === ageGroup && styles.matrixActiveCol,
+                      isYou && styles.matrixYouCell,
+                    ]}
+                  >
+                    {val != null ? (
+                      <Text style={[styles.matrixVal, isYou && { color: colors.orange[500], fontWeight: '700' }]}>
+                        {formatPerformance(val, discipline)}
+                      </Text>
+                    ) : (
+                      <Text style={styles.matrixNull}>—</Text>
+                    )}
+                  </View>
+                )
+              })}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+      {tier ? (
+        <Text style={styles.matrixYouNote}>
+          You: {TIER_SHORT[tier.tier]} ({tier.tierName}) in {ageGroup}
+        </Text>
+      ) : null}
+    </AlmanacCard>
+  )
+}
+
 export default function TrajectoryScreen() {
   const { user, profile } = useAuth()
+  const { colors: c } = useTheme()
   const [performances, setPerformances] = useState<any[]>([])
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -599,7 +674,7 @@ export default function TrajectoryScreen() {
     : null
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
         {selectedDiscipline && (
@@ -626,6 +701,8 @@ export default function TrajectoryScreen() {
         >
           <TierPositioningSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
 
+          <PerformanceMatrixSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
+
           <SimilarAthletesSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
 
           <ImprovementScenariosSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
@@ -647,6 +724,24 @@ export default function TrajectoryScreen() {
 // ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // Performance Matrix (age-group × tier grid)
+  matrixCaption: { color: colors.text.secondary, fontSize: 12, lineHeight: 17, marginBottom: spacing.md },
+  matrixRow: { flexDirection: 'row' },
+  matrixCell: {
+    width: 62, height: 34, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.06)',
+  },
+  matrixHeaderCell: { backgroundColor: 'rgba(255,255,255,0.03)' },
+  matrixHeaderText: { color: colors.text.muted, fontSize: 10, fontWeight: '700' },
+  matrixActiveCol: { backgroundColor: 'rgba(249,115,22,0.06)' },
+  matrixLabelCell: { flexDirection: 'row', gap: 5, backgroundColor: 'rgba(255,255,255,0.03)' },
+  matrixTierDot: { width: 7, height: 7, borderRadius: 4 },
+  matrixTierLabel: { color: colors.text.secondary, fontSize: 10, fontWeight: '700' },
+  matrixYouCell: { backgroundColor: 'rgba(249,115,22,0.18)', borderColor: colors.orange[500] },
+  matrixVal: { color: colors.text.secondary, fontSize: 10.5 },
+  matrixNull: { color: colors.text.dimmed, fontSize: 10.5 },
+  matrixYouNote: { color: colors.orange[400], fontSize: 11, fontWeight: '600', marginTop: spacing.md },
+
   safe: { flex: 1, backgroundColor: colors.bg.primary },
   header: {
     padding: spacing.lg,

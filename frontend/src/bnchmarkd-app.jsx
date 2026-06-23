@@ -4659,10 +4659,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <span className="text-slate-700">·</span>
               <a href="mailto:hello@bnchmrkd.org" className="text-[10px] text-slate-500 hover:text-orange-400 transition-colors landing-font">hello@bnchmrkd.org</a>
             </div>
-            <p className="text-[10px] text-slate-600 landing-font mt-4 max-w-md mx-auto leading-relaxed">
-              Built by a sports analyst and track coach. Independently developed in New Zealand.
-            </p>
-            <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mt-3 text-[10px] text-slate-500 landing-font">
+            <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mt-6 text-[10px] text-slate-500 landing-font">
               <button onClick={() => setCurrentView('about')} className="hover:text-orange-400 transition-colors">Methodology</button>
               <span className="text-slate-700">·</span>
               <button onClick={() => setCurrentView('privacy')} className="hover:text-orange-400 transition-colors">Privacy Policy</button>

@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
+import { useTheme } from '../contexts/ThemeContext'
 import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { isLowerBetter, performancePercentile } from '../lib/disciplineScience'
@@ -39,13 +40,14 @@ function calcAge(dob: string | null): number | null {
 }
 
 export default function AthleteDetailScreen() {
+  const { colors: c } = useTheme()
   const route = useRoute<any>()
   const navigation = useNavigation()
   const athlete = route.params?.athlete
 
   if (!athlete) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
         <View style={styles.emptyWrap}>
           <Ionicons name="person-outline" size={32} color={colors.text.dimmed} />
           <Text style={styles.emptyText}>No athlete data</Text>
@@ -108,7 +110,7 @@ export default function AthleteDetailScreen() {
   }, [races])
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

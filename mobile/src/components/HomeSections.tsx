@@ -527,7 +527,7 @@ export function AthleteDNALadder({ metrics, discipline, dob }: DNALadderProps) {
   const rows = useMemo(() => {
     return priorityOrder.map((key: string, priorityIdx: number) => {
       const axis = RADAR_AXES.find((a: any) => a.key === key)
-      const raw = profile[key]?.score ?? null
+      const raw = (profile as Record<string, any>)[key]?.score ?? null
       const adj = ageAdjustScore(raw, key, age)
       const tier = raw != null && adj ? scoreToTier(adj.adjusted) : null
       return {
@@ -539,12 +539,12 @@ export function AthleteDNALadder({ metrics, discipline, dob }: DNALadderProps) {
         adjusted: adj?.adjusted ?? null,
         boost: adj?.boost ?? 0,
         tier,
-        info: AXIS_INFO?.[key],
+        info: (AXIS_INFO as Record<string, any>)?.[key],
       }
     })
   }, [profile, priorityOrder, age])
 
-  const measuredRows = rows.filter((r) => r.measured)
+  const measuredRows = rows.filter((r: any) => r.measured)
 
   // Strengths / Focus
   const sortedByScore = [...measuredRows].sort((a, b) => (b.adjusted ?? 0) - (a.adjusted ?? 0))
@@ -585,7 +585,7 @@ export function AthleteDNALadder({ metrics, discipline, dob }: DNALadderProps) {
       )}
 
       {/* Rows */}
-      {rows.map((row, idx) => (
+      {rows.map((row: any, idx: number) => (
         <LadderRow key={row.key} row={row} isTop={idx === 0} discipline={discipline} />
       ))}
 

@@ -20,7 +20,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { insertInto, selectFrom } from '../lib/supabase'
+import { loadProgress, saveProgress, bootstrapXPFromLogs } from '../lib/progress'
 import {
   AlmanacCard,
   MonoKicker,
@@ -32,6 +34,7 @@ import {
   calculateLogXP,
   calculateStreak,
   getNewBadges,
+  getEarnedBadges,
   getMotivationalMessage,
   getLevelFromXP,
   countUniqueCategories,
@@ -51,10 +54,13 @@ function pushRecent(userId: string, metricKey: string) {
   RECENT_STORE[userId] = cur.slice(0, 3)
 }
 
-// XP store — persists in memory for the session (TODO: move to Supabase)
+// XP store — in-session cache, seeded from the athlete_progress table on load
+// and written back to it on every save (see ../lib/progress). The DB row is
+// the source of truth; this just avoids a round-trip mid-session.
 const XP_STORE: Record<string, number> = {}
 function getXP(userId: string): number { return XP_STORE[userId] || 0 }
 function addXP(userId: string, amount: number) { XP_STORE[userId] = (XP_STORE[userId] || 0) + amount }
+function setXP(userId: string, amount: number) { XP_STORE[userId] = amount }
 
 // ── LOWER_IS_BETTER (times, HR, fat) ──
 const LOWER_IS_BETTER = new Set([
@@ -197,6 +203,7 @@ METRIC_CATALOG.forEach((cat) => {
 // ═══════════════════════════════════════════════════════════════════════
 export default function LogScreen() {
   const { user, profile } = useAuth()
+  const { colors: c } = useTheme()
   const [logMode, setLogMode] = useState<'physical' | 'competition'>('physical')
   const [selectedCategory, setSelectedCategory] = useState<CategoryDef | null>(null)
   const [selectedMetric, setSelectedMetric] = useState<MetricDef | null>(null)
@@ -218,6 +225,10 @@ export default function LogScreen() {
   const [showPBCeleb, setShowPBCeleb] = useState(false)
   const [pbCelebData, setPbCelebData] = useState({ value: '', unit: '', label: '', improvement: '' })
   const [showXPPopup, setShowXPPopup] = useState(false)
+  // Persisted progress mirrors (athlete_progress table). Refs so the save
+  // handler always reads the latest without extra re-renders.
+  const badgesEarnedRef = useRef<string[]>([])
+  const longestStreakRef = useRef(0)
   // ── Intelligence card state ──
   const [showDnaShift, setShowDnaShift] = useState(false)
   const [beforeLogs, setBeforeLogs] = useState<any[]>([])
@@ -231,26 +242,56 @@ export default function LogScreen() {
     newLevel?: { level: number; title: string; icon: string }
   }>({ breakdown: [], message: '', newBadges: [], leveledUp: false })
 
-  // Load all logs for gamification stats
+  // Load all logs for gamification stats, then reconcile with persisted XP.
   useEffect(() => {
     if (!user) return
-    selectFrom('athlete_metrics', {
-      filter: `athlete_id=eq.${user.id}`,
-      order: 'recorded_at.desc',
-      limit: '1000',
-    })
-      .then((rows) => {
-        setAllLogs(rows || [])
-        // Compute XP from existing logs (rough bootstrap)
-        const xp = getXP(user.id) || (rows || []).length * 25
-        if (!XP_STORE[user.id]) XP_STORE[user.id] = xp
-        setTotalXP(xp)
-        // Compute streak
-        const dates = (rows || []).map((r: any) => r.recorded_at)
-        const s = calculateStreak(dates)
-        setStreak(s.current)
-      })
-      .catch(() => {})
+    let cancelled = false
+    ;(async () => {
+      let rows: any[] = []
+      try {
+        rows = await selectFrom('athlete_metrics', {
+          filter: `athlete_id=eq.${user.id}`,
+          order: 'recorded_at.desc',
+          limit: '1000',
+        }) || []
+      } catch { rows = [] }
+      if (cancelled) return
+      setAllLogs(rows)
+
+      const dates = rows.map((r: any) => r.recorded_at)
+      const s = calculateStreak(dates)
+      setStreak(s.current)
+
+      // Pull persisted progress (survives reinstall / device switch).
+      const persisted = await loadProgress(user.id)
+      if (cancelled) return
+
+      if (persisted && persisted.bootstrapped) {
+        // Source of truth: use the stored XP.
+        setXP(user.id, persisted.totalXP)
+        setTotalXP(persisted.totalXP)
+        badgesEarnedRef.current = persisted.badgesEarned
+        longestStreakRef.current = Math.max(persisted.longestStreak, s.longest)
+      } else {
+        // First run since the table existed (or new user) — backfill a fair
+        // XP total by replaying their history, then persist it once.
+        const lower = (k: string) => LOWER_IS_BETTER.has(k)
+        const boot = bootstrapXPFromLogs(rows, lower)
+        const seedXP = persisted ? Math.max(persisted.totalXP, boot.totalXP) : boot.totalXP
+        setXP(user.id, seedXP)
+        setTotalXP(seedXP)
+        badgesEarnedRef.current = boot.badgesEarned
+        longestStreakRef.current = Math.max(boot.longestStreak, s.longest)
+        saveProgress(user.id, {
+          totalXP: seedXP,
+          longestStreak: longestStreakRef.current,
+          badgesEarned: boot.badgesEarned,
+          lastLogDate: dates[0] ? String(dates[0]).slice(0, 10) : null,
+          bootstrapped: true,
+        })
+      }
+    })()
+    return () => { cancelled = true }
   }, [user])
 
   // Load recent metrics for quick-log
@@ -424,6 +465,17 @@ export default function LogScreen() {
       }
       const newBadges = getNewBadges(oldStats, newStats)
 
+      // ── Persist progress (XP / streak / badges) so it survives reinstall ──
+      longestStreakRef.current = Math.max(longestStreakRef.current, newStreak.longest)
+      badgesEarnedRef.current = getEarnedBadges(newStats).map((b) => b.id)
+      saveProgress(user.id, {
+        totalXP: newTotalXP,
+        longestStreak: longestStreakRef.current,
+        badgesEarned: badgesEarnedRef.current,
+        lastLogDate: date,
+        bootstrapped: true,
+      })
+
       // Get motivational message
       const message = getMotivationalMessage(isPB, newStreak.current)
 
@@ -507,7 +559,7 @@ export default function LogScreen() {
   if (selectedMetric && selectedCategory) {
     const cat = selectedCategory
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
         <ScrollView contentContainerStyle={styles.inputScreenContent} keyboardShouldPersistTaps="handled">
           {/* Back */}
           <TouchableOpacity
@@ -734,7 +786,7 @@ export default function LogScreen() {
   // ══════════════════════════════════════════════════════════════════════
   if (selectedCategory) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => setSelectedCategory(null)}>
             <Ionicons name="arrow-back" size={20} color={colors.text.secondary} />
@@ -782,9 +834,11 @@ export default function LogScreen() {
   // ══════════════════════════════════════════════════════════════════════
   // COMPETITION LOG MODE
   // ══════════════════════════════════════════════════════════════════════
-  if (logMode === 'competition') {
+  // Cast the discriminant so TS doesn't narrow logMode to 'physical' for the
+  // rest of the render — the mode toggle below still needs the full union.
+  if ((logMode as string) === 'competition') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
         <CompetitionLog onClose={() => setLogMode('physical')} />
       </SafeAreaView>
     )
@@ -794,7 +848,7 @@ export default function LogScreen() {
   // CATEGORY PICKER (default view) + Quick-log + Performance Hero
   // ══════════════════════════════════════════════════════════════════════
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
           <View style={{ flex: 1 }}>

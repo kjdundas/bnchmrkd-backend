@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { getCachedToken } from '../lib/supabase'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
@@ -456,6 +457,7 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachRosterScreen() {
   const { user, profile } = useAuth()
+  const { colors: c } = useTheme()
   const navigation = useNavigation<any>()
   const [roster, setRoster] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -539,7 +541,7 @@ export default function CoachRosterScreen() {
   const firstName = profile?.full_name?.split(' ')[0] || 'Coach'
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>

@@ -1,6 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // PERFORMANCE LEVELS — bnchmrkd level system (1-12)
 // Calibrated against Olympic-level dataset (628K+ race records)
+//
+// ⚠️  DUPLICATED FILE — keep frontend/src/lib/performanceLevels.js and
+//     mobile/src/lib/performanceLevels.js byte-identical (athletes must see the
+//     same tiers on web and mobile). Edit both together. Verify with:
+//       diff frontend/src/lib/performanceLevels.js mobile/src/lib/performanceLevels.js
 // Throws: higher = better · Sprints/Hurdles: lower = better
 // Levels 1-9: all age groups · Levels 10-12: Senior only
 // ═══════════════════════════════════════════════════════════════════

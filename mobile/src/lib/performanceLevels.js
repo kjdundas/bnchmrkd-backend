@@ -1,6 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // PERFORMANCE LEVELS — bnchmrkd level system (1-12)
 // Calibrated against Olympic-level dataset (628K+ race records)
+//
+// ⚠️  DUPLICATED FILE — keep frontend/src/lib/performanceLevels.js and
+//     mobile/src/lib/performanceLevels.js byte-identical (athletes must see the
+//     same tiers on web and mobile). Edit both together. Verify with:
+//       diff frontend/src/lib/performanceLevels.js mobile/src/lib/performanceLevels.js
 // Throws: higher = better · Sprints/Hurdles: lower = better
 // Levels 1-9: all age groups · Levels 10-12: Senior only
 // ═══════════════════════════════════════════════════════════════════
@@ -22,7 +27,7 @@ const TIME_DISCIPLINES = [
   '100m', '200m', '400m', '60m', '75m', '150m', '300m',
   '100mH', '110mH', '400mH', '60mH', '75mH', '80mH',
   '70mH', '300mH',
-  '800m', '1500m', '3000m', '5000m', '10000m', 'Marathon',
+  '800m', '1500m', '3000m', '3000m Steeplechase', '5000m', '10000m', 'Marathon',
 ];
 
 export const isTimeDiscipline = (discipline) =>
@@ -200,6 +205,14 @@ export const PERFORMANCE_LEVELS = {
   '5000m_F': {
     U20:   [1439.50, 1319.50, 1259.50, 1199.50, 1159.50, 1129.50, 1099.50, 1079.50, 1059.50, null, null, null],
     Senior:[1199.50, 1159.50, 1129.50, 1099.50, 1079.50, 1059.50, 1039.50, 1019.50, 999.50, 905.00, 894.00, 860.00],
+  },
+  '3000m Steeplechase_M': {
+    U20:   [640.00, 620.00, 600.00, 580.00, 560.00, 540.00, 520.00, 505.00, 490.00, null, null, null],
+    Senior:[600.00, 580.00, 560.00, 540.00, 525.00, 510.00, 500.00, 495.00, 490.00, 486.00, 481.00, 475.00],
+  },
+  '3000m Steeplechase_F': {
+    U20:   [720.00, 700.00, 680.00, 660.00, 640.00, 620.00, 600.00, 580.00, 560.00, null, null, null],
+    Senior:[680.00, 660.00, 640.00, 620.00, 600.00, 585.00, 575.00, 568.00, 560.00, 552.00, 545.00, 535.00],
   },
   '10000m_M': {
     U20:   [2019.50, 1979.50, 1919.50, 1889.50, 1859.50, 1829.50, 1799.50, 1784.50, 1739.50, null, null, null],
