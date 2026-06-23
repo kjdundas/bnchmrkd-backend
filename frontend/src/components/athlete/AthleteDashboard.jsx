@@ -21,6 +21,7 @@ import {
   getEarnedBadges, getNewBadges, getMotivationalMessage,
 } from '../../lib/gamification'
 import { loadProgress, saveProgress, bootstrapXPFromRaces } from '../../lib/progress'
+import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -576,11 +577,11 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
               No performance data yet
             </h2>
             <p className="landing-font text-slate-400 text-sm leading-snug mb-6 max-w-sm mx-auto relative">
-              {athleteRow?.world_athletics_url
+              {WA_IMPORT_ENABLED && athleteRow?.world_athletics_url
                 ? 'We have your World Athletics URL on file. Pull your results in to get started.'
-                : 'Log your first result, or add your World Athletics URL on your profile to pull your full history.'}
+                : 'Log your first result to get started.'}
             </p>
-            {athleteRow?.world_athletics_url ? (
+            {WA_IMPORT_ENABLED && athleteRow?.world_athletics_url ? (
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -846,7 +847,7 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
 
       <RecentMetricsPanel athleteId={athleteId} refreshKey={metrics.length} preloaded={metrics} />
 
-      {athleteRow?.world_athletics_url && (
+      {WA_IMPORT_ENABLED && athleteRow?.world_athletics_url && (
         <button
           onClick={onRefresh}
           disabled={refreshing}
@@ -1098,6 +1099,7 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
             </div>
           </div>
 
+          {WA_IMPORT_ENABLED && (
           <div>
             <label className="block text-xs text-gray-400 mb-1">World Athletics Profile URL</label>
             <input
@@ -1109,6 +1111,7 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
               Add or update this URL to pull your career history from World Athletics.
             </p>
           </div>
+          )}
 
           {err && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">

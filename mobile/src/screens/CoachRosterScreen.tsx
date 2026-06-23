@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
+import { WA_IMPORT_ENABLED } from '../lib/featureFlags'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
@@ -277,6 +278,7 @@ function AddAthleteModal({
                 <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
               </TouchableOpacity>
 
+              {WA_IMPORT_ENABLED && (
               <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('url')} activeOpacity={0.7}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(59,130,246,0.08)' }]}>
                   <Ionicons name="globe-outline" size={22} color={colors.blue} />
@@ -287,6 +289,7 @@ function AddAthleteModal({
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
               </TouchableOpacity>
+              )}
             </View>
           )}
 

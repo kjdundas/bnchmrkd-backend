@@ -9,17 +9,22 @@ import { supabase } from '../../lib/supabase'
 import { selectFrom, insertInto, deleteFrom, updateIn } from '../../lib/supabaseRest'
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
+import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
 // AI Scanner is gated to Keenan during testing
 const SCANNER_BETA_UUID = 'e4a344cd-1175-40f2-8b0d-94593eaedd53'
 
-// Feature flags — CSV bulk upload and manual entry are not wired to a backend
-// yet (CSV "import" was a no-op stub, manual entry had no submit handler).
-// Flip these to true once the real import path lands (roadmap Phase 2A/2B).
+// Feature flags.
+//  - BULK_IMPORT_ENABLED: CSV bulk upload (still a no-op stub).
+//  - MANUAL_ENTRY_ENABLED: hand-enter a single athlete (now wired to coach_roster).
+//  - WA_IMPORT_ENABLED: World Athletics URL import. Disabled until we have a
+//    sanctioned data agreement (the Selenium scraper is paused). Flip back on
+//    once licensed — all the import code remains in place.
 const BULK_IMPORT_ENABLED = false
-const MANUAL_ENTRY_ENABLED = false
+const MANUAL_ENTRY_ENABLED = true
+// WA_IMPORT_ENABLED imported from ../../lib/featureFlags
 
 // Discipline type helpers
 const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
@@ -52,6 +57,10 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const [csvFile, setCsvFile] = useState(null)
   const [csvPreview, setCsvPreview] = useState(null)
   const [csvUploading, setCsvUploading] = useState(false)
+  // Manual athlete entry
+  const [manualForm, setManualForm] = useState({ name: '', dob: '', discipline: '', gender: '', pb: '', nationality: '' })
+  const [manualSaving, setManualSaving] = useState(false)
+  const [manualError, setManualError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterAgeGroup, setFilterAgeGroup] = useState('all')
   // Chat state removed — replaced by AI Scanner
@@ -325,6 +334,67 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     setCsvUploading(true)
     await new Promise(r => setTimeout(r, 2000))
     setCsvUploading(false); setCsvFile(null); setCsvPreview(null); setAddMethod(null); setActiveSection('roster')
+  }
+
+  // Add a single athlete by hand → coach_roster (no World Athletics needed).
+  const handleManualAdd = async () => {
+    const { name, dob, discipline, gender, pb, nationality } = manualForm
+    if (!name.trim() || !dob || !discipline || !gender) {
+      setManualError('Name, date of birth, discipline and gender are required.')
+      return
+    }
+    setManualError('')
+    setManualSaving(true)
+    try {
+      // Parse optional PB: "1:52.30" → seconds, "2:05:30" → seconds, else a plain number.
+      let pbValue = null
+      if (pb && pb.trim()) {
+        const s = pb.trim().replace(',', '.').replace(/m$/i, '')
+        if (s.includes(':')) {
+          const parts = s.split(':').map(parseFloat)
+          if (parts.every(n => !isNaN(n))) {
+            pbValue = parts.length === 3
+              ? parts[0] * 3600 + parts[1] * 60 + parts[2]
+              : parts[0] * 60 + parts[1]
+          }
+        } else {
+          const v = parseFloat(s)
+          if (!isNaN(v)) pbValue = v
+        }
+      }
+
+      const newAthlete = {
+        coach_id: user.id,
+        name: name.trim(),
+        dob: dob || null,
+        gender,
+        discipline,
+        disciplines: [discipline],
+        disciplines_data: {},
+        nationality: nationality.trim() || null,
+        pb: pbValue != null ? formatMark(pbValue, discipline) : null,
+        pb_value: pbValue,
+        last_result: null,
+        last_result_value: null,
+        last_date: null,
+        trend: 'stable',
+        tier: 'developing',
+        world_athletics_url: null,
+        races: [],
+      }
+
+      const inserted = await insertInto('coach_roster', newAthlete)
+      if (inserted?.id) setRoster(prev => [inserted, ...prev])
+      else setRoster(prev => [{ ...newAthlete, id: crypto.randomUUID(), created_at: new Date().toISOString() }, ...prev])
+
+      setManualForm({ name: '', dob: '', discipline: '', gender: '', pb: '', nationality: '' })
+      setAddMethod(null)
+      setActiveSection('roster')
+    } catch (e) {
+      setManualError(e.message || 'Could not add athlete. Please try again.')
+    } finally {
+      setManualSaving(false)
+    }
   }
 
   const handleDeleteAthlete = async (athleteId) => {
@@ -657,7 +727,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
                   {/* Setup steps — 3 clear CTAs */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={stagger(1)}>
-                    {/* Step 1: Import from World Athletics */}
+                    {/* Step 1: Import from World Athletics (paused until licensed) */}
+                    {WA_IMPORT_ENABLED && (
                     <button
                       onClick={() => { setActiveSection('add'); setAddMethod('url'); }}
                       className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
@@ -680,6 +751,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                       </div>
                     </button>
+                    )}
 
                     {/* Step 2: CSV Upload */}
                     <button
@@ -781,7 +853,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       {/* Overlay CTA */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <button
-                          onClick={() => { setActiveSection('add'); setAddMethod('url'); }}
+                          onClick={() => { setActiveSection('add'); setAddMethod(null); }}
                           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-black landing-font transition-all hover:brightness-110 hover:scale-[1.02]"
                           style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)', boxShadow: '0 8px 32px rgba(249,115,22,0.3)' }}
                         >
@@ -1057,7 +1129,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   <Users className="w-8 h-8 mx-auto mb-2 text-slate-500" />
                   <p className="text-[12px] text-slate-400 landing-font">{roster.length === 0 ? 'No athletes in your roster yet — add one to get started' : 'No athletes match your search'}</p>
                   {roster.length === 0 && (
-                    <button onClick={() => { setActiveSection('add'); setAddMethod('url') }} className="mt-3 text-[11px] font-bold text-orange-500 hover:text-orange-400 landing-font">+ Import from World Athletics</button>
+                    <button onClick={() => { setActiveSection('add'); setAddMethod(null) }} className="mt-3 text-[11px] font-bold text-orange-500 hover:text-orange-400 landing-font">+ Add athlete</button>
                   )}
                 </div>
               )}
@@ -1149,9 +1221,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               {!addMethod ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { key: 'url', icon: Globe, title: 'World Athletics', desc: 'Paste a profile URL — we\'ll import their full history, PBs, and progressions automatically.', color: '#22c55e', tag: 'Recommended', enabled: true },
+                    { key: 'manual', icon: UserPlus, title: 'Manual Entry', desc: 'Add a single athlete by hand — name, DOB, discipline, and personal best.', color: '#f97316', tag: 'Recommended', enabled: MANUAL_ENTRY_ENABLED },
                     { key: 'csv', icon: FileSpreadsheet, title: 'Bulk Upload', desc: 'Upload a CSV or Excel with athlete names and dates of birth to onboard your whole squad at once.', color: '#3b82f6', tag: null, enabled: BULK_IMPORT_ENABLED },
-                    { key: 'manual', icon: UserPlus, title: 'Manual Entry', desc: 'Add a single athlete by hand — name, DOB, discipline, and personal best.', color: '#f97316', tag: null, enabled: MANUAL_ENTRY_ENABLED },
+                    { key: 'url', icon: Globe, title: 'World Athletics', desc: 'Paste a profile URL to import an athlete\'s full history automatically.', color: '#22c55e', tag: null, enabled: WA_IMPORT_ENABLED },
                   ].map(({ key, icon: Icon, title, desc, color, tag, enabled }, i) => (
                     <button key={key} onClick={() => enabled && setAddMethod(key)} disabled={!enabled}
                       aria-disabled={!enabled}
@@ -1264,25 +1336,32 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <button onClick={() => setAddMethod(null)} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {[
-                      { label: 'Full Name', type: 'text', placeholder: 'Athlete name' },
-                      { label: 'Date of Birth', type: 'date', placeholder: '' },
-                    ].map((f, i) => (
-                      <div key={i}>
-                        <label className="block text-[10px] text-slate-400 mb-1 landing-font">{f.label} *</label>
-                        <input type={f.type} placeholder={f.placeholder} className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
-                      </div>
-                    ))}
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1 landing-font">Full Name *</label>
+                      <input type="text" placeholder="Athlete name" value={manualForm.name}
+                        onChange={e => setManualForm(f => ({ ...f, name: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1 landing-font">Date of Birth *</label>
+                      <input type="date" value={manualForm.dob}
+                        onChange={e => setManualForm(f => ({ ...f, dob: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                    </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Discipline *</label>
-                      <select className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <select value={manualForm.discipline}
+                        onChange={e => setManualForm(f => ({ ...f, discipline: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <option value="">Select</option>
                         {['100m','200m','400m','110m Hurdles','100m Hurdles','400m Hurdles','Discus Throw','Shot Put','Javelin Throw','Hammer Throw'].map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Gender *</label>
-                      <select className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <select value={manualForm.gender}
+                        onChange={e => setManualForm(f => ({ ...f, gender: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <option value="">Select</option>
                         <option value="M">Male</option>
                         <option value="F">Female</option>
@@ -1290,15 +1369,25 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Personal Best</label>
-                      <input type="text" placeholder="e.g. 10.85 or 65.40" className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                      <input type="text" placeholder="e.g. 10.85, 1:52.30 or 65.40" value={manualForm.pb}
+                        onChange={e => setManualForm(f => ({ ...f, pb: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Nationality</label>
-                      <input type="text" placeholder="e.g. UAE" className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                      <input type="text" placeholder="e.g. UAE" value={manualForm.nationality}
+                        onChange={e => setManualForm(f => ({ ...f, nationality: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
                     </div>
                   </div>
-                  <button className="mt-4 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110 transition-all" style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
-                    <Plus className="w-3.5 h-3.5" strokeWidth={3} />Add to Roster
+                  {manualError && (
+                    <div className="mt-3 flex items-start gap-2 text-red-400 text-[11px] landing-font">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />{manualError}
+                    </div>
+                  )}
+                  <button onClick={handleManualAdd} disabled={manualSaving}
+                    className="mt-4 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110 transition-all disabled:opacity-60" style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
+                    {manualSaving ? 'Adding…' : <><Plus className="w-3.5 h-3.5" strokeWidth={3} />Add to Roster</>}
                   </button>
                 </div>
               )}

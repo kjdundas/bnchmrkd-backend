@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { User, Users, ChevronRight, ChevronLeft, MapPin, Calendar, Ruler, Weight, Trophy, Link as LinkIcon } from 'lucide-react'
 import CoachOnboarding from './CoachOnboarding'
+import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -129,7 +130,7 @@ export default function Onboarding({ onSkip }) {
         // ── Optional: scrape World Athletics profile right now ──
         // We don't block onboarding completion if this fails; the athlete
         // can refresh from their dashboard later.
-        if (worldAthleticsUrl && worldAthleticsUrl.includes('worldathletics.org')) {
+        if (WA_IMPORT_ENABLED && worldAthleticsUrl && worldAthleticsUrl.includes('worldathletics.org')) {
           try {
             setScrapeProgress('Pulling your results from World Athletics — this can take up to a minute...')
             const ctrl = new AbortController()
@@ -441,7 +442,7 @@ export default function Onboarding({ onSkip }) {
           )}
 
           {/* World Athletics URL (athlete only — optional, populates dashboard) */}
-          {accountType === 'athlete' && (
+          {WA_IMPORT_ENABLED && accountType === 'athlete' && (
             <div>
               <label className="block text-sm text-gray-400 mb-1 flex items-center gap-1.5">
                 <LinkIcon className="w-3.5 h-3.5" />
