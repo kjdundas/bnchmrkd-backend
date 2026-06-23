@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Users, UserPlus, TrendingUp, Activity, Upload, Link, Search,
   ChevronRight, ChevronLeft, ArrowUpRight, AlertTriangle, Target,
-  Calendar, Plus, X, FileSpreadsheet, Globe, Bot,
+  Calendar, Plus, X, FileSpreadsheet, Globe, Bot, Mail,
   Eye, Clock, Zap, ChevronDown, Loader2, CheckCircle, AlertCircle, Trash2, Pencil, Save
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -10,6 +10,7 @@ import { selectFrom, insertInto, deleteFrom, updateIn } from '../../lib/supabase
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
+import InviteAthletePanel from './InviteAthletePanel'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -1221,7 +1222,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               {!addMethod ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { key: 'manual', icon: UserPlus, title: 'Manual Entry', desc: 'Add a single athlete by hand — name, DOB, discipline, and personal best.', color: '#f97316', tag: 'Recommended', enabled: MANUAL_ENTRY_ENABLED },
+                    { key: 'invite', icon: Mail, title: 'Invite Athlete', desc: 'Send a link request to an athlete\'s account — they approve before you see their data.', color: '#f97316', tag: 'Recommended', enabled: true },
+                    { key: 'manual', icon: UserPlus, title: 'Manual Entry', desc: 'Keep a private record of an athlete by hand — name, DOB, discipline, PB.', color: '#a78bfa', tag: null, enabled: MANUAL_ENTRY_ENABLED },
                     { key: 'csv', icon: FileSpreadsheet, title: 'Bulk Upload', desc: 'Upload a CSV or Excel with athlete names and dates of birth to onboard your whole squad at once.', color: '#3b82f6', tag: null, enabled: BULK_IMPORT_ENABLED },
                     { key: 'url', icon: Globe, title: 'World Athletics', desc: 'Paste a profile URL to import an athlete\'s full history automatically.', color: '#22c55e', tag: null, enabled: WA_IMPORT_ENABLED },
                   ].map(({ key, icon: Icon, title, desc, color, tag, enabled }, i) => (
@@ -1238,6 +1240,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     </button>
                   ))}
                 </div>
+              ) : addMethod === 'invite' ? (
+                <InviteAthletePanel onClose={() => setAddMethod(null)} />
               ) : addMethod === 'url' ? (
                 /* URL Import */
                 <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>

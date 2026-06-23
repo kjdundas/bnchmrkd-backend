@@ -99,3 +99,11 @@ export async function updateIn(table, filter, payload) {
 export async function deleteFrom(table, filter) {
   return rawFetch(`/${table}?${filter}`, { method: 'DELETE' })
 }
+
+// Call a Postgres function (RPC). Returns the function's result.
+export async function callRpc(fnName, args = {}) {
+  return rawFetch(`/rpc/${fnName}`, {
+    method: 'POST',
+    body: JSON.stringify(args),
+  })
+}

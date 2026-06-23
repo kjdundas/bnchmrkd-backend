@@ -22,6 +22,7 @@ import {
 } from '../../lib/gamification'
 import { loadProgress, saveProgress, bootstrapXPFromRaces } from '../../lib/progress'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
+import AthleteCoachLinks from './AthleteCoachLinks'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -698,6 +699,9 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
     <>
       <TierUpCelebration celebrating={celebrating} onDismiss={dismissTierUp} />
 
+      {/* Pending coach requests (only renders when there are any) */}
+      <AthleteCoachLinks pendingOnly />
+
       {/* XP / level + streak — engagement layer (parity with mobile) */}
       <div className="flex items-stretch gap-2">
         <div className="flex-1"><XPBar totalXP={totalXP} /></div>
@@ -1135,6 +1139,11 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
               <><Save className="w-4 h-4" /> Save changes</>
             )}
           </button>
+
+          {/* Coach connections — approve/decline requests + manage who can see your data */}
+          <div className="pt-5 mt-2 border-t border-gray-800">
+            <AthleteCoachLinks />
+          </div>
         </div>
       </main>
     </div>
