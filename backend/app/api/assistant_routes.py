@@ -207,42 +207,170 @@ class ProgramRequest(BaseModel):
     intake: dict[str, Any] = {}     # season_phase, primary/secondary_quality, days_per_week,
                                     # equipment, training_age_years, target_competition_date,
                                     # session_minutes, injuries[], goal
+    brief: str | None = None        # optional natural-language request (coach chat flow);
+                                    # parsed into intake fields, which explicit `intake` overrides
     weeks: int = 4
+
+
+# Enum vocab the brief parser must stay inside (mirrors the athlete intake form).
+_PHASE_KEYS = ("off_season", "pre_season", "competition", "transition")
+_QUALITY_KEYS = (
+    "acceleration", "max velocity", "speed", "speed endurance", "power", "max strength",
+    "aerobic capacity", "anaerobic/lactate", "plyometric/elastic", "mobility", "technique",
+)
+_EQUIPMENT_KEYS = ("track", "full_gym", "minimal", "none")
+_INJURY_KEYS = ("knee", "heel", "ankle", "hip", "shin", "back")
+
+_BRIEF_SYSTEM = (
+    "You convert a coach's natural-language training request into a STRICT JSON intake "
+    "object for a program generator. Return ONLY JSON, no prose. Infer sensible values from "
+    "the request and the athlete's event; leave a field null if truly unspecified.\n"
+    "Schema (use these EXACT enum values):\n"
+    f"  season_phase: one of {list(_PHASE_KEYS)} | null\n"
+    f"  primary_quality: one of {list(_QUALITY_KEYS)} | null  (the main emphasis)\n"
+    f"  secondary_quality: one of {list(_QUALITY_KEYS)} | null\n"
+    "  days_per_week: integer 2-6 | null\n"
+    f"  equipment: one of {list(_EQUIPMENT_KEYS)} | null\n"
+    f"  injuries: array of any of {list(_INJURY_KEYS)} (only ones the coach explicitly mentions)\n"
+    "  weeks: integer 1-12 | null (block length)\n"
+    "  goal: short string restating the specific target, or null\n"
+    "Map synonyms (e.g. 'top-end speed'->'max velocity', 'gym'->'full_gym', "
+    "'base/GPP'->'off_season', 'in-season'->'competition'). Never invent injuries."
+)
+
+
+def _intake_from_brief(brief: str, context: dict[str, Any]) -> dict[str, Any]:
+    """Best-effort parse a coach's free-text request into structured intake.
+
+    Returns {} on any failure — the caller still has deterministic defaults.
+    """
+    brief = (brief or "").strip()
+    if not brief:
+        return {}
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return {}
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        athlete = {
+            "event": (context or {}).get("discipline"),
+            "age": (context or {}).get("age"),
+            "maturity": (context or {}).get("maturity"),
+        }
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",   # cheap structured extraction
+            messages=[
+                {"role": "system", "content": _BRIEF_SYSTEM},
+                {"role": "user", "content": (
+                    f"Athlete: {json.dumps(athlete, default=str)}\n"
+                    f"Coach request: {brief[:800]}"
+                )},
+            ],
+            temperature=0,
+            max_tokens=300,
+            response_format={"type": "json_object"},
+        )
+        parsed = json.loads(resp.choices[0].message.content or "{}")
+    except Exception:  # noqa: BLE001
+        return {}
+
+    out: dict[str, Any] = {}
+    if parsed.get("season_phase") in _PHASE_KEYS:
+        out["season_phase"] = parsed["season_phase"]
+    if parsed.get("primary_quality") in _QUALITY_KEYS:
+        out["primary_quality"] = parsed["primary_quality"]
+    if parsed.get("secondary_quality") in _QUALITY_KEYS:
+        out["secondary_quality"] = parsed["secondary_quality"]
+    if isinstance(parsed.get("days_per_week"), int) and 2 <= parsed["days_per_week"] <= 6:
+        out["days_per_week"] = parsed["days_per_week"]
+    if parsed.get("equipment") in _EQUIPMENT_KEYS:
+        out["equipment"] = parsed["equipment"]
+    inj = parsed.get("injuries")
+    if isinstance(inj, list):
+        out["injuries"] = [i for i in inj if i in _INJURY_KEYS]
+    if isinstance(parsed.get("weeks"), int) and 1 <= parsed["weeks"] <= 12:
+        out["weeks"] = parsed["weeks"]
+    if isinstance(parsed.get("goal"), str) and parsed["goal"].strip():
+        out["goal"] = parsed["goal"].strip()[:500]
+    return out
 
 
 _PROGRAM_SYSTEM = _FOUNDATION + """
 
-YOUR TASK: produce a STRUCTURED TRAINING PROGRAM for the athlete in DATA, as JSON only.
+YOUR TASK: produce a STRUCTURED, FULLY-PRESCRIBED TRAINING PROGRAM for the athlete in
+DATA, as JSON only. This must read like a program written by an expert S&C coach — every
+working item carries concrete numbers, not vague advice.
 
 FOLLOW THE SKELETON EXACTLY:
-- A SKELETON block is provided — it is the deterministic coaching plan derived from the
-  athlete's event, season phase, maturity, and injury screen. You MUST build to it:
+- A SKELETON block is provided — the deterministic coaching plan derived from the athlete's
+  event, season phase, maturity, and injury screen. You MUST build to it:
   · Each session's primary quality must match the SKELETON's week_layout.
-  · Respect the SKELETON's loading_ceiling (external-load, plyometric, and intensity caps
-    for the athlete's maturity stage) — these OVERRIDE any request the athlete made.
-  · Reflect the season_phase emphasis (volume/intensity/general-vs-specific).
-  · Apply EVERY injury_modification: reduce the named loads, and tell the athlete to see a
+  · Respect the SKELETON's loading_ceiling (external-load, plyometric and intensity caps for
+    the athlete's maturity stage) — these OVERRIDE any request the athlete made.
+  · Reflect the season_phase emphasis (volume/intensity, general-vs-specific).
+  · Apply EVERY injury_modification: reduce the named loads and tell the athlete to see a
     physio/doctor. Never diagnose; never program through pain.
   · Honour days_per_week, equipment, and session_minutes where given.
 
+PRESCRIPTION REQUIREMENTS (this is the whole point — be specific, never vague):
+- EVERY working exercise must specify, in its fields: how much work, how hard, and how much
+  rest. Never write "do some sprints" or "core work" — name the exercise and prescribe it.
+- Strength: sets × reps + load. For post-PHV/adult athletes load may be %1RM or RPE
+  (e.g. "4 × 5 @ 82% 1RM" or "3 × 6 @ RPE 8"). For pre-PHV or circa-PHV athletes NEVER use
+  %1RM or near-maximal loads — prescribe by RPE, bodyweight, or "technical load" and keep
+  reps submaximal (this is required by the loading ceiling).
+- Sprints / runs: distance × reps (and sets if grouped), target intensity as % effort, and
+  BOTH recoveries — between reps and between sets (e.g. "3 × 30 m @ 95%, walk-back ~3 min;
+  2 sets, 6 min between sets").
+- Plyometrics / jumps: foot contacts as sets × reps, intensity/height appropriate to
+  maturity, and rest (e.g. "4 × 5 pogo hops, low, full recovery ~60 s").
+- Tempo/conditioning: distance or time, target pace or %, and the work:rest (e.g.
+  "8 × 100 m @ 75%, 100 m walk recovery").
+- ALWAYS give a concrete rest figure ("2–3 min", "60 s"), never "adequate rest".
+- Give ONE short coaching cue per main exercise (the "cue" field).
+- Warm-up and cool-down are real blocks with concrete drills, durations and reps.
+
 SAFETY (always):
 - No nutrition, weight-loss, or body-composition content.
-- Include a warm-up and recovery guidance. Tell them to stop if they feel pain and see a
-  professional. Tell them to review the plan with their coach (and a parent/guardian if a minor).
+- Tell them to stop if they feel pain and see a professional; review the plan with their
+  coach (and a parent/guardian if a minor).
 
-OUTPUT: return ONLY valid JSON with this shape (no prose outside the JSON):
+OUTPUT: return ONLY valid JSON with this shape (no prose outside the JSON). Each block holds
+an "exercises" array; each exercise is fully prescribed:
 {
   "title": "short title",
   "summary": "1-2 sentence overview tied to their goal and stage",
   "duration_weeks": <int>,
   "sessions_per_week": <int>,
   "sessions": [
-    {"label":"Session 1 — ...","focus":"...","blocks":[{"name":"Warm-up","detail":"..."},{"name":"Main","detail":"..."},{"name":"Cool-down","detail":"..."}],"notes":"..."}
+    {
+      "label": "Day 1 — Acceleration + Max Strength",
+      "focus": "acceleration",
+      "blocks": [
+        {"name":"Warm-up","exercises":[
+          {"name":"Jog + dynamic drills","prescription":"8–10 min","intensity":"easy","rest":"—","tempo":"—","cue":"raise core temp, open hips"}
+        ]},
+        {"name":"Acceleration","exercises":[
+          {"name":"Sled push","prescription":"5 × 20 m","intensity":"~75% BW load","rest":"3 min between reps","tempo":"max intent","cue":"low shin angle, push the ground back"}
+        ]},
+        {"name":"Max strength","exercises":[
+          {"name":"Back squat","prescription":"4 × 4","intensity":"82% 1RM","rest":"3–4 min","tempo":"2-0-X","cue":"brace, drive through mid-foot"}
+        ]},
+        {"name":"Cool-down","exercises":[
+          {"name":"Easy jog + mobility","prescription":"6–8 min","intensity":"easy","rest":"—","tempo":"—","cue":"nasal breathing, relax"}
+        ]}
+      ],
+      "notes": "session-level notes"
+    }
   ],
-  "progression": "how to progress week to week",
+  "progression": "concrete week-to-week progression, incl. a deload (e.g. 'Wk1→3 add ~2.5–5% load / 1 rep or 1 sprint rep; Wk4 deload to ~60% volume')",
   "maturity_note": "how this plan reflects their development stage (or that they're treated as fully matured)",
   "safety_note": "the key safety reminders"
-}"""
+}
+
+If you cannot fit full detail for every day within the token budget, prescribe FEWER days
+fully rather than many days vaguely — completeness of prescription beats breadth."""
 
 
 @router.post("/program")
@@ -257,8 +385,13 @@ async def generate_program(req: ProgramRequest) -> dict[str, Any]:
     if not api_key:
         raise HTTPException(status_code=503, detail="Assistant is not configured yet.")
 
-    weeks = max(1, min(int(req.weeks or 4), 12))
-    intake = dict(req.intake or {})
+    # If a natural-language brief was given (coach chat flow), parse it into intake
+    # fields first; explicit `intake` values override the brief-derived ones.
+    brief_intake = _intake_from_brief(req.brief, req.context) if req.brief else {}
+    explicit = {k: v for k, v in (req.intake or {}).items() if v not in (None, "", [])}
+    intake = {**brief_intake, **explicit}
+
+    weeks = max(1, min(int(intake.get("weeks") or req.weeks or 4), 12))
     intake.setdefault("event", (req.context or {}).get("discipline"))
     age = (req.context or {}).get("age")
     maturity = (req.context or {}).get("maturity")
@@ -290,7 +423,7 @@ async def generate_program(req: ProgramRequest) -> dict[str, Any]:
             model="gpt-4o",
             messages=messages,
             temperature=0.4,
-            max_tokens=1600,
+            max_tokens=4000,
             response_format={"type": "json_object"},
         )
         raw = resp.choices[0].message.content or "{}"
@@ -300,4 +433,14 @@ async def generate_program(req: ProgramRequest) -> dict[str, Any]:
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Program generation failed: {e}")
 
-    return {"program": program}
+    # Echo back the resolved plan parameters so the UI can show what was assumed.
+    resolved = {
+        "season_phase": skeleton.get("season_phase", {}).get("label"),
+        "primary_quality": skeleton.get("primary_quality"),
+        "secondary_quality": skeleton.get("secondary_quality"),
+        "days_per_week": skeleton.get("days_per_week"),
+        "weeks": weeks,
+        "equipment": intake.get("equipment"),
+        "injuries": skeleton.get("injury_flags"),
+    }
+    return {"program": program, "resolved": resolved}

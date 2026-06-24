@@ -218,6 +218,27 @@ export default function ProgramsPanel({ user, fetchContext }) {
   )
 }
 
+// One fully-prescribed exercise row: name + prescription headline, then the
+// intensity / rest / tempo meta and a short coaching cue.
+function ExerciseRow({ ex }) {
+  if (!ex) return null
+  const skip = (v) => v && String(v).trim() && String(v).trim() !== '—' && String(v).trim() !== '-'
+  const meta = []
+  if (skip(ex.intensity)) meta.push(ex.intensity)
+  if (skip(ex.rest)) meta.push(`rest ${ex.rest}`)
+  if (skip(ex.tempo)) meta.push(`tempo ${ex.tempo}`)
+  return (
+    <div className="rounded-md px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-semibold text-slate-100 landing-font">{ex.name}</span>
+        {skip(ex.prescription) && <span className="text-[11px] font-bold text-orange-300 mono-font whitespace-nowrap flex-shrink-0">{ex.prescription}</span>}
+      </div>
+      {meta.length > 0 && <p className="text-[10px] text-slate-400 mono-font mt-0.5">{meta.join(' · ')}</p>}
+      {skip(ex.cue) && <p className="text-[10px] text-slate-500 landing-font italic mt-0.5">{ex.cue}</p>}
+    </div>
+  )
+}
+
 function ProgramCard({ program, open, onToggle, onDelete }) {
   const s = program.structure || {}
   const sessions = Array.isArray(s.sessions) ? s.sessions : []
@@ -225,7 +246,13 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
     <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 text-left">
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-bold text-white landing-font truncate">{s.title || program.title}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[13px] font-bold text-white landing-font truncate">{s.title || program.title}</p>
+            {(program.source === 'coach_ai' || (program.created_by && program.athlete_user_id && program.created_by !== program.athlete_user_id)) && (
+              <span className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
+                style={{ background: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)' }}>From coach</span>
+            )}
+          </div>
           <p className="text-[10px] text-slate-400 landing-font truncate">
             {s.duration_weeks ? `${s.duration_weeks} wk` : ''}{s.sessions_per_week ? ` · ${s.sessions_per_week}×/wk` : ''}{s.summary ? ` · ${s.summary}` : ''}
           </p>
@@ -241,11 +268,20 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
             <div key={i} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
               <p className="text-[12px] font-bold text-white landing-font">{sess.label || `Session ${i + 1}`}</p>
               {sess.focus && <p className="text-[10px] text-orange-400 mono-font uppercase tracking-wider mt-0.5">{sess.focus}</p>}
-              <div className="mt-2 space-y-1.5">
+              <div className="mt-2 space-y-2">
                 {(Array.isArray(sess.blocks) ? sess.blocks : []).map((b, j) => (
                   <div key={j}>
-                    <p className="text-[11px] font-semibold text-slate-200 landing-font">{b.name}</p>
-                    <p className="text-[11px] text-slate-400 landing-font leading-snug">{b.detail}</p>
+                    <p className="text-[11px] font-semibold text-slate-200 landing-font mb-1">{b.name}</p>
+                    {Array.isArray(b.exercises) && b.exercises.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {b.exercises.map((ex, k) => (
+                          <ExerciseRow key={k} ex={ex} />
+                        ))}
+                      </div>
+                    ) : (
+                      // Back-compat: older programs stored a free-text detail string.
+                      <p className="text-[11px] text-slate-400 landing-font leading-snug">{b.detail}</p>
+                    )}
                   </div>
                 ))}
               </div>

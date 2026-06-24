@@ -367,6 +367,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       const dob = a.dob ? new Date(a.dob) : null
       const age = dob && !isNaN(dob) ? Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000)) : null
       return {
+        // athlete_user_id lets the coach target this athlete when building a
+        // program in the assistant (saved to their account).
+        athlete_user_id: a.athlete_user_id,
         name: a.name,
         discipline: disc,
         gender: (a.gender || 'M').toUpperCase().startsWith('F') ? 'F' : 'M',
@@ -1745,7 +1748,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         </div>
       </div>
 
-      <AssistantChat role="coach" fetchContext={buildAssistantContext} />
+      <AssistantChat role="coach" fetchContext={buildAssistantContext} currentUserId={user?.id} />
     </div>
   )
 }
