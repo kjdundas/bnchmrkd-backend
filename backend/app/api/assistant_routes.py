@@ -25,6 +25,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.core.program_skeleton import build_skeleton
+
 router = APIRouter(prefix="/api/v1/assistant", tags=["assistant"])
 
 
@@ -192,3 +194,110 @@ async def assistant(req: AssistantRequest) -> AssistantResponse:
         raise HTTPException(status_code=502, detail=f"Assistant call failed: {e}")
 
     return AssistantResponse(answer=answer or "I'm not sure how to answer that from your data.")
+
+
+# ════════════════════════════════════════════════════════════════════════
+# PROGRAM GENERATION (Expert Assistant · Phase 2)
+# Generates a structured, maturation-capped training block as JSON.
+# ════════════════════════════════════════════════════════════════════════
+
+class ProgramRequest(BaseModel):
+    role: str                       # 'coach' | 'athlete'
+    context: dict[str, Any] = {}    # athlete data incl. age + maturity (client-fetched)
+    intake: dict[str, Any] = {}     # season_phase, primary/secondary_quality, days_per_week,
+                                    # equipment, training_age_years, target_competition_date,
+                                    # session_minutes, injuries[], goal
+    weeks: int = 4
+
+
+_PROGRAM_SYSTEM = _FOUNDATION + """
+
+YOUR TASK: produce a STRUCTURED TRAINING PROGRAM for the athlete in DATA, as JSON only.
+
+FOLLOW THE SKELETON EXACTLY:
+- A SKELETON block is provided — it is the deterministic coaching plan derived from the
+  athlete's event, season phase, maturity, and injury screen. You MUST build to it:
+  · Each session's primary quality must match the SKELETON's week_layout.
+  · Respect the SKELETON's loading_ceiling (external-load, plyometric, and intensity caps
+    for the athlete's maturity stage) — these OVERRIDE any request the athlete made.
+  · Reflect the season_phase emphasis (volume/intensity/general-vs-specific).
+  · Apply EVERY injury_modification: reduce the named loads, and tell the athlete to see a
+    physio/doctor. Never diagnose; never program through pain.
+  · Honour days_per_week, equipment, and session_minutes where given.
+
+SAFETY (always):
+- No nutrition, weight-loss, or body-composition content.
+- Include a warm-up and recovery guidance. Tell them to stop if they feel pain and see a
+  professional. Tell them to review the plan with their coach (and a parent/guardian if a minor).
+
+OUTPUT: return ONLY valid JSON with this shape (no prose outside the JSON):
+{
+  "title": "short title",
+  "summary": "1-2 sentence overview tied to their goal and stage",
+  "duration_weeks": <int>,
+  "sessions_per_week": <int>,
+  "sessions": [
+    {"label":"Session 1 — ...","focus":"...","blocks":[{"name":"Warm-up","detail":"..."},{"name":"Main","detail":"..."},{"name":"Cool-down","detail":"..."}],"notes":"..."}
+  ],
+  "progression": "how to progress week to week",
+  "maturity_note": "how this plan reflects their development stage (or that they're treated as fully matured)",
+  "safety_note": "the key safety reminders"
+}"""
+
+
+@router.post("/program")
+async def generate_program(req: ProgramRequest) -> dict[str, Any]:
+    if req.role not in ("coach", "athlete"):
+        raise HTTPException(status_code=400, detail="role must be 'coach' or 'athlete'.")
+    try:
+        from openai import OpenAI
+    except ImportError:
+        raise HTTPException(status_code=500, detail="openai package not installed.")
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Assistant is not configured yet.")
+
+    weeks = max(1, min(int(req.weeks or 4), 12))
+    intake = dict(req.intake or {})
+    intake.setdefault("event", (req.context or {}).get("discipline"))
+    age = (req.context or {}).get("age")
+    maturity = (req.context or {}).get("maturity")
+
+    # Deterministic coaching skeleton (periodization + maturity ceilings + injury mods).
+    skeleton = build_skeleton(intake, maturity, age)
+    goal = str(intake.get("goal") or "").strip()
+
+    data_blob = json.dumps(req.context, default=str)[:18000]
+    skeleton_blob = json.dumps(skeleton, default=str)[:6000]
+    user_msg = (
+        f"Goal: {goal[:500] or 'event-specific development for this phase'}.\n"
+        f"Target length: about {weeks} weeks.\n"
+        "Build the program now as JSON, following the SKELETON, its maturation loading "
+        "ceilings, the injury modifications, and the safety rules exactly."
+    )
+    messages = [
+        {"role": "system", "content": (
+            f"{_PROGRAM_SYSTEM}"
+            f"\n\n=== SKELETON (the deterministic plan you MUST follow) ===\n{skeleton_blob}\n=== END SKELETON ==="
+            f"\n\n=== ATHLETE DATA (facts) ===\n{data_blob}\n=== END DATA ==="
+        )},
+        {"role": "user", "content": user_msg},
+    ]
+
+    client = OpenAI(api_key=api_key)
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.4,
+            max_tokens=1600,
+            response_format={"type": "json_object"},
+        )
+        raw = resp.choices[0].message.content or "{}"
+        program = json.loads(raw)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="Program generation returned invalid JSON.")
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Program generation failed: {e}")
+
+    return {"program": program}
