@@ -67,8 +67,11 @@ export function maturityOffsetMirwald({ sex, ageYears, heightCm, sittingHeightCm
 
 // Convenience: compute maturity from a profile-shaped object, or null if data
 // is incomplete (graceful degradation — guidance falls back to age-based).
+// Maturity offset is only meaningful for youth — anyone 18+ is treated as
+// fully matured (post-PHV) and gets no estimate.
 export function maturityFromProfile({ sex, dob, heightCm, sittingHeightCm, weightKg }) {
   const ageYears = decimalAge(dob)
   if (ageYears == null) return null
+  if (ageYears >= 18) return null   // assume fully matured at 18+
   return maturityOffsetMirwald({ sex, ageYears, heightCm, sittingHeightCm, weightKg })
 }

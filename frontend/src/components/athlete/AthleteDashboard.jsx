@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   TrendingUp, TrendingDown, Minus, Target, Calendar,
   LogOut, RefreshCw, AlertCircle, Activity, Home, LineChart as LineChartIcon, Plus,
-  ChevronLeft, Save, X
+  ChevronLeft, Save, X, Dumbbell
 } from 'lucide-react'
 import {
   Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -24,6 +24,7 @@ import { loadProgress, saveProgress, bootstrapXPFromRaces } from '../../lib/prog
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 import AthleteCoachLinks from './AthleteCoachLinks'
 import AssistantChat from '../AssistantChat'
+import ProgramsPanel from './ProgramsPanel'
 import { isTimeDiscipline } from '../../lib/performanceLevels'
 import { maturityFromProfile } from '../../lib/maturation'
 
@@ -404,6 +405,59 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     }
   }, [athleteRow, activeDiscipline])
 
+  // Build the Assistant's data context: the athlete's own results (web races +
+  // mobile performances), progress, maturity, and next milestone — all their own.
+  // NOTE: defined here, ABOVE all early returns, so the hook order is stable.
+  const buildAssistantContext = useCallback(async () => {
+    const disc = (athleteRow?.discipline || activeDiscipline || '').trim()
+    const lower = isTimeDiscipline(disc)
+    let perfs = []
+    try { perfs = (await selectFrom('performances', { filter: `user_id=eq.${user.id}`, limit: '500' })) || [] } catch { perfs = [] }
+    const pts = []
+    for (const r of (athleteRow?.races || [])) {
+      if (r?.value == null || !r.date) continue
+      const rd = (r.discipline || '').trim()
+      if (disc && rd && rd !== disc) continue
+      pts.push({ date: r.date, value: Number(r.value), competition: r.competition || null })
+    }
+    for (const p of perfs) {
+      if (p?.mark == null || !p.competition_date) continue
+      const pd = (p.discipline || '').trim()
+      if (disc && pd && pd !== disc) continue
+      pts.push({ date: p.competition_date, value: Number(p.mark), competition: p.competition_name || null })
+    }
+    pts.sort((x, y) => new Date(y.date) - new Date(x.date))
+    let pb = null
+    for (const r of pts) { if (pb == null || (lower ? r.value < pb : r.value > pb)) pb = r.value }
+    const lvl = getLevelFromXP(totalXP || 0)
+    const d = profile?.date_of_birth ? new Date(profile.date_of_birth) : null
+    const age = d && !isNaN(d) ? Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)) : null
+    const maturity = maturityFromProfile({
+      sex: profile?.gender,
+      dob: profile?.date_of_birth,
+      heightCm: athleteRow?.height_cm,
+      sittingHeightCm: athleteRow?.sitting_height_cm,
+      weightKg: athleteRow?.weight_kg,
+    })
+    return {
+      name: profile?.full_name || 'You',
+      discipline: disc,
+      age,
+      maturity,
+      pb,
+      most_recent: pts[0] || null,
+      total_results: pts.length,
+      recent_results: pts.slice(0, 6),
+      next_milestone: view?.nextMilestone ?? null,
+      trend: view?.trend ?? null,
+      xp: totalXP || 0,
+      level: lvl.level,
+      level_title: lvl.title,
+      current_streak: streak || 0,
+      longest_streak: longestStreak || 0,
+    }
+  }, [athleteRow, activeDiscipline, user, totalXP, streak, longestStreak, view, profile])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
@@ -491,6 +545,14 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
           <Home className="w-[18px] h-[18px]" strokeWidth={2} />
           <span className="mono-font text-[9px] uppercase tracking-[0.18em]">Home</span>
         </button>
+        <button
+          onClick={() => setTab('programs')}
+          className="flex flex-col items-center gap-1 px-4 py-1.5 transition-colors"
+          style={{ color: tab === 'programs' ? '#fb923c' : '#475569' }}
+        >
+          <Dumbbell className="w-[18px] h-[18px]" strokeWidth={2} />
+          <span className="mono-font text-[9px] uppercase tracking-[0.18em]">Programs</span>
+        </button>
         <button onClick={() => setTab('log')} className="flex flex-col items-center -mt-5">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center transition-all"
@@ -559,6 +621,18 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         </div>
       )
     }
+    // Programs don't require any logged results — let the tab render when empty.
+    if (tab === 'programs') {
+      return (
+        <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+          <Header />
+          <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+            <ProgramsPanel user={user} fetchContext={buildAssistantContext} />
+          </main>
+          <BottomNav />
+        </div>
+      )
+    }
     return (
       <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
         <Header />
@@ -622,60 +696,6 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     )
   }
 
-  // Build the Assistant's data context: the athlete's own results (web races +
-  // mobile performances), progress, and next milestone — all their own data.
-  const buildAssistantContext = useCallback(async () => {
-    const disc = (athleteRow?.discipline || activeDiscipline || '').trim()
-    const lower = isTimeDiscipline(disc)
-    let perfs = []
-    try { perfs = (await selectFrom('performances', { filter: `user_id=eq.${user.id}`, limit: '500' })) || [] } catch { perfs = [] }
-    const pts = []
-    for (const r of (athleteRow?.races || [])) {
-      if (r?.value == null || !r.date) continue
-      const rd = (r.discipline || '').trim()
-      if (disc && rd && rd !== disc) continue
-      pts.push({ date: r.date, value: Number(r.value), competition: r.competition || null })
-    }
-    for (const p of perfs) {
-      if (p?.mark == null || !p.competition_date) continue
-      const pd = (p.discipline || '').trim()
-      if (disc && pd && pd !== disc) continue
-      pts.push({ date: p.competition_date, value: Number(p.mark), competition: p.competition_name || null })
-    }
-    pts.sort((x, y) => new Date(y.date) - new Date(x.date))
-    let pb = null
-    for (const r of pts) { if (pb == null || (lower ? r.value < pb : r.value > pb)) pb = r.value }
-    const lvl = getLevelFromXP(totalXP || 0)
-    const d = profile?.date_of_birth ? new Date(profile.date_of_birth) : null
-    const age = d && !isNaN(d) ? Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)) : null
-    // Maturity estimate (years from PHV) when the inputs are available — drives
-    // maturity-aware guidance. Null when height/sitting-height/weight missing.
-    const maturity = maturityFromProfile({
-      sex: profile?.gender,
-      dob: profile?.date_of_birth,
-      heightCm: athleteRow?.height_cm,
-      sittingHeightCm: athleteRow?.sitting_height_cm,
-      weightKg: athleteRow?.weight_kg,
-    })
-    return {
-      name: profile?.full_name || 'You',
-      discipline: disc,
-      age,
-      maturity,
-      pb,
-      most_recent: pts[0] || null,
-      total_results: pts.length,
-      recent_results: pts.slice(0, 6),
-      next_milestone: view?.nextMilestone ?? null,
-      trend: view?.trend ?? null,
-      xp: totalXP || 0,
-      level: lvl.level,
-      level_title: lvl.title,
-      current_streak: streak || 0,
-      longest_streak: longestStreak || 0,
-    }
-  }, [athleteRow, activeDiscipline, user, totalXP, streak, longestStreak, view, profile])
-
   // ── Main shell ──────────────────────────────────────────────────────
   return (
     <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
@@ -683,16 +703,21 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
 
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
         {tab === 'home' && (
-          <HomeView
-            view={view}
-            athleteRow={athleteRow}
-            profile={profile}
-            athleteId={user?.id}
-            onRefresh={handleRefresh}
-            refreshing={refreshing}
-            totalXP={totalXP}
-            streak={streak}
-          />
+          <>
+            <HomeView
+              view={view}
+              athleteRow={athleteRow}
+              profile={profile}
+              athleteId={user?.id}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
+              totalXP={totalXP}
+              streak={streak}
+            />
+          </>
+        )}
+        {tab === 'programs' && (
+          <ProgramsPanel user={user} fetchContext={buildAssistantContext} />
         )}
         {tab === 'log' && (
           <MetricLogView
@@ -1173,6 +1198,31 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
             <p className="text-[11px] text-gray-500 mt-1">
               Optional. Sit tall against a wall and measure from the seat to the top of your head. With height + weight, this lets the assistant estimate your growth/maturity stage for age-appropriate guidance.
             </p>
+            {(() => {
+              const m = maturityFromProfile({
+                sex: profile?.gender,
+                dob: profile?.date_of_birth,
+                heightCm: parseFloat(heightCm),
+                sittingHeightCm: parseFloat(sittingHeightCm),
+                weightKg: parseFloat(weightKg),
+              })
+              if (!m) return null
+              const before = m.offset < 0
+              const yrs = Math.abs(m.offset).toFixed(1)
+              return (
+                <div className="mt-2 rounded-lg p-3" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                  <p className="text-[12px] text-white font-semibold landing-font">
+                    Estimated stage: <span className="text-orange-400">{m.status}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-300 landing-font mt-0.5">
+                    ~{yrs} yr {before ? 'before' : 'past'} peak height velocity · predicted PHV age ~{m.age_at_phv}
+                  </p>
+                  <p className="text-[10px] text-slate-500 landing-font mt-1.5">
+                    Estimate only (±~{m.std_error_years} yr, {m.method}). Not a measurement — it informs training guidance, it doesn't define you.
+                  </p>
+                </div>
+              )
+            })()}
           </div>
 
           {WA_IMPORT_ENABLED && (

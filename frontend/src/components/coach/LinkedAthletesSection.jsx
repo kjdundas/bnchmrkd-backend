@@ -10,6 +10,7 @@ import { Link2, ChevronRight } from 'lucide-react'
 import { callRpc } from '../../lib/supabaseRest'
 import { getTier, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
+import { maturityFromProfile } from '../../lib/maturation'
 
 function calcAge(dob) {
   if (!dob) return null
@@ -86,6 +87,11 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
         {athletes.map((a) => {
           const age = calcAge(a.dob)
           const gender = (a.gender || 'M').toUpperCase().startsWith('F') ? 'F' : 'M'
+          // Maturity stage — only returns a value for under-18s with the data.
+          const maturity = maturityFromProfile({
+            sex: a.gender, dob: a.dob,
+            heightCm: a.height_cm, sittingHeightCm: a.sitting_height_cm, weightKg: a.weight_kg,
+          })
           const marks = deriveMarks(a)
           const pbDisplay = fmtMark(marks.pb, a.discipline) || a.pb_display
           let tier = null
@@ -137,6 +143,13 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
                   <span className="text-[13px] font-bold text-white landing-font truncate">{a.name || 'Athlete'}</span>
                   <span className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
                     style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>Linked</span>
+                  {maturity && (
+                    <span title={`~${Math.abs(maturity.offset).toFixed(1)}yr ${maturity.offset < 0 ? 'before' : 'past'} PHV (est.)`}
+                      className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
+                      style={{ background: 'rgba(249,115,22,0.12)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.25)' }}>
+                      {maturity.status}
+                    </span>
+                  )}
                 </div>
                 <p className="text-[10px] text-slate-400 landing-font truncate">
                   {a.discipline || '—'}{age != null ? ` · ${age}y` : ''}{pbDisplay ? ` · PB ${pbDisplay}` : ''}

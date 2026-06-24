@@ -10,6 +10,7 @@ import { selectFrom, insertInto, deleteFrom, updateIn, callRpc } from '../../lib
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
+import { maturityFromProfile } from '../../lib/maturation'
 import InviteAthletePanel from './InviteAthletePanel'
 import LinkedAthletesSection from './LinkedAthletesSection'
 import AssistantChat from '../AssistantChat'
@@ -370,6 +371,11 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         discipline: disc,
         gender: (a.gender || 'M').toUpperCase().startsWith('F') ? 'F' : 'M',
         age,
+        // Maturity stage (under-18s only; null otherwise) for maturity-aware coaching.
+        maturity: maturityFromProfile({
+          sex: a.gender, dob: a.dob,
+          heightCm: a.height_cm, sittingHeightCm: a.sitting_height_cm, weightKg: a.weight_kg,
+        }),
         pb,
         most_recent: pts[0] ? { date: pts[0].date, value: pts[0].value } : null,
         total_results: pts.length,
