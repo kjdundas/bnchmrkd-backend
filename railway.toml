@@ -1,5 +1,2 @@
 [build]
 dockerfilePath = "backend/Dockerfile"
-
-[build.buildContext]
-directory = "."
