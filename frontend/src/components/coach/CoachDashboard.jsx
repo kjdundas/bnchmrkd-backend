@@ -6,11 +6,13 @@ import {
   Eye, Clock, Zap, ChevronDown, Loader2, CheckCircle, AlertCircle, Trash2, Pencil, Save
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { selectFrom, insertInto, deleteFrom, updateIn } from '../../lib/supabaseRest'
+import { selectFrom, insertInto, deleteFrom, updateIn, callRpc } from '../../lib/supabaseRest'
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 import InviteAthletePanel from './InviteAthletePanel'
+import LinkedAthletesSection from './LinkedAthletesSection'
+import AssistantChat from '../AssistantChat'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -336,6 +338,46 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     await new Promise(r => setTimeout(r, 2000))
     setCsvUploading(false); setCsvFile(null); setCsvPreview(null); setAddMethod(null); setActiveSection('roster')
   }
+
+  // Build the data context for the Assistant: the coach's CONSENTED athletes
+  // with clean, computed stats (PB + recent from combined web + mobile logs).
+  const buildAssistantContext = useCallback(async () => {
+    let rows = []
+    try { rows = await callRpc('get_linked_athletes') } catch { rows = [] }
+    const athletes = (Array.isArray(rows) ? rows : []).map(a => {
+      const disc = (a.discipline || '').trim()
+      const lower = isTimeDiscipline(disc)
+      const pts = []
+      for (const r of (Array.isArray(a.races) ? a.races : [])) {
+        if (r?.value == null || !r.date) continue
+        const rd = (r.discipline || '').trim()
+        if (disc && rd && rd !== disc) continue
+        pts.push({ date: r.date, value: Number(r.value), competition: r.competition || null })
+      }
+      for (const p of (Array.isArray(a.performances) ? a.performances : [])) {
+        if (p?.value == null || !p.date) continue
+        const pd = (p.discipline || '').trim()
+        if (disc && pd && pd !== disc) continue
+        pts.push({ date: p.date, value: Number(p.value), competition: p.competition || null })
+      }
+      pts.sort((x, y) => new Date(y.date) - new Date(x.date))
+      let pb = null
+      for (const r of pts) { if (pb == null || (lower ? r.value < pb : r.value > pb)) pb = r.value }
+      const dob = a.dob ? new Date(a.dob) : null
+      const age = dob && !isNaN(dob) ? Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000)) : null
+      return {
+        name: a.name,
+        discipline: disc,
+        gender: (a.gender || 'M').toUpperCase().startsWith('F') ? 'F' : 'M',
+        age,
+        pb,
+        most_recent: pts[0] ? { date: pts[0].date, value: pts[0].value } : null,
+        total_results: pts.length,
+        recent_results: pts.slice(0, 5),
+      }
+    })
+    return { coach_name: profile?.full_name || 'Coach', athlete_count: athletes.length, athletes }
+  }, [profile])
 
   // Add a single athlete by hand → coach_roster (no World Athletics needed).
   const handleManualAdd = async () => {
@@ -966,6 +1008,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           {/* ═══════════════ ROSTER ═══════════════ */}
           {activeSection === 'roster' && (
             <div className="space-y-4">
+              <LinkedAthletesSection onViewAthlete={onViewAthlete} />
               <div className="flex flex-col sm:flex-row gap-3" style={stagger(0)}>
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -1695,6 +1738,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
         </div>
       </div>
+
+      <AssistantChat role="coach" fetchContext={buildAssistantContext} />
     </div>
   )
 }

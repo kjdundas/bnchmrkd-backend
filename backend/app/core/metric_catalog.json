@@ -1,0 +1,533 @@
+[
+ {
+  "key": "sprint_10m",
+  "label": "0–10m Split",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "1.2-3.5 s",
+  "protocol": "Standing or 3-point start, electronic timing gates at 0m and 10m. Best of 3 with ≥3 min rest."
+ },
+ {
+  "key": "sprint_20m",
+  "label": "0–20m Split",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "2.2-5 s",
+  "protocol": "Same start. Gate at 20m. Best of 3 trials."
+ },
+ {
+  "key": "sprint_30m",
+  "label": "0–30m Split",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "3.2-6.5 s",
+  "protocol": "Standing start, fully rested, indoor track if possible. Best of 3."
+ },
+ {
+  "key": "sprint_40m",
+  "label": "0–40m Split",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "4.2-8 s",
+  "protocol": "Electronic timing only — hand timing inflates results by ~0.2s."
+ },
+ {
+  "key": "sprint_60m",
+  "label": "0–60m Split",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "6.2-11 s",
+  "protocol": "Block or 3-point start. Wind-legal if outdoors (<+2.0 m/s)."
+ },
+ {
+  "key": "sprint_100m",
+  "label": "100m Sprint",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "9.5-16 s",
+  "protocol": "Full competition distance. Block start, electronic timing."
+ },
+ {
+  "key": "flying_10m",
+  "label": "Flying 10m",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "0.8-1.6 s",
+  "protocol": "20m run-in to gate, then time across 10m. Use to derive max velocity."
+ },
+ {
+  "key": "max_velocity",
+  "label": "Max Velocity",
+  "unit": "m/s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "6-13.5 m/s",
+  "protocol": "Radar or LPS device, or compute from a 10m fly: v = 10 / fly time."
+ },
+ {
+  "key": "split_300m",
+  "label": "300m Split",
+  "unit": "s",
+  "category": "Speed",
+  "category_desc": "Sprint splits & top-end velocity",
+  "range": "30-70 s",
+  "protocol": "Single rep on track, full warm-up, lane 1. Used predictor."
+ },
+ {
+  "key": "cmj_height",
+  "label": "CMJ Height",
+  "unit": "cm",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "10-90 cm",
+  "protocol": "Hands on hips, free counter-movement to self-selected depth. Force plate or validated jump mat. Best of 3."
+ },
+ {
+  "key": "cmj_rel_pp",
+  "label": "CMJ Rel. Peak Power",
+  "unit": "W/kg",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "20-110 W/kg",
+  "protocol": "Force plate concentric phase — peak power ÷ body mass. Best of 3."
+ },
+ {
+  "key": "cmj_peak_force",
+  "label": "CMJ Peak Force",
+  "unit": "N",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "800-5000 N",
+  "protocol": "Concentric peak vertical GRF from force plate."
+ },
+ {
+  "key": "sj_height",
+  "label": "Squat Jump Height",
+  "unit": "cm",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "10-80 cm",
+  "protocol": "90° knee, 3s pause, no dip. Hands on hips. Force plate or jump mat."
+ },
+ {
+  "key": "eur",
+  "label": "Eccentric Util. Ratio",
+  "unit": "CMJ/SJ",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "0.85-1.3 CMJ/SJ",
+  "protocol": "CMJ height ÷ SJ height. Same session, 3 reps each."
+ },
+ {
+  "key": "broad_jump",
+  "label": "Standing Broad Jump",
+  "unit": "m",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "1.2-4 m",
+  "protocol": "Two-foot take-off from a line, two-foot landing. Best of 3."
+ },
+ {
+  "key": "rsi_dj30",
+  "label": "RSI (Drop Jump 30cm)",
+  "unit": "m/s",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "0.5-4.5 m/s",
+  "protocol": "Drop from 30cm, minimal contact time. RSI = jump height ÷ contact time."
+ },
+ {
+  "key": "rsi_mod",
+  "label": "RSI-Modified (CMJ)",
+  "unit": "m/s",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "0.2-1.2 m/s",
+  "protocol": "CMJ jump height ÷ time-to-take-off (force plate)."
+ },
+ {
+  "key": "imtp_rfd_100",
+  "label": "IMTP RFD 0–100ms",
+  "unit": "N/s",
+  "category": "Power",
+  "category_desc": "Jump & ballistic outputs",
+  "range": "1000-25000 N/s",
+  "protocol": "Isometric mid-thigh pull on fixed bar. Force plate, max effort, 5s rep."
+ },
+ {
+  "key": "back_squat_1rm",
+  "label": "Back Squat 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "20-400 kg",
+  "protocol": "True 1RM or estimated via Epley from a clean rep ≤5 RIR 0. Note depth (parallel/below)."
+ },
+ {
+  "key": "front_squat_1rm",
+  "label": "Front Squat 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "20-300 kg",
+  "protocol": "Full depth, clean grip."
+ },
+ {
+  "key": "bench_press_1rm",
+  "label": "Bench Press 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "20-300 kg",
+  "protocol": "Pause on chest, no bounce, full lockout. Spotter present."
+ },
+ {
+  "key": "deadlift_1rm",
+  "label": "Deadlift 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "20-400 kg",
+  "protocol": "Conventional or sumo (note which). Full lockout."
+ },
+ {
+  "key": "power_clean_1rm",
+  "label": "Power Clean 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "20-220 kg",
+  "protocol": "Floor to front rack. No full squat catch."
+ },
+ {
+  "key": "snatch_1rm",
+  "label": "Snatch 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "20-200 kg",
+  "protocol": "Full snatch or power snatch."
+ },
+ {
+  "key": "hip_thrust_1rm",
+  "label": "Hip Thrust 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "40-350 kg",
+  "protocol": "Barbell hip thrust, full hip extension at top."
+ },
+ {
+  "key": "imtp_peak_force",
+  "label": "IMTP Peak Force",
+  "unit": "N",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "1000-6000 N",
+  "protocol": "Isometric mid-thigh pull, knee 125–145°, hip 140–150°, max effort 5s on force plate."
+ },
+ {
+  "key": "imtp_rel_force",
+  "label": "IMTP Rel. Peak Force",
+  "unit": "N/kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "15-60 N/kg",
+  "protocol": "IMTP peak vertical force ÷ body mass."
+ },
+ {
+  "key": "pullup_max",
+  "label": "Pull-ups (Max Reps)",
+  "unit": "reps",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "0-60 reps",
+  "protocol": "Dead-hang, chin over bar, no kip."
+ },
+ {
+  "key": "weighted_pullup",
+  "label": "Weighted Pull-up 1RM",
+  "unit": "kg",
+  "category": "Strength",
+  "category_desc": "Maximal & relative strength",
+  "range": "0-100 kg",
+  "protocol": "Added weight for 1 rep. Full dead hang to chin over bar."
+ },
+ {
+  "key": "sit_and_reach",
+  "label": "Sit & Reach",
+  "unit": "cm",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "-20-45 cm",
+  "protocol": "Standard sit-and-reach box, shoes off, knees flat. Slow reach, hold 2s. Best of 3."
+ },
+ {
+  "key": "knee_to_wall_l",
+  "label": "Knee-to-Wall (L)",
+  "unit": "cm",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "0-20 cm",
+  "protocol": "Distance from longest toe to wall when knee touches wall, heel down. Ankle dorsiflexion."
+ },
+ {
+  "key": "knee_to_wall_r",
+  "label": "Knee-to-Wall (R)",
+  "unit": "cm",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "0-20 cm",
+  "protocol": "Same side."
+ },
+ {
+  "key": "thomas_l",
+  "label": "Thomas Test (L)",
+  "unit": "°",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "-30-30 °",
+  "protocol": "Supine on bench, opposite knee to chest. Measure hip extension angle (negative = tight)."
+ },
+ {
+  "key": "thomas_r",
+  "label": "Thomas Test (R)",
+  "unit": "°",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "-30-30 °",
+  "protocol": "Same side."
+ },
+ {
+  "key": "aslr_l",
+  "label": "Active SLR (L)",
+  "unit": "°",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "30-110 °",
+  "protocol": "Supine, knee straight, raise leg without lumbar flexion. Goniometer at hip."
+ },
+ {
+  "key": "aslr_r",
+  "label": "Active SLR (R)",
+  "unit": "°",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "30-110 °",
+  "protocol": "Same side."
+ },
+ {
+  "key": "shoulder_flex",
+  "label": "Shoulder Flexion ROM",
+  "unit": "°",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "100-200 °",
+  "protocol": "Supine, arm overhead, lumbar flat. Goniometer at acromion."
+ },
+ {
+  "key": "overhead_squat",
+  "label": "Overhead Squat (FMS)",
+  "unit": "score",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "0-3 score",
+  "protocol": "FMS overhead squat. Scored 0–3 by trained tester."
+ },
+ {
+  "key": "fms_total",
+  "label": "FMS Total Score",
+  "unit": "/21",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "0-21 /21",
+  "protocol": "Functional Movement Screen, 7 tests. Trained tester only."
+ },
+ {
+  "key": "adductor_squeeze",
+  "label": "Adductor Squeeze",
+  "unit": "mmHg",
+  "category": "Mobility",
+  "category_desc": "Joint range & movement quality",
+  "range": "100-400 mmHg",
+  "protocol": "Supine, knees straight, BP cuff between ankles inflated to 10 mmHg, squeeze max 5s."
+ },
+ {
+  "key": "vo2max",
+  "label": "VO₂max",
+  "unit": "ml/kg/min",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "25-95 ml/kg/min",
+  "protocol": "Lab graded exercise test or validated field estimate (beep test, Cooper)."
+ },
+ {
+  "key": "yoyo_ir1",
+  "label": "Yo-Yo IR1 Distance",
+  "unit": "m",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "200-3500 m",
+  "protocol": "20m shuttles with 10s active recovery, increasing speed. Stop at 2nd failure."
+ },
+ {
+  "key": "yoyo_ir2",
+  "label": "Yo-Yo IR2 Distance",
+  "unit": "m",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "80-2200 m",
+  "protocol": "Higher-intensity version of IR1."
+ },
+ {
+  "key": "iftt_30_15",
+  "label": "30-15 IFT Velocity",
+  "unit": "km/h",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "12-24 km/h",
+  "protocol": "30s shuttle / 15s walk protocol. Final stage velocity = VIFT."
+ },
+ {
+  "key": "mas",
+  "label": "Max Aerobic Speed",
+  "unit": "km/h",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "12-24 km/h",
+  "protocol": "From 1.2–2km TT or 5 min running test. MAS = avg velocity."
+ },
+ {
+  "key": "tt_1200m",
+  "label": "1.2km Time Trial",
+  "unit": "s",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "180-420 s",
+  "protocol": "Flat surface, timed from start. Record in seconds."
+ },
+ {
+  "key": "bronco",
+  "label": "Bronco Test",
+  "unit": "s",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "240-540 s",
+  "protocol": "5×(60+40+20m) shuttles continuous, total 1200m. Standard conditioning test."
+ },
+ {
+  "key": "tt_2km",
+  "label": "2km Time Trial",
+  "unit": "s",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "300-720 s",
+  "protocol": "Flat surface, all-out effort."
+ },
+ {
+  "key": "rhr",
+  "label": "Resting Heart Rate",
+  "unit": "bpm",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "30-90 bpm",
+  "protocol": "Measured supine, first thing on waking, 1 min average."
+ },
+ {
+  "key": "hrv_rmssd",
+  "label": "HRV (RMSSD)",
+  "unit": "ms",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "10-200 ms",
+  "protocol": "Morning, supine, 1–5 min recording with chest strap or validated app."
+ },
+ {
+  "key": "hr_recovery_60",
+  "label": "HR Recovery (60s)",
+  "unit": "bpm",
+  "category": "Endurance",
+  "category_desc": "Aerobic capacity & conditioning",
+  "range": "5-80 bpm",
+  "protocol": "60s post-max effort HR recovery drop."
+ },
+ {
+  "key": "body_mass",
+  "label": "Body Mass",
+  "unit": "kg",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "30-200 kg",
+  "protocol": "Morning, post-void, minimal clothing, calibrated scale."
+ },
+ {
+  "key": "standing_height",
+  "label": "Standing Height",
+  "unit": "cm",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "140-220 cm",
+  "protocol": "Stadiometer, no shoes, head in Frankfort plane."
+ },
+ {
+  "key": "sitting_height",
+  "label": "Sitting Height",
+  "unit": "cm",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "70-110 cm",
+  "protocol": "Sitting on flat surface, back straight."
+ },
+ {
+  "key": "wingspan",
+  "label": "Wingspan (Arm Span)",
+  "unit": "cm",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "140-230 cm",
+  "protocol": "Arms horizontal, fingertip to fingertip against a wall."
+ },
+ {
+  "key": "body_fat_pct",
+  "label": "Body Fat %",
+  "unit": "%",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "3-45 %",
+  "protocol": "DEXA preferred. ISAK skinfolds or BIA acceptable if standardised."
+ },
+ {
+  "key": "sum_7_skinfolds",
+  "label": "Sum of 7 Skinfolds",
+  "unit": "mm",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "25-250 mm",
+  "protocol": "ISAK level 1 sites: tri, sub, bi, supraspinale, abdominal, thigh, calf."
+ },
+ {
+  "key": "lean_mass",
+  "label": "Lean Body Mass",
+  "unit": "kg",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "25-130 kg",
+  "protocol": "DEXA total lean (excluding bone mineral content)."
+ },
+ {
+  "key": "fat_mass",
+  "label": "Fat Mass",
+  "unit": "kg",
+  "category": "Anthropometrics",
+  "category_desc": "Body composition & morphology",
+  "range": "2-80 kg",
+  "protocol": "DEXA or derived from body fat % and body mass."
+ }
+]

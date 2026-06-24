@@ -36,6 +36,7 @@ import {
   buildDnaProfile,
   scoreToTier,
 } from '../lib/disciplineScience'
+import AthleteCoachLinks from '../components/AthleteCoachLinks'
 
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile } = useAuth()
@@ -329,6 +330,13 @@ export default function ProfileScreen() {
             </View>
           </View>
         </AlmanacCard>
+
+        {/* ════════════════════════════════════════════════════════════════
+            COACH CONNECTIONS — approve requests + manage who sees your data
+            ════════════════════════════════════════════════════════════ */}
+        <View style={{ marginBottom: spacing.lg }}>
+          <AthleteCoachLinks />
+        </View>
 
         {/* ════════════════════════════════════════════════════════════════
             SIGN OUT

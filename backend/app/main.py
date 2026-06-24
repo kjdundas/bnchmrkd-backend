@@ -16,6 +16,7 @@ from app.api import routes
 from app.api import scrape_routes
 from app.api import athlete_routes
 from app.api import ai_scanner_routes
+from app.api import assistant_routes
 from app.core.database import close_pool
 
 
@@ -59,6 +60,7 @@ app.include_router(routes.router)
 app.include_router(scrape_routes.router)
 app.include_router(athlete_routes.router)
 app.include_router(ai_scanner_routes.router)
+app.include_router(assistant_routes.router)
 
 
 @app.get("/health")

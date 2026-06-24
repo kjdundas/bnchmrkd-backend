@@ -40,6 +40,7 @@ import {
   Sparkline,
 } from '../components/HomeSections'
 import { XPBar, StreakChip as GamStreakChip } from '../components/GamificationUI'
+import AthleteCoachLinks from '../components/AthleteCoachLinks'
 import { calculateStreak, type UserStats } from '../lib/gamification'
 import { loadProgress } from '../lib/progress'
 import {
@@ -340,6 +341,11 @@ export default function HomeScreen() {
 
         {/* ── XP Progress ── */}
         <XPBar totalXP={gamStats.totalXP} />
+
+        {/* ── Pending coach requests (only renders if any) ── */}
+        <View style={{ marginTop: spacing.md }}>
+          <AthleteCoachLinks pendingOnly />
+        </View>
 
         {/* ════════════════════════════════════════════════════
             NEXT MILESTONE — nearest meaningful target

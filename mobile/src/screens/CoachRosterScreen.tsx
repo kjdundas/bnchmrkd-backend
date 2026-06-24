@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { WA_IMPORT_ENABLED } from '../lib/featureFlags'
+import CoachInvitePanel from '../components/CoachInvitePanel'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
@@ -99,7 +100,7 @@ function AddAthleteModal({
   onSaved: () => void
   coachId: string
 }) {
-  const [method, setMethod] = useState<'manual' | 'url' | null>(null)
+  const [method, setMethod] = useState<'manual' | 'url' | 'invite' | null>(null)
   const [name, setName] = useState('')
   const [discipline, setDiscipline] = useState('')
   const [gender, setGender] = useState<'Male' | 'Female'>('Male')
@@ -257,7 +258,7 @@ function AddAthleteModal({
           {/* Header */}
           <View style={modalStyles.header}>
             <Text style={modalStyles.headerTitle}>
-              {method === 'manual' ? 'Manual Entry' : method === 'url' ? 'World Athletics Import' : 'Add Athlete'}
+              {method === 'manual' ? 'Manual Entry' : method === 'url' ? 'World Athletics Import' : method === 'invite' ? 'Invite Athlete' : 'Add Athlete'}
             </Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={modalStyles.closeBtn}>
@@ -267,13 +268,24 @@ function AddAthleteModal({
 
           {!method && (
             <View style={modalStyles.methodPicker}>
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('manual')} activeOpacity={0.7}>
+              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('invite')} activeOpacity={0.7}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(249,115,22,0.08)' }]}>
-                  <Ionicons name="person-add-outline" size={22} color={colors.orange[500]} />
+                  <Ionicons name="mail-outline" size={22} color={colors.orange[500]} />
+                </View>
+                <View style={modalStyles.methodInfo}>
+                  <Text style={modalStyles.methodTitle}>Invite Athlete</Text>
+                  <Text style={modalStyles.methodDesc}>They approve before you see their data</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('manual')} activeOpacity={0.7}>
+                <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(167,139,250,0.08)' }]}>
+                  <Ionicons name="person-add-outline" size={22} color="#a78bfa" />
                 </View>
                 <View style={modalStyles.methodInfo}>
                   <Text style={modalStyles.methodTitle}>Manual Entry</Text>
-                  <Text style={modalStyles.methodDesc}>Name, discipline, date of birth</Text>
+                  <Text style={modalStyles.methodDesc}>Private record — name, discipline, DOB</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
               </TouchableOpacity>
@@ -290,6 +302,17 @@ function AddAthleteModal({
                 <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
               </TouchableOpacity>
               )}
+            </View>
+          )}
+
+          {method === 'invite' && (
+            <View style={{ flex: 1, paddingBottom: spacing.lg }}>
+              <TouchableOpacity onPress={() => setMethod(null)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
+                <Ionicons name="chevron-back" size={16} color={colors.text.muted} />
+                <Text style={{ color: colors.text.muted, fontSize: 13 }}>Back</Text>
+              </TouchableOpacity>
+              <CoachInvitePanel />
             </View>
           )}
 

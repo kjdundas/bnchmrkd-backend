@@ -23,6 +23,9 @@ import {
 import { loadProgress, saveProgress, bootstrapXPFromRaces } from '../../lib/progress'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 import AthleteCoachLinks from './AthleteCoachLinks'
+import AssistantChat from '../AssistantChat'
+import { isTimeDiscipline } from '../../lib/performanceLevels'
+import { maturityFromProfile } from '../../lib/maturation'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -619,6 +622,60 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     )
   }
 
+  // Build the Assistant's data context: the athlete's own results (web races +
+  // mobile performances), progress, and next milestone — all their own data.
+  const buildAssistantContext = useCallback(async () => {
+    const disc = (athleteRow?.discipline || activeDiscipline || '').trim()
+    const lower = isTimeDiscipline(disc)
+    let perfs = []
+    try { perfs = (await selectFrom('performances', { filter: `user_id=eq.${user.id}`, limit: '500' })) || [] } catch { perfs = [] }
+    const pts = []
+    for (const r of (athleteRow?.races || [])) {
+      if (r?.value == null || !r.date) continue
+      const rd = (r.discipline || '').trim()
+      if (disc && rd && rd !== disc) continue
+      pts.push({ date: r.date, value: Number(r.value), competition: r.competition || null })
+    }
+    for (const p of perfs) {
+      if (p?.mark == null || !p.competition_date) continue
+      const pd = (p.discipline || '').trim()
+      if (disc && pd && pd !== disc) continue
+      pts.push({ date: p.competition_date, value: Number(p.mark), competition: p.competition_name || null })
+    }
+    pts.sort((x, y) => new Date(y.date) - new Date(x.date))
+    let pb = null
+    for (const r of pts) { if (pb == null || (lower ? r.value < pb : r.value > pb)) pb = r.value }
+    const lvl = getLevelFromXP(totalXP || 0)
+    const d = profile?.date_of_birth ? new Date(profile.date_of_birth) : null
+    const age = d && !isNaN(d) ? Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)) : null
+    // Maturity estimate (years from PHV) when the inputs are available — drives
+    // maturity-aware guidance. Null when height/sitting-height/weight missing.
+    const maturity = maturityFromProfile({
+      sex: profile?.gender,
+      dob: profile?.date_of_birth,
+      heightCm: athleteRow?.height_cm,
+      sittingHeightCm: athleteRow?.sitting_height_cm,
+      weightKg: athleteRow?.weight_kg,
+    })
+    return {
+      name: profile?.full_name || 'You',
+      discipline: disc,
+      age,
+      maturity,
+      pb,
+      most_recent: pts[0] || null,
+      total_results: pts.length,
+      recent_results: pts.slice(0, 6),
+      next_milestone: view?.nextMilestone ?? null,
+      trend: view?.trend ?? null,
+      xp: totalXP || 0,
+      level: lvl.level,
+      level_title: lvl.title,
+      current_streak: streak || 0,
+      longest_streak: longestStreak || 0,
+    }
+  }, [athleteRow, activeDiscipline, user, totalXP, streak, longestStreak, view, profile])
+
   // ── Main shell ──────────────────────────────────────────────────────
   return (
     <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
@@ -663,6 +720,8 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       <BottomNav />
 
       <LogCelebration show={!!celebration} data={celebration} onClose={() => setCelebration(null)} />
+
+      <AssistantChat role="athlete" title="Assistant" fetchContext={buildAssistantContext} />
     </div>
   )
 }
@@ -1008,6 +1067,7 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
   const [waUrl, setWaUrl] = useState(athleteRow?.world_athletics_url || '')
   const [heightCm, setHeightCm] = useState(athleteRow?.height_cm || '')
   const [weightKg, setWeightKg] = useState(athleteRow?.weight_kg || '')
+  const [sittingHeightCm, setSittingHeightCm] = useState(athleteRow?.sitting_height_cm || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [err, setErr] = useState('')
@@ -1020,6 +1080,7 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
         world_athletics_url: waUrl || null,
         height_cm: heightCm ? parseFloat(heightCm) : null,
         weight_kg: weightKg ? parseFloat(weightKg) : null,
+        sitting_height_cm: sittingHeightCm ? parseFloat(sittingHeightCm) : null,
       })
       // Shared fields go to user_profiles
       await updateIn('user_profiles', `id=eq.${user.id}`, {
@@ -1101,6 +1162,17 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
                 className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Sitting height (cm)</label>
+            <input
+              type="number" value={sittingHeightCm} onChange={(e) => setSittingHeightCm(e.target.value)}
+              className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500"
+            />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Optional. Sit tall against a wall and measure from the seat to the top of your head. With height + weight, this lets the assistant estimate your growth/maturity stage for age-appropriate guidance.
+            </p>
           </div>
 
           {WA_IMPORT_ENABLED && (

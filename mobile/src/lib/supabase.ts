@@ -101,3 +101,17 @@ export async function updateIn(table: string, filter: string, data: any) {
   const rows = await res.json()
   return Array.isArray(rows) ? rows[0] : rows
 }
+
+/** Call a Postgres function (RPC). Returns the function's result. */
+export async function callRpc(fnName: string, args: any = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(args),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`rpc ${fnName} failed: ${res.status} ${body}`)
+  }
+  return res.json()
+}

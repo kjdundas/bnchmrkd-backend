@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './contexts/AuthContext'
+import { callRpc } from './lib/supabaseRest'
 import AuthPage from './components/auth/AuthPage'
 import Onboarding from './components/auth/Onboarding'
 import CoachDashboard from './components/coach/CoachDashboard'
@@ -59,6 +60,27 @@ export default function App() {
     }
     if (!user) { setAutoRouted(false); setShowOnboarding(false) }
   }, [user, profile, autoRouted, showOnboarding])
+
+  // A9: capture a share-link invite token (?invite=...) so it survives sign-up.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const token = new URLSearchParams(window.location.search).get('invite')
+    if (token) {
+      try { localStorage.setItem('bnchmrkd:invite_token', token) } catch { /* ignore */ }
+    }
+  }, [])
+
+  // A9: once a signed-in athlete is present, attach their account to the invite.
+  // The link stays pending → they still explicitly approve it from their dashboard.
+  useEffect(() => {
+    if (!user || !profile || profile.account_type !== 'athlete') return
+    let token = null
+    try { token = localStorage.getItem('bnchmrkd:invite_token') } catch { /* ignore */ }
+    if (!token) return
+    callRpc('claim_invite', { p_token: token })
+      .catch(() => { /* non-fatal */ })
+      .finally(() => { try { localStorage.removeItem('bnchmrkd:invite_token') } catch { /* ignore */ } })
+  }, [user, profile])
 
   // Show loading spinner while checking auth state
   if (loading) {
