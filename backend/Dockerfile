@@ -39,13 +39,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV CHROME_BIN=/usr/bin/google-chrome
 
 # Copy requirements file
-COPY backend/requirements.txt .
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY backend/ .
+COPY . .
 
 # Expose port
 EXPOSE 8000
