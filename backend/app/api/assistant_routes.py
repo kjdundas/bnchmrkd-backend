@@ -331,6 +331,23 @@ PRESCRIPTION REQUIREMENTS (this is the whole point — be specific, never vague)
 - Give ONE short coaching cue per main exercise (the "cue" field).
 - Warm-up and cool-down are real blocks with concrete drills, durations and reps.
 
+DIAGNOSE FROM THE ATHLETE'S DNA / TEST SCORES (the differentiator):
+- The DATA may include a `dna` block: each physical axis (acceleration, top speed, power,
+  strength, mobility, conditioning) placed on an age-adjusted 0–100 tier ladder
+  (Emerging → Developing → Proficient → Excellent → Elite), ordered by how much it matters for
+  the athlete's event (priority_rank 1 = most important), plus `limiters` (the high-priority
+  axes they score LOWEST on) and `strengths`.
+- LEAD WITH THE LIMITERS: bias the weekly emphasis and exercise selection toward raising the
+  limiter axes — without abandoning the event's primary quality or breaking the SKELETON.
+  Maintain strengths; develop limiters. A clear weakness in a high-priority axis is the single
+  best lever on performance.
+- If a high-priority axis is in `untested_priority`, add a short line recommending which test
+  to run to fill the gap — never invent a score.
+- Put your reasoning in `focus_rationale`: name the 1–3 limiters WITH their tier and score from
+  the DATA, say why each matters for THIS event, and how the program targets it. Be concrete and
+  cite the actual numbers — never generic. If there is no `dna` data, say so in one line and
+  fall back to event-standard programming.
+
 SAFETY (always):
 - No nutrition, weight-loss, or body-composition content.
 - Tell them to stop if they feel pain and see a professional; review the plan with their
@@ -341,6 +358,7 @@ an "exercises" array; each exercise is fully prescribed:
 {
   "title": "short title",
   "summary": "1-2 sentence overview tied to their goal and stage",
+  "focus_rationale": "what the program targets and why, citing the athlete's DNA test tiers/scores and named limiters (or one line noting there is no test data yet)",
   "duration_weeks": <int>,
   "sessions_per_week": <int>,
   "sessions": [

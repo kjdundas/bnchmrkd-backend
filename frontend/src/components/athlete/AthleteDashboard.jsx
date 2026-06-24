@@ -9,7 +9,7 @@ import {
   ReferenceLine, Area, ComposedChart
 } from 'recharts'
 import { selectFrom, updateIn } from '../../lib/supabaseRest'
-import { getReferenceTiers, getCalibration, performancePosition } from '../../lib/disciplineScience'
+import { getReferenceTiers, getCalibration, performancePosition, buildDnaSummary } from '../../lib/disciplineScience'
 import MetricLogView from './MetricLogView'
 import {
   TrajectoryHero, RivalCard, WhereYouStand, AthleteDNALadder, LimitingFactorCard, ScienceSpotlight, SinceLastVisit,
@@ -439,11 +439,17 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       sittingHeightCm: athleteRow?.sitting_height_cm,
       weightKg: athleteRow?.weight_kg,
     })
+    // Athlete DNA — test-score profile placed on the age-adjusted tier ladder,
+    // so the assistant/program generator can diagnose and target limiters.
+    let metricRows = []
+    try { metricRows = (await selectFrom('athlete_metrics', { filter: `athlete_id=eq.${user.id}`, limit: '500' })) || [] } catch { metricRows = [] }
+    const dna = buildDnaSummary(metricRows, disc, age)
     return {
       name: profile?.full_name || 'You',
       discipline: disc,
       age,
       maturity,
+      dna,
       pb,
       most_recent: pts[0] || null,
       total_results: pts.length,

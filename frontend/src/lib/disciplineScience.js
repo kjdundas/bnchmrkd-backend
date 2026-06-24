@@ -740,6 +740,59 @@ export function disciplinePriority(discipline) {
   return AXIS_PRIORITY[disciplineFamily(discipline)] || AXIS_PRIORITY.sprint
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// DNA SUMMARY — a compact, serialisable read of an athlete's test scores
+// for the AI program generator. Places each physical axis on the age-
+// adjusted tier ladder, orders by the event's quality priorities, and
+// flags the limiters (high-priority axes the athlete scores low on).
+// Returns null if there are no scoreable metrics.
+// ══════════════════════════════════════════════════════════════════════
+export function buildDnaSummary(metrics, discipline, age) {
+  const arr = Array.isArray(metrics) ? metrics : []
+  if (arr.length === 0) return null
+  const profile = buildDnaProfile(arr)                 // { axisKey: {score, metrics:[...]} }
+  const priority = disciplinePriority(discipline)      // [axisKey, ...] most → least important
+  const labelByKey = Object.fromEntries(RADAR_AXES.map((a) => [a.key, a.label]))
+
+  const axes = priority.map((key, idx) => {
+    const p = profile[key] || { score: null, metrics: [] }
+    const adj = p.score != null ? ageAdjustScore(p.score, key, age) : null
+    const score = adj ? adj.adjusted : null
+    const tier = score != null ? scoreToTier(score) : null
+    return {
+      key,
+      label: labelByKey[key] || key,
+      priority_rank: idx + 1,                          // 1 = most important for this event
+      score,                                           // age-adjusted 0–100 (null if untested)
+      tier: tier ? tier.label : null,
+      n_tests: p.metrics.length,
+      top_metrics: p.metrics.slice(0, 3).map((m) => ({ label: m.label, value: m.value, unit: m.unit, score: m.score })),
+    }
+  })
+
+  const tested = axes.filter((a) => a.score != null)
+  if (tested.length === 0) return null
+
+  // Limiters: among the event's key qualities (top-4 priority), the lowest-
+  // scoring axes that aren't already excellent/elite.
+  const limiters = tested
+    .filter((a) => a.priority_rank <= 4)
+    .sort((a, b) => a.score - b.score)
+    .filter((a) => a.score < 60)
+    .slice(0, 3)
+    .map((a) => ({
+      axis: a.key, label: a.label, score: a.score, tier: a.tier, priority_rank: a.priority_rank,
+      why: AXIS_INFO[a.key]?.why || null, how: AXIS_INFO[a.key]?.how || null,
+    }))
+
+  const strengths = [...tested].sort((a, b) => b.score - a.score).slice(0, 2)
+    .map((a) => ({ axis: a.key, label: a.label, score: a.score, tier: a.tier }))
+
+  const untested_priority = axes.filter((a) => a.priority_rank <= 4 && a.score == null).map((a) => a.label)
+
+  return { axes, limiters, strengths, untested_priority }
+}
+
 // Expected metric values at a given performance level (percentile 0-100).
 // Linear interpolation between development (p20) and elite (p90) within
 // the REFERENCE_RANGES. For sprint-family athletes, scaled by their

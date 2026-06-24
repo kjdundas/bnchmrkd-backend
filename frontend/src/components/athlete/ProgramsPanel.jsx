@@ -261,6 +261,12 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
       </button>
       {open && (
         <div className="px-3.5 pb-3.5 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          {s.focus_rationale && (
+            <div className="mt-3 rounded-lg p-2.5" style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}>
+              <p className="text-[9px] uppercase tracking-wider text-sky-400 mono-font mb-1">Why this plan</p>
+              <p className="text-[11px] text-sky-100 landing-font leading-snug">{s.focus_rationale}</p>
+            </div>
+          )}
           {s.maturity_note && (
             <p className="text-[11px] text-orange-300 landing-font mt-3" style={{ background: 'rgba(249,115,22,0.06)', borderRadius: 8, padding: 8 }}>🌱 {s.maturity_note}</p>
           )}

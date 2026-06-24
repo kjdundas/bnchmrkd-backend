@@ -284,6 +284,12 @@ function ProgramMessage({ msg, onSave }) {
         )}
       </div>
 
+      {p.focus_rationale && (
+        <div className="rounded-lg p-2" style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}>
+          <p className="text-[8px] uppercase tracking-wider text-sky-400 mono-font mb-0.5">Why this plan</p>
+          <p className="text-[10px] text-sky-100 landing-font leading-snug">{p.focus_rationale}</p>
+        </div>
+      )}
       {p.maturity_note && <p className="text-[10px] text-orange-300 landing-font" style={{ background: 'rgba(249,115,22,0.06)', borderRadius: 8, padding: 7 }}>🌱 {p.maturity_note}</p>}
 
       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">

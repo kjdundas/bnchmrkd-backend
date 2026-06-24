@@ -11,6 +11,7 @@ import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 import { maturityFromProfile } from '../../lib/maturation'
+import { buildDnaSummary } from '../../lib/disciplineScience'
 import InviteAthletePanel from './InviteAthletePanel'
 import LinkedAthletesSection from './LinkedAthletesSection'
 import AssistantChat from '../AssistantChat'
@@ -379,6 +380,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           sex: a.gender, dob: a.dob,
           heightCm: a.height_cm, sittingHeightCm: a.sitting_height_cm, weightKg: a.weight_kg,
         }),
+        // Athlete DNA — test-score profile + limiters for diagnostic programming.
+        dna: buildDnaSummary(a.metrics, disc, age),
         pb,
         most_recent: pts[0] ? { date: pts[0].date, value: pts[0].value } : null,
         total_results: pts.length,
