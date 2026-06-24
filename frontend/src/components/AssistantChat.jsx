@@ -120,7 +120,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
       await insertInto('programs', {
         athlete_user_id: msg.athleteUserId,
         created_by: currentUserId,
-        source: 'coach_ai',
+        source: 'coach',
         title: msg.program.title,
         goal: (msg.brief || '').trim().slice(0, 500) || null,
         structure: msg.program,

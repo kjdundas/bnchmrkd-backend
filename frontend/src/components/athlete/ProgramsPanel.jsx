@@ -248,7 +248,7 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-[13px] font-bold text-white landing-font truncate">{s.title || program.title}</p>
-            {(program.source === 'coach_ai' || (program.created_by && program.athlete_user_id && program.created_by !== program.athlete_user_id)) && (
+            {(program.source === 'coach' || (program.created_by && program.athlete_user_id && program.created_by !== program.athlete_user_id)) && (
               <span className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
                 style={{ background: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)' }}>From coach</span>
             )}
