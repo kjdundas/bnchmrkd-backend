@@ -78,6 +78,11 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   const [editingAthlete, setEditingAthlete] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [editSaving, setEditSaving] = useState(false)
+  // Add-result (manual single result for a roster athlete)
+  const [addResultFor, setAddResultFor] = useState(null)
+  const [resultForm, setResultForm] = useState({ discipline: '', mark: '', date: '', competition: '' })
+  const [resultSaving, setResultSaving] = useState(false)
+  const [resultError, setResultError] = useState('')
   const fileInputRef = useRef(null)
   // chatEndRef removed — replaced by AI Scanner
 
@@ -462,6 +467,57 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     } catch (err) {
       // delete failed — silent
     }
+  }
+
+  // ── Manual add-result for a roster athlete ──
+  const openAddResult = (athlete) => {
+    setAddResultFor(athlete)
+    setResultForm({ discipline: athlete.discipline || '', mark: '', date: new Date().toISOString().slice(0, 10), competition: '' })
+    setResultError('')
+  }
+
+  // Parse a typed mark: "1:52.30"/"2:05:30" → seconds; "65.20m"/"10.45" → number.
+  const parseMarkInput = (s) => {
+    const t = String(s || '').trim().replace(',', '.').replace(/m$/i, '')
+    if (!t) return null
+    if (t.includes(':')) {
+      const parts = t.split(':').map(parseFloat)
+      if (parts.some(n => isNaN(n))) return null
+      return parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : parts[0] * 60 + parts[1]
+    }
+    const v = parseFloat(t)
+    return isNaN(v) ? null : v
+  }
+
+  const handleAddResult = async () => {
+    const a = addResultFor
+    if (!a) return
+    const disc = (resultForm.discipline || a.discipline || '').trim()
+    const value = parseMarkInput(resultForm.mark)
+    if (!disc) { setResultError('Discipline is required.'); return }
+    if (value == null) { setResultError('Enter a valid mark — e.g. 10.45, 1:52.30, or 65.20m.'); return }
+    const date = resultForm.date || new Date().toISOString().slice(0, 10)
+    setResultSaving(true); setResultError('')
+    try {
+      const newRace = { discipline: disc, value, date, competition: resultForm.competition.trim() || 'Manual entry', source: 'manual' }
+      const existing = Array.isArray(a.races) ? a.races : []
+      const merged = [...existing, newRace]
+      // Recompute PB + most-recent for this discipline.
+      const lower = isTimeDiscipline(disc)
+      const sameDisc = merged.filter(r => r && r.value != null && (((r.discipline || disc).trim()) === disc))
+      let pb = null
+      for (const r of sameDisc) { const v = Number(r.value); if (Number.isFinite(v) && (pb == null || (lower ? v < pb : v > pb))) pb = v }
+      const sorted = [...sameDisc].sort((x, y) => new Date(y.date) - new Date(x.date))
+      const last = sorted[0]
+      const patch = { races: merged }
+      if (pb != null) { patch.pb_value = pb; patch.pb = formatMark(pb, disc) }
+      if (last) { patch.last_result_value = Number(last.value); patch.last_result = formatMark(Number(last.value), disc); patch.last_date = last.date }
+      await updateIn('coach_roster', `id=eq.${a.id}`, patch)
+      setAddResultFor(null)
+      fetchRoster()
+    } catch (e) {
+      setResultError(e.message?.replace(/^Supabase \d+:\s*/, '') || 'Failed to save result.')
+    } finally { setResultSaving(false) }
   }
 
   const genderDisplay = (g) => g === 'M' ? 'Male' : g === 'F' ? 'Female' : g || 'Male'
@@ -1061,6 +1117,13 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       onClick={() => onViewAthlete?.(a)}>
                       {/* Edit + Delete buttons */}
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openAddResult(a) }}
+                          title="Add result"
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); openEditModal(a) }}
                           className="w-6 h-6 rounded-md flex items-center justify-center text-slate-500 hover:text-orange-400 hover:bg-orange-500/10"
@@ -1756,6 +1819,64 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
         </div>
       </div>
+
+      {/* Add-result modal — manual single result for a roster athlete */}
+      {addResultFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setAddResultFor(null)}>
+          <div className="w-full max-w-md rounded-2xl p-6 mx-4" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-bold text-white landing-font">Add result</h3>
+              <button onClick={() => setAddResultFor(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-[11px] text-slate-500 landing-font mb-5">for {addResultFor.name}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Discipline</label>
+                <input type="text" value={resultForm.discipline} onChange={e => setResultForm(f => ({ ...f, discipline: e.target.value }))}
+                  placeholder="e.g. 100m, Discus Throw"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Mark</label>
+                  <input type="text" value={resultForm.mark} onChange={e => setResultForm(f => ({ ...f, mark: e.target.value }))}
+                    placeholder="10.45 / 1:52.30 / 65.20m"
+                    className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Date</label>
+                  <input type="date" value={resultForm.date} onChange={e => setResultForm(f => ({ ...f, date: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Competition (optional)</label>
+                <input type="text" value={resultForm.competition} onChange={e => setResultForm(f => ({ ...f, competition: e.target.value }))}
+                  placeholder="e.g. Club Champs"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+              </div>
+            </div>
+            {resultError && (
+              <div className="mt-4 px-3 py-2 rounded-lg text-[11px] text-red-400 landing-font" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>{resultError}</div>
+            )}
+            <div className="flex gap-2 mt-6">
+              <button onClick={() => setAddResultFor(null)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-[12px] font-semibold text-slate-500 hover:text-white transition-all landing-font"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>Cancel</button>
+              <button onClick={handleAddResult} disabled={resultSaving || !resultForm.mark.trim()}
+                className="flex-1 px-4 py-2.5 rounded-lg text-[12px] font-bold text-white transition-all landing-font flex items-center justify-center gap-1.5 disabled:opacity-40"
+                style={{ background: 'rgba(249,115,22,0.8)', border: '1px solid rgba(249,115,22,0.4)' }}>
+                {resultSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                {resultSaving ? 'Saving…' : 'Save result'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AssistantChat role="coach" fetchContext={buildAssistantContext} currentUserId={user?.id} />
     </div>
