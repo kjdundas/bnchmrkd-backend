@@ -15,6 +15,7 @@ import { buildDnaSummary } from '../../lib/disciplineScience'
 import InviteAthletePanel from './InviteAthletePanel'
 import LinkedAthletesSection from './LinkedAthletesSection'
 import NeedsAttention from './NeedsAttention'
+import CoachFeed from './CoachFeed'
 import AssistantChat from '../AssistantChat'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
@@ -925,6 +926,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               <div className="space-y-5">
               {/* Needs attention — the triage surface that leads the screen */}
               <NeedsAttention onViewAthlete={onViewAthlete} />
+              {/* Squad activity feed — react to give athletes a nudge */}
+              <CoachFeed currentUserId={user?.id} coachName={profile?.full_name} />
               {/* Hero stat row */}
               <div className="grid grid-cols-4 gap-3" style={stagger(0)}>
                 {[
