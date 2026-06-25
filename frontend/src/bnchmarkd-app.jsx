@@ -10,6 +10,7 @@ import {
   Percent, Layers, BarChart2, CheckCircle2, Circle, Flag, Database, Info, ArrowRight, ChevronLeft,
   Search, User, Globe, Medal, Lock, Download, FileText
 } from 'lucide-react';
+import ValueFlywheel from './components/landing/ValueFlywheel';
 import { analytics } from './lib/analytics';
 import { exportQuickAnalysisPDF } from './lib/pdfExport';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
@@ -4170,6 +4171,11 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* ── VALUE FLYWHEEL — what bnchmrkd does for everyone ── */}
+          <div className="relative z-10 py-10 sm:py-14">
+            <ValueFlywheel />
           </div>
 
           {/* ── WHO ARE YOU? — Interactive Role Selector + Pillars ── */}
