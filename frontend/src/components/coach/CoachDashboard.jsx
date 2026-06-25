@@ -533,6 +533,28 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         if (pb != null) { patch.pb_value = pb; patch.pb = formatMark(pb, disc) }
         if (last) { patch.last_result_value = Number(last.value); patch.last_result = formatMark(Number(last.value), disc); patch.last_date = last.date }
       }
+      // Sync the disciplines_data bucket — the analysis view reads from there
+      // (per-discipline tabs), not the flat races array. Merge in any races for
+      // this discipline that aren't already in the bucket (deduped by date+value),
+      // which also self-heals results added before this sync existed. Other
+      // disciplines' buckets are left untouched.
+      const dd = { ...(a.disciplines_data && typeof a.disciplines_data === 'object' ? a.disciplines_data : {}) }
+      const bucketKey = Object.keys(dd).find(k => k.trim() === disc) || disc
+      const existingBucket = Array.isArray(dd[bucketKey]) ? dd[bucketKey] : []
+      const seen = new Set(existingBucket.map(b => `${b.date}|${b.value}`))
+      const additions = []
+      for (const r of merged) {
+        if (!r || r.value == null || (r.discipline || disc).trim() !== disc) continue
+        const k = `${r.date}|${r.value}`
+        if (seen.has(k)) continue
+        seen.add(k)
+        additions.push({ date: r.date, value: r.value, competition: r.competition || null, implement_weight_kg: r.implement_weight_kg ?? null })
+      }
+      dd[bucketKey] = [...existingBucket, ...additions]
+      patch.disciplines_data = dd
+      // Make sure the discipline chip is present.
+      const discs = Array.isArray(a.disciplines) ? a.disciplines.slice() : (a.discipline ? [a.discipline] : [])
+      if (!discs.some(d => (d || '').trim() === disc)) { discs.push(disc); patch.disciplines = discs }
       await updateIn('coach_roster', `id=eq.${a.id}`, patch)
       setAddResultFor(null)
       fetchRoster()
