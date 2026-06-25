@@ -11,6 +11,7 @@ import { callRpc } from '../../lib/supabaseRest'
 import { getTier, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { maturityFromProfile } from '../../lib/maturation'
+import { checkinStatus, READINESS_COLORS, isToday } from '../../lib/readiness'
 
 function calcAge(dob) {
   if (!dob) return null
@@ -93,6 +94,13 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
             heightCm: a.height_cm, sittingHeightCm: a.sitting_height_cm, weightKg: a.weight_kg,
           })
           const marks = deriveMarks(a)
+          // Readiness from the latest daily check-in (grey if none / stale).
+          const freshCheck = isToday(a.latest_checkin)
+          const readiness = checkinStatus(freshCheck ? a.latest_checkin : null)
+          const readyColor = READINESS_COLORS[readiness.level]
+          const readyTitle = freshCheck
+            ? `Readiness: ${readiness.label}${readiness.reasons.length ? ' — ' + readiness.reasons.join(', ') : ''}`
+            : 'No check-in today'
           const pbDisplay = fmtMark(marks.pb, a.discipline) || a.pb_display
           let tier = null
           try {
@@ -138,6 +146,8 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
               className="text-left rounded-xl p-3.5 transition-all hover:translate-y-[-1px] flex items-center gap-3"
               style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(16,185,129,0.18)' }}
             >
+              <span title={readyTitle} className="flex-shrink-0 w-2.5 h-2.5 rounded-full"
+                style={{ background: readyColor, boxShadow: freshCheck && readiness.level !== 'none' ? `0 0 8px ${readyColor}` : 'none' }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="text-[13px] font-bold text-white landing-font truncate">{a.name || 'Athlete'}</span>

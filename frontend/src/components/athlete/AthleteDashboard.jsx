@@ -25,6 +25,7 @@ import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 import AthleteCoachLinks from './AthleteCoachLinks'
 import AssistantChat from '../AssistantChat'
 import ProgramsPanel from './ProgramsPanel'
+import CheckInCard from './CheckInCard'
 import { isTimeDiscipline } from '../../lib/performanceLevels'
 import { maturityFromProfile } from '../../lib/maturation'
 
@@ -710,6 +711,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
         {tab === 'home' && (
           <>
+            <CheckInCard athleteId={user?.id} />
             <HomeView
               view={view}
               athleteRow={athleteRow}
