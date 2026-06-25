@@ -575,13 +575,22 @@ export default function CoachRosterScreen() {
             <Text style={styles.greeting}>{getGreeting()}, {firstName}</Text>
             <Text style={styles.title}>Your Squad</Text>
           </View>
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => setAddModalVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="add" size={20} color="#fff" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <TouchableOpacity
+              style={styles.scanBtn}
+              onPress={() => navigation.navigate('CoachResults')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="scan-outline" size={18} color={colors.orange[500]} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addBtn}
+              onPress={() => setAddModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Quick stats row */}
@@ -746,6 +755,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  scanBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(249,115,22,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(249,115,22,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   quickStats: {

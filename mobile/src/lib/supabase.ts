@@ -102,6 +102,18 @@ export async function updateIn(table: string, filter: string, data: any) {
   return Array.isArray(rows) ? rows[0] : rows
 }
 
+export async function deleteFrom(table: string, filter: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+    method: 'DELETE',
+    headers: headers(),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`deleteFrom ${table} failed: ${res.status} ${body}`)
+  }
+  return true
+}
+
 /** Call a Postgres function (RPC). Returns the function's result. */
 export async function callRpc(fnName: string, args: any = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {

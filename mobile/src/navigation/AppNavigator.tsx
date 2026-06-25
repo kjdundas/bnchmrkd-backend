@@ -24,6 +24,7 @@ import ProfileScreen from '../screens/ProfileScreen'
 import SplashScreen from '../components/SplashScreen'
 
 // Coach screens
+import CoachHomeScreen from '../screens/CoachHomeScreen'
 import CoachRosterScreen from '../screens/CoachRosterScreen'
 import CoachResultsScreen from '../screens/CoachResultsScreen'
 import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
@@ -107,17 +108,17 @@ function CoachTabs() {
       screenOptions={({ route }) => ({
         ...tabBarOptions,
         tabBarIcon: ({ color, size, focused }) => {
-          let iconName: string = 'people-outline'
-          if (route.name === 'Roster') iconName = focused ? 'people' : 'people-outline'
-          else if (route.name === 'Results') iconName = focused ? 'document-text' : 'document-text-outline'
+          let iconName: string = 'home-outline'
+          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline'
+          else if (route.name === 'Squad') iconName = focused ? 'people' : 'people-outline'
           else if (route.name === 'Analyse') iconName = focused ? 'flash' : 'flash-outline'
           else if (route.name === 'CoachProfile') iconName = focused ? 'person' : 'person-outline'
           return <Ionicons name={iconName as any} size={size} color={color} />
         },
       })}
     >
-      <Tab.Screen name="Roster" component={CoachRosterScreen} />
-      <Tab.Screen name="Results" component={CoachResultsScreen} />
+      <Tab.Screen name="Home" component={CoachHomeScreen} />
+      <Tab.Screen name="Squad" component={CoachRosterScreen} />
       <Tab.Screen name="Analyse" component={CoachAnalyseScreen} />
       <Tab.Screen
         name="CoachProfile"
@@ -167,6 +168,7 @@ export default function AppNavigator() {
           />
           {/* Shared push screens */}
           <Stack.Screen name="AthleteDetail" component={AthleteDetailScreen} />
+          <Stack.Screen name="CoachResults" component={CoachResultsScreen} />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
