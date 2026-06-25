@@ -82,6 +82,7 @@ export default function CoachHomeScreen() {
   const [busy, setBusy] = useState<string | null>(null)
 
   const load = useCallback(async () => {
+    if (!user?.id) { setLoading(false); return }   // wait for auth/token before fetching
     try {
       const [athletes, events] = await Promise.all([
         callRpc('get_linked_athletes').catch(() => []),
@@ -94,7 +95,7 @@ export default function CoachHomeScreen() {
       for (const e of list) map[e.event_key] = new Set(Array.isArray(e.my_reactions) ? e.my_reactions : [])
       setReacts(map)
     } finally { setLoading(false) }
-  }, [])
+  }, [user?.id])
 
   useEffect(() => { load() }, [load])
   useEffect(() => {

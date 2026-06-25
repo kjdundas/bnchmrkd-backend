@@ -17,6 +17,7 @@ import {
   Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
@@ -292,6 +293,7 @@ function ScanDoneStage({ savedCount, onReset }: { savedCount: number; onReset: (
 export default function CoachResultsScreen() {
   const { user } = useAuth()
   const { colors: c } = useTheme()
+  const navigation = useNavigation<any>()
   const [stage, setStage] = useState<'input' | 'review' | 'done'>('input')
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState('')
@@ -401,8 +403,11 @@ export default function CoachResultsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
+        </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Results</Text>
+          <Text style={styles.title}>Scan results</Text>
         </View>
         {stage === 'review' && (
           <TouchableOpacity onPress={handleReset} style={styles.resetBtn}>
@@ -491,6 +496,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text.primary,
     letterSpacing: -0.5,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.xs,
+    marginLeft: -6,
   },
   resetBtn: {
     width: 36,
