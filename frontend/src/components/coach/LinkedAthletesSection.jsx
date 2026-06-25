@@ -34,7 +34,7 @@ function fmtMark(v, disc) {
 // Combine an athlete's web races + mobile performances for their primary
 // discipline, then compute true PB + most-recent (the stored athlete_profiles
 // fields go stale because mobile logs write to `performances`, not the profile).
-function deriveMarks(a) {
+export function deriveMarks(a) {
   const disc = (a.discipline || '').trim()   // normalize — stored data sometimes has trailing spaces
   const lower = isTimeDiscipline(disc)   // track: lower is better; field: higher
   const pts = []
@@ -57,6 +57,35 @@ function deriveMarks(a) {
     if (recentDate == null || new Date(r.date) > new Date(recentDate)) { recent = r.value; recentDate = r.date }
   }
   return { pb, recent, recentDate }
+}
+
+// Build the onViewAthlete payload for a linked athlete row (shared with the
+// NeedsAttention triage so both open the same detail view).
+export function buildLinkedPayload(a) {
+  const marks = deriveMarks(a)
+  const gender = (a.gender || 'M').toUpperCase().startsWith('F') ? 'F' : 'M'
+  const dd = {}
+  const pushRace = (disc, date, value, competition) => {
+    if (value == null || !date) return
+    const k = (disc || a.discipline || '100m').trim()
+    if (!Array.isArray(dd[k])) dd[k] = []
+    dd[k].push({ date, value, competition: competition || null })
+  }
+  for (const r of (Array.isArray(a.races) ? a.races : [])) pushRace(r.discipline, r.date, r.value, r.competition)
+  for (const p of (Array.isArray(a.performances) ? a.performances : [])) pushRace(p.discipline, p.date, p.value, p.competition)
+  if (Object.keys(dd).length === 0 && a.disciplines_data && typeof a.disciplines_data === 'object') Object.assign(dd, a.disciplines_data)
+  return {
+    id: a.athlete_user_id, link_id: a.link_id, _linked: true,
+    name: a.name, gender, dob: a.dob,
+    discipline: (a.discipline || '').trim(),
+    disciplines: (a.disciplines || (a.discipline ? [a.discipline] : [])).map((d) => (d || '').trim()),
+    pb: fmtMark(marks.pb, a.discipline) || a.pb_display, pb_value: marks.pb ?? a.pb_value,
+    last_result: fmtMark(marks.recent, a.discipline) || a.last_result_display,
+    last_result_value: marks.recent ?? a.last_result_value,
+    last_date: marks.recentDate || a.last_date,
+    races: Array.isArray(a.races) ? a.races : [],
+    disciplines_data: dd,
+  }
 }
 
 export default function LinkedAthletesSection({ onViewAthlete }) {
