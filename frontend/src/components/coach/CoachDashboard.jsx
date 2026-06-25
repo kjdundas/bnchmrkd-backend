@@ -12,6 +12,7 @@ import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performa
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
 import { maturityFromProfile } from '../../lib/maturation'
 import { buildDnaSummary } from '../../lib/disciplineScience'
+import { DISCIPLINE_GROUPS, isThrow, implementOptions, weightLabel, resultInputHint } from '../../lib/disciplines'
 import InviteAthletePanel from './InviteAthletePanel'
 import LinkedAthletesSection from './LinkedAthletesSection'
 import NeedsAttention from './NeedsAttention'
@@ -472,8 +473,16 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   // ── Manual add-result for a roster athlete ──
   const openAddResult = (athlete) => {
     setAddResultFor(athlete)
-    setResultForm({ discipline: athlete.discipline || '', mark: '', date: new Date().toISOString().slice(0, 10), competition: '' })
+    const disc = (athlete.discipline || '').trim()
+    const opts = isThrow(disc) ? implementOptions(disc, genderCode(athlete.gender)) : []
+    setResultForm({ discipline: disc, implement: opts[0] ?? null, mark: '', date: new Date().toISOString().slice(0, 10), competition: '' })
     setResultError('')
+  }
+
+  // Changing the discipline resets the implement weight to that throw's default.
+  const setResultDiscipline = (disc) => {
+    const opts = isThrow(disc) ? implementOptions(disc, genderCode(addResultFor?.gender)) : []
+    setResultForm((f) => ({ ...f, discipline: disc, implement: opts[0] ?? null }))
   }
 
   // Parse a typed mark: "1:52.30"/"2:05:30" → seconds; "65.20m"/"10.45" → number.
@@ -494,24 +503,36 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
     if (!a) return
     const disc = (resultForm.discipline || a.discipline || '').trim()
     const value = parseMarkInput(resultForm.mark)
-    if (!disc) { setResultError('Discipline is required.'); return }
-    if (value == null) { setResultError('Enter a valid mark — e.g. 10.45, 1:52.30, or 65.20m.'); return }
+    if (!disc) { setResultError('Pick a discipline.'); return }
+    if (value == null) { setResultError('Enter a valid result — e.g. 10.45, 1:52.30, or 65.20.'); return }
     const date = resultForm.date || new Date().toISOString().slice(0, 10)
+    const isThr = isThrow(disc)
+    const implement = isThr ? (resultForm.implement ?? null) : null
     setResultSaving(true); setResultError('')
     try {
-      const newRace = { discipline: disc, value, date, competition: resultForm.competition.trim() || 'Manual entry', source: 'manual' }
+      const newRace = { discipline: disc, value, date, competition: resultForm.competition.trim() || 'Manual entry', source: 'manual', implement_weight_kg: implement }
       const existing = Array.isArray(a.races) ? a.races : []
       const merged = [...existing, newRace]
-      // Recompute PB + most-recent for this discipline.
-      const lower = isTimeDiscipline(disc)
-      const sameDisc = merged.filter(r => r && r.value != null && (((r.discipline || disc).trim()) === disc))
-      let pb = null
-      for (const r of sameDisc) { const v = Number(r.value); if (Number.isFinite(v) && (pb == null || (lower ? v < pb : v > pb))) pb = v }
-      const sorted = [...sameDisc].sort((x, y) => new Date(y.date) - new Date(x.date))
-      const last = sorted[0]
+      // Update the headline PB/last only when adding to the athlete's PRIMARY
+      // discipline — scoped to the same implement weight class for throws so a
+      // 5kg shot never gets compared against a 7.26kg one.
+      const isPrimary = !a.discipline || disc === (a.discipline || '').trim()
       const patch = { races: merged }
-      if (pb != null) { patch.pb_value = pb; patch.pb = formatMark(pb, disc) }
-      if (last) { patch.last_result_value = Number(last.value); patch.last_result = formatMark(Number(last.value), disc); patch.last_date = last.date }
+      if (isPrimary) {
+        const lower = isTimeDiscipline(disc)
+        const sameClass = merged.filter(r => {
+          if (!r || r.value == null) return false
+          if ((r.discipline || disc).trim() !== disc) return false
+          if (isThr) return (r.implement_weight_kg ?? null) === implement
+          return true
+        })
+        let pb = null
+        for (const r of sameClass) { const v = Number(r.value); if (Number.isFinite(v) && (pb == null || (lower ? v < pb : v > pb))) pb = v }
+        const sorted = [...sameClass].sort((x, y) => new Date(y.date) - new Date(x.date))
+        const last = sorted[0]
+        if (pb != null) { patch.pb_value = pb; patch.pb = formatMark(pb, disc) }
+        if (last) { patch.last_result_value = Number(last.value); patch.last_result = formatMark(Number(last.value), disc); patch.last_date = last.date }
+      }
       await updateIn('coach_roster', `id=eq.${a.id}`, patch)
       setAddResultFor(null)
       fetchRoster()
@@ -1832,16 +1853,37 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Discipline</label>
-                <input type="text" value={resultForm.discipline} onChange={e => setResultForm(f => ({ ...f, discipline: e.target.value }))}
-                  placeholder="e.g. 100m, Discus Throw"
-                  className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                <select value={resultForm.discipline} onChange={e => setResultDiscipline(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                  <option value="">Select discipline…</option>
+                  {DISCIPLINE_GROUPS.map(g => (
+                    <optgroup key={g.group} label={g.group}>
+                      {g.items.map(d => <option key={d} value={d}>{d}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
+              {/* Implement weight — throws only */}
+              {isThrow(resultForm.discipline) && (
+                <div>
+                  <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Implement weight</label>
+                  <select value={resultForm.implement ?? ''} onChange={e => setResultForm(f => ({ ...f, implement: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                    {implementOptions(resultForm.discipline, genderCode(addResultFor.gender)).map(w => (
+                      <option key={w} value={w}>{weightLabel(resultForm.discipline, w)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Mark</label>
+                  <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">
+                    {resultInputHint(resultForm.discipline).label}
+                  </label>
                   <input type="text" value={resultForm.mark} onChange={e => setResultForm(f => ({ ...f, mark: e.target.value }))}
-                    placeholder="10.45 / 1:52.30 / 65.20m"
+                    placeholder={resultInputHint(resultForm.discipline).placeholder}
                     className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/40"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
                 </div>
