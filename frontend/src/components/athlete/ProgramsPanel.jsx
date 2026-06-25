@@ -5,8 +5,17 @@
 // and the LLM fills in the detail. Athlete-direct; a linked coach can see it.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback } from 'react'
-import { Dumbbell, Sparkles, ChevronDown, ChevronUp, Loader2, AlertCircle, Trash2 } from 'lucide-react'
+import { Dumbbell, Sparkles, ChevronDown, ChevronUp, Loader2, AlertCircle, Trash2, CheckCircle2, Circle } from 'lucide-react'
 import { selectFrom, insertInto, deleteFrom } from '../../lib/supabaseRest'
+
+// Monday of the current week (local), as YYYY-MM-DD — the bucket for weekly
+// session completions.
+function weekStartStr() {
+  const d = new Date()
+  const day = (d.getDay() + 6) % 7
+  d.setDate(d.getDate() - day)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -209,7 +218,7 @@ export default function ProgramsPanel({ user, fetchContext }) {
       ) : (
         <div className="space-y-2">
           {programs.map((p) => (
-            <ProgramCard key={p.id} program={p} open={openId === p.id}
+            <ProgramCard key={p.id} program={p} athleteId={user?.id} open={openId === p.id}
               onToggle={() => setOpenId(openId === p.id ? null : p.id)} onDelete={() => remove(p.id)} />
           ))}
         </div>
@@ -239,9 +248,40 @@ function ExerciseRow({ ex }) {
   )
 }
 
-function ProgramCard({ program, open, onToggle, onDelete }) {
+function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
   const s = program.structure || {}
   const sessions = Array.isArray(s.sessions) ? s.sessions : []
+  const week = weekStartStr()
+  const [done, setDone] = useState(() => new Set())
+  const [busy, setBusy] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!athleteId || !program.id) return
+    selectFrom('program_session_logs', { filter: `program_id=eq.${program.id}&week_start=eq.${week}`, limit: '50' })
+      .then((rows) => { if (!cancelled) setDone(new Set((rows || []).map((r) => r.session_index))) })
+      .catch(() => { if (!cancelled) setDone(new Set()) })
+    return () => { cancelled = true }
+  }, [athleteId, program.id, week])
+
+  const toggle = async (i) => {
+    if (busy != null) return
+    setBusy(i)
+    const has = done.has(i)
+    setDone((prev) => { const n = new Set(prev); if (has) n.delete(i); else n.add(i); return n })
+    try {
+      if (has) await deleteFrom('program_session_logs', `program_id=eq.${program.id}&session_index=eq.${i}&week_start=eq.${week}`)
+      else await insertInto('program_session_logs', { program_id: program.id, athlete_id: athleteId, session_index: i, week_start: week })
+    } catch {
+      setDone((prev) => { const n = new Set(prev); if (has) n.add(i); else n.delete(i); return n })
+    } finally { setBusy(null) }
+  }
+
+  const total = sessions.length
+  const completed = sessions.reduce((c, _, i) => c + (done.has(i) ? 1 : 0), 0)
+  const pct = total ? Math.round((completed / total) * 100) : 0
+  const allDone = total > 0 && completed === total
+
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 text-left">
@@ -256,6 +296,14 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
           <p className="text-[10px] text-slate-400 landing-font truncate">
             {s.duration_weeks ? `${s.duration_weeks} wk` : ''}{s.sessions_per_week ? ` · ${s.sessions_per_week}×/wk` : ''}{s.summary ? ` · ${s.summary}` : ''}
           </p>
+          {total > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: allDone ? '#34d399' : 'linear-gradient(90deg,#f97316,#fbbf24)' }} />
+              </div>
+              <span className="text-[9px] mono-font flex-shrink-0" style={{ color: allDone ? '#34d399' : '#94a3b8' }}>{completed}/{total} this wk</span>
+            </div>
+          )}
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-slate-500 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />}
       </button>
@@ -270,10 +318,22 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
           {s.maturity_note && (
             <p className="text-[11px] text-orange-300 landing-font mt-3" style={{ background: 'rgba(249,115,22,0.06)', borderRadius: 8, padding: 8 }}>🌱 {s.maturity_note}</p>
           )}
-          {sessions.map((sess, i) => (
-            <div key={i} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
-              <p className="text-[12px] font-bold text-white landing-font">{sess.label || `Session ${i + 1}`}</p>
-              {sess.focus && <p className="text-[10px] text-orange-400 mono-font uppercase tracking-wider mt-0.5">{sess.focus}</p>}
+          {sessions.map((sess, i) => {
+            const isDone = done.has(i)
+            return (
+            <div key={i} className="rounded-lg p-3" style={{ background: isDone ? 'rgba(52,211,153,0.06)' : 'rgba(255,255,255,0.02)', border: isDone ? '1px solid rgba(52,211,153,0.2)' : '1px solid transparent' }}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[12px] font-bold text-white landing-font">{sess.label || `Session ${i + 1}`}</p>
+                  {sess.focus && <p className="text-[10px] text-orange-400 mono-font uppercase tracking-wider mt-0.5">{sess.focus}</p>}
+                </div>
+                <button onClick={() => toggle(i)} disabled={busy === i}
+                  className="flex items-center gap-1 text-[10px] font-bold landing-font flex-shrink-0 disabled:opacity-50"
+                  style={{ color: isDone ? '#34d399' : '#64748b' }}>
+                  {isDone ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                  {isDone ? 'Done' : 'Mark done'}
+                </button>
+              </div>
               <div className="mt-2 space-y-2">
                 {(Array.isArray(sess.blocks) ? sess.blocks : []).map((b, j) => (
                   <div key={j}>
@@ -293,7 +353,8 @@ function ProgramCard({ program, open, onToggle, onDelete }) {
               </div>
               {sess.notes && <p className="text-[10px] text-slate-500 landing-font mt-2 italic">{sess.notes}</p>}
             </div>
-          ))}
+            )
+          })}
           {s.progression && <p className="text-[11px] text-slate-300 landing-font"><span className="font-semibold">Progression:</span> {s.progression}</p>}
           {s.safety_note && <p className="text-[10px] text-slate-500 landing-font">⚠ {s.safety_note}</p>}
           <button onClick={onDelete} className="flex items-center gap-1.5 text-[10px] text-slate-600 hover:text-red-400 landing-font">

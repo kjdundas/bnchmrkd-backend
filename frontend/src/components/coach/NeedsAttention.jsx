@@ -6,7 +6,7 @@
 // Rows open the athlete's full analysis. Positive empty state when all clear.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback } from 'react'
-import { AlertTriangle, HeartPulse, Clock, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, HeartPulse, Clock, ChevronRight, CheckCircle2, Dumbbell } from 'lucide-react'
 import { callRpc } from '../../lib/supabaseRest'
 import { checkinStatus, READINESS_COLORS, isToday } from '../../lib/readiness'
 import { buildLinkedPayload } from './LinkedAthletesSection'
@@ -43,6 +43,19 @@ function buildItems(athletes) {
         headline: `${a.name} · gone quiet`,
         detail: `No result logged in ${days} days`,
       })
+    }
+    // Program adherence — only nag from mid-week on (don't flag an empty Monday).
+    const comp = a.program_compliance
+    const dow = (new Date().getDay() + 6) % 7   // 0 = Mon
+    if (comp && comp.sessions_per_week && dow >= 3) {
+      const ratio = comp.done_this_week / comp.sessions_per_week
+      if (ratio < 0.5) {
+        items.push({
+          a, key: `${a.athlete_user_id}-comp`, kind: 'compliance', level: 'amber', rank: 1,
+          headline: `${a.name} · behind on program`,
+          detail: `${comp.done_this_week}/${comp.sessions_per_week} sessions this week`,
+        })
+      }
     }
   }
   return items.sort((x, y) => y.rank - x.rank)
@@ -84,8 +97,8 @@ export default function NeedsAttention({ onViewAthlete }) {
       ) : (
         <div className="space-y-2">
           {items.map((it) => {
-            const color = it.kind === 'readiness' ? READINESS_COLORS[it.level] : '#64748b'
-            const Icon = it.kind === 'readiness' ? HeartPulse : Clock
+            const color = it.kind === 'readiness' ? READINESS_COLORS[it.level] : it.kind === 'compliance' ? '#fbbf24' : '#64748b'
+            const Icon = it.kind === 'readiness' ? HeartPulse : it.kind === 'compliance' ? Dumbbell : Clock
             return (
               <button key={it.key} onClick={() => onViewAthlete && onViewAthlete(buildLinkedPayload(it.a))}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all hover:bg-white/[0.03]"

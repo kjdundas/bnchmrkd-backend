@@ -6,7 +6,7 @@
 // Backed by the get_linked_athletes RPC (consent-gated server-side).
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback } from 'react'
-import { Link2, ChevronRight } from 'lucide-react'
+import { Link2, ChevronRight, Dumbbell } from 'lucide-react'
 import { callRpc } from '../../lib/supabaseRest'
 import { getTier, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
@@ -193,6 +193,18 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
                 <p className="text-[10px] text-slate-400 landing-font truncate">
                   {a.discipline || '—'}{age != null ? ` · ${age}y` : ''}{pbDisplay ? ` · PB ${pbDisplay}` : ''}
                 </p>
+                {a.program_compliance && a.program_compliance.sessions_per_week && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Dumbbell className="w-2.5 h-2.5 flex-shrink-0" style={{ color: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#64748b' }} />
+                    <div className="w-14 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <div className="h-full rounded-full" style={{
+                        width: `${Math.min(100, Math.round((a.program_compliance.done_this_week / a.program_compliance.sessions_per_week) * 100))}%`,
+                        background: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#fb923c',
+                      }} />
+                    </div>
+                    <span className="text-[9px] text-slate-500 mono-font flex-shrink-0">{a.program_compliance.done_this_week}/{a.program_compliance.sessions_per_week} this wk</span>
+                  </div>
+                )}
               </div>
               {tier && (
                 <div className="flex items-center gap-1 flex-shrink-0">
