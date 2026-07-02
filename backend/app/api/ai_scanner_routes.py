@@ -29,10 +29,21 @@ import unicodedata
 from datetime import date, datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/api/v1/ai-scanner", tags=["ai-scanner"])
+from app.core.auth import rate_limit, require_pro
+
+# Pro-only (paywalled) + rate limited: every route in this router requires a
+# valid Supabase JWT whose user_profiles.plan = 'pro'. Non-pro users get 402.
+router = APIRouter(
+    prefix="/api/v1/ai-scanner",
+    tags=["ai-scanner"],
+    dependencies=[
+        Depends(require_pro),
+        Depends(rate_limit("ai-scanner", max_calls=20, window_seconds=3600)),
+    ],
+)
 
 
 # Bidi & zero-width control characters that often contaminate Arabic /
@@ -802,5 +813,5 @@ async def extract_results(
             "dropped_count": raw_count - accepted_count - ambiguous_count,
             "source_is_image": source_is_image,
         },
-        "dropped_reasons": dropped_reasons[:20],  # cap for response size
+        "dropped_reasons": dropped_reasons[:20],  # capped for response size
     }

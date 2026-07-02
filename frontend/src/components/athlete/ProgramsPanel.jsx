@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback } from 'react'
 import { Dumbbell, Sparkles, ChevronDown, ChevronUp, Loader2, AlertCircle, Trash2, CheckCircle2, Circle } from 'lucide-react'
-import { selectFrom, insertInto, deleteFrom } from '../../lib/supabaseRest'
+import { selectFrom, insertInto, deleteFrom, authHeader } from '../../lib/supabaseRest'
 
 // Monday of the current week (local), as YYYY-MM-DD — the bucket for weekly
 // session completions.
@@ -82,7 +82,7 @@ export default function ProgramsPanel({ user, fetchContext }) {
         },
       }
       const res = await fetch(`${API_BASE}/api/v1/assistant/program`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() }, body: JSON.stringify(payload),
       })
       if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.detail || `Server error ${res.status}`) }
       const { program } = await res.json()

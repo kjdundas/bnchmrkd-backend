@@ -21,6 +21,7 @@ import { getTier, TIER_COLORS, TIER_NAMES, TIER_SHORT } from './lib/performanceT
 import { projectAllTrajectories, getImprovementCurves } from './lib/improvementCurves';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
+import { authHeader } from './lib/supabaseRest';
 
 // ── Data stats constants (update when dataset changes) ──
 const STATS = { athletes: '8,395+', records: '929K+', events: '21', disciplines: '20', games: 'Sydney 2000 – Paris 2024' };
@@ -3353,7 +3354,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
     try {
       const response = await fetch(`${API_BASE}/api/v1/scrape`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify({ url: urlInput.trim() }),
       });
 

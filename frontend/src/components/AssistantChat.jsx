@@ -19,7 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Bot, Send, X, Loader2, Dumbbell, Sparkles, Check, MessageSquare } from 'lucide-react'
-import { insertInto } from '../lib/supabaseRest'
+import { insertInto, authHeader } from '../lib/supabaseRest'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
@@ -67,7 +67,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
     try {
       const ctx = await ensureContext()
       const res = await fetch(`${API_BASE}/api/v1/assistant`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify({ role, question: q, context: ctx, history }),
       })
       if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.detail || `Server error ${res.status}`) }
@@ -88,7 +88,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
     setSending(true)
     try {
       const res = await fetch(`${API_BASE}/api/v1/assistant/program`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify({ role: 'coach', context: target, brief, weeks: 4 }),
       })
       if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.detail || `Server error ${res.status}`) }

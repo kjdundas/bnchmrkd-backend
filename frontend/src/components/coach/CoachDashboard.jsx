@@ -6,7 +6,7 @@ import {
   Eye, Clock, Zap, ChevronDown, Loader2, CheckCircle, AlertCircle, Trash2, Pencil, Save
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { selectFrom, insertInto, deleteFrom, updateIn, callRpc } from '../../lib/supabaseRest'
+import { selectFrom, insertInto, deleteFrom, updateIn, callRpc, authHeader } from '../../lib/supabaseRest'
 import { getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../../lib/performanceTiers'
 import { WA_IMPORT_ENABLED } from '../../lib/featureFlags'
@@ -21,8 +21,9 @@ import AssistantChat from '../AssistantChat'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://web-production-295f1.up.railway.app'
 
-// AI Scanner is gated to Keenan during testing
-const SCANNER_BETA_UUID = 'e4a344cd-1175-40f2-8b0d-94593eaedd53'
+// AI Scanner is a Pro feature — the tab is visible to all coaches, but the
+// scanner itself requires user_profiles.plan = 'pro' (enforced server-side
+// too: the backend returns 402 for non-pro users).
 
 // Feature flags.
 //  - BULK_IMPORT_ENABLED: CSV bulk upload (still a no-op stub).
@@ -110,7 +111,22 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   useEffect(() => { fetchRoster() }, [fetchRoster])
 
   // ── AI Scanner state ──
-  const scannerEnabled = user?.id === SCANNER_BETA_UUID
+  const scannerEnabled = true // tab always visible; non-pro users see the upgrade panel
+  const [userPlan, setUserPlan] = useState(null) // null = loading, 'free' | 'pro'
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const rows = await selectFrom('user_profiles', { filter: `id=eq.${user.id}` })
+        if (!cancelled) setUserPlan(rows?.[0]?.plan || 'free')
+      } catch {
+        if (!cancelled) setUserPlan('free')
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user?.id])
+  const isPro = userPlan === 'pro'
   const [scanStage, setScanStage] = useState('input') // 'input' | 'review' | 'done'
   const [scanInputType, setScanInputType] = useState('text') // 'text' | 'pdf' | 'image'
   const [scanText, setScanText] = useState('')
@@ -149,7 +165,13 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       if (scanInputType === 'text') form.append('text', scanText)
       else form.append('file', scanFile)
 
-      const res = await fetch(`${API_BASE}/api/v1/ai-scanner/extract`, { method: 'POST', body: form })
+      const res = await fetch(`${API_BASE}/api/v1/ai-scanner/extract`, { method: 'POST', headers: { ...authHeader() }, body: form })
+      if (res.status === 402) {
+        throw new Error('The AI Scanner is a Pro feature. Upgrade to Pro to scan result sheets.')
+      }
+      if (res.status === 401) {
+        throw new Error('Your session has expired — please sign in again.')
+      }
       if (!res.ok) {
         const t = await res.text()
         throw new Error(`Scanner failed (${res.status}): ${t.slice(0, 200)}`)
@@ -1565,8 +1587,26 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             </div>
           )}
 
+          {/* ═══════════════ AI SCANNER — UPGRADE PANEL (non-pro) ═══════════════ */}
+          {activeSection === 'assistant' && !isPro && (
+            <div className="rounded-xl overflow-hidden p-8 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
+              <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)' }}>
+                <Bot className="w-6 h-6 text-black" />
+              </div>
+              <p className="text-base font-semibold text-white landing-font mb-1">AI Results Scanner is a Pro feature</p>
+              <p className="text-[12px] text-slate-400 landing-font max-w-md mx-auto mb-5">
+                Paste a results sheet, PDF, or photo and the scanner extracts every mark and matches
+                it to your roster — hours of data entry done in seconds.
+              </p>
+              <span className="inline-block px-4 py-2 rounded-lg text-[12px] font-semibold text-black landing-font" style={{ background: '#f97316' }}>
+                Upgrade to Pro — coming soon
+              </span>
+              <p className="text-[10px] text-slate-500 landing-font mt-3">Want early access? Contact us and we'll switch it on for you.</p>
+            </div>
+          )}
+
           {/* ═══════════════ AI SCANNER ═══════════════ */}
-          {activeSection === 'assistant' && scannerEnabled && (
+          {activeSection === 'assistant' && isPro && (
             <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
               {/* Header */}
               <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>

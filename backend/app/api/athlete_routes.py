@@ -7,11 +7,18 @@ replacing the embedded SIMILAR_ATHLETES data in the frontend.
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.core.auth import rate_limit
 from app.core.database import get_db
 
-router = APIRouter(prefix="/api/v1", tags=["athletes"])
+# Public (powers the pre-signup Quick Analysis flow) but rate limited
+# to deter bulk scraping of the dataset.
+router = APIRouter(
+    prefix="/api/v1",
+    tags=["athletes"],
+    dependencies=[Depends(rate_limit("athletes", max_calls=120, window_seconds=60))],
+)
 
 
 # ============================================================

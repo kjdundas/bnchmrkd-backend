@@ -10,13 +10,22 @@ import asyncio
 import json
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.auth import rate_limit, require_user
 from app.scrapers.world_athletics import WorldAthleticsScraper
 
-router = APIRouter(prefix="/api/v1", tags=["scraping"])
+# Signed-in users only + rate limited (Selenium scrapes are expensive).
+router = APIRouter(
+    prefix="/api/v1",
+    tags=["scraping"],
+    dependencies=[
+        Depends(require_user),
+        Depends(rate_limit("scrape", max_calls=10, window_seconds=600)),
+    ],
+)
 
 
 class ScrapeRequest(BaseModel):
@@ -76,10 +85,11 @@ async def scrape_athlete(request: ScrapeRequest):
                 "event": "complete",
                 "data": result,
             })
-        except Exception as e:
+        except Exception:
+            # Don't leak internal error details (paths, stack info) to clients.
             await progress_queue.put({
                 "event": "error",
-                "data": {"message": str(e)},
+                "data": {"message": "Scraping failed — please check the URL and try again."},
             })
 
     async def event_stream() -> AsyncGenerator[str, None]:
@@ -99,8 +109,8 @@ async def scrape_athlete(request: ScrapeRequest):
             except asyncio.TimeoutError:
                 # Send keepalive
                 yield f"event: keepalive\ndata: {{}}\n\n"
-            except Exception as e:
-                yield f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
+            except Exception:
+                yield f"event: error\ndata: {json.dumps({'message': 'Scraping failed — please try again.'})}\n\n"
                 break
 
         # Ensure task is done

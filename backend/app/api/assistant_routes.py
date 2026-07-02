@@ -22,12 +22,21 @@ import os
 import re
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.core.auth import rate_limit, require_user
 from app.core.program_skeleton import build_skeleton
 
-router = APIRouter(prefix="/api/v1/assistant", tags=["assistant"])
+# Signed-in users only + rate limited (these routes spend OpenAI credits).
+router = APIRouter(
+    prefix="/api/v1/assistant",
+    tags=["assistant"],
+    dependencies=[
+        Depends(require_user),
+        Depends(rate_limit("assistant", max_calls=30, window_seconds=300)),
+    ],
+)
 
 
 # ── Metric catalog (59 metrics: label, unit, range, measurement protocol) ──

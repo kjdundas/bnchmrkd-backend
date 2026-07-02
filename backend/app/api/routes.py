@@ -11,8 +11,9 @@ Defines endpoints for:
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.auth import rate_limit
 from app.models.schemas import (
     AnalysisResponse,
     BenchmarkResponse,
@@ -27,8 +28,12 @@ from app.services.analysis_service import AnalysisService
 from app.scrapers.manual import ManualScraper
 from app.scrapers.world_athletics import WorldAthleticsScraper
 
-# Create router
-router = APIRouter(prefix="/api/v1", tags=["analysis"])
+# Create router — public (used pre-signup) but rate limited.
+router = APIRouter(
+    prefix="/api/v1",
+    tags=["analysis"],
+    dependencies=[Depends(rate_limit("analysis", max_calls=60, window_seconds=60))],
+)
 
 # Initialize services and scrapers
 analysis_service = AnalysisService()

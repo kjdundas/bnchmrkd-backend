@@ -22,6 +22,13 @@ function getTokenFromStorage() {
   }
 }
 
+// Authorization header for calls to the bnchmrkd backend API (Railway).
+// The backend verifies this Supabase JWT on protected routes.
+export function authHeader() {
+  const token = getTokenFromStorage()
+  return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
 function getAuthHeaders() {
   const token = getTokenFromStorage()
   if (!token) throw new Error('No active session — please sign in again.')
