@@ -8,8 +8,10 @@ import { Activity, Crosshair, Dumbbell, Footprints, ClipboardList, HeartHandshak
 
 export default function ValueFlywheel() {
   return (
-    <section className="vf-wrap">
+    <section className="vf-section">
       <style>{CSS}</style>
+      <div className="vf-photo" aria-hidden="true" />
+      <div className="vf-wrap">
 
       <div className="vf-head">
         <p className="vf-eyebrow">For athletes, coaches &amp; parents</p>
@@ -75,12 +77,15 @@ export default function ValueFlywheel() {
           </div>
         </div>
       </div>
+      </div>
     </section>
   )
 }
 
 const CSS = `
-.vf-wrap{max-width:1000px;margin:0 auto;padding:8px 20px 12px;text-align:center;font-family:'Inter','Helvetica Neue',sans-serif}
+.vf-section{position:relative;overflow:hidden}
+.vf-photo{position:absolute;inset:0;z-index:0;background-image:linear-gradient(180deg,rgba(10,10,15,0.86) 0%,rgba(10,10,15,0.72) 45%,rgba(10,10,15,0.92) 100%),url('/value-stadium.jpg');background-size:cover;background-position:center 30%}
+.vf-wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:8px 20px 12px;text-align:center;font-family:'Inter','Helvetica Neue',sans-serif}
 .vf-eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#fb923c;font-weight:600}
 .vf-title{margin:0;font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.5px;color:#f8fafc;line-height:1.05}
 .vf-title span{background:linear-gradient(135deg,#f97316,#fb923c,#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}

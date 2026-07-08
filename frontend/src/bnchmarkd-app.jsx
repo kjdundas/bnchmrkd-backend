@@ -22,6 +22,7 @@ import { projectAllTrajectories, getImprovementCurves } from './lib/improvementC
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
 import { authHeader } from './lib/supabaseRest';
+import { gsap, ScrollTrigger, SplitText, useGSAP } from './lib/gsapSetup';
 
 // ── Data stats constants (update when dataset changes) ──
 const STATS = { athletes: '8,395+', records: '929K+', events: '21', disciplines: '20', games: 'Sydney 2000 – Paris 2024' };
@@ -473,6 +474,59 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
   }, [currentView, SHOWCASE_ATHLETES.length, showcasePaused]);
 
   const showcaseAthlete = SHOWCASE_ATHLETES[showcaseIdx];
+
+  // ── GSAP: reveal below-the-fold landing sections as they scroll into view
+  //    (replaces the load-time fadeSlideUp delays). Scoped + reduced-motion aware. ──
+  const landingRef = useRef(null);
+  useGSAP(() => {
+    if (currentView !== 'landing' || !landingRef.current) return;
+    const q = gsap.utils.selector(landingRef);
+    const targets = q('[data-reveal]');
+    if (!targets.length) return;
+
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.set(targets, { opacity: 0, y: 24 });
+      ScrollTrigger.batch(targets, {
+        start: 'top 85%',
+        once: true,
+        onEnter: (batch) =>
+          gsap.to(batch, { opacity: 1, y: 0, duration: 0.7, stagger: 0.09, overwrite: true }),
+      });
+    });
+    return () => mm.revert();
+  }, { scope: landingRef, dependencies: [currentView] });
+
+  // ── GSAP: hero entrance timeline (replaces the stagger-* CSS delays).
+  //    Headline reveals word-by-word via SplitText; gradient survives via .hero-grad. ──
+  useGSAP(() => {
+    if (currentView !== 'landing' || !landingRef.current) return;
+    const q = gsap.utils.selector(landingRef);
+    const title = q('[data-hero="title"]')[0];
+    if (!title) return;
+
+    const mm = gsap.matchMedia();
+    let split;
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      split = new SplitText(title, { type: 'words' });
+      gsap.set(
+        q('[data-hero="nav"], [data-hero="sub"], [data-hero="cta"], [data-hero="stats"], [data-hero="card"]'),
+        { opacity: 0, y: 20 }
+      );
+      gsap.set(split.words, { opacity: 0, y: 24 });
+
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.7 } });
+      tl.to(q('[data-hero="nav"]'), { opacity: 1, y: 0, duration: 0.5 })
+        .to(split.words, { opacity: 1, y: 0, stagger: 0.05, duration: 0.6 }, '-=0.2')
+        .to(q('[data-hero="sub"]'), { opacity: 1, y: 0 }, '-=0.35')
+        .to(q('[data-hero="cta"]'), { opacity: 1, y: 0 }, '-=0.45')
+        .to(q('[data-hero="stats"]'), { opacity: 1, y: 0 }, '-=0.5')
+        .to(q('[data-hero="card"]'), { opacity: 1, y: 0, duration: 0.9 }, '-=0.7');
+
+      return () => { if (split) split.revert(); };
+    });
+    return () => mm.revert();
+  }, { scope: landingRef, dependencies: [currentView] });
 
   // Standards tracker tier filter in results view
   const [standardsTier, setStandardsTier] = useState('all'); // 'all' | 'world' | 'regional' | 'development'
@@ -3757,7 +3811,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* LANDING PAGE                                                    */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'landing' && (
-        <div className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(165deg, #0a0a0f 0%, #0d1117 30%, #111318 60%, #0a0a0f 100%)'}}>
+        <div ref={landingRef} className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(165deg, #0a0a0f 0%, #0d1117 30%, #111318 60%, #0a0a0f 100%)'}}>
 
           {/* ── INJECT GOOGLE FONTS + KEYFRAMES ── */}
           <style>{`
@@ -3806,6 +3860,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             .bento-card:hover { transform: translateY(-2px); border-color: rgba(249,115,22,0.3); }
             .cta-primary { background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%); transition: all 0.3s ease; }
             .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(249,115,22,0.35); }
+            /* Gradient headline text — applied to the span AND to SplitText's word wrappers
+               so the gradient survives the word split. */
+            .hero-grad, .hero-grad * { background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
             .noise-overlay { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); }
 
             /* ── Shiny Text shimmer effect ── */
@@ -3864,7 +3921,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           </div>
 
           {/* ── TOP NAV BAR ── */}
-          <nav className="relative z-20 stagger-1">
+          <nav data-hero="nav" className="relative z-20">
             <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-8 h-8" />
@@ -3912,18 +3969,28 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           {/* ── HERO SECTION ── */}
           <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-8 sm:pt-16 pb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Stadium backdrop — full-bleed behind hero, scrimmed left→right for legibility */}
+            <div
+              className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen z-0 pointer-events-none"
+              aria-hidden="true"
+              style={{
+                backgroundImage: "linear-gradient(100deg, rgba(10,10,15,0.97) 0%, rgba(10,10,15,0.90) 42%, rgba(10,10,15,0.55) 100%), url('/hero-stadium.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center right',
+              }}
+            ></div>
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
               {/* LEFT — Copy */}
               <div>
-                <h1 className="stagger-3 text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-5">
+                <h1 data-hero="title" className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.08] tracking-tight landing-font mb-5">
                   Put your performance{' '}
                   <span className="hidden sm:inline"><br /></span>
                   in{' '}
-                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Olympic context.</span>
+                  <span className="hero-grad">Olympic context.</span>
                 </h1>
 
-                <p className="stagger-4 text-base sm:text-lg text-slate-300 leading-relaxed max-w-lg landing-font mb-8">
+                <p data-hero="sub" className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-lg landing-font mb-8">
                   25 years of Olympic career data, distilled into one trajectory.{' '}
                   <span className="text-slate-400">Talent{' '}
                     <TypewriterCycle
@@ -3933,7 +4000,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </p>
 
                 {/* CTAs */}
-                <div className="stagger-5 flex flex-col sm:flex-row gap-3 mb-10">
+                <div data-hero="cta" className="flex flex-col sm:flex-row gap-3 mb-10">
                   <button
                     onClick={() => setCurrentView('categories')}
                     className="cta-primary flex items-center justify-center gap-2.5 px-7 py-3.5 text-white font-semibold rounded-xl text-[15px] landing-font"
@@ -3952,7 +4019,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
 
                 {/* Data credibility — static, instantly readable */}
-                <div className="stagger-6 flex items-center gap-4 sm:gap-8">
+                <div data-hero="stats" className="flex items-center gap-4 sm:gap-8">
                   {[
                     { value: '915K+', label: 'Records' },
                     { value: '7,360+', label: 'Athletes' },
@@ -3967,7 +4034,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
 
               {/* RIGHT — Animated trajectory visualization + bento preview */}
-              <div className="stagger-4 relative"
+              <div data-hero="card" className="relative"
                 onMouseEnter={() => setShowcasePaused(true)}
                 onMouseLeave={() => setShowcasePaused(false)}
               >
@@ -4175,12 +4242,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           </div>
 
           {/* ── VALUE FLYWHEEL — what bnchmrkd does for everyone ── */}
-          <div className="relative z-10 py-10 sm:py-14">
+          <div data-reveal className="relative z-10 py-10 sm:py-14">
             <ValueFlywheel />
           </div>
 
           {/* ── WHO ARE YOU? — Interactive Role Selector + Pillars ── */}
-          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-20">
+          <div data-reveal className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 py-20">
             {/* Animated background glow that shifts with role */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               <div className="role-transition absolute top-[20%] left-[50%] -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-[180px]" style={{
@@ -4619,7 +4686,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 ].map((feature, i) => {
                   const Icon = feature.icon;
                   return (
-                    <div key={i} className="group" style={{animation: `fadeSlideUp 0.6s ease-out ${0.9 + i * 0.12}s both`}}>
+                    <div key={i} data-reveal className="group">
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{background: `${feature.accent}12`}}>
                         <Icon className="w-5 h-5" style={{color: feature.accent}} />
                       </div>
@@ -4633,7 +4700,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           </div>
 
           {/* ── BOTTOM SOURCE LINE ── */}
-          <div className="relative z-10 text-center pb-8 px-4">
+          <div data-reveal className="relative z-10 text-center pb-8 px-4">
             <div className="flex items-center justify-center gap-3 mb-2">
               <div className="w-8 h-px" style={{background: 'rgba(255,255,255,0.08)'}}></div>
               <span className="text-[10px] text-slate-500 mono-font uppercase tracking-[0.2em]">Data Source</span>
