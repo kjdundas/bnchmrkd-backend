@@ -144,7 +144,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
         <button onClick={() => setOpen(true)}
           className="fixed bottom-20 right-4 z-[120] flex items-center gap-2 px-4 py-3 rounded-full text-black font-bold text-[12px] landing-font shadow-lg hover:brightness-110 transition-all"
           style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)', boxShadow: '0 8px 28px rgba(249,115,22,0.45)' }}>
-          <Bot className="w-4 h-4" /> Ask
+          <Bot className="w-4 h-4" /> Ask assistant AI coach
         </button>
       )}
 

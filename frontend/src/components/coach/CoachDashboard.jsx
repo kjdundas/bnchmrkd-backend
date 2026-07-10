@@ -57,7 +57,9 @@ const calcAge = (dob) => {
 // ═══════════════════════════════════════════════════════════════════
 
 export default function CoachDashboard({ user, profile, onBack, onViewAthlete }) {
-  const [activeSection, setActiveSection] = useState('highlights')
+  const [activeSection, setActiveSection] = useState('overview')
+  const [detailAthlete, setDetailAthlete] = useState(null)
+  const [detailTab, setDetailTab] = useState('perf')
   const [addMethod, setAddMethod] = useState(null)
   const [urlInput, setUrlInput] = useState('')
   const [urlLoading, setUrlLoading] = useState(false)
@@ -823,7 +825,33 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         <div className="absolute -bottom-[200px] -left-[200px] w-[500px] h-[500px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.03) 0%, transparent 70%)' }} />
       </div>
 
-      <div className="relative z-10">
+      {/* ── Sidebar (desktop/tablet) ── */}
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-[220px] flex-col px-3 py-4" style={{ background: 'rgba(8,8,13,0.92)', borderRight: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
+        <div className="px-3 pb-5 flex items-center gap-1 text-white font-black text-[19px] landing-font">bnchmrkd<span style={{ color: '#f97316' }}>.</span></div>
+        <div className="px-3 pb-1.5 text-[9px] tracking-[0.16em] uppercase text-slate-600 mono-font">Coach</div>
+        {[
+          { k: 'overview', label: 'Overview', Icon: Zap },
+          { k: 'athletes', label: 'Athletes', Icon: Users },
+          { k: 'training', label: 'Training', Icon: Calendar },
+          { k: 'testing', label: 'Testing', Icon: Target },
+          { k: 'wellness', label: 'Wellness', Icon: Activity },
+          { k: 'reports', label: 'Reports', Icon: FileSpreadsheet },
+        ].map(({ k, label, Icon }) => (
+          <button key={k} onClick={() => setActiveSection(k)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium landing-font transition-colors mb-0.5" style={{ color: activeSection === k ? '#f97316' : '#94a3b8', background: activeSection === k ? 'rgba(249,115,22,0.12)' : 'transparent' }}>
+            <Icon className="w-4 h-4" /> {label}
+          </button>
+        ))}
+        <div className="px-3 pt-4 pb-1.5 text-[9px] tracking-[0.16em] uppercase text-slate-600 mono-font">Tools</div>
+        <button onClick={() => setActiveSection('assistant')} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium landing-font transition-colors" style={{ color: activeSection === 'assistant' ? '#f97316' : '#94a3b8', background: activeSection === 'assistant' ? 'rgba(249,115,22,0.12)' : 'transparent' }}>
+          <Bot className="w-4 h-4" /> AI Scanner
+        </button>
+        <div className="mt-auto flex items-center gap-2.5 px-3 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black text-black flex-shrink-0" style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)' }}>{(profile?.full_name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
+          <div className="min-w-0"><p className="text-[12px] font-semibold text-white truncate landing-font">{profile?.full_name || 'Coach'}</p><p className="text-[10px] text-slate-500 mono-font">Head coach</p></div>
+        </div>
+      </aside>
+
+      <div className="relative z-10 md:pl-[220px]">
         {/* ── Top bar ── */}
         <header className="sticky top-0 z-50" style={{ background: 'rgba(2,6,23,0.7)', backdropFilter: 'blur(24px) saturate(1.4)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
@@ -831,14 +859,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               <button onClick={onBack} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-all">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
-                  <span className="text-[10px] font-black text-black">b.</span>
-                </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-white leading-none landing-font">Dashboard</p>
-                  <p className="text-[10px] text-slate-400 leading-none mt-0.5 mono-font">{profile?.full_name || user?.email}</p>
-                </div>
+              <div>
+                <p className="text-[13px] font-semibold text-white leading-none landing-font">{profile?.full_name ? `${profile.full_name.split(' ')[0]}'s squad` : 'Your squad'}</p>
+                <p className="text-[10px] text-slate-400 leading-none mt-0.5 mono-font">Coach dashboard</p>
               </div>
             </div>
             <button
@@ -847,43 +870,25 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}
             >
               <Plus className="w-3 h-3" strokeWidth={3} />
-              Add Athletes
+              Add athlete
             </button>
           </div>
         </header>
 
-        {/* ── Section tabs ── */}
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-5 pb-1">
-          <div className="flex gap-0.5">
-            {[
-              { key: 'highlights', label: 'Highlights', icon: Zap },
-              { key: 'roster', label: 'Roster', icon: Users },
-              { key: 'add', label: 'Add Athletes', icon: UserPlus },
-              ...(scannerEnabled ? [{ key: 'assistant', label: 'AI Scanner', icon: Bot }] : []),
-            ].map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => { setActiveSection(key); if (key === 'add') setAddMethod(null) }}
-                className="relative flex items-center gap-1.5 px-4 py-2.5 text-[11px] sm:text-[12px] font-semibold transition-all landing-font"
-                style={{
-                  color: activeSection === key ? '#f97316' : '#94a3b8',
-                  borderBottom: activeSection === key ? '2px solid #f97316' : '2px solid transparent',
-                }}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="h-px" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        {/* ── Section nav (phone) ── */}
+        <div className="md:hidden px-4 pt-3 pb-1 flex gap-1.5 overflow-x-auto scrollbar-none">
+          {[['overview','Overview'],['athletes','Athletes'],['training','Training'],['testing','Testing'],['wellness','Wellness'],['reports','Reports'],['assistant','Scanner']].map(([k, l]) => (
+            <button key={k} onClick={() => setActiveSection(k)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap landing-font" style={{ color: activeSection === k ? '#f97316' : '#94a3b8', background: activeSection === k ? 'rgba(249,115,22,0.12)' : 'rgba(255,255,255,0.03)' }}>{l}</button>
+          ))}
         </div>
 
         {/* ── Content ── */}
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-6">
 
           {/* ═══════════════ HIGHLIGHTS ═══════════════ */}
-          {activeSection === 'highlights' && (
+          {activeSection === 'overview' && (
             <div className="space-y-5">
+              <div><h1 className="text-[22px] font-bold text-white landing-font">Overview</h1><p className="text-[13px] text-slate-500 landing-font">Here's what needs you today.</p></div>
 
               {/* ── EMPTY STATE — shown when roster is empty ── */}
               {rosterWithAge.length === 0 ? (
@@ -1044,109 +1049,36 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 </div>
               ) : (
               /* ── POPULATED STATE — existing highlights ── */
-              <div className="space-y-5">
-              {/* Needs attention — the triage surface that leads the screen */}
-              <NeedsAttention onViewAthlete={onViewAthlete} />
-              {/* Squad activity feed — react to give athletes a nudge */}
-              <CoachFeed currentUserId={user?.id} coachName={profile?.full_name} />
-              {/* Hero stat row */}
-              <div className="grid grid-cols-4 gap-3" style={stagger(0)}>
-                {[
-                  { value: rosterWithAge.length, label: 'Athletes', sub: 'in roster', color: '#f97316' },
-                  { value: trendingUp, label: 'Improving', sub: 'this month', color: '#22c55e' },
-                  { value: trendingDown, label: 'Declining', sub: 'needs review', color: '#ef4444' },
-                  { value: totalSessions, label: 'Races', sub: 'total logged', color: '#3b82f6' },
-                ].map((kpi, i) => (
-                  <div key={i} className="relative overflow-hidden rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="absolute top-0 right-0 w-16 h-16 rounded-full" style={{ background: `radial-gradient(circle, ${kpi.color}08 0%, transparent 70%)`, transform: 'translate(30%, -30%)' }} />
-                    <p className="text-3xl font-bold text-white mono-font leading-none">{kpi.value}</p>
-                    <p className="text-[11px] font-semibold mt-1.5 landing-font" style={{ color: kpi.color }}>{kpi.label}</p>
-                    <p className="text-[10px] text-slate-400 landing-font">{kpi.sub}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Classification breakdown — horizontal bar */}
-              <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(1) }}>
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 landing-font">Squad Classification</p>
-                <div className="flex gap-1 h-3 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                  {Object.entries(tierCounts).map(([tier, count]) => (
-                    <div key={tier} className="rounded-full transition-all" style={{
-                      width: `${rosterWithAge.length ? (count / rosterWithAge.length) * 100 : 0}%`,
-                      background: tierConfig[tier]?.color,
-                      opacity: 0.8,
-                    }} />
-                  ))}
+              <div className="space-y-6">
+                {/* Squad pulse */}
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="mono-font text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: '#f97316' }}>Squad pulse</span>
+                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-1">
-                  {Object.entries(tierCounts).map(([tier, count]) => (
-                    <div key={tier} className="flex items-center gap-1.5">
-                      <TierDot tier={tier} />
-                      <span className="text-[11px] text-slate-500 landing-font">{tierConfig[tier]?.label}</span>
-                      <span className="text-[11px] font-bold mono-font" style={{ color: tierConfig[tier]?.color }}>{count}</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { value: rosterWithAge.length, label: 'Athletes', color: '#f97316' },
+                    { value: trendingUp, label: 'Improving', color: '#22c55e' },
+                    { value: trendingDown, label: 'Declining', color: '#ef4444' },
+                    { value: totalSessions, label: 'Races logged', color: '#3b82f6' },
+                  ].map((kpi, i) => (
+                    <div key={i} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p className="text-3xl font-bold text-white mono-font leading-none tabular-nums">{kpi.value}</p>
+                      <p className="text-[11px] font-semibold mt-1.5 landing-font" style={{ color: kpi.color }}>{kpi.label}</p>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Two-column: Alerts + Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Performance Alerts */}
-                <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(2) }}>
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3 landing-font">Performance Alerts</p>
-                  <div className="space-y-2">
-                    {rosterWithAge.filter(a => a.trend !== 'stable').length === 0 && (
-                      <p className="text-[11px] text-slate-400 landing-font py-4 text-center">No alerts yet — add athletes to start tracking</p>
-                    )}
-                    {rosterWithAge.filter(a => a.trend !== 'stable').map((a, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg transition-all hover:bg-white/[0.02]" style={{ border: '1px solid rgba(255,255,255,0.03)' }}>
-                        <div className={`w-1.5 h-8 rounded-full ${a.trend === 'up' ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ opacity: 0.7 }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-[13px] text-white font-medium landing-font truncate">{a.name}</p>
-                            <TierDot tier={a.tier} size={5} />
-                          </div>
-                          <p className="text-[10px] text-slate-400 landing-font">{a.discipline} · {a.trend === 'up' ? 'Improving' : 'Declining'} · Last: {a.last_result || '—'}</p>
-                        </div>
-                        <ArrowUpRight className={`w-3.5 h-3.5 flex-shrink-0 ${a.trend === 'up' ? 'text-emerald-500' : 'text-red-500 rotate-90'}`} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(3) }}>
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3 landing-font">Recent Results</p>
-                  <div className="space-y-0">
-                    {rosterWithAge.length === 0 && (
-                      <p className="text-[11px] text-slate-400 landing-font py-4 text-center">No results yet</p>
-                    )}
-                    {[...rosterWithAge].filter(a => a.last_date).sort((a, b) => new Date(b.last_date) - new Date(a.last_date)).map((a, i) => (
-                      <div key={i} className="flex items-center gap-3 py-2.5" style={{ borderBottom: i < rosterWithAge.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold mono-font" style={{ background: 'rgba(255,255,255,0.04)', color: tierConfig[a.tier]?.color }}>
-                          {a.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] text-white landing-font">{a.name}</p>
-                          <p className="text-[10px] text-slate-400 mono-font">{a.discipline}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[12px] font-bold text-white mono-font">{a.last_result || '—'}</p>
-                          <p className="text-[9px] text-slate-400 mono-font">{a.last_date ? new Date(a.last_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                {/* Needs attention */}
+                <NeedsAttention onViewAthlete={onViewAthlete} />
               </div>
               )}
             </div>
           )}
 
           {/* ═══════════════ ROSTER ═══════════════ */}
-          {activeSection === 'roster' && (
+          {activeSection === 'athletes' && (
             <div className="space-y-4">
+              <div className="mb-1"><h1 className="text-[22px] font-bold text-white landing-font">Athletes</h1><p className="text-[13px] text-slate-500 landing-font">Tap an athlete for full performance, testing, training &amp; wellness.</p></div>
               <LinkedAthletesSection onViewAthlete={onViewAthlete} />
               <div className="flex flex-col sm:flex-row gap-3" style={stagger(0)}>
                 <div className="relative flex-1">
@@ -1179,7 +1111,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   {displayRoster.map((a, i) => (
                     <div key={a.id} className="group relative rounded-xl p-4 cursor-pointer transition-all hover:translate-y-[-2px]"
                       style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(i + 1) }}
-                      onClick={() => onViewAthlete?.(a)}>
+                      onClick={() => { setDetailAthlete(a); setDetailTab('perf'); setActiveSection('detail') }}>
                       {/* Edit + Delete buttons */}
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                         <button
@@ -1212,31 +1144,22 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </div>
                       )}
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold mono-font" style={{ background: `${tierConfig[a.tier]?.color || '#64748b'}12`, color: tierConfig[a.tier]?.color || '#64748b' }}>
-                              {a.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: '#0f172a', border: '2px solid #0f172a' }}>
-                              <div className={`w-2 h-2 rounded-full ${a.trend === 'up' ? 'bg-emerald-500' : a.trend === 'down' ? 'bg-red-500' : 'bg-slate-400'}`} />
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-[13px] font-semibold text-white landing-font group-hover:text-orange-400 transition-colors">{a.name}</p>
-                            <p className="text-[10px] text-slate-400 landing-font">{a.gender || '?'} · {a.age != null ? `${a.age}y` : '—'}</p>
-                          </div>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold mono-font flex-shrink-0" style={{ background: `${tierConfig[a.tier]?.color || '#64748b'}18`, color: tierConfig[a.tier]?.color || '#64748b' }}>
+                          {a.name.split(' ').map(n => n[0]).join('')}
                         </div>
+                        <div className="min-w-0">
+                          <p className="text-[14px] font-semibold text-white landing-font truncate group-hover:text-orange-400 transition-colors">{a.name}</p>
+                          <p className="text-[10px] text-slate-400 mono-font">{a.gender || '?'} · {a.age != null ? `${a.age}y` : '—'}</p>
+                        </div>
+                        <div className={`ml-auto flex-shrink-0 w-2 h-2 rounded-full ${a.trend === 'up' ? 'bg-emerald-500' : a.trend === 'down' ? 'bg-red-500' : 'bg-slate-500'}`} />
                       </div>
                       {/* Discipline chips */}
                       {Array.isArray(a.disciplines) && a.disciplines.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2" onClick={e => e.stopPropagation()}>
                           {a.disciplines.map(d => (
-                            <button
-                              key={d}
-                              onClick={() => onViewAthlete?.({ ...a, discipline: d })}
-                              className={`px-1.5 py-0.5 rounded text-[9px] mono-font transition-colors ${d === a.discipline ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' : 'bg-white/5 text-slate-400 border border-white/5 hover:bg-white/10'}`}
-                            >
+                            <button key={d} onClick={() => onViewAthlete?.({ ...a, discipline: d })}
+                              className={`px-1.5 py-0.5 rounded text-[9px] mono-font transition-colors ${d === a.discipline ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' : 'bg-white/5 text-slate-400 border border-white/5 hover:bg-white/10'}`}>
                               {d}
                             </button>
                           ))}
@@ -1245,70 +1168,45 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       {!Array.isArray(a.disciplines) && (
                         <p className="text-[10px] text-slate-400 landing-font mb-2">{a.discipline || '—'}</p>
                       )}
-                      {/* Tier sticker (T1-T7) */}
+                      {/* Tier badge */}
                       {(() => {
                         const age = a.age != null ? a.age : calcAge(a.dob);
-                        const pbVal = a.pb_value;
-                        const disc = a.discipline;
+                        const pbVal = a.pb_value; const disc = a.discipline;
+                        let col = tierConfig[a.tier]?.color || '#64748b';
+                        let tierN = null, tName = tierConfig[a.tier]?.label || 'Developing';
                         if (age != null && pbVal && disc) {
-                          const genderCode = a.gender === 'Male' ? 'M' : 'F';
-                          const ageGroup = getAgeGroup(age);
-                          const t = getTier(disc, genderCode, ageGroup, pbVal);
-                          if (t && t.tier > 0) {
-                            return (
-                              <div className="flex items-center gap-1.5 mb-2">
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold mono-font" style={{ background: `${t.color}18`, color: t.color, border: `1px solid ${t.color}30` }}>
-                                  T{t.tier}
-                                </span>
-                                <span className="text-[9px] text-slate-400 landing-font">{t.tierName}</span>
-                                <span className="text-[8px] text-slate-500 mono-font ml-auto">{ageGroup}</span>
-                              </div>
-                            );
-                          }
+                          const t = getTier(disc, a.gender === 'Male' ? 'M' : 'F', getAgeGroup(age), pbVal);
+                          if (t && t.tier > 0) { col = t.color; tierN = t.tier; tName = t.tierName; }
                         }
-                        return null;
+                        return (
+                          <span className="inline-block mb-3 px-2 py-0.5 rounded text-[10px] font-medium mono-font" style={{ background: `${col}18`, color: col, border: `1px solid ${col}30` }}>
+                            {tierN ? `T${tierN} · ` : ''}{tName}
+                          </span>
+                        );
                       })()}
-                      {/* Stats */}
-                      <div className="flex gap-2 mb-3">
-                        <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                          <p className="text-[14px] font-bold text-white mono-font">{a.pb || '—'}</p>
-                          <p className="text-[8px] text-slate-400 uppercase tracking-wider landing-font">PB</p>
+                      {/* Body: PB + trajectory */}
+                      <div className="flex items-end justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div>
+                          <p className="text-[24px] font-bold text-white mono-font leading-none tabular-nums">{a.pb || '—'}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-wider landing-font mt-1.5">Personal best</p>
                         </div>
-                        <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                          <p className="text-[14px] font-bold text-slate-300 mono-font">{a.last_result || '—'}</p>
-                          <p className="text-[8px] text-slate-400 uppercase tracking-wider landing-font">Last</p>
-                        </div>
-                      </div>
-                      {/* Footer — compute tier from PB, fallback to stored tier */}
-                      <div className="flex items-center justify-between">
                         {(() => {
-                          const age = a.age != null ? a.age : calcAge(a.dob);
-                          const pbVal = a.pb_value;
-                          const disc = a.discipline;
-                          let dotColor = tierConfig[a.tier]?.color || '#64748b';
-                          let dotLabel = tierConfig[a.tier]?.label || 'Developing';
-                          if (age != null && pbVal && disc) {
-                            const genderCode = a.gender === 'Male' ? 'M' : 'F';
-                            const ag = getAgeGroup(age);
-                            const t = getTier(disc, genderCode, ag, pbVal);
-                            if (t && t.tier > 0) {
-                              dotColor = t.color;
-                              dotLabel = t.tierName;
-                            }
-                          }
+                          const up = a.trend === 'up', down = a.trend === 'down';
+                          const col = up ? '#34d399' : down ? '#fb7185' : '#9aa1ac';
+                          const pts = up ? '2,18 16,14 30,10 44,6 58,3' : down ? '2,4 16,6 30,10 44,14 58,17' : '2,10 16,11 30,10 44,11 58,10';
+                          const lab = up ? '▲ improving' : down ? '▼ declining' : '→ steady';
                           return (
-                            <div className="flex items-center gap-1.5">
-                              <div className="rounded-full" style={{ width: 6, height: 6, background: dotColor }} />
-                              <span className="text-[10px] landing-font" style={{ color: dotColor }}>{dotLabel}</span>
+                            <div className="flex flex-col items-end gap-1.5">
+                              <svg width="58" height="22" viewBox="0 0 60 22"><polyline points={pts} fill="none" stroke={col} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                              <span className="mono-font text-[9px] px-2 py-0.5 rounded-full" style={{ background: `${col}22`, color: col }}>{lab}</span>
                             </div>
                           );
                         })()}
-                        <div className="flex items-center gap-2">
-                          {a.races?.length > 0 && <span className="text-[9px] text-slate-500 mono-font">{a.races.length} races</span>}
-                          <span className="text-[10px] text-slate-500 group-hover:text-orange-500 transition-colors landing-font flex items-center gap-0.5">
-                            View <ChevronRight className="w-3 h-3" />
-                          </span>
-                        </div>
+                      </div>
+                      {/* Footer */}
+                      <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span className="text-[9px] text-slate-500 mono-font">{a.races?.length > 0 ? `${a.races.length} races` : (a.last_result ? `last ${a.last_result}` : 'no results yet')}</span>
+                        <span className="text-[10px] text-slate-500 group-hover:text-orange-500 transition-colors landing-font flex items-center gap-0.5">View <ChevronRight className="w-3 h-3" /></span>
                       </div>
                     </div>
                   ))}
@@ -1406,6 +1304,77 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           )}
 
           {/* ═══════════════ ADD ATHLETES ═══════════════ */}
+          {activeSection === 'overview' && rosterWithAge.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="mono-font text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: '#f97316' }}>Recent activity</span>
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              </div>
+              <CoachFeed currentUserId={user?.id} coachName={profile?.full_name} />
+            </div>
+          )}
+
+          {activeSection === 'detail' && detailAthlete && (() => {
+            const a = detailAthlete;
+            const age = a.age != null ? a.age : calcAge(a.dob);
+            let tCol = tierConfig[a.tier]?.color || '#64748b', tN = null, tName = tierConfig[a.tier]?.label || 'Developing';
+            if (age != null && a.pb_value && a.discipline) {
+              const t = getTier(a.discipline, a.gender === 'Male' ? 'M' : 'F', getAgeGroup(age), a.pb_value);
+              if (t && t.tier > 0) { tCol = t.color; tN = t.tier; tName = t.tierName; }
+            }
+            const up = a.trend === 'up', down = a.trend === 'down';
+            const trajCol = up ? '#34d399' : down ? '#fb7185' : '#9aa1ac';
+            const trajLab = up ? '▲ improving' : down ? '▼ declining' : '→ steady';
+            const tabs = [['perf', 'Performance'], ['test', 'Testing'], ['train', 'Training'], ['well', 'Wellness']];
+            const stub = (what) => (
+              <div className="rounded-xl p-8 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-[13px] text-slate-400 landing-font">{what} for {a.name.split(' ')[0]} lives in the full profile.</p>
+                <button onClick={() => onViewAthlete?.(a)} className="mt-3 text-[12px] font-bold text-orange-500 hover:text-orange-400 landing-font">Open full profile →</button>
+              </div>
+            );
+            return (
+              <div>
+                <button onClick={() => setActiveSection('athletes')} className="flex items-center gap-1.5 text-[12px] text-slate-400 hover:text-white transition-colors mb-4 landing-font"><ChevronLeft className="w-3.5 h-3.5" /> Athletes</button>
+                <div className="flex items-center gap-4 mb-1">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[18px] font-black mono-font flex-shrink-0" style={{ background: `${tCol}18`, color: tCol }}>{a.name.split(' ').map(n => n[0]).join('')}</div>
+                  <div>
+                    <h1 className="text-[24px] font-bold text-white landing-font leading-tight">{a.name}</h1>
+                    <p className="text-[12px] text-slate-400 mono-font">{a.gender || '?'} · {age != null ? `${age}y · ${getAgeGroup(age)}` : '—'}{a.discipline ? ` · ${a.discipline}` : ''}{tN ? ` · T${tN} ${tName}` : ''}</p>
+                  </div>
+                </div>
+                <div className="flex gap-0.5 mt-5 mb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  {tabs.map(([k, l]) => (
+                    <button key={k} onClick={() => setDetailTab(k)} className="px-4 py-2.5 text-[13px] font-semibold landing-font transition-colors" style={{ color: detailTab === k ? '#f97316' : '#94a3b8', borderBottom: detailTab === k ? '2px solid #f97316' : '2px solid transparent' }}>{l}</button>
+                  ))}
+                </div>
+                {detailTab === 'perf' && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Personal best</p><p className="text-[24px] font-bold text-white mono-font mt-1">{a.pb || '—'}</p></div>
+                      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Tier</p><p className="text-[20px] font-bold mono-font mt-1" style={{ color: tCol }}>{tN ? `T${tN} · ` : ''}{tName}</p></div>
+                      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Recent trend</p><p className="text-[18px] font-bold mono-font mt-1" style={{ color: trajCol }}>{trajLab}</p></div>
+                    </div>
+                    <button onClick={() => onViewAthlete?.(a)} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-bold text-black landing-font transition-all hover:brightness-110" style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>Open full analysis — trajectory, benchmarking &amp; standards →</button>
+                  </div>
+                )}
+                {detailTab === 'test' && stub('Test results (splits, lifts, VO₂max)')}
+                {detailTab === 'train' && stub('Training programs &amp; session compliance')}
+                {detailTab === 'well' && stub('Wellness check-ins &amp; readiness')}
+              </div>
+            );
+          })()}
+
+          {['training', 'testing', 'wellness', 'reports'].includes(activeSection) && (
+            <div>
+              <h1 className="text-[22px] font-bold text-white landing-font mb-1">{({ training: 'Training', testing: 'Testing & performance', wellness: 'Wellness & readiness', reports: 'Reports' })[activeSection]}</h1>
+              <p className="text-[13px] text-slate-500 landing-font mb-5">{({ training: "Squad programs, session compliance, and this week's plan.", testing: 'Test batteries, PBs, and benchmarking across the squad.', wellness: 'Daily check-ins, readiness, sleep, and soreness.', reports: 'Export athlete and squad reports.' })[activeSection]}</p>
+              <div className="rounded-xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-[13px] text-slate-400 landing-font">Coming soon — this section is being built.</p>
+                <p className="text-[11px] text-slate-500 landing-font mt-1.5">Your athletes' data already flows in; the dedicated view lands next.</p>
+              </div>
+            </div>
+          )}
+
           {activeSection === 'add' && (
             <div className="space-y-5">
               {!addMethod ? (
