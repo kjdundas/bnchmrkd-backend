@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine, ReferenceDot,
-  ScatterChart, Scatter, ZAxis
-} from 'recharts';
-import {
   Activity, Timer, TrendingUp, Target, Award, ChevronRight, Plus, Trash2,
   Link, Upload, BarChart3, Zap, Calendar, ArrowUpRight, AlertTriangle, Users,
   Percent, Layers, BarChart2, CheckCircle2, Circle, Flag, Database, Info, ArrowRight, ChevronLeft,
@@ -13,6 +8,7 @@ import {
 import ValueFlywheel from './components/landing/ValueFlywheel';
 import QuickAnalysisFlow from './components/landing/QuickAnalysisFlow';
 import SnapshotStory from './components/landing/SnapshotStory';
+import LazyChartArea from './components/charts/LazyChartArea';
 import { analytics } from './lib/analytics';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PerformanceMatrixCard from './components/PerformanceMatrixCard';
@@ -5435,7 +5431,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <TrendingUp className="w-5 h-5" style={{color: '#f97316'}} />
                           Career Trajectory — {athleteTrajectory.discipline || ''}
                         </h3>
-                        <ResponsiveContainer width="100%" height={280}>
+                        <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={280}>
                           <ComposedChart data={athleteTrajectory.seasons
                             .filter(s => s.best_time)
                             .sort((a, b) => (a.age || a.year) - (b.age || b.year))
@@ -5475,7 +5471,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               activeDot={{ r: 6 }}
                             />
                           </ComposedChart>
-                        </ResponsiveContainer>
+                        </ResponsiveContainer>); }}</LazyChartArea>
 
                         {/* Discipline Tabs (if multiple) */}
                         {athleteProfile.personal_bests && athleteProfile.personal_bests.length > 1 && (
@@ -6433,7 +6429,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   {/* Scatter plot */}
                   {scatterRaces.length > 0 ? (
                     <div style={{width: '100%', height: 320}} className="mb-6">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height="100%">
                         <ScatterChart margin={{top: 10, right: 20, bottom: 30, left: 10}}>
                           <CartesianGrid stroke="rgba(255,255,255,0.06)" />
                           <XAxis
@@ -6479,7 +6475,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           />
                           <Scatter name="Races" data={scatterRaces} fill="#f97316" fillOpacity={0.8} />
                         </ScatterChart>
-                      </ResponsiveContainer>
+                      </ResponsiveContainer>); }}</LazyChartArea>
                     </div>
                   ) : (
                     <div className="mb-6 p-4 rounded-lg text-center text-xs text-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -6563,7 +6559,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <p className="text-sm text-slate-400 mb-4">
                     Absolute {isFieldEvent(analysisResults.discipline) ? 'distances' : 'times'} plotted against age with projections, confidence intervals, and Olympic threshold reference lines
                   </p>
-                  <ResponsiveContainer width="100%" height={320}>
+                  <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                     <ComposedChart data={analysisResults.chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <defs>
                         <linearGradient id="ci90Gradient" x1="0" y1="0" x2="0" y2="1">
@@ -6601,7 +6597,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Line type="monotone" dataKey="projectedTime" stroke="#3b82f6" strokeWidth={2.5} strokeDasharray="8 4" dot={{ fill: '#3b82f6', r: 3, strokeWidth: 0 }} name="Projected" connectNulls={false} />
                       <Line type="monotone" dataKey="actualTime" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Actual Performance" connectNulls={false} />
                     </ComposedChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer>); }}</LazyChartArea>
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs">
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-orange-500 rounded"></div><span className="text-slate-400">Your Actual {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-blue-500 rounded" style={{borderBottom: '2px dashed #3b82f6'}}></div><span className="text-slate-400">Projected {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
@@ -6621,7 +6617,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <p className="text-sm text-slate-400 mb-4">
                     Your season-best performance expressed as percentage off personal best, compared to Olympic population norms
                   </p>
-                  <ResponsiveContainer width="100%" height={320}>
+                  <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                     <ComposedChart data={analysisResults.pctOffPBChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <defs>
                         <linearGradient id="pctBandGrad" x1="0" y1="0" x2="0" y2="1">
@@ -6640,7 +6636,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Line type="monotone" dataKey="pctOffPB" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Your % Off PB" connectNulls={false} />
                       <ReferenceLine y={0} stroke="#10b981" strokeDasharray="8 4" strokeWidth={2} label={{ value: 'Personal Best', position: 'right', fill: '#10b981', fontSize: 11 }} />
                     </ComposedChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer>); }}</LazyChartArea>
                   <div className="mt-4 text-xs text-slate-400 text-center">
                     Lower values = closer to your personal best. The shaded band shows where 50% of Olympic athletes perform at each age.
                   </div>
@@ -6653,7 +6649,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <p className="text-sm text-slate-400 mb-4">
                     Population percentile corridor showing where you sit among Olympic-level athletes at each age
                   </p>
-                  <ResponsiveContainer width="100%" height={320}>
+                  <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                     <ComposedChart data={analysisResults.percentileBandData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <defs>
                         <linearGradient id="p90Band" x1="0" y1="0" x2="0" y2="1">
@@ -6680,7 +6676,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Line type="monotone" dataKey="p10" stroke="#1d4ed8" strokeWidth={1.5} strokeDasharray="2 2" dot={false} name="P10 (Top 10%)" connectNulls />
                       <Line type="monotone" dataKey="userPctOff" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 6, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} name="Your Position" connectNulls={false} />
                     </ComposedChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer>); }}</LazyChartArea>
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs text-center">
                     <div className="p-2 bg-blue-900 bg-opacity-20 rounded"><span className="font-semibold text-blue-300">P10</span><br/>Top 10%</div>
                     <div className="p-2 bg-blue-700 bg-opacity-20 rounded"><span className="font-semibold text-blue-700">P25</span><br/>Top 25%</div>
@@ -6699,7 +6695,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     Year-on-year improvement rate showing momentum between seasons. Positive = faster, negative = slower.
                   </p>
                   {analysisResults.improvementChartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={320}>
+                    <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                       <BarChart data={analysisResults.improvementChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis dataKey="label" label={{ value: 'Age Period', position: 'insideBottom', offset: -10, fill: '#94a3b8' }} tick={{ fontSize: 12, fill: '#94a3b8' }} />
@@ -6713,7 +6709,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           ))}
                         </Bar>
                       </BarChart>
-                    </ResponsiveContainer>
+                    </ResponsiveContainer>); }}</LazyChartArea>
                   ) : (
                     <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
                       Need at least 2 seasons of data to show improvement rates
@@ -6803,7 +6799,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   }));
                   return (
                     <div style={{ width: '100%', height: 280 }}>
-                      <ResponsiveContainer>
+                      <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer>
                         <BarChart data={chartData} margin={{ top: 16, right: 24, left: 8, bottom: 8 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                           <XAxis dataKey="age" stroke="#94a3b8" tick={{ fontSize: 11 }} label={{ value: 'Age', position: 'insideBottom', offset: -2, fill: '#94a3b8', fontSize: 11 }} />
@@ -6821,7 +6817,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             ))}
                           </Bar>
                         </BarChart>
-                      </ResponsiveContainer>
+                      </ResponsiveContainer>); }}</LazyChartArea>
                     </div>
                   );
                 })()}
@@ -6903,7 +6899,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </button>
                 ))}
               </div>
-              <ResponsiveContainer width="100%" height={320}>
+              <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                 <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#94a3b8' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#64748b' }} />
@@ -6920,7 +6916,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   {trajToggles.finalist && <Line type="monotone" dataKey="finalist" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Finalist Median" />}
                   <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 5, fill: '#e8712a', stroke: '#fff', strokeWidth: 1 }} activeDot={{ r: 7, fill: '#f97316' }} name="You" connectNulls={false} />
                 </LineChart>
-              </ResponsiveContainer>
+              </ResponsiveContainer>); }}</LazyChartArea>
               <div className={`mt-4 p-3 rounded text-sm ${
                 analysisResults.improvementRate >= analysisResults.finalistNorm
                   ? 'bg-green-900/30 border border-green-800 text-green-300'
