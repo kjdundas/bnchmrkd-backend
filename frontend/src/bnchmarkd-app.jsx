@@ -9,6 +9,7 @@ import ValueFlywheel from './components/landing/ValueFlywheel';
 import QuickAnalysisFlow from './components/landing/QuickAnalysisFlow';
 import SnapshotStory from './components/landing/SnapshotStory';
 import LazyChartArea from './components/charts/LazyChartArea';
+import WAPointsCard from './components/WAPointsCard';
 import { analytics } from './lib/analytics';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PerformanceMatrixCard from './components/PerformanceMatrixCard';
@@ -6105,6 +6106,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ══════════ OVERVIEW TAB ══════════ */}
             {dashTab === 'overview' && (<>
+
+            <div className="mb-6">
+              <WAPointsCard discipline={analysisResults.discipline} gender={analysisResults.gender} age={analysisResults.age} pb={parseFloat(analysisResults.personalBest)} />
+            </div>
 
             {/* ── WHERE YOU STAND — form snapshot + championship progression rail ── */}
             {analysisResults.standards && analysisResults.standards.length > 0 && (() => {

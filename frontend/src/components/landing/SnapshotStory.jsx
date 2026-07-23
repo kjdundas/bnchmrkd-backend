@@ -7,6 +7,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { gsap, useGSAP } from '../../lib/gsapSetup'
 import { PERFORMANCE_LEVELS, LEVEL_NAMES, getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
+import WAPointsCard from '../WAPointsCard'
 
 const O = '#f97316'
 
@@ -105,6 +106,10 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
           A <span style={{ color: O }}>{pl ? pl.name.toLowerCase() : 'developing'}-level</span> {noun}{nextName ? <> — one step from the <span style={{ color: O }}>{nextName.toLowerCase()}</span> tier.</> : ' — at the top tier for this age.'}
         </h1>
         <p data-a="v" style={{ color: '#9aa1ac', fontSize: 15, marginTop: 8 }}>Here's the read on {bare(pb)}{unit}, in three steps.</p>
+      </div>
+
+      <div style={{ margin: '18px 0 4px' }}>
+        <WAPointsCard discipline={disc} gender={gender} age={age} pb={pb} />
       </div>
 
       {/* story rail */}
