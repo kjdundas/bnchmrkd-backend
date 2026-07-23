@@ -4,9 +4,27 @@
 // understand where you stand vs global standards, improve with experts or
 // your coach. Pure CSS animation (transforms/opacity) — no deps.
 // ═══════════════════════════════════════════════════════════════════════
+import { useRef, useState, useEffect } from 'react'
 import { Activity, Crosshair, Dumbbell, Footprints, ClipboardList, HeartHandshake } from 'lucide-react'
 
 export default function ValueFlywheel() {
+  const stageRef = useRef(null)
+  const [started, setStarted] = useState(false)
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    // Don't let the flywheel's continuous animations fight the first paint /
+    // intro — start them once the browser is idle. Pause when off-screen.
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 700))
+    idle(() => setStarted(true), { timeout: 1200 })
+    const el = stageRef.current
+    let io
+    if (el && 'IntersectionObserver' in window) {
+      io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.05 })
+      io.observe(el)
+    }
+    return () => { if (io) io.disconnect() }
+  }, [])
+  const active = started && visible
   return (
     <section className="vf-section">
       <style>{CSS}</style>
@@ -23,7 +41,7 @@ export default function ValueFlywheel() {
         </p>
       </div>
 
-      <div className="vf-stage">
+      <div ref={stageRef} className={`vf-stage ${active ? '' : 'is-paused'}`}>
         <div className="vf-halo" aria-hidden="true" />
         <div className="vf-fly" aria-hidden="true">
           <div className="vf-sweep" />
@@ -138,4 +156,5 @@ const CSS = `
 @media (prefers-reduced-motion:reduce){
   .vf-sweep,.vf-ring,.vf-orbit,.vf-ping,.vf-core,.vf-halo,.vf-fly,.vf-node{animation:none!important}
 }
+.vf-stage.is-paused *{animation-play-state:paused!important}
 `
