@@ -169,32 +169,41 @@ function SpotlightCard({ children, className = '', style = {}, spotlightColor = 
 
 function useScrollVelocity(baseSpeed = 1, sensitivity = 0.003, maxMultiplier = 4) {
   const [multiplier, setMultiplier] = useState(1);
+  const mRef = useRef(1);
   useEffect(() => {
     let lastY = window.scrollY;
     let lastT = performance.now();
-    let raf;
-    const decay = () => {
-      setMultiplier(prev => {
-        const next = prev + (baseSpeed - prev) * 0.08;
-        return Math.abs(next - baseSpeed) < 0.01 ? baseSpeed : next;
-      });
-      raf = requestAnimationFrame(decay);
+    let raf = null;
+    // Decay runs ONLY while the value is settling, then stops — no perpetual
+    // 60fps rAF loop re-rendering the ticker when the page is idle.
+    const tick = () => {
+      const next = mRef.current + (baseSpeed - mRef.current) * 0.08;
+      if (Math.abs(next - baseSpeed) < 0.01) {
+        mRef.current = baseSpeed;
+        setMultiplier(baseSpeed);
+        raf = null;
+        return;
+      }
+      mRef.current = next;
+      setMultiplier(next);
+      raf = requestAnimationFrame(tick);
     };
     const onScroll = () => {
       const now = performance.now();
       const dt = now - lastT;
       if (dt > 0) {
         const vel = Math.abs(window.scrollY - lastY) / dt;
-        setMultiplier(Math.min(baseSpeed + vel / sensitivity, maxMultiplier));
+        mRef.current = Math.min(baseSpeed + vel / sensitivity, maxMultiplier);
+        setMultiplier(mRef.current);
       }
       lastY = window.scrollY;
       lastT = now;
+      if (raf === null) raf = requestAnimationFrame(tick);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    raf = requestAnimationFrame(decay);
     return () => {
       window.removeEventListener('scroll', onScroll);
-      cancelAnimationFrame(raf);
+      if (raf !== null) cancelAnimationFrame(raf);
     };
   }, [baseSpeed, sensitivity, maxMultiplier]);
   return multiplier;
@@ -3896,7 +3905,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             .stagger-4 { animation: fadeSlideUp 0.7s ease-out 0.55s both; }
             .stagger-5 { animation: fadeSlideUp 0.7s ease-out 0.7s both; }
             .stagger-6 { animation: fadeSlideUp 0.7s ease-out 0.85s both; }
-            .bento-card { backdrop-filter: blur(12px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+            .bento-card { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease; }
             .bento-card:hover { transform: translateY(-2px); border-color: rgba(249,115,22,0.3); }
             .cta-primary { background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%); transition: all 0.3s ease; }
             .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(249,115,22,0.35); }
