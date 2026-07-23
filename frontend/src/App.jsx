@@ -1,12 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { callRpc } from './lib/supabaseRest'
-import AuthPage from './components/auth/AuthPage'
-import Onboarding from './components/auth/Onboarding'
-import CoachDashboard from './components/coach/CoachDashboard'
-import AthleteDashboard from './components/athlete/AthleteDashboard'
-import MatrixPreview from './components/MatrixPreview'
 import BnchMrkdApp from './bnchmarkd-app'
+
+// Post-login / secondary views are lazy-loaded so they (and heavy deps like
+// recharts in AthleteDashboard) stay out of the initial landing bundle.
+const AuthPage = lazy(() => import('./components/auth/AuthPage'))
+const Onboarding = lazy(() => import('./components/auth/Onboarding'))
+const CoachDashboard = lazy(() => import('./components/coach/CoachDashboard'))
+const AthleteDashboard = lazy(() => import('./components/athlete/AthleteDashboard'))
+const MatrixPreview = lazy(() => import('./components/MatrixPreview'))
+
+function FullScreenSpinner() {
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-10 h-10 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-gray-400">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+// Detect a stored Supabase session synchronously so we only block first paint
+// on auth for RETURNING signed-in users. Fresh visitors skip the spinner.
+function hasStoredSession() {
+  try {
+    const url = import.meta.env.VITE_SUPABASE_URL || ''
+    const ref = url.replace('https://', '').split('.')[0]
+    return !!localStorage.getItem(`sb-${ref}-auth-token`)
+  } catch {
+    return false
+  }
+}
 
 export default function App() {
   const { user, profile, loading, signOut } = useAuth()
@@ -17,7 +43,7 @@ export default function App() {
   if (typeof window !== 'undefined') {
     const previewView = new URLSearchParams(window.location.search).get('view')
     if (previewView === 'matrix') {
-      return <MatrixPreview />
+      return <Suspense fallback={<FullScreenSpinner />}><MatrixPreview /></Suspense>
     }
   }
 
@@ -82,32 +108,26 @@ export default function App() {
       .finally(() => { try { localStorage.removeItem('bnchmrkd:invite_token') } catch { /* ignore */ } })
   }, [user, profile])
 
-  // Show loading spinner while checking auth state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
+  // Only block first paint on auth for returning signed-in users. Fresh
+  // visitors (no stored session) go straight to the landing page.
+  if (loading && hasStoredSession()) {
+    return <FullScreenSpinner />
   }
 
   // User clicked "Sign Up" / "Log In" from the app → show auth page
   if (showAuth && !user) {
-    return <AuthPage onBack={() => setShowAuth(false)} />
+    return <Suspense fallback={<FullScreenSpinner />}><AuthPage onBack={() => setShowAuth(false)} /></Suspense>
   }
 
   // User explicitly opened onboarding
   if (showOnboarding && user && !profile) {
-    return <Onboarding onSkip={() => setShowOnboarding(false)} />
+    return <Suspense fallback={<FullScreenSpinner />}><Onboarding onSkip={() => setShowOnboarding(false)} /></Suspense>
   }
 
   // Coach dashboard — gated to coach accounts only
   if (showDashboard && user && profile?.account_type === 'coach') {
     return (
-      <CoachDashboard
+      <Suspense fallback={<FullScreenSpinner />}><CoachDashboard
         user={user}
         profile={profile}
         onBack={() => setShowDashboard(false)}
@@ -115,14 +135,14 @@ export default function App() {
           setIncomingAthlete(athlete)
           setShowDashboard(false)
         }}
-      />
+      /></Suspense>
     )
   }
 
   // Athlete dashboard — gated to athlete accounts only
   if (showAthleteDashboard && user && profile?.account_type === 'athlete') {
     return (
-      <AthleteDashboard
+      <Suspense fallback={<FullScreenSpinner />}><AthleteDashboard
         user={user}
         profile={profile}
         onSignOut={async () => {
@@ -134,7 +154,7 @@ export default function App() {
           setAthleteTrajectoryMode(true)
           setShowAthleteDashboard(false)
         }}
-      />
+      /></Suspense>
     )
   }
 

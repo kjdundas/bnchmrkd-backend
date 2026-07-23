@@ -6,7 +6,10 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { initAnalytics } from './lib/analytics'
 import './index.css'
 
-initAnalytics()
+if (typeof window !== 'undefined') {
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1))
+  idle(() => initAnalytics())
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

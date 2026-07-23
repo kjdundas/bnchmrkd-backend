@@ -9,10 +9,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Safety timeout — if auth takes longer than 5s (e.g. Web Locks hang), proceed without auth
+    // Safety timeout — if auth takes longer than 2s (e.g. Web Locks hang), proceed without auth
     const authTimeout = setTimeout(() => {
       setLoading(false)
-    }, 5000)
+    }, 2000)
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
       if (!token) { setLoading(false); return }
 
       const ctrl = new AbortController()
-      const timer = setTimeout(() => ctrl.abort(), 10000)
+      const timer = setTimeout(() => ctrl.abort(), 4000)
       try {
         const res = await fetch(`${url}/rest/v1/user_profiles?id=eq.${userId}&select=*`, {
           headers: {

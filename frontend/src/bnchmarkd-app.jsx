@@ -14,7 +14,6 @@ import ValueFlywheel from './components/landing/ValueFlywheel';
 import QuickAnalysisFlow from './components/landing/QuickAnalysisFlow';
 import SnapshotStory from './components/landing/SnapshotStory';
 import { analytics } from './lib/analytics';
-import { exportQuickAnalysisPDF } from './lib/pdfExport';
 import { LEVEL_NAMES, LEVEL_COLORS, PERFORMANCE_LEVELS, getAgeGroup, getPerformanceLevel, isTimeDiscipline } from './lib/performanceLevels';
 import PerformanceMatrixCard from './components/PerformanceMatrixCard';
 import CompetitionStandardsLadder from './components/CompetitionStandardsLadder';
@@ -5968,7 +5967,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Export PDF</span>
                 </button>
@@ -6011,7 +6010,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => exportQuickAnalysisPDF(analysisResults)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Export PDF</span>
                 </button>
@@ -7136,7 +7135,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 className="px-8 py-3 text-white font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
                 &larr; Analyze Another Athlete
               </button>
-              <button onClick={() => exportQuickAnalysisPDF(analysisResults)}
+              <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))}
                 className="px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center gap-2" style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316'}}>
                 <Download className="w-4 h-4" />
                 Export PDF
