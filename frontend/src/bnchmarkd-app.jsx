@@ -3005,13 +3005,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
     const _peerPercentile = (athletePB, athleteAge) => {
       const ageGrp = getAgeGroup(athleteAge);
-      const lvls = PERFORMANCE_LEVELS[eventCode];
+      const lvls = PERFORMANCE_LEVELS[`${discipline}_${gender === 'Male' ? 'M' : 'F'}`];
       if (!lvls || !lvls[ageGrp]) return 50;
       const ageLvls = lvls[ageGrp];
-      // Build ordered array of thresholds from L1 (lowest) to highest available
-      const keys = Object.keys(ageLvls).filter(k => k.startsWith('L')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
-      if (keys.length === 0) return 50;
-      const thresholds = keys.map(k => ageLvls[k]);
+      // ageLvls is an ARRAY of thresholds: index 0 = L1 (entry) ... up to L9/L12,
+      // padded with nulls. Strip nulls to get the ordered threshold list.
+      if (!Array.isArray(ageLvls)) return 50;
+      const thresholds = ageLvls.filter(t => t != null);
+      if (thresholds.length === 0) return 50;
       const lowerBetter = isTimeDiscipline(discipline);
       // For time events, L1 is worst (highest time), higher levels are better (lower time)
       // For field events, L1 is worst (lowest distance), higher levels are better (higher distance)
@@ -6857,7 +6858,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     style={{ width: `${analysisResults.percentileAtCurrentAge}%` }} />
                 </div>
                 <p className="text-center font-bold text-white">
-                  Top {100 - analysisResults.percentileAtCurrentAge}% among Olympic-level athletes at age {analysisResults.age}
+                  Scores {analysisResults.percentileAtCurrentAge} of 100 against age-{analysisResults.age} standards — entry level to world class
                 </p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">

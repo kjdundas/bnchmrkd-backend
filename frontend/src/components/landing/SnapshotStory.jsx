@@ -123,7 +123,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
           {pct != null ? (<>
             <Dots pct={pct} />
             <div style={{ fontSize: 32, fontWeight: 700 }} className="ss-num">{dotN}<span style={{ fontSize: 15, color: '#9aa1ac' }}> of 100</span></div>
-            <div style={sayS}>Line up 100 {gender === 'Male' ? 'men' : 'women'} at {her} level who reached an Olympic final — <b style={bS}>{she}'s ahead of {pct} of them.</b></div>
+            <div style={sayS}>Rated against the full standards for a {age}-year-old {gender === 'Male' ? 'male' : 'female'} {noun} — from entry level to world class. <b style={bS}>{Her} PB scores {pct} out of 100.</b></div>
           </>) : (<div style={sayS}>Percentile data is still being built for this event.</div>)}
         </Beat>
         <div className="ss-arrow" style={arrowS}>→</div>
