@@ -3653,13 +3653,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {[0, 1, 2, 3, 4, 5, 6, 7].map(lane => (
               <g key={lane}>
                 <rect x="20" y={10 + lane * 12.5} width="560" height="12" rx="2"
-                  fill={lane === 3 ? '#3B34C9' : '#334155'} opacity={lane === 3 ? 0.3 : 0.6} />
+                  fill={lane === 3 ? '#3B34C9' : '#E7E9F2'} opacity={lane === 3 ? 0.3 : 0.6} />
                 <line x1="20" y1={10 + lane * 12.5} x2="580" y2={10 + lane * 12.5}
-                  stroke="#475569" strokeWidth="0.5" />
+                  stroke="#E7E9F2" strokeWidth="0.5" />
               </g>
             ))}
             {/* Lane lines */}
-            <line x1="20" y1="110" x2="580" y2="110" stroke="#475569" strokeWidth="0.5" />
+            <line x1="20" y1="110" x2="580" y2="110" stroke="#E7E9F2" strokeWidth="0.5" />
 
             {/* Start line */}
             <line x1="40" y1="8" x2="40" y2="112" stroke="#fff" strokeWidth="2" opacity="0.5" />
@@ -4040,7 +4040,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       ))}
                       {/* Age labels */}
                       {showcaseAthlete.ages.map((age, i) => (
-                        <text key={`${showcaseIdx}-age-${i}`} x={60 + i * 52} y="195" fill="#475569" fontSize="10" textAnchor="middle" style={{fontFamily: "'DM Mono', monospace"}}>{age}</text>
+                        <text key={`${showcaseIdx}-age-${i}`} x={60 + i * 52} y="195" fill="#E7E9F2" fontSize="10" textAnchor="middle" style={{fontFamily: "'DM Mono', monospace"}}>{age}</text>
                       ))}
                       {/* Benchmark corridor (P25-P75) — wide translucent band */}
                       <path d={showcaseAthlete.corridor} fill="none" stroke="rgba(148,163,184,0.1)" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" />
@@ -5442,7 +5442,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               bestTime: s.best_time,
                               races: s.n_races
                             }))}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E9F2" />
                             <XAxis
                               dataKey="age"
                               stroke="#5B5F6B"
@@ -5458,7 +5458,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               label={{ value: getUnitLabel(athleteTrajectory.discipline), angle: -90, position: 'insideLeft', fill: '#5B5F6B' }}
                             />
                             <Tooltip
-                              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }}
+                              contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E9F2', borderRadius: '8px', color: '#fff' }}
                               formatter={(value, name) => [typeof value === 'number' ? formatTime(value, athleteTrajectory.discipline) : value, name === 'bestTime' ? 'Season Best' : name]}
                               labelFormatter={(label) => `Age ${label}`}
                             />
@@ -6577,14 +6577,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E7E9F2" />
                       <XAxis dataKey="age" label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} />
                       <YAxis label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', offset: -5, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} reversed={!isFieldEvent(analysisResults.discipline)} domain={['auto', 'auto']} tickFormatter={v => formatTime(v, analysisResults.discipline)} />
                       <Tooltip content={<TrajectoryTooltip />} />
                       <Area type="monotone" dataKey="ci90Upper" stroke="none" fill="url(#ci90Gradient)" name="90% CI" connectNulls={false} isAnimationActive={false} />
-                      <Area type="monotone" dataKey="ci90Lower" stroke="none" fill="#1e293b" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
+                      <Area type="monotone" dataKey="ci90Lower" stroke="none" fill="#FFFFFF" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
                       <Area type="monotone" dataKey="ci50Upper" stroke="none" fill="url(#ci50Gradient)" name="50% CI" connectNulls={false} isAnimationActive={false} />
-                      <Area type="monotone" dataKey="ci50Lower" stroke="none" fill="#1e293b" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
+                      <Area type="monotone" dataKey="ci50Lower" stroke="none" fill="#FFFFFF" name="" connectNulls={false} isAnimationActive={false} legendType="none" />
                       <ReferenceLine y={analysisResults.thresholds.finalist} stroke="#dc2626" strokeDasharray="8 4" strokeWidth={2} label={{ value: `Finalist (${analysisResults.thresholds.finalist}{isFieldEvent(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#dc2626', fontSize: 11 }} />
                       <ReferenceLine y={analysisResults.thresholds.semiFinalist} stroke="#f59e0b" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `Semi (${analysisResults.thresholds.semiFinalist}{isFieldEvent(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#f59e0b', fontSize: 11 }} />
                       <ReferenceLine y={analysisResults.thresholds.qualifier} stroke="#9AA0AC" strokeDasharray="4 4" strokeWidth={1} label={{ value: `Qualifier (${analysisResults.thresholds.qualifier}{isFieldEvent(analysisResults.discipline) ? 'm' : 's'})`, position: 'right', fill: '#9AA0AC', fontSize: 11 }} />
@@ -6631,13 +6631,13 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E7E9F2" />
                       <XAxis dataKey="age" label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} />
                       <YAxis label={{ value: '% Off Personal Best', angle: -90, position: 'insideLeft', offset: -5, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} domain={[0, 'auto']} />
-                      <Tooltip formatter={(v, name) => [`${parseFloat(v).toFixed(1)}%`, name]} contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#16181D' }} />
+                      <Tooltip formatter={(v, name) => [`${parseFloat(v).toFixed(1)}%`, name]} contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E9F2', borderRadius: '8px', color: '#16181D' }} />
                       <Legend verticalAlign="top" height={36} wrapperStyle={{ color: '#5B5F6B' }} />
                       <Area type="monotone" dataKey="p75Pct" stroke="none" fill="url(#pctBandGrad)" name="P25-P75 Band" connectNulls />
-                      <Area type="monotone" dataKey="p25Pct" stroke="none" fill="#1e293b" name="" connectNulls legendType="none" />
+                      <Area type="monotone" dataKey="p25Pct" stroke="none" fill="#FFFFFF" name="" connectNulls legendType="none" />
                       <Line type="monotone" dataKey="medianPct" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="6 3" dot={false} name="Population Median (P50)" connectNulls />
                       <Line type="monotone" dataKey="pctOffPB" stroke="#4F3CF0" strokeWidth={3} dot={{ fill: '#4F3CF0', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Your % Off PB" connectNulls={false} />
                       <ReferenceLine y={0} stroke="#10b981" strokeDasharray="8 4" strokeWidth={2} label={{ value: 'Personal Best', position: 'right', fill: '#10b981', fontSize: 11 }} />
@@ -6671,7 +6671,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E7E9F2" />
                       <XAxis dataKey="age" label={{ value: 'Age (years)', position: 'insideBottom', offset: -10, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} />
                       <YAxis label={{ value: '% Off PB', angle: -90, position: 'insideLeft', offset: -5, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} domain={[0, 'auto']} />
                       <Tooltip formatter={(v, name) => [v !== null ? `${parseFloat(v).toFixed(1)}%` : 'N/A', name]} />
@@ -6703,10 +6703,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   {analysisResults.improvementChartData.length > 0 ? (
                     <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                       <BarChart data={analysisResults.improvementChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E7E9F2" />
                         <XAxis dataKey="label" label={{ value: 'Age Period', position: 'insideBottom', offset: -10, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} />
                         <YAxis label={{ value: 'Improvement (%)', angle: -90, position: 'insideLeft', offset: -5, fill: '#5B5F6B' }} tick={{ fontSize: 12, fill: '#5B5F6B' }} />
-                        <Tooltip formatter={(v) => [`${parseFloat(v).toFixed(2)}%`, 'Improvement']} contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#16181D' }} />
+                        <Tooltip formatter={(v) => [`${parseFloat(v).toFixed(2)}%`, 'Improvement']} contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E9F2', borderRadius: '8px', color: '#16181D' }} />
                         <ReferenceLine y={analysisResults.finalistNorm} stroke="#10b981" strokeDasharray="8 4" strokeWidth={1.5} label={{ value: `Finalist Norm (${analysisResults.finalistNorm}%)`, position: 'right', fill: '#10b981', fontSize: 10 }} />
                         <ReferenceLine y={0} stroke="#5B5F6B" strokeWidth={1} />
                         <Bar dataKey="improvement" radius={[4, 4, 0, 0]}>
@@ -6907,10 +6907,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
               <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={320}>
                 <LineChart data={analysisResults.trajectoryComparison} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E7E9F2" />
                   <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#5B5F6B' }} label={{ value: 'Age', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: '#9AA0AC' }} />
                   <YAxis reversed={!isFieldEvent(analysisResults.discipline)} tick={{ fontSize: 11, fill: '#5B5F6B' }} domain={['auto', 'auto']} label={{ value: getUnitLabel(analysisResults.discipline), angle: -90, position: 'insideLeft', fontSize: 11, fill: '#9AA0AC' }} tickFormatter={v => formatTime(v, analysisResults.discipline)} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#16181D' }}
+                  <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E9F2', borderRadius: '8px', color: '#16181D' }}
                     formatter={(v, dataKey) => {
                       if (v == null) return null;
                       const labels = { you: 'You', finalist: 'Finalist Median', semiFinalist: 'Semi-Finalist Median', qualifier: 'Qualifier Median' };
