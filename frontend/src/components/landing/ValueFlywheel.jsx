@@ -106,8 +106,8 @@ const CSS = `
 .vf-wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:8px 20px 12px;text-align:center;font-family:'Inter','Helvetica Neue',sans-serif}
 .vf-eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#8B83FF;font-weight:600}
 .vf-title{margin:0;font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.5px;color:#f8fafc;line-height:1.05}
-.vf-title span{background:linear-gradient(135deg,#4F3CF0,#8B83FF,#8B83FF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.vf-sub{margin:16px auto 0;max-width:620px;font-size:clamp(14px,1.7vw,17px);line-height:1.6;color:#5B5F6B}
+.vf-title span{color:#8B83FF}
+.vf-sub{margin:16px auto 0;max-width:620px;font-size:clamp(14px,1.7vw,17px);line-height:1.6;color:#D3D8E0}
 
 .vf-stage{position:relative;height:420px;display:flex;align-items:center;justify-content:center;margin:8px 0 4px}
 .vf-halo{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(79,60,240,0.18) 0%,rgba(79,60,240,0.05) 40%,transparent 66%);filter:blur(18px);animation:vf-breathe 6s ease-in-out infinite}
@@ -117,7 +117,7 @@ const CSS = `
 .vf-ring{position:absolute;inset:40px;border-radius:50%;border:1.5px dashed rgba(79,60,240,0.28);animation:vf-spin 26s linear infinite}
 .vf-ring2{inset:18px;border-style:solid;border-color:rgba(0,0,0,0.05);animation-duration:40s;animation-direction:reverse}
 
-.vf-core{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;background:radial-gradient(circle at 38% 30%,#ffe2b8,#8B83FF 44%,#b1370a 82%);box-shadow:0 0 46px 8px rgba(79,60,240,0.5),inset 0 0 22px rgba(255,255,255,0.25);animation:vf-breathe 3.6s ease-in-out infinite}
+.vf-core{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;background:radial-gradient(circle at 38% 30%,#eef0ff,#8B83FF 46%,#3B34C9 84%);box-shadow:0 0 46px 8px rgba(79,60,240,0.5),inset 0 0 22px rgba(255,255,255,0.25);animation:vf-breathe 3.6s ease-in-out infinite}
 .vf-ping{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:1.5px solid rgba(79,60,240,0.5);animation:vf-ping 3.6s ease-out infinite}
 .vf-ping2{animation-delay:1.2s}
 .vf-ping3{animation-delay:2.4s}
@@ -131,9 +131,9 @@ const CSS = `
 .vf-n1{transform:translateY(-150px)}
 .vf-n2{transform:translate(-130px,78px);animation-delay:1.2s}
 .vf-n3{transform:translate(130px,78px);animation-delay:2.4s}
-.vf-ico{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:7px;backdrop-filter:blur(4px);border:1px solid rgba(0,0,0,0.08)}
-.vf-nl{font-size:14px;font-weight:700;color:#16181D}
-.vf-ns{font-size:11.5px;color:#5B5F6B;line-height:1.3;margin-top:1px}
+.vf-ico{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:7px;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.18)}
+.vf-nl{font-size:14px;font-weight:700;color:#ffffff;text-shadow:0 1px 8px rgba(0,0,0,0.55)}
+.vf-ns{font-size:11.5px;color:rgba(255,255,255,0.82);line-height:1.3;margin-top:1px;text-shadow:0 1px 6px rgba(0,0,0,0.5)}
 
 .vf-personas{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:880px;margin:18px auto 0}
 .vf-p{display:flex;align-items:flex-start;gap:11px;text-align:left;padding:14px 16px;border-radius:14px;background:rgba(0,0,0,0.025);border:1px solid rgba(0,0,0,0.06)}

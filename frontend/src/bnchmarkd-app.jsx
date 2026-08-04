@@ -3784,7 +3784,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* LANDING PAGE                                                    */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'landing' && (
-        <div ref={landingRef} className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div ref={landingRef} className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
 
           {/* ── INJECT GOOGLE FONTS + KEYFRAMES ── */}
           <style>{`
@@ -4242,23 +4242,23 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
               {/* Role Toggle — pill style with sliding indicator */}
               <div className="flex justify-center mb-14">
-                <div className="relative inline-flex rounded-full p-1" style={{background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div className="relative inline-flex rounded-full p-1" style={{background: '#FFFFFF', border: '1px solid #E7E9F2', boxShadow: '0 4px 16px rgba(20,22,46,0.06)'}}>
                   {/* Sliding pill background */}
                   <div className="absolute top-1 bottom-1 rounded-full role-transition" style={{
                     width: 'calc(50% - 4px)',
                     left: landingRole === 'athlete' ? '4px' : 'calc(50% + 0px)',
                     background: landingRole === 'athlete'
-                      ? 'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))'
-                      : 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(59,130,246,0.1))',
-                    border: `1px solid ${landingRole === 'athlete' ? 'rgba(34,197,94,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                      ? 'linear-gradient(135deg, #16a34a, #22c55e)'
+                      : 'linear-gradient(135deg, #2563eb, #3b82f6)',
+                    border: `1px solid ${landingRole === 'athlete' ? '#15803d' : '#1d4ed8'}`,
                     boxShadow: landingRole === 'athlete'
-                      ? '0 0 20px rgba(34,197,94,0.15)'
-                      : '0 0 20px rgba(59,130,246,0.15)',
+                      ? '0 6px 18px rgba(22,163,74,0.35)'
+                      : '0 6px 18px rgba(37,99,235,0.35)',
                   }}></div>
                   <button
                     onClick={() => setLandingRole('athlete')}
                     className="relative z-10 px-8 py-2.5 rounded-full text-sm font-semibold landing-font transition-colors duration-300"
-                    style={{color: landingRole === 'athlete' ? '#4ade80' : '#9AA0AC'}}
+                    style={{color: landingRole === 'athlete' ? '#ffffff' : '#5B5F6B'}}
                   >
                     <span className="flex items-center gap-2">
                       <User className="w-4 h-4" />
@@ -4268,7 +4268,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <button
                     onClick={() => setLandingRole('coach')}
                     className="relative z-10 px-8 py-2.5 rounded-full text-sm font-semibold landing-font transition-colors duration-300"
-                    style={{color: landingRole === 'coach' ? '#60a5fa' : '#9AA0AC'}}
+                    style={{color: landingRole === 'coach' ? '#ffffff' : '#5B5F6B'}}
                   >
                     <span className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
@@ -4737,7 +4737,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* ABOUT OUR DATA PAGE                                            */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'about' && (
-        <div className="min-h-screen" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div className="min-h-screen" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
@@ -5049,7 +5049,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* DISCIPLINE CATEGORY SELECTION                                   */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'categories' && (
-        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
@@ -5227,7 +5227,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* ATHLETE EXPLORER VIEW                                          */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'explorer' && (
-        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
@@ -5576,7 +5576,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       )}
 
       {currentView === 'input' && (
-        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
@@ -5880,7 +5880,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* QUICK ANALYSIS RESULTS — snapshot from a single time + age     */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'quickResults' && analysisResults && (
-        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
@@ -5926,7 +5926,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       {/* RESULTS DASHBOARD                                              */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {currentView === 'results' && analysisResults && (
-        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 30%, #111318 60%, #F6F7FB 100%)'}}>
+        <div className="min-h-screen flex flex-col" style={{background: 'linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%)'}}>
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
