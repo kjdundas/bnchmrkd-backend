@@ -61,7 +61,7 @@ export default class ErrorBoundary extends React.Component {
           }}
         >
           <div className="mb-5">
-            <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5">
+            <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5">
               Unexpected error
             </p>
             <h1 className="landing-font text-2xl sm:text-3xl font-semibold text-white tracking-tight mb-2">
@@ -78,7 +78,7 @@ export default class ErrorBoundary extends React.Component {
               onClick={this.handleReload}
               className="flex-1 landing-font text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors focus:outline-none focus-visible:outline-none"
               style={{
-                background: 'linear-gradient(90deg, #f97316 0%, #fb923c 100%)',
+                background: 'linear-gradient(90deg, #4F3CF0 0%, #8B83FF 100%)',
                 color: '#0f172a',
               }}
             >
@@ -104,7 +104,7 @@ export default class ErrorBoundary extends React.Component {
               </summary>
               <div className="mt-3 p-3 rounded-lg overflow-auto max-h-64"
                    style={{background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                <p className="mono-font text-[11px] text-orange-300 mb-2 break-all">
+                <p className="mono-font text-[11px] text-indigo-300 mb-2 break-all">
                   {error && (error.message || String(error))}
                 </p>
                 {isDev && error && error.stack && (

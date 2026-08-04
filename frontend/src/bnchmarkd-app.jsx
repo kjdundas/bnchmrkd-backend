@@ -115,7 +115,7 @@ function TypewriterCycle({
   deleteSpeed = 45,      // ms per character while deleting
   holdDuration = 1500,   // ms to hold fully-typed word before deleting
   gapDuration = 350,     // ms pause between words (after fully deleted)
-  cursorColor = '#f97316',
+  cursorColor = '#4F3CF0',
   className = '',
 }) {
   const [wordIndex, setWordIndex] = useState(0);
@@ -166,7 +166,7 @@ function TypewriterCycle({
 }
 
 // ── SpotlightCard: card wrapper that follows mouse with radial gradient ──
-function SpotlightCard({ children, className = '', style = {}, spotlightColor = 'rgba(249,115,22,0.08)' }) {
+function SpotlightCard({ children, className = '', style = {}, spotlightColor = 'rgba(79,60,240,0.08)' }) {
   const cardRef = useRef(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
 
@@ -331,7 +331,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       bars: [35, 52, 68, 78, 92, 88, 85],
       tags: ['100m','200m','60m'],
       tagLabel: 'Sprint events',
-      color: '#f97316',
+      color: '#4F3CF0',
     },
     {
       label: "Women's 800m — Standard Progression",
@@ -3635,7 +3635,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center">
         {/* Stadium lights effect */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-orange-500 opacity-5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-indigo-500 opacity-5 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute top-10 right-1/3 w-48 h-48 bg-blue-500 opacity-5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
           <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-amber-500 opacity-5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '0.5s'}}></div>
         </div>
@@ -3643,7 +3643,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
         {/* Logo */}
         <div className="mb-8 flex items-center gap-3 z-10">
           <img src="/icon.svg" alt="bnchmrkd icon" className="w-10 h-10" />
-          <h1 className="text-4xl font-bold text-white" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif"}}>bnchmrkd<span className="text-orange-500">.</span></h1>
+          <h1 className="text-4xl font-bold text-white" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif"}}>bnchmrkd<span className="text-indigo-500">.</span></h1>
         </div>
 
         {/* Track SVG */}
@@ -3653,7 +3653,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {[0, 1, 2, 3, 4, 5, 6, 7].map(lane => (
               <g key={lane}>
                 <rect x="20" y={10 + lane * 12.5} width="560" height="12" rx="2"
-                  fill={lane === 3 ? '#ea580c' : '#334155'} opacity={lane === 3 ? 0.3 : 0.6} />
+                  fill={lane === 3 ? '#3B34C9' : '#334155'} opacity={lane === 3 ? 0.3 : 0.6} />
                 <line x1="20" y1={10 + lane * 12.5} x2="580" y2={10 + lane * 12.5}
                   stroke="#475569" strokeWidth="0.5" />
               </g>
@@ -3677,15 +3677,15 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* Runner figure on lane 4 */}
             <g transform={`translate(${40 + (runnerPos / 100) * 510}, ${48})`}>
               {/* Body */}
-              <circle r="4" fill="#f97316" />
+              <circle r="4" fill="#4F3CF0" />
               {/* Motion trail */}
-              <line x1="-12" y1="0" x2="-3" y2="0" stroke="#f97316" strokeWidth="2" opacity="0.4" />
-              <line x1="-20" y1="0" x2="-14" y2="0" stroke="#f97316" strokeWidth="1.5" opacity="0.2" />
+              <line x1="-12" y1="0" x2="-3" y2="0" stroke="#4F3CF0" strokeWidth="2" opacity="0.4" />
+              <line x1="-20" y1="0" x2="-14" y2="0" stroke="#4F3CF0" strokeWidth="1.5" opacity="0.2" />
             </g>
 
             {/* Progress bar overlay on lane 4 */}
             <rect x="40" y="46" width={Math.max(0, (scrapeProgress.progress) * 515)} height="8" rx="1"
-              fill="#f97316" opacity="0.6" />
+              fill="#4F3CF0" opacity="0.6" />
           </svg>
         </div>
 
@@ -3706,8 +3706,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 .indexOf(scrapeProgress.step) > idx;
               return (
                 <div key={step} className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  isCurrent ? 'bg-orange-500 scale-125 animate-pulse'
-                  : isPast ? 'bg-orange-500'
+                  isCurrent ? 'bg-indigo-500 scale-125 animate-pulse'
+                  : isPast ? 'bg-indigo-500'
                   : 'bg-slate-600'
                 }`} />
               );
@@ -3759,7 +3759,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
       <div className="bg-slate-900/95 backdrop-blur-md border border-slate-600 rounded-lg shadow-xl shadow-black/30 p-3 text-sm">
         <p className="font-bold text-white mb-1">Age {label}</p>
         {data.actualTime && (
-          <p className="text-orange-400">Actual: {fmtT(data.actualTime)}</p>
+          <p className="text-indigo-400">Actual: {fmtT(data.actualTime)}</p>
         )}
         {data.projectedTime && !data.actualTime && (
           <>
@@ -3830,12 +3830,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             .stagger-5 { animation: fadeSlideUp 0.7s ease-out 0.7s both; }
             .stagger-6 { animation: fadeSlideUp 0.7s ease-out 0.85s both; }
             .bento-card { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease; }
-            .bento-card:hover { transform: translateY(-2px); border-color: rgba(249,115,22,0.3); }
-            .cta-primary { background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%); transition: all 0.3s ease; }
-            .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(249,115,22,0.35); }
+            .bento-card:hover { transform: translateY(-2px); border-color: rgba(79,60,240,0.3); }
+            .cta-primary { background: linear-gradient(135deg, #3B34C9 0%, #4F3CF0 50%, #8B83FF 100%); transition: all 0.3s ease; }
+            .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(79,60,240,0.35); }
             /* Gradient headline text — applied to the span AND to SplitText's word wrappers
                so the gradient survives the word split. */
-            .hero-grad, .hero-grad * { background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+            .hero-grad, .hero-grad * { background: linear-gradient(135deg, #4F3CF0, #8B83FF, #8B83FF); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
             .noise-overlay { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); }
 
             /* ── Shiny Text shimmer effect ── */
@@ -3883,12 +3883,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* Noise texture overlay */}
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
             {/* Warm glow — asymmetric, off-centre */}
-            <div className="absolute top-[15%] left-[65%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)'}}></div>
+            <div className="absolute top-[15%] left-[65%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.08) 0%, transparent 70%)'}}></div>
             <div className="absolute bottom-[10%] left-[20%] w-[400px] h-[400px] rounded-full blur-[120px]" style={{background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)'}}></div>
             {/* Subtle track lane lines */}
             <svg className="absolute inset-0 w-full h-full opacity-[0.03]" preserveAspectRatio="none">
               {[...Array(8)].map((_, i) => (
-                <line key={i} x1="0" y1={`${12 + i * 11}%`} x2="100%" y2={`${12 + i * 11}%`} stroke="#f97316" strokeWidth="0.5" />
+                <line key={i} x1="0" y1={`${12 + i * 11}%`} x2="100%" y2={`${12 + i * 11}%`} stroke="#4F3CF0" strokeWidth="0.5" />
               ))}
             </svg>
           </div>
@@ -3899,7 +3899,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <div className="flex items-center gap-2.5">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-8 h-8" />
                 <span className="text-xl font-bold text-white tracking-tight landing-font">
-                  bnchmrkd<span style={{color: '#f97316'}}>.</span>
+                  bnchmrkd<span style={{color: '#4F3CF0'}}>.</span>
                 </span>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
@@ -3912,7 +3912,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <button
                         onClick={onOpenDashboard}
                         className="text-sm font-semibold text-black px-3 py-1.5 rounded-lg landing-font"
-                        style={{background: '#f97316'}}
+                        style={{background: '#4F3CF0'}}
                       >
                         Dashboard
                       </button>
@@ -3930,7 +3930,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 ) : (
                   <button
                     onClick={onSignUp}
-                    className="text-sm font-semibold text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg landing-font transition-colors hover:text-orange-400"
+                    className="text-sm font-semibold text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg landing-font transition-colors hover:text-indigo-400"
                     style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)'}}
                   >
                     Log In
@@ -4236,7 +4236,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <div className="text-center pt-16 mb-6">
                 <h2 className="text-2xl sm:text-4xl font-bold text-white landing-font tracking-tight mb-4">
                   Everything you need to{' '}
-                  <span style={{background: 'linear-gradient(135deg, #f97316, #fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>track elite development</span>
+                  <span style={{background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>track elite development</span>
                 </h2>
               </div>
 
@@ -4284,7 +4284,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   {
                     word: 'Benchmark',
                     icon: Target,
-                    accent: '#f97316',
+                    accent: '#4F3CF0',
                     comingSoon: false,
                     athlete: {
                       headline: 'Know where you stand',
@@ -4425,10 +4425,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             <path d="M10,80 C60,70 110,55 160,40 S230,20 270,15" fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="8" strokeLinecap="round" />
                             <path d="M10,85 C70,75 120,60 170,42 S240,22 270,18" fill="none" stroke={pillars[2].accent} strokeWidth="2.5" strokeLinecap="round"
                               strokeDasharray="400" style={{animation: 'lineReveal 1.5s ease-out 0.2s both'}} />
-                            <path d="M10,90 C80,82 130,68 180,55 S240,35 270,28" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 4"
+                            <path d="M10,90 C80,82 130,68 180,55 S240,35 270,28" fill="none" stroke="#4F3CF0" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 4"
                               style={{opacity: 0.6, animation: 'lineReveal 1.5s ease-out 0.5s both'}} />
                             <text x="270" y="12" fill={pillars[2].accent} fontSize="9" fontWeight="600" textAnchor="end" style={{fontFamily: "'DM Mono', monospace", animation: 'fadeSlideUp 0.4s ease-out 1.5s both'}}>ELITE PATH</text>
-                            <text x="270" y="38" fill="#f97316" fontSize="9" fontWeight="600" textAnchor="end" style={{fontFamily: "'DM Mono', monospace", opacity: 0.7, animation: 'fadeSlideUp 0.4s ease-out 1.7s both'}}>YOUR PATH</text>
+                            <text x="270" y="38" fill="#4F3CF0" fontSize="9" fontWeight="600" textAnchor="end" style={{fontFamily: "'DM Mono', monospace", opacity: 0.7, animation: 'fadeSlideUp 0.4s ease-out 1.7s both'}}>YOUR PATH</text>
                           </>
                         ) : (
                           <>
@@ -4436,8 +4436,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             <path d="M3,38 C14,32 26,22 40,14 S56,6 61,5" fill="none" stroke={pillars[2].accent} strokeWidth="1.8" strokeLinecap="round" />
                             <circle cx="61" cy="5" r="1.8" fill={pillars[2].accent} />
                             {/* Your path (orange, dashed) */}
-                            <path d="M3,42 C16,38 28,30 42,22 S56,12 61,10" fill="none" stroke="#f97316" strokeWidth="1.3" strokeLinecap="round" strokeDasharray="2.5 2" opacity="0.75" />
-                            <circle cx="61" cy="10" r="1.5" fill="#f97316" opacity="0.9" />
+                            <path d="M3,42 C16,38 28,30 42,22 S56,12 61,10" fill="none" stroke="#4F3CF0" strokeWidth="1.3" strokeLinecap="round" strokeDasharray="2.5 2" opacity="0.75" />
+                            <circle cx="61" cy="10" r="1.5" fill="#4F3CF0" opacity="0.9" />
                           </>
                         )}
                       </svg>
@@ -4652,7 +4652,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { icon: TrendingUp, title: 'Trajectory Classification', desc: 'Identifies your career pattern — Early Peaker, Late Developer, or Consistent Performer — based on how your results evolve over time.', accent: '#f97316' },
+                  { icon: TrendingUp, title: 'Trajectory Classification', desc: 'Identifies your career pattern — Early Peaker, Late Developer, or Consistent Performer — based on how your results evolve over time.', accent: '#4F3CF0' },
                   { icon: Target, title: 'Finalist Probability', desc: 'Computes your statistical likelihood of reaching an Olympic final based on your current performance and age.', accent: '#3b82f6' },
                   { icon: BarChart3, title: 'Percentile Corridors', desc: 'See where you rank at every age from 15 to 38 against the full Olympic population.', accent: '#22c55e' },
                   { icon: Zap, title: 'Peak Projection', desc: 'Models your improvement rate to project your ceiling performance and the age you\'ll likely reach it.', accent: '#f59e0b' },
@@ -4682,36 +4682,36 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             <p className="text-xs text-slate-500 landing-font">
               World Athletics competition records · Sydney 2000 – Paris 2024
             </p>
-            <button onClick={() => setCurrentView('about')} className="text-xs text-slate-400 hover:text-orange-400 transition-colors mt-1 landing-font underline decoration-slate-600 underline-offset-2">
+            <button onClick={() => setCurrentView('about')} className="text-xs text-slate-400 hover:text-indigo-400 transition-colors mt-1 landing-font underline decoration-slate-600 underline-offset-2">
               View methodology
             </button>
             <div className="flex items-center justify-center gap-5 mt-5">
-              <a href="https://instagram.com/bnchmrkd.hq" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-slate-500 hover:text-orange-400 transition-colors">
+              <a href="https://instagram.com/bnchmrkd.hq" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-slate-500 hover:text-indigo-400 transition-colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                 </svg>
               </a>
-              <a href="https://tiktok.com/@bnchmrkd" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-slate-500 hover:text-orange-400 transition-colors">
+              <a href="https://tiktok.com/@bnchmrkd" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-slate-500 hover:text-indigo-400 transition-colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.74a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.17z"/>
                 </svg>
               </a>
-              <a href="https://x.com/bnchmrkd" target="_blank" rel="noopener noreferrer" aria-label="X" className="text-slate-500 hover:text-orange-400 transition-colors">
+              <a href="https://x.com/bnchmrkd" target="_blank" rel="noopener noreferrer" aria-label="X" className="text-slate-500 hover:text-indigo-400 transition-colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
               </a>
               <span className="text-slate-700">·</span>
-              <a href="mailto:hello@bnchmrkd.org" className="text-[10px] text-slate-500 hover:text-orange-400 transition-colors landing-font">hello@bnchmrkd.org</a>
+              <a href="mailto:hello@bnchmrkd.org" className="text-[10px] text-slate-500 hover:text-indigo-400 transition-colors landing-font">hello@bnchmrkd.org</a>
             </div>
             <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mt-6 text-[10px] text-slate-500 landing-font">
-              <button onClick={() => setCurrentView('about')} className="hover:text-orange-400 transition-colors">Methodology</button>
+              <button onClick={() => setCurrentView('about')} className="hover:text-indigo-400 transition-colors">Methodology</button>
               <span className="text-slate-700">·</span>
-              <button onClick={() => setCurrentView('privacy')} className="hover:text-orange-400 transition-colors">Privacy Policy</button>
+              <button onClick={() => setCurrentView('privacy')} className="hover:text-indigo-400 transition-colors">Privacy Policy</button>
               <span className="text-slate-700">·</span>
-              <button onClick={() => setCurrentView('terms')} className="hover:text-orange-400 transition-colors">Terms of Service</button>
+              <button onClick={() => setCurrentView('terms')} className="hover:text-indigo-400 transition-colors">Terms of Service</button>
               <span className="text-slate-700">·</span>
               <span className="text-slate-600">Free during beta</span>
             </div>
@@ -4742,19 +4742,19 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
             <div className="absolute top-[30%] right-[10%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)'}}></div>
-            <div className="absolute bottom-[20%] left-[15%] w-[400px] h-[400px] rounded-full blur-[120px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)'}}></div>
+            <div className="absolute bottom-[20%] left-[15%] w-[400px] h-[400px] rounded-full blur-[120px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.05) 0%, transparent 70%)'}}></div>
           </div>
 
           {/* Header */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
             <div className="max-w-6xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
-              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
                 <span className="text-sm font-medium">Back</span>
               </button>
               <div className="flex items-center gap-2.5">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
               </div>
               <div className="w-20"></div>
             </div>
@@ -4796,7 +4796,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background: item.accent}}></span>
                     <span className="text-xs font-semibold text-white whitespace-nowrap landing-font">{item.disc}</span>
                     <span className="text-[10px] font-medium mono-font px-1.5 py-0.5 rounded" style={{background: item.gender === 'M' ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)', color: item.accent}}>{item.gender}</span>
-                    <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#f97316'}}>{item.threshold}</span>
+                    <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#4F3CF0'}}>{item.threshold}</span>
                   </div>
                 )))}
               </ScrollVelocityTicker>
@@ -4821,7 +4821,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background: item.accent}}></span>
                     <span className="text-xs font-semibold text-white whitespace-nowrap landing-font">{item.disc}</span>
                     <span className="text-[10px] font-medium mono-font px-1.5 py-0.5 rounded" style={{background: item.gender === 'M' ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)', color: item.accent}}>{item.gender}</span>
-                    <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#f97316'}}>{item.threshold}</span>
+                    <span className="text-xs font-bold mono-font whitespace-nowrap" style={{color: '#4F3CF0'}}>{item.threshold}</span>
                   </div>
                 )))}
               </ScrollVelocityTicker>
@@ -4836,7 +4836,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
                 <div key={i} className="bento-card rounded-xl p-3 sm:p-5 text-center" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <p className="text-xl sm:text-3xl font-bold mono-font" style={{color: '#f97316'}}>{stat.value}</p>
+                  <p className="text-xl sm:text-3xl font-bold mono-font" style={{color: '#4F3CF0'}}>{stat.value}</p>
                   <p className="text-sm font-semibold text-white mt-1 landing-font">{stat.label}</p>
                   <p className="text-xs text-slate-600 mt-0.5 landing-font">{stat.sub}</p>
                 </div>
@@ -4846,8 +4846,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── Discipline coverage — categorised ── */}
             <div className="bento-card rounded-2xl p-6 sm:p-8 mb-10 stagger-5" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="flex items-center gap-3 mb-1">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background: 'rgba(249,115,22,0.1)'}}>
-                  <BarChart3 className="w-4 h-4" style={{color: '#f97316'}} />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background: 'rgba(79,60,240,0.1)'}}>
+                  <BarChart3 className="w-4 h-4" style={{color: '#4F3CF0'}} />
                 </div>
                 <h3 className="text-lg font-bold text-white landing-font">Discipline Coverage</h3>
               </div>
@@ -4954,7 +4954,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                 color: row.gender === 'Male' ? '#60a5fa' : '#f472b6'
                               }}>{row.gender}</span>
                             </td>
-                            <td className="py-2.5 px-3 text-center font-bold mono-font" style={{color: '#f97316'}}>{row.threshold}</td>
+                            <td className="py-2.5 px-3 text-center font-bold mono-font" style={{color: '#4F3CF0'}}>{row.threshold}</td>
                             <td className="hidden sm:table-cell py-2.5 px-3 text-center text-slate-400 mono-font">{row.mean}</td>
                           </tr>
                         ))}
@@ -4972,7 +4972,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   icon: TrendingUp,
                   title: 'Trajectory Classification',
                   text: 'K-means clustering (K=3) on age-normalised % off PB series identifies three career patterns: Early Peaker, Late Developer, and Plateau Pattern. Your trajectory type shapes your projected development curve.',
-                  accent: '#f97316'
+                  accent: '#4F3CF0'
                 },
                 {
                   icon: Target,
@@ -5054,19 +5054,19 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
             <div className="absolute inset-0" style={{backgroundImage: "linear-gradient(180deg, rgba(10,10,15,0.66) 0%, rgba(10,10,15,0.58) 45%, rgba(10,10,15,0.82) 100%), url('/discipline-stadium.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 35%'}}></div>
-            <div className="absolute top-[20%] left-[50%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)'}}></div>
+            <div className="absolute top-[20%] left-[50%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.06) 0%, transparent 70%)'}}></div>
           </div>
 
           {/* Header */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
             <div className="max-w-6xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
-              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
               </div>
               <div className="w-8 sm:w-20"></div>
             </div>
@@ -5074,7 +5074,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
           <main ref={categoriesRef} className="relative z-10 flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-8 sm:py-12">
             <div className="stagger-2 mb-4">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mono-font tracking-wide" style={{background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c'}}>
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mono-font tracking-wide" style={{background: 'rgba(79,60,240,0.1)', border: '1px solid rgba(79,60,240,0.2)', color: '#8B83FF'}}>
                 SELECT DISCIPLINE
               </span>
             </div>
@@ -5087,42 +5087,42 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <button
                 onClick={() => { setDisciplineCategory('sprints'); setAthleteData(d => ({...d, discipline: '100m'})); setQuickAnalysisData(d => ({...d, discipline: '100m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(249,115,22,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(79,60,240,0.30)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
-                  <Zap className="w-6 h-6 text-orange-400" />
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(79,60,240,0.1)', border: '1px solid rgba(79,60,240,0.15)'}}>
+                  <Zap className="w-6 h-6 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">Sprints & Hurdles</h3>
+                <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-indigo-400 transition-colors">Sprints & Hurdles</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">100m, 200m, 400m, 100mH, 110mH, 400mH</p>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(249,115,22,0.15)', color: '#fb923c'}}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(79,60,240,0.15)', color: '#8B83FF'}}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
                     Live
                   </span>
                   <span className="text-xs text-slate-500 mono-font">10 events</span>
                 </div>
-                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-orange-400 transition-colors" />
+                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
               </button>
 
               {/* ── THROWS (ACTIVE) ── */}
               <button
                 onClick={() => { setDisciplineCategory('throws'); setAthleteData(d => ({...d, discipline: 'Discus Throw'})); setQuickAnalysisData(d => ({...d, discipline: 'Discus Throw'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(249,115,22,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(79,60,240,0.30)'}}
               >
-                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)'}}>
-                  <Target className="w-6 h-6 text-orange-400" />
+                <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(79,60,240,0.1)', border: '1px solid rgba(79,60,240,0.15)'}}>
+                  <Target className="w-6 h-6 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-orange-400 transition-colors">Throws</h3>
+                <h3 className="text-lg font-bold text-white mb-1 landing-font group-hover:text-indigo-400 transition-colors">Throws</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">Shot Put, Discus, Hammer, Javelin</p>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(249,115,22,0.15)', color: '#fb923c'}}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mono-font" style={{background: 'rgba(79,60,240,0.15)', color: '#8B83FF'}}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
                     Live
                   </span>
                   <span className="text-xs text-slate-500 mono-font">8 events</span>
                 </div>
-                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-orange-400 transition-colors" />
+                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
               </button>
 
               {/* ── JUMPS (ACTIVE) ── */}
@@ -5195,7 +5195,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
                 <h3 className="text-lg font-bold text-slate-300 mb-1 landing-font">Combined Events</h3>
                 <p className="text-sm text-slate-500 mb-3 landing-font">Decathlon, Heptathlon</p>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold mono-font flex items-center gap-1.5 w-fit" style={{background: 'rgba(245,158,11,0.1)', color: '#fbbf24'}}>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold mono-font flex items-center gap-1.5 w-fit" style={{background: 'rgba(245,158,11,0.1)', color: '#8B83FF'}}>
                   <svg className="w-3 h-3 animate-spin" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 12" /></svg>
                   Compiling Data
                 </span>
@@ -5232,19 +5232,19 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
             <div className="absolute top-[15%] left-[60%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)'}}></div>
-            <div className="absolute top-[60%] left-[20%] w-[400px] h-[400px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.04) 0%, transparent 70%)'}}></div>
+            <div className="absolute top-[60%] left-[20%] w-[400px] h-[400px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.04) 0%, transparent 70%)'}}></div>
           </div>
 
           {/* Nav */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
             <div className="max-w-6xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
-              <button onClick={() => { setCurrentView('landing'); setSelectedAthlete(null); setAthleteProfile(null); setAthleteTrajectory(null); setExplorerSearch(''); setExplorerResults([]); }} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+              <button onClick={() => { setCurrentView('landing'); setSelectedAthlete(null); setAthleteProfile(null); setAthleteTrajectory(null); setExplorerSearch(''); setExplorerResults([]); }} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
               </div>
               <div className="w-8 sm:w-20"></div>
             </div>
@@ -5308,7 +5308,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
               {explorerLoading && (
                 <div className="mt-3 text-sm text-slate-400 flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-indigo-500/30 border-t-orange-500 rounded-full animate-spin"></div>
                   Searching...
                 </div>
               )}
@@ -5329,14 +5329,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             : 'hover:translate-y-[-1px]'
                         }`}
                         style={selectedAthlete?.id === a.id
-                          ? {background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.3)'}
+                          ? {background: 'rgba(79,60,240,0.08)', border: '1px solid rgba(79,60,240,0.3)'}
                           : {background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)'}
                         }
                       >
                         <div className="font-semibold text-white text-sm landing-font">{a.name}</div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 mono-font">
                           <span className="flex items-center gap-1"><Globe className="w-3 h-3" />{a.country || 'N/A'}</span>
-                          {a.disciplines && <span className="text-orange-400">{a.disciplines.join(', ')}</span>}
+                          {a.disciplines && <span className="text-indigo-400">{a.disciplines.join(', ')}</span>}
                         </div>
                       </button>
                     ))}
@@ -5360,7 +5360,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 {profileLoading ? (
                   <div className="flex items-center justify-center py-24">
                     <div className="text-center">
-                      <div className="w-10 h-10 border-3 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
+                      <div className="w-10 h-10 border-3 border-indigo-500/30 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
                       <p className="text-slate-400">Loading profile...</p>
                     </div>
                   </div>
@@ -5379,7 +5379,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         </div>
                         <div className="flex flex-wrap gap-1.5 sm:justify-end">
                           {athleteProfile.disciplines && athleteProfile.disciplines.map(d => (
-                            <span key={d} className="inline-block px-2.5 py-0.5 sm:px-3 sm:py-1 bg-orange-500/15 text-orange-400 rounded-full text-xs sm:text-sm font-medium">{d}</span>
+                            <span key={d} className="inline-block px-2.5 py-0.5 sm:px-3 sm:py-1 bg-indigo-500/15 text-indigo-400 rounded-full text-xs sm:text-sm font-medium">{d}</span>
                           ))}
                         </div>
                       </div>
@@ -5390,7 +5390,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           {athleteProfile.personal_bests.map((pb, i) => (
                             <div key={i} className="rounded-lg p-3 text-center" style={{background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)'}}>
                               <div className="text-xs text-slate-500 uppercase tracking-wider mono-font">{pb.discipline}</div>
-                              <div className="text-xl font-bold mt-1 mono-font" style={{color: '#f97316'}}>{typeof pb.time === 'number' ? formatTime(pb.time, pb.discipline || athleteProfile.primary_discipline) : pb.time}</div>
+                              <div className="text-xl font-bold mt-1 mono-font" style={{color: '#4F3CF0'}}>{typeof pb.time === 'number' ? formatTime(pb.time, pb.discipline || athleteProfile.primary_discipline) : pb.time}</div>
                               {pb.year && <div className="text-xs text-slate-500 mt-1 mono-font">{pb.year}</div>}
                             </div>
                           ))}
@@ -5401,7 +5401,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       {athleteProfile.olympic_results && athleteProfile.olympic_results.length > 0 && (
                         <div className="mt-6">
                           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2 mono-font">
-                            <Medal className="w-4 h-4" style={{color: '#f97316'}} />
+                            <Medal className="w-4 h-4" style={{color: '#4F3CF0'}} />
                             Olympic Results
                           </h3>
                           <div className="space-y-2">
@@ -5413,7 +5413,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                   <span className="text-slate-400">{r.discipline}</span>
                                 </div>
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                  {r.time && <span className="text-orange-400 font-mono">{typeof r.time === 'number' ? formatTime(r.time, r.discipline || athleteProfile.primary_discipline) : r.time}</span>}
+                                  {r.time && <span className="text-indigo-400 font-mono">{typeof r.time === 'number' ? formatTime(r.time, r.discipline || athleteProfile.primary_discipline) : r.time}</span>}
                                   {r.position && <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                                     r.position <= 3 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'
                                   }`}>{r.position}{r.position === 1 ? 'st' : r.position === 2 ? 'nd' : r.position === 3 ? 'rd' : 'th'}</span>}
@@ -5430,7 +5430,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     {athleteTrajectory && athleteTrajectory.seasons && athleteTrajectory.seasons.length > 0 && (
                       <div className="bento-card rounded-xl p-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 landing-font">
-                          <TrendingUp className="w-5 h-5" style={{color: '#f97316'}} />
+                          <TrendingUp className="w-5 h-5" style={{color: '#4F3CF0'}} />
                           Career Trajectory — {athleteTrajectory.discipline || ''}
                         </h3>
                         <LazyChartArea>{(RC) => { const { ResponsiveContainer, ComposedChart, LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell, ReferenceLine, ReferenceDot, ScatterChart, Scatter, ZAxis } = RC; return (<ResponsiveContainer width="100%" height={280}>
@@ -5467,9 +5467,9 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               type="monotone"
                               dataKey="bestTime"
                               name="Season Best"
-                              stroke="#f97316"
+                              stroke="#4F3CF0"
                               strokeWidth={2.5}
-                              dot={{ r: 4, fill: '#f97316', stroke: '#f97316' }}
+                              dot={{ r: 4, fill: '#4F3CF0', stroke: '#4F3CF0' }}
                               activeDot={{ r: 6 }}
                             />
                           </ComposedChart>
@@ -5496,7 +5496,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                   athleteTrajectory.discipline === pb.discipline_code
-                                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40'
+                                    ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
                                     : 'bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:text-white'
                                 }`}
                               >
@@ -5526,7 +5526,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                                 <tr key={i} className="hover:bg-white/[0.02]" style={{borderBottom: '1px solid rgba(255,255,255,0.03)'}}>
                                   <td className="py-2 px-3 text-white font-medium landing-font">{s.age || '–'}</td>
                                   <td className="py-2 px-3 text-slate-500 landing-font">{s.year || '–'}</td>
-                                  <td className="py-2 px-3 text-right mono-font" style={{color: '#f97316'}}>{formatTime(s.best_time, athleteTrajectory.discipline)}</td>
+                                  <td className="py-2 px-3 text-right mono-font" style={{color: '#4F3CF0'}}>{formatTime(s.best_time, athleteTrajectory.discipline)}</td>
                                   <td className="py-2 px-3 text-right text-slate-400 mono-font">{s.pct_off_pb != null ? s.pct_off_pb.toFixed(1) + '%' : '–'}</td>
                                   <td className="py-2 px-3 text-right text-slate-500 mono-font">{s.n_races || '–'}</td>
                                 </tr>
@@ -5552,7 +5552,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                             setActiveTab('quick');
                             setCurrentView('input');
                           }}
-                          className="cta-primary inline-flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all landing-font"
+                          className="cta-primary inline-flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all landing-font"
                         >
                           <Target className="w-5 h-5" />
                           Benchmark This Athlete
@@ -5580,18 +5580,18 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
-            <div className="absolute top-[30%] left-[70%] w-[450px] h-[450px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)'}}></div>
+            <div className="absolute top-[30%] left-[70%] w-[450px] h-[450px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.05) 0%, transparent 70%)'}}></div>
           </div>
 
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
             <div className="max-w-6xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
-              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+              <button onClick={() => setCurrentView('landing')} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
               </div>
               <div className="w-8 sm:w-20"></div>
             </div>
@@ -5615,7 +5615,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   }}
                   className={`px-3 py-2 sm:px-6 sm:py-3 font-medium border-b-2 transition-colors landing-font whitespace-nowrap text-sm sm:text-base ${
                     activeTab === tab.key
-                      ? 'border-orange-500 text-orange-400'
+                      ? 'border-indigo-500 text-indigo-400'
                       : 'border-transparent text-slate-500 hover:text-white'
                   }`}
                 >
@@ -5654,7 +5654,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Discipline</label>
                     <select value={athleteData.discipline} onChange={(e) => { handleManualEntry('discipline', e.target.value); analytics.disciplineSelected({ discipline: e.target.value }); }}
-                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
                       {isThrowsMode ? (
                         <>
                           <option value="Discus Throw">Discus Throw</option>
@@ -5701,7 +5701,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Gender</label>
                     <select value={athleteData.gender} onChange={(e) => handleManualEntry('gender', e.target.value)}
-                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                     </select>
@@ -5713,20 +5713,20 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Athlete Name</label>
                     <input type="text" placeholder={isThrowsMode ? "e.g., Daniel Stahl" : "e.g., Shelly-Ann Fraser-Pryce"} value={athleteData.name}
                       onChange={(e) => handleManualEntry('name', e.target.value)}
-                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
+                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Date of Birth</label>
                     <input type="date" value={athleteData.dateOfBirth}
                       onChange={(e) => handleManualEntry('dateOfBirth', e.target.value)}
-                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
+                      className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                   </div>
                   {isThrowsMode && (
                     <div>
                       <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Implement Weight</label>
                       <select value={athleteData.implementWeight}
                         onChange={(e) => handleManualEntry('implementWeight', parseFloat(e.target.value))}
-                        className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                        className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
                         {getWeightOptions(athleteData.discipline, athleteData.gender).map(opt => (
                           <option key={opt.kg} value={opt.kg}>{opt.label}</option>
                         ))}
@@ -5737,7 +5737,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
 
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <Timer className="w-5 h-5 " style={{color: '#f97316'}} />
+                  <Timer className="w-5 h-5 " style={{color: '#4F3CF0'}} />
                   {isThrowsMode ? 'Competition History' : 'Race History'}
                 </h3>
 
@@ -5766,14 +5766,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </table>
                 </div>
 
-                <button onClick={addRaceRow} className="flex items-center gap-2 text-slate-300 hover:text-orange-600 transition-colors mb-8 font-medium">
+                <button onClick={addRaceRow} className="flex items-center gap-2 text-slate-300 hover:text-indigo-600 transition-colors mb-8 font-medium">
                   <Plus className="w-4 h-4" /> {isThrowsMode ? 'Add Result' : 'Add Race'}
                 </button>
 
                 {error && <div className="bg-red-900/30 border border-red-800 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>}
 
                 <button onClick={handleAnalyze} disabled={loading}
-                  className="cta-primary w-full text-white font-bold py-4 rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.01] transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed landing-font">
+                  className="cta-primary w-full text-white font-bold py-4 rounded-xl hover:shadow-xl hover:shadow-indigo-500/25 hover:scale-[1.01] transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed landing-font">
                   {loading ? 'Analyzing...' : 'Analyze Performance'}
                 </button>
               </div>
@@ -5802,11 +5802,11 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">World Athletics Profile URL</label>
                   <input type="text" placeholder="https://worldathletics.org/athletes/..." value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className="w-full px-4 py-3 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
+                    className="w-full px-4 py-3 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}} />
                 </div>
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Override Discipline (optional)</label>
-                  <select className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                  <select className="w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/30 placeholder-slate-500 landing-font" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}>
                     <option value="">Auto-detect</option>
                     {isThrowsMode ? (
                       <optgroup label="Throws">
@@ -5849,7 +5849,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 </div>
                 {error && <div className="bg-red-900/30 border border-red-800 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>}
                 <button onClick={handleScrapeUrl} disabled={scraping}
-                  className="cta-primary w-full text-white font-bold py-4 rounded-xl hover:shadow-xl hover:shadow-orange-500/25 hover:scale-[1.01] transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed landing-font">
+                  className="cta-primary w-full text-white font-bold py-4 rounded-xl hover:shadow-xl hover:shadow-indigo-500/25 hover:scale-[1.01] transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed landing-font">
                   {scraping ? 'Scraping...' : 'Import & Analyze'}
                 </button>
               </div>
@@ -5884,27 +5884,27 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
-            <div className="absolute top-[20%] left-[30%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)'}}></div>
+            <div className="absolute top-[20%] left-[30%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.06) 0%, transparent 70%)'}}></div>
             <div className="absolute top-[60%] left-[70%] w-[400px] h-[400px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)'}}></div>
           </div>
 
           {/* Nav */}
           <nav className="relative z-20 stagger-1" style={{borderBottom: '1px solid rgba(255,255,255,0.04)'}}>
             <div className="max-w-5xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
-              <button onClick={handleBack} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+              <button onClick={handleBack} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                 <ChevronLeft className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 transition-colors landing-font" style={{border: '1px solid rgba(79,60,240,0.3)'}}>
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Export PDF</span>
                 </button>
-                <button onClick={() => setCurrentView('input')} className="hidden sm:block text-sm text-slate-500 hover:text-orange-400 transition-colors landing-font">
+                <button onClick={() => setCurrentView('input')} className="hidden sm:block text-sm text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                   Full Analysis &rarr;
                 </button>
               </div>
@@ -5930,7 +5930,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           {/* Atmospheric background */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div className="absolute inset-0 noise-overlay opacity-40"></div>
-            <div className="absolute top-[10%] left-[60%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)'}}></div>
+            <div className="absolute top-[10%] left-[60%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(79,60,240,0.05) 0%, transparent 70%)'}}></div>
             <div className="absolute top-[40%] left-[10%] w-[400px] h-[400px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)'}}></div>
             <div className="absolute top-[70%] left-[50%] w-[500px] h-[500px] rounded-full blur-[150px]" style={{background: 'radial-gradient(circle, rgba(168,85,247,0.03) 0%, transparent 70%)'}}></div>
           </div>
@@ -5940,14 +5940,14 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#f97316'}}>.</span></span>
+                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-orange-400 hover:bg-orange-500/10 transition-colors landing-font" style={{border: '1px solid rgba(249,115,22,0.3)'}}>
+                <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 transition-colors landing-font" style={{border: '1px solid rgba(79,60,240,0.3)'}}>
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Export PDF</span>
                 </button>
-                <button onClick={handleBack} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-orange-400 transition-colors landing-font">
+                <button onClick={handleBack} className="flex items-center gap-1 sm:gap-2 text-slate-500 hover:text-indigo-400 transition-colors landing-font">
                   <ChevronLeft className="w-4 h-4" />
                   <span className="hidden sm:inline text-sm font-medium">Home</span>
                 </button>
@@ -5960,7 +5960,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {multiResults && (
               <div className="bento-card rounded-xl p-4 mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Activity className="w-5 h-5 " style={{color: '#f97316'}} />
+                  <Activity className="w-5 h-5 " style={{color: '#4F3CF0'}} />
                   <span className="font-semibold text-white">Disciplines Analyzed</span>
                   <span className="text-xs text-slate-400 ml-2">
                     ({Object.entries(multiResults).filter(([k]) => !k.startsWith('_')).reduce((sum, [, r]) => sum + (r._totalRaces || 0), 0)} races across {Object.keys(multiResults).filter(k => !k.startsWith('_')).length} disciplines)
@@ -5979,12 +5979,12 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       }}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                         activeDiscipline === disc
-                          ? 'bg-orange-500 text-white shadow-md'
+                          ? 'bg-indigo-500 text-white shadow-md'
                           : 'bg-slate-700/60 text-slate-300 hover:bg-slate-600'
                       }`}
                     >
                       {disc}
-                      <span className={`ml-2 text-xs ${activeDiscipline === disc ? 'text-orange-100' : 'text-slate-400'}`}>
+                      <span className={`ml-2 text-xs ${activeDiscipline === disc ? 'text-indigo-100' : 'text-slate-400'}`}>
                         ({result._totalRaces || 0} races)
                       </span>
                     </button>
@@ -6000,7 +6000,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             )}
 
             {/* ── HERO HEADER — PB as anchor ── */}
-            <div className="bento-card rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(249,115,22,0.1)'}}>
+            <div className="bento-card rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.04) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(79,60,240,0.1)'}}>
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-8">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -6016,7 +6016,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <h2 className="text-lg sm:text-2xl font-bold text-white landing-font tracking-tight mb-1">Quick Analysis</h2>
                   )}
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl md:text-6xl font-bold mono-font tracking-tight" style={{color: '#f97316'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
+                    <span className="text-3xl sm:text-4xl md:text-6xl font-bold mono-font tracking-tight" style={{color: '#4F3CF0'}}>{formatTime(analysisResults.personalBest, analysisResults.discipline)}</span>
                     {!isFieldEvent(analysisResults.discipline) && !isDistanceDiscipline(analysisResults.discipline) && (
                       <span className="text-base sm:text-lg md:text-2xl font-medium text-slate-500 mono-font">s</span>
                     )}
@@ -6097,7 +6097,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         ? 'text-white shadow-lg'
                         : 'text-slate-500 hover:text-white'
                     }`}
-                    style={dashTab === tab.id ? {background: 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%)', boxShadow: '0 4px 15px rgba(249,115,22,0.25)'} : {}}>
+                    style={dashTab === tab.id ? {background: 'linear-gradient(135deg, #3B34C9 0%, #4F3CF0 50%, #8B83FF 100%)', boxShadow: '0 4px 15px rgba(79,60,240,0.25)'} : {}}>
                     <TabIcon className="w-4 h-4" />
                     {tab.label}
                   </button>
@@ -6143,7 +6143,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const deltaColor = (d) => {
                 if (d == null || Math.abs(d) < 0.005) return 'text-slate-400';
                 const isBetter = isThrows ? d > 0 : d < 0;
-                return isBetter ? 'text-emerald-400' : 'text-orange-300';
+                return isBetter ? 'text-emerald-400' : 'text-indigo-300';
               };
               const lastDateStr = lastRace && lastRace.date
                 ? new Date(lastRace.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -6170,7 +6170,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               if (activeComp.p8) allMarkers.push({ label: '8th place', value: activeComp.p8, color: '#3b82f6' });
               if (activeComp.bronze) allMarkers.push({ label: 'Bronze', value: activeComp.bronze, color: '#cd7f32' });
               if (activeComp.gold) allMarkers.push({ label: 'Gold', value: activeComp.gold, color: '#FFD700' });
-              if (wrInfo && wrInfo.mark) allMarkers.push({ label: 'WR', value: wrInfo.mark, color: '#f97316' });
+              if (wrInfo && wrInfo.mark) allMarkers.push({ label: 'WR', value: wrInfo.mark, color: '#4F3CF0' });
 
               // Rail bounds: from "slowest meaningful mark" to "fastest meaningful mark", padded by PB
               const allVals = [...allMarkers.map(m => m.value), pb];
@@ -6203,7 +6203,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               return (
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                   <div className="mb-5">
-                    <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                    <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                       <Award className="w-3 h-3" />
                       Where you stand
                     </p>
@@ -6217,7 +6217,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
                     <div className="rounded-xl p-2 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
                       <p className="mono-font text-[9px] uppercase tracking-[0.15em] text-slate-500 mb-1">Personal Best</p>
-                      <p className="mono-font text-lg sm:text-2xl md:text-3xl font-bold text-orange-400 leading-none">{fmt(pb)}</p>
+                      <p className="mono-font text-lg sm:text-2xl md:text-3xl font-bold text-indigo-400 leading-none">{fmt(pb)}</p>
                       <p className="text-[10px] sm:text-xs text-slate-500 mt-1.5">{pbYear ? `set ${pbYear}` : 'lifetime best'}</p>
                     </div>
                     <div className="rounded-xl p-2 sm:p-4" style={{background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)'}}>
@@ -6242,7 +6242,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                           onClick={() => setSelectedCompId(comp.compId)}
                           className={`mono-font text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors focus:outline-none focus-visible:outline-none ${
                             isActive
-                              ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
+                              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
                               : 'bg-white/[0.03] text-slate-400 border border-white/[0.06] hover:bg-white/[0.06] hover:text-slate-200'
                           }`}
                         >
@@ -6255,7 +6255,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   {/* ── Progression rail ── */}
                   <div className="relative h-3 rounded-full mb-12" style={{background: 'rgba(255,255,255,0.06)'}}>
                     {/* Filled portion up to PB */}
-                    <div className="absolute top-0 left-0 h-full rounded-full" style={{width: `${Math.min(100, Math.max(2, getPos(pb)))}%`, background: 'linear-gradient(90deg, #f97316 0%, #fb923c 100%)', transition: 'width 0.6s ease'}}></div>
+                    <div className="absolute top-0 left-0 h-full rounded-full" style={{width: `${Math.min(100, Math.max(2, getPos(pb)))}%`, background: 'linear-gradient(90deg, #4F3CF0 0%, #8B83FF 100%)', transition: 'width 0.6s ease'}}></div>
                     {/* Marker ticks + labels */}
                     {allMarkers.map((m, i) => {
                       const pos = getPos(m.value);
@@ -6272,8 +6272,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     })}
                     {/* PB marker (above the rail) */}
                     <div className="absolute flex flex-col items-center pointer-events-none" style={{left: `${Math.min(100, Math.max(0, getPos(pb)))}%`, top: '-22px', transform: 'translateX(-50%)'}}>
-                      <p className="mono-font text-[9px] font-bold text-orange-400 mb-0.5">PB</p>
-                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg" style={{background: '#f97316'}}></div>
+                      <p className="mono-font text-[9px] font-bold text-indigo-400 mb-0.5">PB</p>
+                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg" style={{background: '#4F3CF0'}}></div>
                     </div>
                   </div>
 
@@ -6282,7 +6282,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <p className={`text-sm sm:text-base landing-font ${nextTarget ? 'text-slate-300' : 'text-emerald-300'}`}>
                       {nextTarget ? (
                         <>
-                          <span className="text-orange-400 font-semibold mono-font">{formatTime(isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value), analysisResults.discipline)}</span>
+                          <span className="text-indigo-400 font-semibold mono-font">{formatTime(isThrows ? (nextTarget.value - pb) : (pb - nextTarget.value), analysisResults.discipline)}</span>
                           {' '}away from{' '}
                           <span className="text-white font-semibold">{nextTarget.label}</span>
                           {' '}at <span className="text-white font-semibold">{activeComp.label}</span>
@@ -6348,7 +6348,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <div className="bento-card rounded-2xl p-5 sm:p-7 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                   {/* Section header — matches bento pattern */}
                   <div className="mb-5">
-                    <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300 mb-1">Actions</p>
+                    <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300 mb-1">Actions</p>
                     <div className="flex items-end justify-between gap-3">
                       <h3 className="landing-font text-lg sm:text-xl font-semibold text-white leading-tight">What to focus on next</h3>
                       <span className="mono-font text-[10px] text-slate-500 tabular-nums pb-1">{sorted.length} item{sorted.length === 1 ? '' : 's'}</span>
@@ -6426,7 +6426,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" style={{color: '#f97316'}} />
+                      <Calendar className="w-4 h-4" style={{color: '#4F3CF0'}} />
                       <h3 className="text-sm font-semibold text-white uppercase tracking-wider landing-font">Full Event History</h3>
                     </div>
                     <span className="text-[10px] text-slate-500 mono-font">{races.length} result{races.length === 1 ? '' : 's'}</span>
@@ -6479,7 +6479,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                               );
                             }}
                           />
-                          <Scatter name="Races" data={scatterRaces} fill="#f97316" fillOpacity={0.8} />
+                          <Scatter name="Races" data={scatterRaces} fill="#4F3CF0" fillOpacity={0.8} />
                         </ScatterChart>
                       </ResponsiveContainer>); }}</LazyChartArea>
                     </div>
@@ -6528,7 +6528,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── PERFORMANCE TRAJECTORY CHART WITH TABBED VIEWS ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="mb-4 sm:mb-6">
-                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" />
                   Trajectory
                 </p>
@@ -6548,7 +6548,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <button key={tab.id} onClick={() => setChartView(tab.id)}
                       className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap mono-font focus:outline-none focus-visible:outline-none ${
                         chartView === tab.id
-                          ? 'text-orange-400 shadow-sm'
+                          ? 'text-indigo-400 shadow-sm'
                           : 'text-slate-500 hover:text-slate-300'
                       }`}
                       style={chartView === tab.id ? {background: 'rgba(255,255,255,0.05)'} : {}}>
@@ -6601,11 +6601,11 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         ));
                       })()}
                       <Line type="monotone" dataKey="projectedTime" stroke="#3b82f6" strokeWidth={2.5} strokeDasharray="8 4" dot={{ fill: '#3b82f6', r: 3, strokeWidth: 0 }} name="Projected" connectNulls={false} />
-                      <Line type="monotone" dataKey="actualTime" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Actual Performance" connectNulls={false} />
+                      <Line type="monotone" dataKey="actualTime" stroke="#4F3CF0" strokeWidth={3} dot={{ fill: '#4F3CF0', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Actual Performance" connectNulls={false} />
                     </ComposedChart>
                   </ResponsiveContainer>); }}</LazyChartArea>
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs">
-                    <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-orange-500 rounded"></div><span className="text-slate-400">Your Actual {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
+                    <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-indigo-500 rounded"></div><span className="text-slate-400">Your Actual {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-blue-500 rounded" style={{borderBottom: '2px dashed #3b82f6'}}></div><span className="text-slate-400">Projected {isFieldEvent(analysisResults.discipline) ? 'Distances' : 'Times'}</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-red-600 rounded" style={{borderBottom: '2px dashed #dc2626'}}></div><span className="text-slate-400">Finalist Threshold</span></div>
                     <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-amber-500 rounded" style={{borderBottom: '2px dashed #f59e0b'}}></div><span className="text-slate-400">Semi-Finalist</span></div>
@@ -6639,7 +6639,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Area type="monotone" dataKey="p75Pct" stroke="none" fill="url(#pctBandGrad)" name="P25-P75 Band" connectNulls />
                       <Area type="monotone" dataKey="p25Pct" stroke="none" fill="#1e293b" name="" connectNulls legendType="none" />
                       <Line type="monotone" dataKey="medianPct" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="6 3" dot={false} name="Population Median (P50)" connectNulls />
-                      <Line type="monotone" dataKey="pctOffPB" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Your % Off PB" connectNulls={false} />
+                      <Line type="monotone" dataKey="pctOffPB" stroke="#4F3CF0" strokeWidth={3} dot={{ fill: '#4F3CF0', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} name="Your % Off PB" connectNulls={false} />
                       <ReferenceLine y={0} stroke="#10b981" strokeDasharray="8 4" strokeWidth={2} label={{ value: 'Personal Best', position: 'right', fill: '#10b981', fontSize: 11 }} />
                     </ComposedChart>
                   </ResponsiveContainer>); }}</LazyChartArea>
@@ -6680,7 +6680,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                       <Area type="monotone" dataKey="p50" stroke="#3b82f6" strokeWidth={1} fill="url(#p50Band)" name="P50 (Median)" connectNulls />
                       <Line type="monotone" dataKey="p25" stroke="#2563eb" strokeWidth={1.5} strokeDasharray="4 2" dot={false} name="P25 (Top 25%)" connectNulls />
                       <Line type="monotone" dataKey="p10" stroke="#1d4ed8" strokeWidth={1.5} strokeDasharray="2 2" dot={false} name="P10 (Top 10%)" connectNulls />
-                      <Line type="monotone" dataKey="userPctOff" stroke="#e8712a" strokeWidth={3} dot={{ fill: '#e8712a', r: 6, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} name="Your Position" connectNulls={false} />
+                      <Line type="monotone" dataKey="userPctOff" stroke="#4F3CF0" strokeWidth={3} dot={{ fill: '#4F3CF0', r: 6, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} name="Your Position" connectNulls={false} />
                     </ComposedChart>
                   </ResponsiveContainer>); }}</LazyChartArea>
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs text-center">
@@ -6689,7 +6689,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                     <div className="p-2 bg-blue-500 bg-opacity-20 rounded"><span className="font-semibold text-blue-500">P50</span><br/>Median</div>
                     <div className="p-2 bg-blue-300 bg-opacity-20 rounded"><span className="font-semibold text-blue-400">P75</span><br/>Bottom 25%</div>
                     <div className="p-2 bg-slate-700 bg-opacity-50 rounded"><span className="font-semibold text-slate-400">P90</span><br/>Bottom 10%</div>
-                    <div className="p-2 bg-orange-900/40 rounded"><span className="font-semibold text-orange-600">You</span><br/>Your Position</div>
+                    <div className="p-2 bg-indigo-900/40 rounded"><span className="font-semibold text-indigo-600">You</span><br/>Your Position</div>
                   </div>
                 </>
               )}
@@ -6734,7 +6734,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {analysisResults.raceHistory && analysisResults.raceHistory.length > 0 && (
               <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                 <div className="mb-5">
-                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                     <Layers className="w-3 h-3" />
                     Career Map
                   </p>
@@ -6759,7 +6759,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                         const isCurrent = a === analysisResults.age;
                         return (
                           <div key={a} className={`flex flex-col items-center rounded-lg px-3 py-2 min-w-[56px] border-2 transition-all ${
-                            isPB ? 'bg-orange-500 border-orange-500 text-white'
+                            isPB ? 'bg-indigo-500 border-indigo-500 text-white'
                             : isCurrent ? 'bg-blue-500 border-blue-500 text-white'
                             : time ? 'bg-slate-700/60 border-slate-700 text-white'
                             : 'bg-slate-700/50 border-slate-700/50 text-slate-300'
@@ -6777,7 +6777,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </div>
                 </div>
                 <div className="flex gap-4 mt-3 text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-orange-500"></div> Personal Best</div>
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-indigo-500"></div> Personal Best</div>
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-500"></div> Current Age</div>
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-slate-700/60 border border-slate-700"></div> Recorded Season</div>
                 </div>
@@ -6788,7 +6788,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {analysisResults.rodData && analysisResults.rodData.length > 1 && (
               <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
                 <div className="mb-5">
-                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                  <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                     <TrendingUp className="w-3 h-3" />
                     Momentum
                   </p>
@@ -6844,7 +6844,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── PERCENTILE RANKING (in Benchmarks tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="mb-6">
-                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <Target className="w-3 h-3" />
                   Standing
                 </p>
@@ -6879,7 +6879,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── CAREER TRAJECTORY VS BENCHMARKS (in Benchmarks tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="mb-4">
-                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" />
                   Benchmark Curve
                 </p>
@@ -6920,7 +6920,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   {trajToggles.qualifier && <Line type="monotone" dataKey="qualifier" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Qualifier Median" />}
                   {trajToggles.semiFinalist && <Line type="monotone" dataKey="semiFinalist" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Semi-Finalist Median" />}
                   {trajToggles.finalist && <Line type="monotone" dataKey="finalist" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Finalist Median" />}
-                  <Line type="monotone" dataKey="you" stroke="#e8712a" strokeWidth={3} dot={{ r: 5, fill: '#e8712a', stroke: '#fff', strokeWidth: 1 }} activeDot={{ r: 7, fill: '#f97316' }} name="You" connectNulls={false} />
+                  <Line type="monotone" dataKey="you" stroke="#4F3CF0" strokeWidth={3} dot={{ r: 5, fill: '#4F3CF0', stroke: '#fff', strokeWidth: 1 }} activeDot={{ r: 7, fill: '#4F3CF0' }} name="You" connectNulls={false} />
                 </LineChart>
               </ResponsiveContainer>); }}</LazyChartArea>
               <div className={`mt-4 p-3 rounded text-sm ${
@@ -6938,7 +6938,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── SIMILAR ATHLETES (in Benchmarks tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="mb-6">
-                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <Users className="w-3 h-3" />
                   Career Twins
                 </p>
@@ -6951,7 +6951,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {analysisResults.similarAthletes.map((athlete, idx) => (
                     <div key={idx} className="relative bg-gradient-to-br from-slate-800 to-slate-800/80 rounded-xl border border-slate-700 p-4 sm:p-5 hover:shadow-md transition-shadow">
-                      <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow">{idx + 1}</div>
+                      <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-indigo-500 text-white text-xs font-bold flex items-center justify-center shadow">{idx + 1}</div>
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <h4 className="font-bold text-white text-base">{athlete.name}</h4>
@@ -6986,8 +6986,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   ))}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-orange-900/40 bg-orange-950/10 p-6 sm:p-8 text-center">
-                  <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-400/80 mb-2">Dataset still being built</div>
+                <div className="rounded-xl border border-dashed border-indigo-900/40 bg-indigo-950/10 p-6 sm:p-8 text-center">
+                  <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-400/80 mb-2">Dataset still being built</div>
                   <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
                     Olympic peer histories for <span className="text-white font-semibold">{analysisResults.discipline}</span> are still being migrated into the platform. Your benchmark results above are unaffected — this section will populate as soon as the dataset lands.
                   </p>
@@ -7004,7 +7004,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {/* ── PEAK PROJECTION (in Insights tab) ── */}
             <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)', border: '1px solid rgba(255,255,255,0.06)'}}>
               <div className="mb-6">
-                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-orange-400/80 mb-1.5 flex items-center gap-1.5">
+                <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" />
                   Forecast
                 </p>
@@ -7020,10 +7020,10 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 const confLabel = conf >= 0.7 ? 'high' : conf >= 0.5 ? 'moderate' : 'low';
                 const whenStr = yrs > 0 ? `${yrs} year${yrs !== 1 ? 's' : ''} from now` : 'right now';
                 return (
-                  <div className="p-5 sm:p-6 rounded-xl" style={{background: 'rgba(249,115,22,0.04)', border: '1px solid rgba(249,115,22,0.15)'}}>
+                  <div className="p-5 sm:p-6 rounded-xl" style={{background: 'rgba(79,60,240,0.04)', border: '1px solid rgba(79,60,240,0.15)'}}>
                     <p className="landing-font text-base sm:text-lg text-slate-200 leading-relaxed">
                       You're projected to peak at{' '}
-                      <span className="mono-font text-2xl sm:text-3xl font-bold text-orange-400">{analysisResults.peakProjection.time}{unit}</span>
+                      <span className="mono-font text-2xl sm:text-3xl font-bold text-indigo-400">{analysisResults.peakProjection.time}{unit}</span>
                       {' '}at age{' '}
                       <span className="mono-font text-2xl sm:text-3xl font-bold text-white">{analysisResults.peakProjection.age}</span>
                       {' '}— {whenStr}, with {confLabel} confidence.
@@ -7073,7 +7073,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 &larr; Analyze Another Athlete
               </button>
               <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))}
-                className="px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center gap-2" style={{background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316'}}>
+                className="px-8 py-3 font-semibold rounded-xl transition-all hover:translate-y-[-1px] landing-font flex items-center gap-2" style={{background: 'rgba(79,60,240,0.15)', border: '1px solid rgba(79,60,240,0.3)', color: '#4F3CF0'}}>
                 <Download className="w-4 h-4" />
                 Export PDF
               </button>

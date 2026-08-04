@@ -22,10 +22,10 @@ export default function WAPointsCard({ discipline, gender, age, pb }) {
   const edgeNote = !loading && data.edge > 0 ? ' · above table' : !loading && data.edge < 0 ? ' · below table' : ''
 
   return (
-    <div style={{ borderRadius: 14, border: '1px solid rgba(249,115,22,0.28)', background: 'linear-gradient(135deg, rgba(249,115,22,0.09), rgba(255,255,255,0.01))', padding: '16px 18px' }}>
+    <div style={{ borderRadius: 14, border: '1px solid rgba(79,60,240,0.28)', background: 'linear-gradient(135deg, rgba(79,60,240,0.09), rgba(255,255,255,0.01))', padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div className="mono-font" style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#f97316', fontWeight: 700 }}>World Athletics points</div>
+          <div className="mono-font" style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#4F3CF0', fontWeight: 700 }}>World Athletics points</div>
           {loading ? (
             <div style={{ height: 40, width: 130, marginTop: 8, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
           ) : (
@@ -44,7 +44,7 @@ export default function WAPointsCard({ discipline, gender, age, pb }) {
       </div>
 
       <div style={{ marginTop: 14, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: pct + '%', background: 'linear-gradient(90deg, #f97316, #fbbf24)', borderRadius: 3, transition: 'width .6s cubic-bezier(0.4,0,0.2,1)' }} />
+        <div style={{ height: '100%', width: pct + '%', background: 'linear-gradient(90deg, #4F3CF0, #8B83FF)', borderRadius: 3, transition: 'width .6s cubic-bezier(0.4,0,0.2,1)' }} />
       </div>
       <div className="mono-font" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 9.5, color: '#5b6472' }}>
         <span>0</span><span>elite ~1200+</span><span>1400</span>

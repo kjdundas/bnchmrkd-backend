@@ -60,7 +60,7 @@ export default function ValueFlywheel() {
             <span className="vf-ns">what matters in your sport</span>
           </div>
           <div className="vf-node vf-n2">
-            <span className="vf-ico" style={{ background: 'rgba(251,146,60,0.16)', color: '#fb923c', boxShadow: '0 0 22px rgba(249,115,22,0.3)' }}><Crosshair size={20} /></span>
+            <span className="vf-ico" style={{ background: 'rgba(139,131,255,0.16)', color: '#8B83FF', boxShadow: '0 0 22px rgba(79,60,240,0.3)' }}><Crosshair size={20} /></span>
             <span className="vf-nl">Understand</span>
             <span className="vf-ns">vs world age &amp; sex standards</span>
           </div>
@@ -81,7 +81,7 @@ export default function ValueFlywheel() {
           </div>
         </div>
         <div className="vf-p">
-          <span className="vf-pic" style={{ color: '#fb923c', background: 'rgba(249,115,22,0.1)' }}><ClipboardList size={20} /></span>
+          <span className="vf-pic" style={{ color: '#8B83FF', background: 'rgba(79,60,240,0.1)' }}><ClipboardList size={20} /></span>
           <div>
             <div className="vf-pn">Coaches</div>
             <div className="vf-psub">Track, manage, program and prompt — your whole squad in one place.</div>
@@ -104,28 +104,28 @@ const CSS = `
 .vf-section{position:relative;overflow:hidden}
 .vf-photo{position:absolute;inset:0;z-index:0;background-image:linear-gradient(180deg,rgba(10,10,15,0.86) 0%,rgba(10,10,15,0.72) 45%,rgba(10,10,15,0.92) 100%),url('/value-stadium.jpg');background-size:cover;background-position:center 30%}
 .vf-wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:8px 20px 12px;text-align:center;font-family:'Inter','Helvetica Neue',sans-serif}
-.vf-eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#fb923c;font-weight:600}
+.vf-eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#8B83FF;font-weight:600}
 .vf-title{margin:0;font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.5px;color:#f8fafc;line-height:1.05}
-.vf-title span{background:linear-gradient(135deg,#f97316,#fb923c,#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.vf-title span{background:linear-gradient(135deg,#4F3CF0,#8B83FF,#8B83FF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .vf-sub{margin:16px auto 0;max-width:620px;font-size:clamp(14px,1.7vw,17px);line-height:1.6;color:#94a3b8}
 
 .vf-stage{position:relative;height:420px;display:flex;align-items:center;justify-content:center;margin:8px 0 4px}
-.vf-halo{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,0.18) 0%,rgba(249,115,22,0.05) 40%,transparent 66%);filter:blur(18px);animation:vf-breathe 6s ease-in-out infinite}
+.vf-halo{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(79,60,240,0.18) 0%,rgba(79,60,240,0.05) 40%,transparent 66%);filter:blur(18px);animation:vf-breathe 6s ease-in-out infinite}
 .vf-fly{position:relative;width:360px;height:360px;animation:vf-float 9s ease-in-out infinite}
 
-.vf-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(249,115,22,0) 0%,rgba(251,191,36,0.22) 9%,rgba(249,115,22,0) 20%);-webkit-mask:radial-gradient(circle,transparent 56%,#000 58%,#000 80%,transparent 82%);mask:radial-gradient(circle,transparent 56%,#000 58%,#000 80%,transparent 82%);animation:vf-spin 7s linear infinite}
-.vf-ring{position:absolute;inset:40px;border-radius:50%;border:1.5px dashed rgba(249,115,22,0.28);animation:vf-spin 26s linear infinite}
+.vf-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(79,60,240,0) 0%,rgba(139,131,255,0.22) 9%,rgba(79,60,240,0) 20%);-webkit-mask:radial-gradient(circle,transparent 56%,#000 58%,#000 80%,transparent 82%);mask:radial-gradient(circle,transparent 56%,#000 58%,#000 80%,transparent 82%);animation:vf-spin 7s linear infinite}
+.vf-ring{position:absolute;inset:40px;border-radius:50%;border:1.5px dashed rgba(79,60,240,0.28);animation:vf-spin 26s linear infinite}
 .vf-ring2{inset:18px;border-style:solid;border-color:rgba(255,255,255,0.05);animation-duration:40s;animation-direction:reverse}
 
-.vf-core{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;background:radial-gradient(circle at 38% 30%,#ffe2b8,#fb923c 44%,#b1370a 82%);box-shadow:0 0 46px 8px rgba(249,115,22,0.5),inset 0 0 22px rgba(255,255,255,0.25);animation:vf-breathe 3.6s ease-in-out infinite}
-.vf-ping{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:1.5px solid rgba(249,115,22,0.5);animation:vf-ping 3.6s ease-out infinite}
+.vf-core{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;background:radial-gradient(circle at 38% 30%,#ffe2b8,#8B83FF 44%,#b1370a 82%);box-shadow:0 0 46px 8px rgba(79,60,240,0.5),inset 0 0 22px rgba(255,255,255,0.25);animation:vf-breathe 3.6s ease-in-out infinite}
+.vf-ping{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:1.5px solid rgba(79,60,240,0.5);animation:vf-ping 3.6s ease-out infinite}
 .vf-ping2{animation-delay:1.2s}
 .vf-ping3{animation-delay:2.4s}
 
 .vf-orbit{position:absolute;left:50%;top:50%;width:0;height:0;animation:vf-spin 5.5s linear infinite}
 .vf-orbit-b{animation-duration:8s;animation-direction:reverse}
-.vf-comet{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#fff7e6,#fbbf24 60%,rgba(251,191,36,0) 72%);box-shadow:0 0 20px 6px rgba(251,191,36,0.8);transform:translateY(-140px)}
-.vf-comet-b{width:10px;height:10px;left:-5px;top:-5px;background:radial-gradient(circle,#ffe9c2,#fb923c 60%,rgba(249,115,22,0) 74%);box-shadow:0 0 16px 4px rgba(249,115,22,0.6);transform:translateY(-140px)}
+.vf-comet{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#fff7e6,#8B83FF 60%,rgba(139,131,255,0) 72%);box-shadow:0 0 20px 6px rgba(139,131,255,0.8);transform:translateY(-140px)}
+.vf-comet-b{width:10px;height:10px;left:-5px;top:-5px;background:radial-gradient(circle,#ffe9c2,#8B83FF 60%,rgba(79,60,240,0) 74%);box-shadow:0 0 16px 4px rgba(79,60,240,0.6);transform:translateY(-140px)}
 
 .vf-node{position:absolute;left:50%;top:50%;width:128px;margin:-34px 0 0 -64px;display:flex;flex-direction:column;align-items:center;text-align:center;animation:vf-nodepulse 3.6s ease-in-out infinite}
 .vf-n1{transform:translateY(-150px)}

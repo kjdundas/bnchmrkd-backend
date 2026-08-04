@@ -105,26 +105,26 @@ export default function ProgramsPanel({ user, fetchContext }) {
   }
 
   const lbl = 'block text-[10px] uppercase tracking-wider text-slate-500 mono-font mb-1'
-  const fld = 'w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30'
+  const fld = 'w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30'
 
   return (
     <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Dumbbell className="w-4 h-4 text-orange-400" />
+          <Dumbbell className="w-4 h-4 text-indigo-400" />
           <h3 className="text-[13px] font-bold text-white landing-font">Training Programs</h3>
         </div>
         {!showForm && (
           <button onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)' }}>
+            style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
             <Sparkles className="w-3.5 h-3.5" /> Generate
           </button>
         )}
       </div>
 
       {showForm && (
-        <div className="rounded-xl p-3 mb-3 space-y-3" style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.2)' }}>
+        <div className="rounded-xl p-3 mb-3 space-y-3" style={{ background: 'rgba(79,60,240,0.05)', border: '1px solid rgba(79,60,240,0.2)' }}>
           <div className="grid grid-cols-2 gap-2.5">
             <div>
               <label className={lbl}>Season phase</label>
@@ -193,7 +193,7 @@ export default function ProgramsPanel({ user, fetchContext }) {
           <div className="flex gap-2 pt-1">
             <button onClick={generate} disabled={generating}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold text-black landing-font disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)' }}>
+              style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
               {generating ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Building your plan…</> : <><Sparkles className="w-3.5 h-3.5" /> Generate program</>}
             </button>
             <button onClick={() => { setShowForm(false); setError('') }} disabled={generating}
@@ -240,7 +240,7 @@ function ExerciseRow({ ex }) {
     <div className="rounded-md px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-semibold text-slate-100 landing-font">{ex.name}</span>
-        {skip(ex.prescription) && <span className="text-[11px] font-bold text-orange-300 mono-font whitespace-nowrap flex-shrink-0">{ex.prescription}</span>}
+        {skip(ex.prescription) && <span className="text-[11px] font-bold text-indigo-300 mono-font whitespace-nowrap flex-shrink-0">{ex.prescription}</span>}
       </div>
       {meta.length > 0 && <p className="text-[10px] text-slate-400 mono-font mt-0.5">{meta.join(' · ')}</p>}
       {skip(ex.cue) && <p className="text-[10px] text-slate-500 landing-font italic mt-0.5">{ex.cue}</p>}
@@ -299,7 +299,7 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
           {total > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: allDone ? '#34d399' : 'linear-gradient(90deg,#f97316,#fbbf24)' }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: allDone ? '#34d399' : 'linear-gradient(90deg,#4F3CF0,#8B83FF)' }} />
               </div>
               <span className="text-[9px] mono-font flex-shrink-0" style={{ color: allDone ? '#34d399' : '#94a3b8' }}>{completed}/{total} this wk</span>
             </div>
@@ -316,7 +316,7 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
             </div>
           )}
           {s.maturity_note && (
-            <p className="text-[11px] text-orange-300 landing-font mt-3" style={{ background: 'rgba(249,115,22,0.06)', borderRadius: 8, padding: 8 }}>🌱 {s.maturity_note}</p>
+            <p className="text-[11px] text-indigo-300 landing-font mt-3" style={{ background: 'rgba(79,60,240,0.06)', borderRadius: 8, padding: 8 }}>🌱 {s.maturity_note}</p>
           )}
           {sessions.map((sess, i) => {
             const isDone = done.has(i)
@@ -325,7 +325,7 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[12px] font-bold text-white landing-font">{sess.label || `Session ${i + 1}`}</p>
-                  {sess.focus && <p className="text-[10px] text-orange-400 mono-font uppercase tracking-wider mt-0.5">{sess.focus}</p>}
+                  {sess.focus && <p className="text-[10px] text-indigo-400 mono-font uppercase tracking-wider mt-0.5">{sess.focus}</p>}
                 </div>
                 <button onClick={() => toggle(i)} disabled={busy === i}
                   className="flex items-center gap-1 text-[10px] font-bold landing-font flex-shrink-0 disabled:opacity-50"

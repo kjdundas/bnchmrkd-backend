@@ -74,3 +74,19 @@ select optgroup {
   font-weight: 600;
   color: #94a3b8;
 }
+
+/* ══ bnchmrkd brand colour tokens — Electric Indigo identity ══
+   Phase 1 establishes these; Phase 2 migrates surfaces from dark to the
+   light palette below, section by section. */
+:root {
+  --paper: #F6F7FB;        /* app / post background (cool off-white) */
+  --card: #FFFFFF;
+  --ink: #16181D;          /* primary text */
+  --muted: #5B5F6B;        /* secondary text */
+  --dim: #9AA0AC;          /* hints, labels */
+  --line: #E7E9F2;         /* hairline borders */
+  --indigo: #4F3CF0;       /* primary accent (on light) */
+  --indigo-bright: #8B83FF;/* accent on dark surfaces */
+  --indigo-deep: #141636;  /* deep-indigo surface (dark posts) */
+  --indigo-soft: #EDEBFE;  /* tint fills */
+}

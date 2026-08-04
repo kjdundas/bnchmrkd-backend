@@ -34,10 +34,10 @@ export function XPBar({ totalXP = 0, compact = false }) {
             )}
           </div>
         </div>
-        <div className="mono-font text-[11px] font-bold text-orange-400">{totalXP.toLocaleString()} XP</div>
+        <div className="mono-font text-[11px] font-bold text-indigo-400">{totalXP.toLocaleString()} XP</div>
       </div>
       <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#f97316,#fb923c)', transition: 'width .5s ease' }} />
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#4F3CF0,#8B83FF)', transition: 'width .5s ease' }} />
       </div>
     </div>
   )
@@ -48,9 +48,9 @@ export function StreakChip({ streak = 0 }) {
   if (!streak) return null
   return (
     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-      style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)' }}>
-      <Flame className="w-3.5 h-3.5" style={{ color: '#fb923c' }} />
-      <span className="mono-font text-[11px] font-bold text-orange-300">{streak} day{streak === 1 ? '' : 's'}</span>
+      style={{ background: 'rgba(79,60,240,0.12)', border: '1px solid rgba(79,60,240,0.25)' }}>
+      <Flame className="w-3.5 h-3.5" style={{ color: '#8B83FF' }} />
+      <span className="mono-font text-[11px] font-bold text-indigo-300">{streak} day{streak === 1 ? '' : 's'}</span>
     </div>
   )
 }
@@ -82,7 +82,7 @@ export function LogCelebration({ show, data, onClose }) {
         className="w-full max-w-sm rounded-2xl p-5"
         style={{
           background: 'linear-gradient(160deg,#1a1207,#0d0d0f)',
-          border: '1px solid rgba(249,115,22,0.3)',
+          border: '1px solid rgba(79,60,240,0.3)',
           boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
           animation: 'bnchPop .35s cubic-bezier(.2,.8,.2,1)',
         }}
@@ -90,10 +90,10 @@ export function LogCelebration({ show, data, onClose }) {
         <div className="flex items-start justify-between mb-3">
           <div>
             {data.isPB && (
-              <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-400 mb-1">★ Personal Best</div>
+              <div className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-400 mb-1">★ Personal Best</div>
             )}
             <div className="landing-font text-white text-xl font-bold leading-tight">+{data.total} XP</div>
-            {data.pbText && <div className="mono-font text-[11px] text-orange-300 mt-1">{data.pbText}</div>}
+            {data.pbText && <div className="mono-font text-[11px] text-indigo-300 mt-1">{data.pbText}</div>}
           </div>
           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
         </div>
@@ -106,7 +106,7 @@ export function LogCelebration({ show, data, onClose }) {
             {data.breakdown.map((b, i) => (
               <div key={i} className="flex items-center justify-between">
                 <span className="landing-font text-[11px] text-slate-400">{b.reason}</span>
-                <span className="mono-font text-[11px] font-bold text-orange-400">+{b.xp}</span>
+                <span className="mono-font text-[11px] font-bold text-indigo-400">+{b.xp}</span>
               </div>
             ))}
           </div>
@@ -115,8 +115,8 @@ export function LogCelebration({ show, data, onClose }) {
         {/* Level up */}
         {data.leveledUp && data.newLevel && (
           <div className="flex items-center gap-2 rounded-xl px-3 py-2 mb-2"
-            style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)' }}>
-            <ChevronUp className="w-4 h-4 text-orange-400" />
+            style={{ background: 'rgba(79,60,240,0.12)', border: '1px solid rgba(79,60,240,0.25)' }}>
+            <ChevronUp className="w-4 h-4 text-indigo-400" />
             <span className="landing-font text-[12px] font-bold text-white">
               Level up! {data.newLevel.icon} Lv {data.newLevel.level} · {data.newLevel.title}
             </span>

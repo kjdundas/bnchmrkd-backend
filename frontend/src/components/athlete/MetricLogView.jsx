@@ -9,8 +9,8 @@ import { analytics } from '../../lib/analytics'
 // ═══════════════════════════════════════════════════════════════════════
 // BRAND TOKENS — match the home page (slate gradient + orange accent)
 // ═══════════════════════════════════════════════════════════════════════
-const ORANGE      = '#f97316'
-const ORANGE_LITE = '#fb923c'
+const ORANGE      = '#4F3CF0'
+const ORANGE_LITE = '#8B83FF'
 
 // ═══════════════════════════════════════════════════════════════════════
 // METRIC CATALOG — unchanged data, restyled accents
@@ -19,7 +19,7 @@ const METRIC_CATALOG = {
   speed: {
     label: 'Speed',
     icon: Zap,
-    tint: '#f97316',
+    tint: '#4F3CF0',
     blurb: 'Sprint splits and top-end velocity.',
     metrics: [
       { key: 'sprint_10m',  label: '0–10 m split',          unit: 's',   type: 'number', step: 0.01, min: 1.2, max: 3.5,
@@ -43,7 +43,7 @@ const METRIC_CATALOG = {
   power: {
     label: 'Power',
     icon: Flame,
-    tint: '#fb923c',
+    tint: '#8B83FF',
     blurb: 'Jump and ballistic outputs.',
     metrics: [
       { key: 'cmj_height',     label: 'CMJ jump height',                 unit: 'cm',   type: 'number', step: 0.1, min: 10, max: 90,
@@ -301,7 +301,7 @@ export default function MetricLogView({ athleteId, PerformancePanel }) {
 function Header() {
   return (
     <div className="px-1">
-      <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300">
+      <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300">
         Log a session
       </p>
       <h2 className="landing-font text-white mt-1 text-2xl font-semibold leading-tight">
@@ -368,8 +368,8 @@ function PerformanceHeroCard({ onClick }) {
       onClick={onClick}
       className="relative w-full overflow-hidden rounded-2xl p-5 text-left transition-transform active:scale-[0.99]"
       style={{
-        background: `linear-gradient(160deg, rgba(249,115,22,0.12) 0%, rgba(249,115,22,0.04) 100%)`,
-        border: `1px solid rgba(249,115,22,0.3)`,
+        background: `linear-gradient(160deg, rgba(79,60,240,0.12) 0%, rgba(79,60,240,0.04) 100%)`,
+        border: `1px solid rgba(79,60,240,0.3)`,
       }}
     >
       <div
@@ -385,7 +385,7 @@ function PerformanceHeroCard({ onClick }) {
             >
               <Trophy className="w-4 h-4 text-slate-900" />
             </div>
-            <span className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300">
+            <span className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300">
               Primary
             </span>
           </div>
@@ -394,7 +394,7 @@ function PerformanceHeroCard({ onClick }) {
             Race or training mark in your discipline. Feeds your trajectory.
           </p>
         </div>
-        <Plus className="w-5 h-5 text-orange-300 flex-shrink-0 mt-1" />
+        <Plus className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-1" />
       </div>
     </button>
   )
@@ -440,7 +440,7 @@ function BackBar({ onBack, label }) {
   return (
     <button
       onClick={onBack}
-      className="inline-flex items-center gap-1 mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 hover:text-orange-300 transition-colors"
+      className="inline-flex items-center gap-1 mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 hover:text-indigo-300 transition-colors"
     >
       <ChevronLeft className="w-3.5 h-3.5" /> {label}
     </button>
@@ -518,7 +518,7 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
     <section
       className="relative overflow-hidden rounded-2xl"
       style={{
-        background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 60%, rgba(249,115,22,0.04) 100%)',
+        background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 60%, rgba(79,60,240,0.04) 100%)',
         border: '1px solid rgba(255,255,255,0.06)',
       }}
     >
@@ -594,7 +594,7 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
         <button
           type="button"
           onClick={() => setShowMore(s => !s)}
-          className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 hover:text-orange-300 transition-colors flex items-center gap-1"
+          className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 hover:text-indigo-300 transition-colors flex items-center gap-1"
         >
           <ChevronDown className={`w-3 h-3 transition-transform ${showMore ? 'rotate-180' : ''}`} />
           {showMore ? 'Hide details' : `${isToday ? 'Today' : date} · add notes`}
@@ -642,7 +642,7 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
       {metric.protocol && (
         <details className="relative px-5 pb-3 group">
           <summary
-            className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 cursor-pointer hover:text-orange-300 transition-colors flex items-center gap-1 list-none"
+            className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 cursor-pointer hover:text-indigo-300 transition-colors flex items-center gap-1 list-none"
           >
             <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
             Protocol
@@ -707,7 +707,7 @@ function ToastSlot({ toast }) {
           <p className="landing-font text-white text-sm font-semibold leading-tight">
             {toast.label}
           </p>
-          <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-orange-300 mt-0.5 tabular-nums">
+          <p className="mono-font text-[10px] uppercase tracking-[0.18em] text-indigo-300 mt-0.5 tabular-nums">
             {toast.value} {toast.unit} · saved
           </p>
         </div>

@@ -51,9 +51,9 @@ export default function InfoTooltip({
   const toneStyles =
     tone === 'orange'
       ? {
-          background: 'rgba(249,115,22,0.12)',
-          border: '1px solid rgba(249,115,22,0.35)',
-          color: '#fb923c',
+          background: 'rgba(79,60,240,0.12)',
+          border: '1px solid rgba(79,60,240,0.35)',
+          color: '#8B83FF',
         }
       : {
           background: 'rgba(148,163,184,0.08)',
@@ -131,14 +131,14 @@ export default function InfoTooltip({
             style={{
               background: 'rgba(10,13,20,0.96)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(249,115,22,0.22)',
+              border: '1px solid rgba(79,60,240,0.22)',
               boxShadow: '0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02)',
             }}
           >
             {title && (
               <div
                 className="mono-font text-[9px] uppercase tracking-[0.2em] mb-1"
-                style={{ color: '#fb923c' }}
+                style={{ color: '#8B83FF' }}
               >
                 {title}
               </div>

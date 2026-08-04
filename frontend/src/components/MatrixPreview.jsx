@@ -73,7 +73,7 @@ export default function MatrixPreview() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-950 to-slate-950 text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <header className="mb-8">
-          <div className="mono-font text-[10px] uppercase tracking-[0.3em] text-orange-400 mb-2">
+          <div className="mono-font text-[10px] uppercase tracking-[0.3em] text-indigo-400 mb-2">
             localhost preview · ?view=matrix
           </div>
           <h1 className="text-3xl sm:text-4xl font-semibold landing-font">
@@ -99,7 +99,7 @@ export default function MatrixPreview() {
                 onClick={() => setActiveKey(p.key)}
                 className={`px-3 py-1.5 rounded-full text-xs mono-font border transition-all ${
                   activeKey === p.key
-                    ? 'border-orange-400 text-orange-300 bg-orange-400/10 shadow-[0_0_12px_rgba(249,115,22,0.25)]'
+                    ? 'border-indigo-400 text-indigo-300 bg-indigo-400/10 shadow-[0_0_12px_rgba(79,60,240,0.25)]'
                     : 'border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'
                 }`}
               >

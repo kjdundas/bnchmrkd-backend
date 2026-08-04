@@ -9,7 +9,7 @@ import { gsap, useGSAP } from '../../lib/gsapSetup'
 import { PERFORMANCE_LEVELS, LEVEL_NAMES, getAgeGroup, isTimeDiscipline } from '../../lib/performanceLevels'
 import WAPointsCard from '../WAPointsCard'
 
-const O = '#f97316'
+const O = '#4F3CF0'
 
 function nounFor(disc) {
   if (/Throw|Put/.test(disc)) return 'thrower'
@@ -74,7 +74,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
 
   const heat = (f) => `hsl(28, 82%, ${11 + f * 44}%)`
   const onSeg = (t) => {
-    if (t.level === curLevel) return setRead({ tag: ['NOW', 'rgba(249,115,22,0.15)', O], msg: `${Her} level right now — ${t.name} (${bare(t.time)}${unit}).` })
+    if (t.level === curLevel) return setRead({ tag: ['NOW', 'rgba(79,60,240,0.15)', O], msg: `${Her} level right now — ${t.name} (${bare(t.time)}${unit}).` })
     const diff = +(isTime ? (pb - t.time) : (t.time - pb)).toFixed(2)
     if (diff > 0) setRead({ tag: ['TARGET', 'rgba(96,165,250,0.15)', '#60a5fa'], msg: `${t.name} needs ${bare(t.time)}${unit} — ${she}'s ${Math.abs(diff)}${unit} away.` })
     else setRead({ tag: ['CLEARED', 'rgba(52,211,153,0.15)', '#34d399'], msg: `${t.name} needs ${bare(t.time)}${unit} — ${she}'s already ${Math.abs(diff)}${unit} inside it.` })
@@ -131,13 +131,13 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
           {gap != null ? (<>
             <div style={{ ...numS, color: '#34d399' }} className="ss-num">+{gap}<span style={numU}>{unit}</span></div>
             <div style={sayS}><b style={bS}>That's all that separates {her} from {nextName} level</b> — roughly one strong season.</div>
-          </>) : (<><div style={{ ...numS, color: '#fbbf24' }} className="ss-num">Top</div><div style={sayS}>{She}'s already at the ceiling tier for {her} age group.</div></>)}
+          </>) : (<><div style={{ ...numS, color: '#8B83FF' }} className="ss-num">Top</div><div style={sayS}>{She}'s already at the ceiling tier for {her} age group.</div></>)}
         </Beat>
       </div>
 
       {/* PRO COMPARISON */}
       {pro && (
-        <div className="ss-pro" style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, padding: '28px 30px 24px', margin: '6px 0 18px', border: '1px solid rgba(249,115,22,0.3)', background: 'radial-gradient(120% 140% at 50% 0%, rgba(249,115,22,0.14) 0%, rgba(249,115,22,0.04) 38%, rgba(10,10,12,0) 72%), #101014', boxShadow: '0 30px 80px -40px rgba(249,115,22,0.5)' }}>
+        <div className="ss-pro" style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, padding: '28px 30px 24px', margin: '6px 0 18px', border: '1px solid rgba(79,60,240,0.3)', background: 'radial-gradient(120% 140% at 50% 0%, rgba(79,60,240,0.14) 0%, rgba(79,60,240,0.04) 38%, rgba(10,10,12,0) 72%), #101014', boxShadow: '0 30px 80px -40px rgba(79,60,240,0.5)' }}>
           <div className="mono-font" style={{ textAlign: 'center', fontSize: 11, letterSpacing: '.22em', textTransform: 'uppercase', color: O, marginBottom: 20 }}>{Her} closest pro at the same age</div>
           <div className="ss-pro-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1.1fr', alignItems: 'center', gap: 18 }}>
             <div data-side="you" style={{ textAlign: 'right' }}>
@@ -151,7 +151,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
             </div>
             <div data-side="pro" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.13)', borderRadius: 14, padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'linear-gradient(135deg,#f97316,#fbbf24)', color: '#0a0a0b', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pro.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
+                <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)', color: '#0a0a0b', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pro.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
                 <div><div style={{ fontSize: 17, fontWeight: 700 }}>{pro.name}</div><div className="mono-font" style={{ fontSize: 11, color: '#6b7280' }}>{pro.nationality} · {disc}</div></div>
               </div>
               <div style={lblS}>AT AGE {pro.closestAge}</div>
@@ -194,7 +194,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
           </div>
           <div style={{ marginTop: 22, minHeight: 44, background: 'rgba(255,255,255,0.03)', border: `1px solid ${read ? read.tag[2] : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, padding: '11px 15px', fontSize: 14, color: '#9aa1ac', display: 'flex', alignItems: 'center', gap: 12, transition: 'border-color .2s' }}>
             {read ? (<><span className="mono-font" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: read.tag[1], color: read.tag[2] }}>{read.tag[0]}</span><span dangerouslySetInnerHTML={{ __html: read.msg }} /></>)
-              : (<><span className="mono-font" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: 'rgba(249,115,22,0.15)', color: O }}>NOW</span><span>{She}'s at <b style={{ color: '#f5f5f7' }}>{pl?.name}</b> level. <b style={{ color: '#f5f5f7' }}>Hover a level</b> to see the gap.</span></>)}
+              : (<><span className="mono-font" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: 'rgba(79,60,240,0.15)', color: O }}>NOW</span><span>{She}'s at <b style={{ color: '#f5f5f7' }}>{pl?.name}</b> level. <b style={{ color: '#f5f5f7' }}>Hover a level</b> to see the gap.</span></>)}
           </div>
         </div>
       )}
@@ -212,7 +212,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
 }
 
 function Beat({ cls, accent, step, children }) {
-  const bg = cls === 's1' ? 'rgba(148,163,184,0.05)' : cls === 's2' ? 'rgba(249,115,22,0.07)' : 'rgba(52,211,153,0.07)'
+  const bg = cls === 's1' ? 'rgba(148,163,184,0.05)' : cls === 's2' ? 'rgba(79,60,240,0.07)' : 'rgba(52,211,153,0.07)'
   return (
     <div className="ss-beat" style={{ position: 'relative', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', background: bg }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accent }} />
@@ -225,7 +225,7 @@ function Dots({ pct }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(20,1fr)', gap: 3, marginBottom: 12 }}>
       {Array.from({ length: 100 }).map((_, i) => (
-        <div key={i} style={{ aspectRatio: '1', borderRadius: '50%', background: i < pct ? '#f97316' : 'rgba(255,255,255,0.09)' }} />
+        <div key={i} style={{ aspectRatio: '1', borderRadius: '50%', background: i < pct ? '#4F3CF0' : 'rgba(255,255,255,0.09)' }} />
       ))}
     </div>
   )
@@ -234,6 +234,6 @@ const numS = { fontSize: 50, fontWeight: 700, letterSpacing: '-0.03em', lineHeig
 const numU = { fontSize: 21, color: '#9aa1ac' }
 const sayS = { color: '#9aa1ac', fontSize: 14.5, lineHeight: 1.5, marginTop: 'auto', paddingTop: 16 }
 const bS = { color: '#f5f5f7', fontWeight: 600 }
-const arrowS = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, color: '#f97316', fontSize: 26 }
+const arrowS = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, color: '#4F3CF0', fontSize: 26 }
 const lblS = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.14em', color: '#6b7280', marginBottom: 6 }
-const chipS = { fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.22)', padding: '4px 10px', borderRadius: 6 }
+const chipS = { fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#8B83FF', background: 'rgba(139,131,255,0.1)', border: '1px solid rgba(139,131,255,0.22)', padding: '4px 10px', borderRadius: 6 }

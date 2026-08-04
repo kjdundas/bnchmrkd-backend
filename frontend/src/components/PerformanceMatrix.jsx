@@ -23,7 +23,7 @@ import {
 import { isTimeDiscipline } from '../lib/performanceLevels';
 
 const TOTAL_COLS = TIER_COUNT_SENIOR;   // 7. T7 is Senior-only, but keeps column alignment.
-const BRAND = '#fb923c';                 // apex orange, used sparingly.
+const BRAND = '#8B83FF';                 // apex orange, used sparingly.
 
 // Format a threshold for display depending on discipline type.
 function formatValue(value, discipline) {
@@ -50,8 +50,8 @@ function tierBackground(tier, reachable) {
   const op = TIER_OPACITY[tier] ?? 0;
   // Two-stop wash for subtle depth — all within the orange palette.
   return `linear-gradient(135deg,
-    rgba(251, 146, 60, ${op}) 0%,
-    rgba(234, 88, 12, ${Math.max(op - 0.08, 0)}) 100%)`;
+    rgba(139, 131, 255, ${op}) 0%,
+    rgba(59, 52, 201, ${Math.max(op - 0.08, 0)}) 100%)`;
 }
 
 /**
@@ -110,9 +110,9 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
 
   return (
     <div
-      className="relative rounded-2xl border border-orange-900/40 bg-[#0a0604] p-3 sm:p-6 md:p-8 overflow-hidden"
+      className="relative rounded-2xl border border-indigo-900/40 bg-[#0a0604] p-3 sm:p-6 md:p-8 overflow-hidden"
       style={{
-        boxShadow: '0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(251,146,60,0.05) inset',
+        boxShadow: '0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,131,255,0.05) inset',
       }}
     >
       {/* Faint radial wash — editorial atmosphere, not decoration */}
@@ -121,19 +121,19 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse at 95% 105%, rgba(251,146,60,0.12) 0%, transparent 55%)',
+            'radial-gradient(ellipse at 95% 105%, rgba(139,131,255,0.12) 0%, transparent 55%)',
         }}
       />
 
       {/* Header */}
       <div className="relative flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-6 mb-4 sm:mb-6">
         <div className="flex-1 min-w-0">
-          <div className="mono-font text-[10px] uppercase tracking-[0.3em] text-orange-400/80 mb-2">
+          <div className="mono-font text-[10px] uppercase tracking-[0.3em] text-indigo-400/80 mb-2">
             Performance Matrix
           </div>
           <h3 className="landing-font text-xl sm:text-2xl md:text-3xl font-semibold text-white tracking-tight leading-none">
             {discipline}
-            <span className="text-orange-400/60 mx-2">·</span>
+            <span className="text-indigo-400/60 mx-2">·</span>
             <span className="text-slate-300 font-normal">{gender}</span>
           </h3>
           <p className="mt-2 sm:mt-3 text-[12px] sm:text-[13px] text-slate-400 leading-relaxed max-w-xl">
@@ -146,8 +146,8 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
           <div
             className="shrink-0 px-4 py-3 rounded-lg border backdrop-blur-sm"
             style={{
-              borderColor: `rgba(251, 146, 60, ${TIER_OPACITY[current.tier] + 0.15})`,
-              background: `rgba(251, 146, 60, ${TIER_OPACITY[current.tier] * 0.2})`,
+              borderColor: `rgba(139, 131, 255, ${TIER_OPACITY[current.tier] + 0.15})`,
+              background: `rgba(139, 131, 255, ${TIER_OPACITY[current.tier] * 0.2})`,
             }}
           >
             <div className="mono-font text-[9px] uppercase tracking-[0.25em] text-slate-500">
@@ -180,8 +180,8 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                   className="mono-font text-[9px] sm:text-[11px] font-semibold tracking-widest"
                   style={{
                     color: isSeniorOnly
-                      ? 'rgba(251,146,60,0.95)'
-                      : `rgba(251, 146, 60, ${Math.max(TIER_OPACITY[ci + 1], 0.35)})`,
+                      ? 'rgba(139,131,255,0.95)'
+                      : `rgba(139, 131, 255, ${Math.max(TIER_OPACITY[ci + 1], 0.35)})`,
                   }}
                 >
                   T{ci + 1}
@@ -231,8 +231,8 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                         ? tierBackground(tier, true)
                         : 'repeating-linear-gradient(135deg, rgba(24,10,4,0.6) 0 3px, rgba(10,6,4,0.6) 3px 6px)',
                       border: reachable
-                        ? `1px solid rgba(251, 146, 60, ${Math.max(TIER_OPACITY[tier] - 0.2, 0.12)})`
-                        : '1px solid rgba(251, 146, 60, 0.04)',
+                        ? `1px solid rgba(139, 131, 255, ${Math.max(TIER_OPACITY[tier] - 0.2, 0.12)})`
+                        : '1px solid rgba(139, 131, 255, 0.04)',
                       // Visited cells get a faint inset ring; current cell gets a
                       // prominent dashed brand-orange frame *outside* the border,
                       // plus a soft halo — so the threshold text stays untouched.
@@ -240,7 +240,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                         ? `inset 0 0 0 1.5px rgba(10,6,4,0.9),
                            0 0 0 2px rgba(10,6,4,1),
                            0 0 0 3.5px ${BRAND},
-                           0 0 22px 2px rgba(251,146,60,0.55)`
+                           0 0 22px 2px rgba(139,131,255,0.55)`
                         : isVisited
                         ? `inset 0 0 0 1.5px rgba(${textIsDark ? '10,6,4' : '255,255,255'}, ${0.15 + progress * 0.25})`
                         : 'none',
@@ -274,7 +274,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-full mono-font text-[10px] text-orange-900/60">
+                      <div className="flex items-center justify-center h-full mono-font text-[10px] text-indigo-900/60">
                         —
                       </div>
                     )}
@@ -309,7 +309,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                             ? `1.5px solid #0a0604`
                             : `1px solid rgba(${textIsDark ? '10,6,4' : '255,255,255'}, ${chipIntensity * 0.6})`,
                           boxShadow: isCurrent
-                            ? `0 0 12px 2px rgba(251,146,60,0.6), 0 2px 6px rgba(0,0,0,0.5)`
+                            ? `0 0 12px 2px rgba(139,131,255,0.6), 0 2px 6px rgba(0,0,0,0.5)`
                             : 'none',
                           zIndex: 3,
                         }}
@@ -328,7 +328,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                           fontSize: '8px',
                           color: '#0a0604',
                           background: BRAND,
-                          boxShadow: '0 2px 10px rgba(251,146,60,0.5)',
+                          boxShadow: '0 2px 10px rgba(139,131,255,0.5)',
                           zIndex: 4,
                         }}
                       >
@@ -358,7 +358,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                 <div
                   className="w-px h-3"
                   style={{
-                    background: `rgba(251, 146, 60, ${Math.max(TIER_OPACITY[ci + 1], 0.25)})`,
+                    background: `rgba(139, 131, 255, ${Math.max(TIER_OPACITY[ci + 1], 0.25)})`,
                   }}
                 />
               </div>
@@ -385,7 +385,7 @@ export default function PerformanceMatrix({ discipline, gender, trajectory = [] 
                     style={{
                       color: isApex
                         ? BRAND
-                        : `rgba(251, 146, 60, ${Math.max(TIER_OPACITY[ci + 1], 0.55)})`,
+                        : `rgba(139, 131, 255, ${Math.max(TIER_OPACITY[ci + 1], 0.55)})`,
                       fontSize: isApex ? '10px' : '9px',
                     }}
                   >

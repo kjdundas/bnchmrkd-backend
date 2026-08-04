@@ -8,7 +8,7 @@ import { useState, useRef } from 'react'
 import { gsap, useGSAP } from '../../lib/gsapSetup'
 import { ArrowRight, ArrowLeft, Zap } from 'lucide-react'
 
-const ORANGE = '#f97316'
+const ORANGE = '#4F3CF0'
 
 function disciplineList({ isThrowsMode, isJumpsMode, isDistanceMode }) {
   if (isThrowsMode) return [
@@ -99,7 +99,7 @@ export default function QuickAnalysisFlow({
         </span>
       </div>
       <div className="relative z-10" style={{ height: 2, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: 34 }}>
-        <div data-rail-fill style={{ height: '100%', width: `${((step + 1) / total) * 100}%`, background: `linear-gradient(90deg, ${ORANGE}, #fbbf24)` }} />
+        <div data-rail-fill style={{ height: '100%', width: `${((step + 1) / total) * 100}%`, background: `linear-gradient(90deg, ${ORANGE}, #8B83FF)` }} />
       </div>
 
       {/* panels */}
@@ -136,7 +136,7 @@ export default function QuickAnalysisFlow({
             <>
               <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>How old are you?</h3>
               <p className="landing-font" style={{ color: '#94a3b8', marginBottom: 30, fontSize: 15 }}>Your age sets the development cohort we compare you to.</p>
-              <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-orange-500 transition-colors duration-200" style={{ maxWidth: 260 }}>
+              <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-indigo-500 transition-colors duration-200" style={{ maxWidth: 260 }}>
                 <input autoFocus type="text" inputMode="numeric" placeholder="22" value={data.age}
                   onChange={(e) => set({ age: e.target.value.replace(/[^\d]/g, '').slice(0, 2) })}
                   onKeyDown={(e) => onEnter(e, () => ageValid && go(3))}
@@ -155,7 +155,7 @@ export default function QuickAnalysisFlow({
             <>
               <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>Your personal best?</h3>
               <p className="landing-font" style={{ color: '#94a3b8', marginBottom: 30, fontSize: 15 }}>{data.discipline} · {isThrowsMode ? 'best mark' : 'best time'}</p>
-              <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-orange-500 transition-colors duration-200" style={{ maxWidth: 340 }}>
+              <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-indigo-500 transition-colors duration-200" style={{ maxWidth: 340 }}>
                 <input autoFocus type="text" inputMode="decimal" placeholder={pbPlaceholder} value={data.personalBest}
                   onChange={(e) => set({ personalBest: e.target.value.replace(/[^\d.:]/g, '') })}
                   onKeyDown={(e) => onEnter(e, () => pbValid && onSubmit())}
@@ -200,7 +200,7 @@ export default function QuickAnalysisFlow({
             className="landing-font inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-[15px] font-bold transition-all duration-150 active:scale-[0.98]"
             style={(step === 2 && !ageValid)
               ? { color: '#52525b', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'not-allowed' }
-              : { color: '#0a0a0b', background: ORANGE, boxShadow: '0 8px 24px -10px rgba(249,115,22,0.8)' }}>
+              : { color: '#0a0a0b', background: ORANGE, boxShadow: '0 8px 24px -10px rgba(79,60,240,0.8)' }}>
             Next <ArrowRight className="w-4 h-4" />
           </button>
         ) : (
@@ -208,7 +208,7 @@ export default function QuickAnalysisFlow({
             className="landing-font inline-flex items-center gap-2.5 rounded-xl px-8 py-4 text-base font-extrabold transition-transform duration-150 active:scale-[0.98]"
             style={(loading || !pbValid)
               ? { color: '#52525b', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'not-allowed' }
-              : { color: '#fff', background: 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%)', border: '1px solid rgba(249,115,22,0.5)', boxShadow: '0 10px 30px -8px rgba(249,115,22,0.6)' }}>
+              : { color: '#fff', background: 'linear-gradient(135deg, #3B34C9 0%, #4F3CF0 50%, #8B83FF 100%)', border: '1px solid rgba(79,60,240,0.5)', boxShadow: '0 10px 30px -8px rgba(79,60,240,0.6)' }}>
             <Zap className="w-5 h-5" /> {loading ? 'Analysing…' : 'Benchmark'}
           </button>
         )}

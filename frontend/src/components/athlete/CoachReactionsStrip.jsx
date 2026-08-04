@@ -46,9 +46,9 @@ export default function CoachReactionsStrip({ athleteId }) {
   const events = Object.values(byEvent).sort((a, b) => new Date(b.latest) - new Date(a.latest)).slice(0, 4)
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.18)' }}>
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(79,60,240,0.05)', border: '1px solid rgba(79,60,240,0.18)' }}>
       <div className="flex items-center gap-2 mb-2.5">
-        <Sparkles className="w-4 h-4 text-orange-400" />
+        <Sparkles className="w-4 h-4 text-indigo-400" />
         <h3 className="text-[13px] font-bold text-white landing-font">Cheers from your coach</h3>
       </div>
       <div className="space-y-2">

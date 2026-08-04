@@ -12,7 +12,7 @@ import { callRpc, insertInto, deleteFrom } from '../../lib/supabaseRest'
 const EMOJIS = ['👏', '🔥', '💪']
 
 const KIND = {
-  result:  { icon: Trophy, color: '#fbbf24', verb: 'logged a result' },
+  result:  { icon: Trophy, color: '#8B83FF', verb: 'logged a result' },
   test:    { icon: Gauge, color: '#38bdf8', verb: 'logged a test' },
   session: { icon: Dumbbell, color: '#34d399', verb: 'completed a session' },
 }
@@ -80,7 +80,7 @@ export default function CoachFeed({ currentUserId, coachName }) {
   return (
     <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <div className="flex items-center gap-2 mb-3">
-        <Activity className="w-4 h-4 text-orange-400" />
+        <Activity className="w-4 h-4 text-indigo-400" />
         <h3 className="text-[13px] font-bold text-white landing-font">Squad activity</h3>
         <span className="ml-auto text-[10px] text-slate-500 landing-font">React to give your athletes a nudge</span>
       </div>
@@ -111,7 +111,7 @@ export default function CoachFeed({ currentUserId, coachName }) {
                     <button key={e} onClick={() => toggle(ev, e)} disabled={busy === `${ev.event_key}${e}`}
                       className="w-7 h-7 rounded-lg text-[13px] leading-none transition-all disabled:opacity-50"
                       style={on
-                        ? { background: 'rgba(249,115,22,0.18)', border: '1px solid rgba(249,115,22,0.45)' }
+                        ? { background: 'rgba(79,60,240,0.18)', border: '1px solid rgba(79,60,240,0.45)' }
                         : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', filter: 'grayscale(0.4)', opacity: 0.7 }}>
                       {e}
                     </button>

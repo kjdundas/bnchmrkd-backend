@@ -78,7 +78,7 @@ export default function InviteAthletePanel({ onClose }) {
     <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-orange-400" />
+          <Mail className="w-4 h-4 text-indigo-400" />
           <h3 className="text-[12px] font-semibold text-white uppercase tracking-wider landing-font">Invite Athlete</h3>
         </div>
         {onClose && <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>}
@@ -93,12 +93,12 @@ export default function InviteAthletePanel({ onClose }) {
           type="email" value={email} onChange={e => setEmail(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && sendInvite()}
           placeholder="athlete@email.com"
-          className="flex-1 px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+          className="flex-1 px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
         />
         <button onClick={sendInvite} disabled={sending}
           className="px-4 py-2 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110 transition-all disabled:opacity-60 flex items-center gap-1.5"
-          style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
+          style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)' }}>
           {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
           {sending ? 'Sending…' : 'Send invite'}
         </button>

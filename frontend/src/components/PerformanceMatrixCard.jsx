@@ -188,16 +188,16 @@ export default function PerformanceMatrixCard({
       />
 
       {/* ── Trajectory editor ──────────────────────────────────────────── */}
-      <div className="mt-4 rounded-xl border border-orange-900/30 bg-[#0a0604]/70 overflow-hidden">
+      <div className="mt-4 rounded-xl border border-indigo-900/30 bg-[#0a0604]/70 overflow-hidden">
         <button
           type="button"
           onClick={() => setEditorOpen(o => !o)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-orange-950/20 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-indigo-950/20 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div
               className="mono-font text-[10px] uppercase tracking-[0.22em]"
-              style={{ color: '#fb923c' }}
+              style={{ color: '#8B83FF' }}
             >
               Your Trajectory
             </div>
@@ -207,19 +207,19 @@ export default function PerformanceMatrixCard({
           </div>
           <div className="flex items-center gap-2">
             {!editorOpen && missingAgeGroups.length > 0 && (
-              <span className="mono-font text-[10px] text-orange-300/80">
+              <span className="mono-font text-[10px] text-indigo-300/80">
                 + add past PBs
               </span>
             )}
-            <span className="text-orange-400 text-sm">{editorOpen ? '−' : '+'}</span>
+            <span className="text-indigo-400 text-sm">{editorOpen ? '−' : '+'}</span>
           </div>
         </button>
 
         {editorOpen && (
-          <div className="px-4 pb-4 pt-1 border-t border-orange-900/20">
+          <div className="px-4 pb-4 pt-1 border-t border-indigo-900/20">
             <p className="mono-font text-[10px] text-slate-500 mb-3 leading-relaxed">
               Enter your best {discipline} from each age group you competed in.
-              The current-age PB (<span className="text-orange-400">{currentAgeGroup}</span>)
+              The current-age PB (<span className="text-indigo-400">{currentAgeGroup}</span>)
               is locked from your benchmark.
             </p>
 
@@ -240,22 +240,22 @@ export default function PerformanceMatrixCard({
                     key={ag}
                     className={`rounded-lg border transition-all ${
                       isCurrent
-                        ? 'border-orange-500/50 bg-orange-500/5'
+                        ? 'border-indigo-500/50 bg-indigo-500/5'
                         : stored != null
-                        ? 'border-orange-900/40 bg-orange-950/10'
+                        ? 'border-indigo-900/40 bg-indigo-950/10'
                         : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
                     } px-2.5 py-2`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className={`mono-font text-[9px] uppercase tracking-widest ${
-                          isCurrent ? 'text-orange-400' : 'text-slate-500'
+                          isCurrent ? 'text-indigo-400' : 'text-slate-500'
                         }`}
                       >
                         {ag}
                       </span>
                       {isCurrent && (
-                        <span className="mono-font text-[8px] text-orange-400/80">
+                        <span className="mono-font text-[8px] text-indigo-400/80">
                           now
                         </span>
                       )}
@@ -278,7 +278,7 @@ export default function PerformanceMatrixCard({
                       placeholder={placeholderFor(discipline)}
                       className={`w-full bg-transparent mono-font text-sm font-semibold tabular-nums focus:outline-none ${
                         isCurrent
-                          ? 'text-orange-300 cursor-not-allowed'
+                          ? 'text-indigo-300 cursor-not-allowed'
                           : 'text-white placeholder:text-slate-700'
                       }`}
                       aria-label={`Personal best at ${ag}`}

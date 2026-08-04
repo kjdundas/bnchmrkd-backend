@@ -490,7 +490,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         >
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)', boxShadow: '0 4px 16px rgba(249,115,22,0.4)' }}
+            style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)', boxShadow: '0 4px 16px rgba(79,60,240,0.4)' }}
           >
             <span className="landing-font text-white font-semibold text-base">
               {(profile?.full_name || user?.email || 'A')[0].toUpperCase()}
@@ -507,7 +507,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         </button>
         <button
           onClick={onSignOut}
-          className="p-2 rounded-lg text-slate-500 hover:text-orange-300 transition-colors"
+          className="p-2 rounded-lg text-slate-500 hover:text-indigo-300 transition-colors"
           style={{ border: '1px solid rgba(255,255,255,0.06)' }}
           title="Sign out"
         >
@@ -548,7 +548,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         <button
           onClick={() => setTab('home')}
           className="flex flex-col items-center gap-1 px-4 py-1.5 transition-colors"
-          style={{ color: tab === 'home' ? '#fb923c' : '#475569' }}
+          style={{ color: tab === 'home' ? '#8B83FF' : '#475569' }}
         >
           <Home className="w-[18px] h-[18px]" strokeWidth={2} />
           <span className="mono-font text-[9px] uppercase tracking-[0.18em]">Home</span>
@@ -556,7 +556,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         <button
           onClick={() => setTab('programs')}
           className="flex flex-col items-center gap-1 px-4 py-1.5 transition-colors"
-          style={{ color: tab === 'programs' ? '#fb923c' : '#475569' }}
+          style={{ color: tab === 'programs' ? '#8B83FF' : '#475569' }}
         >
           <Dumbbell className="w-[18px] h-[18px]" strokeWidth={2} />
           <span className="mono-font text-[9px] uppercase tracking-[0.18em]">Programs</span>
@@ -565,24 +565,24 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center transition-all"
             style={{
-              background: 'linear-gradient(135deg, #f97316, #fb923c)',
+              background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)',
               boxShadow: tab === 'log'
-                ? '0 0 0 4px rgba(249,115,22,0.25), 0 8px 24px rgba(249,115,22,0.5)'
-                : '0 6px 20px rgba(249,115,22,0.4)',
+                ? '0 0 0 4px rgba(79,60,240,0.25), 0 8px 24px rgba(79,60,240,0.5)'
+                : '0 6px 20px rgba(79,60,240,0.4)',
             }}
           >
             <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
           </div>
           <span
             className="mono-font text-[9px] uppercase tracking-[0.18em] mt-1.5"
-            style={{ color: tab === 'log' ? '#fb923c' : '#475569' }}
+            style={{ color: tab === 'log' ? '#8B83FF' : '#475569' }}
           >
             Log
           </span>
         </button>
         <button
           onClick={handleOpenTrajectory}
-          className="flex flex-col items-center gap-1 px-4 py-1.5 transition-colors text-slate-500 hover:text-orange-300"
+          className="flex flex-col items-center gap-1 px-4 py-1.5 transition-colors text-slate-500 hover:text-indigo-300"
         >
           <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
           <span className="mono-font text-[9px] uppercase tracking-[0.18em]">Trajectory</span>
@@ -654,7 +654,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
           >
             <div
               className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.15) 0%, transparent 65%)' }}
+              style={{ background: 'radial-gradient(circle, rgba(79,60,240,0.15) 0%, transparent 65%)' }}
             />
             <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mb-3 relative">
               Get started
@@ -673,8 +673,8 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
                 disabled={refreshing}
                 className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full landing-font text-sm font-semibold text-white transition-all hover:scale-[1.02] disabled:opacity-60"
                 style={{
-                  background: 'linear-gradient(135deg, #f97316, #fb923c)',
-                  boxShadow: '0 8px 24px rgba(249,115,22,0.4)',
+                  background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)',
+                  boxShadow: '0 8px 24px rgba(79,60,240,0.4)',
                 }}
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -685,15 +685,15 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
                 onClick={() => setTab('log')}
                 className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full landing-font text-sm font-semibold text-white transition-all hover:scale-[1.02]"
                 style={{
-                  background: 'linear-gradient(135deg, #f97316, #fb923c)',
-                  boxShadow: '0 8px 24px rgba(249,115,22,0.4)',
+                  background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)',
+                  boxShadow: '0 8px 24px rgba(79,60,240,0.4)',
                 }}
               >
                 <Plus className="w-4 h-4" /> Log a result
               </button>
             )}
             {error && (
-              <div className="mt-4 inline-flex items-center gap-2 text-orange-300 mono-font text-[10px] uppercase tracking-[0.18em] relative">
+              <div className="mt-4 inline-flex items-center gap-2 text-indigo-300 mono-font text-[10px] uppercase tracking-[0.18em] relative">
                 <AlertCircle className="w-3.5 h-3.5" /> {error}
               </div>
             )}
@@ -865,9 +865,9 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
             border: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <div className="w-1" style={{ background: 'linear-gradient(180deg, #f97316, #fb923c)' }} />
+          <div className="w-1" style={{ background: 'linear-gradient(180deg, #4F3CF0, #8B83FF)' }} />
           <div className="flex-1 px-4 py-3 flex items-center gap-3">
-            <Target className="w-4 h-4 text-orange-300 flex-shrink-0" />
+            <Target className="w-4 h-4 text-indigo-300 flex-shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
                 Next milestone
@@ -894,7 +894,7 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
       >
         <div
           className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(79,60,240,0.08) 0%, transparent 65%)' }}
         />
         <header className="relative px-5 pt-5 pb-3 flex items-end justify-between">
           <div>
@@ -927,12 +927,12 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
                 <div className="text-right flex-shrink-0">
                   <p
                     className="landing-font tabular-nums leading-none font-semibold text-base"
-                    style={{ color: isPB ? '#fb923c' : '#e2e8f0' }}
+                    style={{ color: isPB ? '#8B83FF' : '#e2e8f0' }}
                   >
                     {formatMark(r.value, view.discipline)}
                   </p>
                   {isPB && (
-                    <p className="mono-font text-[8px] uppercase tracking-[0.22em] mt-1 text-orange-300">
+                    <p className="mono-font text-[8px] uppercase tracking-[0.22em] mt-1 text-indigo-300">
                       ★ personal best
                     </p>
                   )}
@@ -1220,9 +1220,9 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
               const before = m.offset < 0
               const yrs = Math.abs(m.offset).toFixed(1)
               return (
-                <div className="mt-2 rounded-lg p-3" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                <div className="mt-2 rounded-lg p-3" style={{ background: 'rgba(79,60,240,0.06)', border: '1px solid rgba(79,60,240,0.2)' }}>
                   <p className="text-[12px] text-white font-semibold landing-font">
-                    Estimated stage: <span className="text-orange-400">{m.status}</span>
+                    Estimated stage: <span className="text-indigo-400">{m.status}</span>
                   </p>
                   <p className="text-[11px] text-slate-300 landing-font mt-0.5">
                     ~{yrs} yr {before ? 'before' : 'past'} peak height velocity · predicted PHV age ~{m.age_at_phv}
@@ -1387,8 +1387,8 @@ function RecentMetricsPanel({ athleteId, refreshKey, preloaded = null }) {
 
   // Category meta: brand-aligned palette + display order
   const CATEGORY_META = {
-    speed:           { label: 'Speed',          tint: '#f97316', order: 1 },
-    power:           { label: 'Power',          tint: '#fb923c', order: 2 },
+    speed:           { label: 'Speed',          tint: '#4F3CF0', order: 1 },
+    power:           { label: 'Power',          tint: '#8B83FF', order: 2 },
     strength:        { label: 'Strength',       tint: '#f43f5e', order: 3 },
     endurance:       { label: 'Endurance',      tint: '#3b82f6', order: 4 },
     mobility:        { label: 'Mobility',       tint: '#14b8a6', order: 5 },

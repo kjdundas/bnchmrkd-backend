@@ -80,9 +80,9 @@ export default function CheckInCard({ athleteId }) {
   // ── Edit / first-time state ──────────────────────────────────────────
   const canSave = form.soreness != null || form.mood != null || form.energy != null || form.sleep_hours != null || form.pain
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.2)' }}>
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(79,60,240,0.05)', border: '1px solid rgba(79,60,240,0.2)' }}>
       <div className="flex items-center gap-2 mb-3">
-        <HeartPulse className="w-4 h-4 text-orange-400" />
+        <HeartPulse className="w-4 h-4 text-indigo-400" />
         <h3 className="text-[13px] font-bold text-white landing-font">Daily check-in</h3>
         <span className="text-[10px] text-slate-500 landing-font">· 30 seconds</span>
       </div>
@@ -128,7 +128,7 @@ export default function CheckInCard({ athleteId }) {
       <div className="flex items-center gap-2 mt-4">
         <button onClick={save} disabled={saving || !canSave}
           className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold text-black landing-font disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)' }}>
+          style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
           {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</> : <><Check className="w-3.5 h-3.5" /> {row ? 'Update check-in' : 'Check in'}</>}
         </button>
         {row && <button onClick={() => { setEditing(false) }} className="px-3 py-2 text-[11px] text-slate-400 hover:text-white landing-font">Cancel</button>}
@@ -159,7 +159,7 @@ function Chip({ on, danger, onClick, children }) {
       style={on
         ? (danger
             ? { background: 'rgba(251,113,133,0.18)', color: '#fb7185', border: '1px solid rgba(251,113,133,0.45)' }
-            : { background: 'rgba(249,115,22,0.18)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.45)' })
+            : { background: 'rgba(79,60,240,0.18)', color: '#8B83FF', border: '1px solid rgba(79,60,240,0.45)' })
         : { background: 'rgba(0,0,0,0.25)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.08)' }}>
       {children}
     </button>

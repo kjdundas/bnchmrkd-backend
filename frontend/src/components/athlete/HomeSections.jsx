@@ -36,11 +36,11 @@ const AXIS_ICON = {
 // landing page and the coach dashboard: deep slate background, frosted
 // white-on-white cards (rgba(255,255,255,0.02–04)), Instrument Sans for
 // display copy, DM Mono for numerals, single signature orange accent
-// (#f97316 → #fb923c), generous rounded-xl corners, atmospheric ambient
+// (#4F3CF0 → #8B83FF), generous rounded-xl corners, atmospheric ambient
 // orange glow inside the hero section.
 // ═══════════════════════════════════════════════════════════════════════
-const ORANGE = '#f97316'
-const ORANGE_LITE = '#fb923c'
+const ORANGE = '#4F3CF0'
+const ORANGE_LITE = '#8B83FF'
 
 // AlmanacCard kept as-named for backward compat with existing call sites,
 // but it now renders the brand-aligned card treatment.
@@ -242,7 +242,7 @@ export function useTierTracker({ athleteId, pb, discipline, sex = 'M' }) {
 // Lightweight confetti — pure CSS via inline styles, no deps
 function Confetti({ count = 36 }) {
   const pieces = useMemo(() => Array.from({ length: count }, (_, i) => {
-    const colors = [ORANGE, ORANGE_LITE, '#fef3c7', '#fbbf24', '#fb923c', '#ffffff']
+    const colors = [ORANGE, ORANGE_LITE, '#fef3c7', '#8B83FF', '#8B83FF', '#ffffff']
     return {
       id: i,
       left: Math.random() * 100,
@@ -285,8 +285,8 @@ export function TierUpCelebration({ celebrating, onDismiss }) {
     'School':        '#64748b',
     'Club':          '#94a3b8',
     'National':      '#f59e0b',
-    'Continental':   '#fb923c',
-    'Olympic Final': '#f97316',
+    'Continental':   '#8B83FF',
+    'Olympic Final': '#4F3CF0',
     'World Record':  '#fef3c7',
   }[to]) || ORANGE
 
@@ -332,7 +332,7 @@ export function TierUpCelebration({ celebrating, onDismiss }) {
           animation: 'tierPop 0.7s cubic-bezier(.2,.9,.3,1.4)',
         }}
       >
-        <p className="mono-font text-[10px] uppercase tracking-[0.3em] text-orange-300 mb-3">
+        <p className="mono-font text-[10px] uppercase tracking-[0.3em] text-indigo-300 mb-3">
           New tier unlocked
         </p>
 
@@ -476,23 +476,23 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
       className="relative overflow-hidden rounded-2xl"
       style={{
         background:
-          'linear-gradient(135deg, rgba(249,115,22,0.12) 0%, rgba(2,6,23,0.4) 45%, rgba(59,130,246,0.06) 100%)',
-        border: '1px solid rgba(249,115,22,0.25)',
-        boxShadow: '0 20px 60px -20px rgba(249,115,22,0.35)',
+          'linear-gradient(135deg, rgba(79,60,240,0.12) 0%, rgba(2,6,23,0.4) 45%, rgba(59,130,246,0.06) 100%)',
+        border: '1px solid rgba(79,60,240,0.25)',
+        boxShadow: '0 20px 60px -20px rgba(79,60,240,0.35)',
       }}
     >
       {/* Drifting ambient orbs */}
       <div
         className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 rounded-full"
         style={{
-          background: 'radial-gradient(circle, rgba(249,115,22,0.25) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(79,60,240,0.25) 0%, transparent 65%)',
           animation: 'driftA 14s ease-in-out infinite',
         }}
       />
       <div
         className="pointer-events-none absolute -bottom-32 -right-32 w-80 h-80 rounded-full"
         style={{
-          background: 'radial-gradient(circle, rgba(251,146,60,0.18) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(139,131,255,0.18) 0%, transparent 65%)',
           animation: 'driftB 18s ease-in-out infinite',
         }}
       />
@@ -510,7 +510,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
       {/* Header — kicker + streak chip */}
       <header className="relative px-5 pt-5 pb-1 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300">
+          <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300">
             Your headline
           </p>
           <h2 className="landing-font text-white mt-1 text-[15px] font-medium leading-tight text-slate-300">
@@ -523,18 +523,18 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
           <div
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full flex-shrink-0"
             style={{
-              background: 'rgba(249,115,22,0.15)',
-              border: '1px solid rgba(249,115,22,0.4)',
+              background: 'rgba(79,60,240,0.15)',
+              border: '1px solid rgba(79,60,240,0.4)',
             }}
           >
             <Flame
-              className="w-3.5 h-3.5 text-orange-300"
+              className="w-3.5 h-3.5 text-indigo-300"
               style={{ animation: 'flameFlicker 1.6s ease-in-out infinite' }}
             />
-            <span className="mono-font text-[11px] tabular-nums text-orange-200 font-semibold">
+            <span className="mono-font text-[11px] tabular-nums text-indigo-200 font-semibold">
               {streak}
             </span>
-            <span className="mono-font text-[9px] uppercase tracking-[0.18em] text-orange-300/70">
+            <span className="mono-font text-[9px] uppercase tracking-[0.18em] text-indigo-300/70">
               day{streak === 1 ? '' : 's'}
             </span>
           </div>
@@ -546,7 +546,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
         <div className="grid grid-cols-3 gap-3">
           {/* ─── PERSONAL BEST (anchor) ─── */}
           <div className="relative">
-            <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-orange-300/80">
+            <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-indigo-300/80">
               Personal best
             </p>
             <div className="flex items-baseline gap-1 mt-1.5">
@@ -556,7 +556,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
                   fontSize: '2.25rem',
                   fontWeight: 700,
                   letterSpacing: '-0.03em',
-                  background: 'linear-gradient(180deg, #ffffff 0%, #fb923c 100%)',
+                  background: 'linear-gradient(180deg, #ffffff 0%, #8B83FF 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -571,7 +571,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
               style={{ background: `linear-gradient(90deg, ${ORANGE}, transparent)` }}
             />
             {currentTier && (
-              <p className="landing-font text-orange-300 text-[11px] font-semibold mt-2">
+              <p className="landing-font text-indigo-300 text-[11px] font-semibold mt-2">
                 {currentTier}
               </p>
             )}
@@ -590,9 +590,9 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
                 <span
                   className="mono-font text-[8px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded font-bold"
                   style={{
-                    background: 'rgba(249,115,22,0.25)',
-                    border: '1px solid rgba(249,115,22,0.5)',
-                    color: '#fb923c',
+                    background: 'rgba(79,60,240,0.25)',
+                    border: '1px solid rgba(79,60,240,0.5)',
+                    color: '#8B83FF',
                   }}
                 >
                   New PB
@@ -667,7 +667,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
           className="relative px-5 py-3 flex items-center gap-2"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <Target className="w-3.5 h-3.5 text-orange-300 flex-shrink-0" />
+          <Target className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
           <p className="landing-font text-slate-300 text-[12px] flex-1 truncate">
             Next tier:{' '}
             <span className="text-white font-semibold">{nextTier}</span>
@@ -729,7 +729,7 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }) {
       className="relative overflow-hidden rounded-2xl"
       style={{
         background:
-          'linear-gradient(135deg, rgba(124,58,237,0.10) 0%, rgba(2,6,23,0.4) 50%, rgba(249,115,22,0.08) 100%)',
+          'linear-gradient(135deg, rgba(124,58,237,0.10) 0%, rgba(2,6,23,0.4) 50%, rgba(79,60,240,0.08) 100%)',
         border: '1px solid rgba(167,139,250,0.25)',
       }}
     >
@@ -744,7 +744,7 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }) {
       <div
         className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full"
         style={{
-          background: 'radial-gradient(circle, rgba(249,115,22,0.14) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(79,60,240,0.14) 0%, transparent 65%)',
           animation: 'driftB 20s ease-in-out infinite',
         }}
       />
@@ -798,9 +798,9 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }) {
               left: `${Math.min(athletePct, rivalPct)}%`,
               width: `${Math.abs(athletePct - rivalPct)}%`,
               background: rival.ahead
-                ? 'linear-gradient(90deg, #34d399, #fb923c)'
+                ? 'linear-gradient(90deg, #34d399, #8B83FF)'
                 : 'linear-gradient(90deg, #fb7185, #a78bfa)',
-              boxShadow: '0 0 10px rgba(251,146,60,0.5)',
+              boxShadow: '0 0 10px rgba(139,131,255,0.5)',
             }}
           />
 
@@ -837,7 +837,7 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }) {
               }}
             />
             <div className="absolute left-1/2 -translate-x-1/2 -top-9 whitespace-nowrap text-center">
-              <p className="mono-font text-[8px] uppercase tracking-[0.18em] text-orange-300">you</p>
+              <p className="mono-font text-[8px] uppercase tracking-[0.18em] text-indigo-300">you</p>
               <p className="mono-font text-[10px] tabular-nums text-white mt-0.5">{fmt(pb)}</p>
             </div>
           </div>
@@ -862,8 +862,8 @@ const TIER_ACCENT = {
   'School':        { swatch: '#64748b', tag: 'developing' },
   'Club':          { swatch: '#94a3b8', tag: 'local' },
   'National':      { swatch: '#f59e0b', tag: 'national' },
-  'Continental':   { swatch: '#fb923c', tag: 'regional' },
-  'Olympic Final': { swatch: '#f97316', tag: 'international' },
+  'Continental':   { swatch: '#8B83FF', tag: 'regional' },
+  'Olympic Final': { swatch: '#4F3CF0', tag: 'international' },
   'World Record':  { swatch: '#fef3c7', tag: 'world' },
 }
 
@@ -884,7 +884,7 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
           <p className="landing-font text-slate-300 text-sm leading-relaxed">
             Log a result to place yourself on the ladder — from{' '}
             <span className="text-slate-200">{tiers[0]?.label || 'novice'}</span> all the way to{' '}
-            <span className="text-orange-300">{tiers[tiers.length - 1]?.label || 'world record'}</span>.
+            <span className="text-indigo-300">{tiers[tiers.length - 1]?.label || 'world record'}</span>.
           </p>
         </div>
       </AlmanacCard>
@@ -907,14 +907,14 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
       className="relative overflow-hidden rounded-2xl"
       style={{
         background:
-          'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 60%, rgba(249,115,22,0.04) 100%)',
+          'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 60%, rgba(79,60,240,0.04) 100%)',
         border: '1px solid rgba(255,255,255,0.06)',
       }}
     >
       {/* Ambient orange glow — atmospheric, anchors the eye to the right side */}
       <div
         className="pointer-events-none absolute -top-32 -right-32 w-80 h-80 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(79,60,240,0.18) 0%, transparent 65%)' }}
       />
       <div
         className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 rounded-full"
@@ -1074,7 +1074,7 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
             {nextTier && nextTier !== nearestTier && gap != null && (
               <>
                 . Next up —{' '}
-                <span className="text-orange-300 font-semibold">{nextTier.label}</span>{' '}
+                <span className="text-indigo-300 font-semibold">{nextTier.label}</span>{' '}
                 <span className="mono-font text-slate-400 text-[11px] tabular-nums ml-1">
                   ({higher ? '+' : '−'}
                   {Math.abs(gap).toFixed(2)}
@@ -1121,7 +1121,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
             type="button"
             onClick={onToggleInfo}
             aria-label={`About ${label}`}
-            className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-orange-300 transition-colors"
+            className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-300 transition-colors"
           >
             <Info className="w-3 h-3" />
           </button>
@@ -1130,8 +1130,8 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
               className="mono-font text-[8px] font-bold tracking-[0.14em] px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap"
               style={{
                 color: ORANGE_LITE,
-                background: 'rgba(249,115,22,0.12)',
-                border: '1px solid rgba(249,115,22,0.25)',
+                background: 'rgba(79,60,240,0.12)',
+                border: '1px solid rgba(79,60,240,0.25)',
               }}
             >
               #1 FOR {String(disciplineLabel || '').toUpperCase()}
@@ -1209,7 +1209,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
           <span className="text-slate-600 tabular-nums">
             {adjusted}
             {boost > 0 && (
-              <span className="text-orange-400/70 ml-1">(+{boost} for age)</span>
+              <span className="text-indigo-400/70 ml-1">(+{boost} for age)</span>
             )}
           </span>
         </div>
@@ -1222,19 +1222,19 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
           className="absolute z-20 left-0 right-0 mt-2 rounded-xl p-4"
           style={{
             background: 'rgba(15,23,42,0.98)',
-            border: '1px solid rgba(249,115,22,0.25)',
+            border: '1px solid rgba(79,60,240,0.25)',
             boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
             backdropFilter: 'blur(8px)',
           }}
         >
           <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-orange-300">
+            <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-indigo-300">
               {label}
             </p>
             <button
               type="button"
               onClick={onToggleInfo}
-              className="mono-font text-[10px] uppercase tracking-[0.14em] text-slate-500 hover:text-orange-300"
+              className="mono-font text-[10px] uppercase tracking-[0.14em] text-slate-500 hover:text-indigo-300"
               aria-label="Close"
             >
               close
@@ -1251,7 +1251,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
           <ul className="landing-font text-slate-300 text-[13px] leading-snug space-y-1">
             {(info.how || []).map((h, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-orange-300 mt-0.5">•</span>
+                <span className="text-indigo-300 mt-0.5">•</span>
                 <span>{h}</span>
               </li>
             ))}
@@ -1353,7 +1353,7 @@ export function AthleteDNALadder({ metrics, discipline, dob }) {
           )}
           {focus.length > 0 && (
             <div className="text-slate-400">
-              <span className="mono-font text-orange-300 mr-1.5 uppercase tracking-[0.14em] text-[9px]">
+              <span className="mono-font text-indigo-300 mr-1.5 uppercase tracking-[0.14em] text-[9px]">
                 ● focus
               </span>
               {focus.join(', ')}
@@ -1432,7 +1432,7 @@ export function LimitingFactorCard({ metrics, pb, discipline, sex = 'M' }) {
       <AlmanacCard kicker="The Limiter" title={`Log your first ${axisLabel.toLowerCase()} metric`}>
         <div className="px-5 py-4">
           <p className="landing-font text-slate-300 text-sm leading-snug">
-            <span className="text-orange-300 font-semibold">{axisLabel}</span> is the strongest physical
+            <span className="text-indigo-300 font-semibold">{axisLabel}</span> is the strongest physical
             predictor for your event. Log a CMJ or equivalent to reveal the single biggest gap holding
             back your PB.
           </p>
@@ -1445,7 +1445,7 @@ export function LimitingFactorCard({ metrics, pb, discipline, sex = 'M' }) {
     return (
       <AlmanacCard kicker="The Limiter" title="Your physicals match your PB">
         <div className="px-5 py-4 flex items-start gap-3">
-          <Trophy className="w-4 h-4 text-orange-300 flex-shrink-0 mt-0.5" />
+          <Trophy className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
           <p className="landing-font text-slate-300 text-sm leading-snug">
             Every measured axis sits at or above the expected envelope for athletes at your level. Keep
             logging to refine the picture.
@@ -1476,7 +1476,7 @@ export function LimitingFactorCard({ metrics, pb, discipline, sex = 'M' }) {
           </div>
           <div className="flex-1 text-right">
             <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">expected</p>
-            <p className="landing-font text-orange-300 leading-none mt-1 tabular-nums text-2xl font-semibold">
+            <p className="landing-font text-indigo-300 leading-none mt-1 tabular-nums text-2xl font-semibold">
               {Number(limiter.expectedValue).toFixed(2)}
               <span className="mono-font text-[10px] text-slate-500 ml-1.5">{limiter.unit}</span>
             </p>
@@ -1490,7 +1490,7 @@ export function LimitingFactorCard({ metrics, pb, discipline, sex = 'M' }) {
           {sprintLike && limiter.estImpactSec > 0 ? (
             <>
               Closing this gap is associated with roughly{' '}
-              <span className="text-orange-300 mono-font tabular-nums">
+              <span className="text-indigo-300 mono-font tabular-nums">
                 −{limiter.estImpactSec.toFixed(2)}s
               </span>{' '}
               on your {discipline} — per published sprint-research correlations.
@@ -1498,7 +1498,7 @@ export function LimitingFactorCard({ metrics, pb, discipline, sex = 'M' }) {
           ) : gapPct ? (
             <>
               You sit{' '}
-              <span className="text-orange-300 mono-font tabular-nums">{gapPct}%</span>{' '}
+              <span className="text-indigo-300 mono-font tabular-nums">{gapPct}%</span>{' '}
               below the typical {limiter.axisLabel.toLowerCase()} level for your PB. This axis is the
               one most likely to unlock distance.
             </>
@@ -1523,14 +1523,14 @@ export function ScienceSpotlight({ discipline }) {
     <AlmanacCard kicker={`Field note · ${card.metric}`} title={card.title}>
       <button onClick={() => setExpanded(e => !e)} className="w-full text-left">
         <div className="px-5 py-4 flex items-start gap-3">
-          <BookOpen className="w-4 h-4 text-orange-300 flex-shrink-0 mt-0.5" />
+          <BookOpen className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             {expanded ? (
               <>
                 <p className="landing-font text-slate-300 text-sm leading-relaxed">
                   {card.body}
                 </p>
-                <p className="mono-font text-[10px] uppercase tracking-[0.18em] mt-3 text-orange-300">
+                <p className="mono-font text-[10px] uppercase tracking-[0.18em] mt-3 text-indigo-300">
                   → {card.target}
                 </p>
               </>
@@ -1592,14 +1592,14 @@ export function SinceLastVisit({ athleteId, metrics, races, pb, discipline }) {
     >
       <div className="w-1" style={{ background: `linear-gradient(180deg, ${ORANGE}, ${ORANGE_LITE})` }} />
       <div className="flex-1 px-4 py-3 flex items-center gap-3">
-        <TrendingUp className="w-3.5 h-3.5 text-orange-300 flex-shrink-0" />
+        <TrendingUp className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
             Since last visit · {whenLabel}
           </p>
           <p className="landing-font text-slate-200 text-[12px] truncate">
             {newPbs > 0 && (
-              <span className="text-orange-300 font-semibold">
+              <span className="text-indigo-300 font-semibold">
                 {newPbs} new PB{newPbs > 1 ? 's' : ''}
                 {(newRaces.length > 0 || newMetrics.length > 0) && ' · '}
               </span>
@@ -1736,16 +1736,16 @@ function downloadShareImage({ recap, discipline, athleteName, higher }) {
       <stop offset="100%" stop-color="#0a0f1c"/>
     </linearGradient>
     <radialGradient id="orb1" cx="20%" cy="25%" r="40%">
-      <stop offset="0%" stop-color="#f97316" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#4F3CF0" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#4F3CF0" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="orb2" cx="80%" cy="80%" r="40%">
-      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#fb923c" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#8B83FF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#8B83FF" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="num" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#8B83FF"/>
     </linearGradient>
   </defs>
 
@@ -1753,7 +1753,7 @@ function downloadShareImage({ recap, discipline, athleteName, higher }) {
   <rect width="${W}" height="${H}" fill="url(#orb1)"/>
   <rect width="${W}" height="${H}" fill="url(#orb2)"/>
 
-  <text x="80" y="140" fill="#fb923c" font-family="DM Mono, monospace" font-size="28" letter-spacing="6">WEEKLY RECAP</text>
+  <text x="80" y="140" fill="#8B83FF" font-family="DM Mono, monospace" font-size="28" letter-spacing="6">WEEKLY RECAP</text>
   <text x="80" y="200" fill="#64748b" font-family="DM Mono, monospace" font-size="22" letter-spacing="4">${(discipline || '').toUpperCase()}</text>
 
   <line x1="80" y1="240" x2="${W - 80}" y2="240" stroke="#1e293b" stroke-width="2"/>
@@ -1771,7 +1771,7 @@ function downloadShareImage({ recap, discipline, athleteName, higher }) {
 
   ${topMetricLine ? `
   <text x="80" y="1080" fill="#94a3b8" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">TOP MOVER</text>
-  <text x="80" y="1170" fill="#fb923c" font-family="Instrument Sans, sans-serif" font-size="64" font-weight="600">${topMetricLine}</text>
+  <text x="80" y="1170" fill="#8B83FF" font-family="Instrument Sans, sans-serif" font-size="64" font-weight="600">${topMetricLine}</text>
   ` : ''}
 
   <line x1="80" y1="1240" x2="${W - 80}" y2="1240" stroke="#1e293b" stroke-width="2"/>
@@ -1824,8 +1824,8 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
     <section
       className="relative overflow-hidden rounded-2xl"
       style={{
-        background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(249,115,22,0.04) 100%)',
-        border: '1px solid rgba(249,115,22,0.18)',
+        background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(79,60,240,0.04) 100%)',
+        border: '1px solid rgba(79,60,240,0.18)',
       }}
     >
       <div
@@ -1835,7 +1835,7 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
 
       <header className="relative px-5 pt-5 pb-3 flex items-start justify-between gap-3">
         <div>
-          <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300">
+          <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300">
             Weekly recap
           </p>
           <h3 className="landing-font text-white mt-1 text-xl font-semibold leading-tight">

@@ -185,7 +185,7 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
                   {maturity && (
                     <span title={`~${Math.abs(maturity.offset).toFixed(1)}yr ${maturity.offset < 0 ? 'before' : 'past'} PHV (est.)`}
                       className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
-                      style={{ background: 'rgba(249,115,22,0.12)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.25)' }}>
+                      style={{ background: 'rgba(79,60,240,0.12)', color: '#8B83FF', border: '1px solid rgba(79,60,240,0.25)' }}>
                       {maturity.status}
                     </span>
                   )}
@@ -199,7 +199,7 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
                     <div className="w-14 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                       <div className="h-full rounded-full" style={{
                         width: `${Math.min(100, Math.round((a.program_compliance.done_this_week / a.program_compliance.sessions_per_week) * 100))}%`,
-                        background: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#fb923c',
+                        background: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#8B83FF',
                       }} />
                     </div>
                     <span className="text-[9px] text-slate-500 mono-font flex-shrink-0">{a.program_compliance.done_this_week}/{a.program_compliance.sessions_per_week} this wk</span>

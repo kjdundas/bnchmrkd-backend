@@ -66,8 +66,8 @@ export default function AthleteCoachLinks({ pendingOnly = false }) {
     <div className="space-y-4">
       {/* Pending invites */}
       {pending.length > 0 && (
-        <div className="rounded-xl p-4" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.25)' }}>
-          <p className="text-[11px] uppercase tracking-wider text-orange-300 mono-font mb-3 flex items-center gap-1.5">
+        <div className="rounded-xl p-4" style={{ background: 'rgba(79,60,240,0.06)', border: '1px solid rgba(79,60,240,0.25)' }}>
+          <p className="text-[11px] uppercase tracking-wider text-indigo-300 mono-font mb-3 flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5" /> Coach {pending.length > 1 ? 'requests' : 'request'}
           </p>
           <div className="space-y-2">
@@ -83,7 +83,7 @@ export default function AthleteCoachLinks({ pendingOnly = false }) {
                 <div className="flex gap-2">
                   <button onClick={() => respond(l.link_id, true)} disabled={busy === l.link_id}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110 disabled:opacity-60"
-                    style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
+                    style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)' }}>
                     {busy === l.link_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Approve
                   </button>
                   <button onClick={() => respond(l.link_id, false)} disabled={busy === l.link_id}

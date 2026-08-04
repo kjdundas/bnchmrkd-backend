@@ -80,11 +80,11 @@ export default function NeedsAttention({ onViewAthlete }) {
   return (
     <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle className="w-4 h-4 text-orange-400" />
+        <AlertTriangle className="w-4 h-4 text-indigo-400" />
         <h3 className="text-[13px] font-bold text-white landing-font">Needs attention</h3>
         {items.length > 0 && (
           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-            style={{ background: 'rgba(249,115,22,0.14)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.3)' }}>{items.length}</span>
+            style={{ background: 'rgba(79,60,240,0.14)', color: '#8B83FF', border: '1px solid rgba(79,60,240,0.3)' }}>{items.length}</span>
         )}
         <span className="ml-auto text-[10px] text-slate-500 landing-font">{checkedToday}/{athletes.length} checked in today</span>
       </div>
@@ -97,7 +97,7 @@ export default function NeedsAttention({ onViewAthlete }) {
       ) : (
         <div className="space-y-2">
           {items.map((it) => {
-            const color = it.kind === 'readiness' ? READINESS_COLORS[it.level] : it.kind === 'compliance' ? '#fbbf24' : '#64748b'
+            const color = it.kind === 'readiness' ? READINESS_COLORS[it.level] : it.kind === 'compliance' ? '#8B83FF' : '#64748b'
             const Icon = it.kind === 'readiness' ? HeartPulse : it.kind === 'compliance' ? Dumbbell : Clock
             return (
               <button key={it.key} onClick={() => onViewAthlete && onViewAthlete(buildLinkedPayload(it.a))}

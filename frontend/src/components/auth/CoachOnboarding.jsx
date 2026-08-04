@@ -8,12 +8,12 @@ import {
 // ═══════════════════════════════════════════════════════════════════════
 // BRAND TOKENS
 // ═══════════════════════════════════════════════════════════════════════
-const ORANGE = '#f97316'
-const ORANGE_GLOW = 'rgba(249,115,22,0.25)'
+const ORANGE = '#4F3CF0'
+const ORANGE_GLOW = 'rgba(79,60,240,0.25)'
 const BG = '#0a0a0a'
 const CARD_BORDER = 'rgba(255,255,255,0.06)'
-const CARD_BORDER_SELECTED = 'rgba(249,115,22,0.5)'
-const CARD_BG_SELECTED = 'rgba(249,115,22,0.08)'
+const CARD_BORDER_SELECTED = 'rgba(79,60,240,0.5)'
+const CARD_BG_SELECTED = 'rgba(79,60,240,0.08)'
 
 const TOTAL_STEPS = 8
 
@@ -358,8 +358,8 @@ export default function CoachOnboarding({ onComplete }) {
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center mb-3"
                   style={{
-                    background: selected ? 'rgba(249,115,22,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${selected ? 'rgba(249,115,22,0.2)' : CARD_BORDER}`,
+                    background: selected ? 'rgba(79,60,240,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${selected ? 'rgba(79,60,240,0.2)' : CARD_BORDER}`,
                   }}
                 >
                   <GroupIcon style={{ color: selected ? ORANGE : '#64748b', width: 18, height: 18 }} />
@@ -424,7 +424,7 @@ export default function CoachOnboarding({ onComplete }) {
       <div>
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-6"
-          style={{ background: 'rgba(249,115,22,0.08)', color: ORANGE, border: '1px solid rgba(249,115,22,0.15)' }}
+          style={{ background: 'rgba(79,60,240,0.08)', color: ORANGE, border: '1px solid rgba(79,60,240,0.15)' }}
         >
           <Zap className="w-3 h-3" /> Early Access
         </div>
@@ -443,7 +443,7 @@ export default function CoachOnboarding({ onComplete }) {
             <div key={i} className="flex items-center gap-3">
               <div
                 className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.12)' }}
+                style={{ background: 'rgba(79,60,240,0.08)', border: '1px solid rgba(79,60,240,0.12)' }}
               >
                 <Icon className="w-4 h-4" style={{ color: ORANGE }} />
               </div>
@@ -493,7 +493,7 @@ export default function CoachOnboarding({ onComplete }) {
         <div className="w-full h-0.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div
             className="h-full transition-all duration-500 ease-out"
-            style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${ORANGE}, #fb923c)` }}
+            style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${ORANGE}, #8B83FF)` }}
           />
         </div>
       )}
@@ -529,7 +529,7 @@ export default function CoachOnboarding({ onComplete }) {
           className="w-full py-4 rounded-2xl text-white font-semibold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           style={{
             background: !ctaDisabled && !loading
-              ? `linear-gradient(135deg, #ea580c 0%, ${ORANGE} 50%, #fb923c 100%)`
+              ? `linear-gradient(135deg, #3B34C9 0%, ${ORANGE} 50%, #8B83FF 100%)`
               : 'rgba(255,255,255,0.04)',
             boxShadow: !ctaDisabled && !loading ? `0 4px 24px ${ORANGE_GLOW}` : 'none',
           }}

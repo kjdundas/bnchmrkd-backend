@@ -94,7 +94,7 @@ export default function AuthPage({ onBack }) {
           <div className="flex items-center justify-center gap-2.5 mb-2">
             <img src="/icon.svg" alt="bnchmrkd" className="w-8 h-8" />
             <h1 className="text-4xl font-black text-white tracking-tight">
-              bnchmrkd<span style={{color: '#f97316'}}>.</span>
+              bnchmrkd<span style={{color: '#4F3CF0'}}>.</span>
             </h1>
           </div>
           <p className="text-gray-400 mt-2">Track your trajectory. Find your potential.</p>

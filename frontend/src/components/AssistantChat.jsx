@@ -143,17 +143,17 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
       {!open && (
         <button onClick={() => setOpen(true)}
           className="fixed bottom-20 right-4 z-[120] flex items-center gap-2 px-4 py-3 rounded-full text-black font-bold text-[12px] landing-font shadow-lg hover:brightness-110 transition-all"
-          style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)', boxShadow: '0 8px 28px rgba(249,115,22,0.45)' }}>
+          style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)', boxShadow: '0 8px 28px rgba(79,60,240,0.45)' }}>
           <Bot className="w-4 h-4" /> Ask assistant AI coach
         </button>
       )}
 
       {open && (
         <div className="fixed bottom-4 right-4 z-[120] w-[92vw] max-w-sm rounded-2xl overflow-hidden flex flex-col"
-          style={{ height: 'min(78vh, 640px)', background: 'linear-gradient(170deg,#11131a,#0a0a0f)', border: '1px solid rgba(249,115,22,0.25)', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
+          style={{ height: 'min(78vh, 640px)', background: 'linear-gradient(170deg,#11131a,#0a0a0f)', border: '1px solid rgba(79,60,240,0.25)', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
           {/* Header */}
           <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)' }}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
               <Bot className="w-4 h-4 text-black" />
             </div>
             <div className="flex-1">
@@ -176,7 +176,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
             <div className="px-3 pt-2">
               <label className="block text-[9px] uppercase tracking-wider text-slate-500 mono-font mb-1">Build for</label>
               <select value={targetId} onChange={(e) => setTargetId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+                className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <option value="">Select an athlete…</option>
                 {athletes.map((a) => (
@@ -211,7 +211,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-[12px] landing-font leading-relaxed whitespace-pre-wrap ${m.role === 'user' ? 'text-black' : 'text-slate-200'}`}
                       style={m.role === 'user'
-                        ? { background: 'linear-gradient(135deg,#f97316,#fb923c)' }
+                        ? { background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }
                         : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       {m.content}
                     </div>
@@ -235,12 +235,12 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
                 value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && send()}
                 placeholder={mode === 'program' ? 'e.g. 6-week pre-season speed block, 4 days…' : 'Ask a question…'}
-                className="flex-1 px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+                className="flex-1 px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
               />
               <button onClick={send} disabled={sending || !input.trim()}
                 className="px-3 rounded-lg text-black disabled:opacity-50 flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg,#f97316,#fb923c)' }}>
+                style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
                 {mode === 'program' ? <Sparkles className="w-4 h-4" /> : <Send className="w-4 h-4" />}
               </button>
             </div>
@@ -259,7 +259,7 @@ function ModeTab({ active, onClick, icon: Icon, label }) {
     <button onClick={onClick}
       className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold landing-font transition-colors"
       style={active
-        ? { background: 'rgba(249,115,22,0.16)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.35)' }
+        ? { background: 'rgba(79,60,240,0.16)', color: '#8B83FF', border: '1px solid rgba(79,60,240,0.35)' }
         : { background: 'rgba(255,255,255,0.03)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)' }}>
       <Icon className="w-3.5 h-3.5" /> {label}
     </button>
@@ -273,13 +273,13 @@ function ProgramMessage({ msg, onSave }) {
   const sessions = Array.isArray(p.sessions) ? p.sessions : []
   const chips = [r.season_phase, r.primary_quality, r.days_per_week ? `${r.days_per_week}×/wk` : null, r.weeks ? `${r.weeks} wk` : null].filter(Boolean)
   return (
-    <div className="rounded-2xl px-3 py-3 space-y-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(249,115,22,0.25)' }}>
+    <div className="rounded-2xl px-3 py-3 space-y-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(79,60,240,0.25)' }}>
       <div>
         <p className="text-[12px] font-bold text-white landing-font">{p.title}</p>
         {p.summary && <p className="text-[10px] text-slate-400 landing-font mt-0.5 leading-snug">{p.summary}</p>}
         {chips.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
-            {chips.map((c, i) => <span key={i} className="text-[9px] text-orange-300 mono-font px-1.5 py-0.5 rounded" style={{ background: 'rgba(249,115,22,0.1)' }}>{c}</span>)}
+            {chips.map((c, i) => <span key={i} className="text-[9px] text-indigo-300 mono-font px-1.5 py-0.5 rounded" style={{ background: 'rgba(79,60,240,0.1)' }}>{c}</span>)}
           </div>
         )}
       </div>
@@ -290,13 +290,13 @@ function ProgramMessage({ msg, onSave }) {
           <p className="text-[10px] text-sky-100 landing-font leading-snug">{p.focus_rationale}</p>
         </div>
       )}
-      {p.maturity_note && <p className="text-[10px] text-orange-300 landing-font" style={{ background: 'rgba(249,115,22,0.06)', borderRadius: 8, padding: 7 }}>🌱 {p.maturity_note}</p>}
+      {p.maturity_note && <p className="text-[10px] text-indigo-300 landing-font" style={{ background: 'rgba(79,60,240,0.06)', borderRadius: 8, padding: 7 }}>🌱 {p.maturity_note}</p>}
 
       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
         {sessions.map((s, i) => (
           <div key={i} className="rounded-lg p-2.5" style={{ background: 'rgba(0,0,0,0.2)' }}>
             <p className="text-[11px] font-bold text-white landing-font">{s.label || `Day ${i + 1}`}</p>
-            {s.focus && <p className="text-[9px] text-orange-400 mono-font uppercase tracking-wider mt-0.5">{s.focus}</p>}
+            {s.focus && <p className="text-[9px] text-indigo-400 mono-font uppercase tracking-wider mt-0.5">{s.focus}</p>}
             <div className="mt-1.5 space-y-1.5">
               {(Array.isArray(s.blocks) ? s.blocks : []).map((b, j) => (
                 <div key={j}>
@@ -310,7 +310,7 @@ function ProgramMessage({ msg, onSave }) {
                       <div key={k} className="mb-1">
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-[10px] text-slate-200 landing-font">{ex.name}</span>
-                          {skip(ex.prescription) && <span className="text-[10px] font-bold text-orange-300 mono-font whitespace-nowrap flex-shrink-0">{ex.prescription}</span>}
+                          {skip(ex.prescription) && <span className="text-[10px] font-bold text-indigo-300 mono-font whitespace-nowrap flex-shrink-0">{ex.prescription}</span>}
                         </div>
                         {meta.length > 0 && <p className="text-[9px] text-slate-500 mono-font">{meta.join(' · ')}</p>}
                         {skip(ex.cue) && <p className="text-[9px] text-slate-500 landing-font italic">{ex.cue}</p>}
@@ -335,7 +335,7 @@ function ProgramMessage({ msg, onSave }) {
       ) : (
         <button onClick={onSave} disabled={msg.saving}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold text-black landing-font disabled:opacity-60"
-          style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)' }}>
+          style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
           {msg.saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</> : <>Save to {msg.athleteName}</>}
         </button>
       )}

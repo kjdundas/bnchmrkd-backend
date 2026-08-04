@@ -28,7 +28,7 @@ const MARK_META = {
 };
 
 const TIER_META = {
-  all:         { label: 'All',      color: '#f97316' },
+  all:         { label: 'All',      color: '#4F3CF0' },
   world:       { label: 'World',    color: '#FFD700' },
   regional:    { label: 'Regional', color: '#E84545' },
   development: { label: 'Dev',      color: '#A259FF' },
@@ -103,7 +103,7 @@ export default function CompetitionStandardsLadder({
     >
       {/* Header */}
       <div className="mb-4">
-        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-orange-300 mb-1">Competition Standards</p>
+        <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300 mb-1">Competition Standards</p>
         <div className="flex items-end justify-between gap-3">
           <h3 className="landing-font text-lg sm:text-xl font-semibold text-white leading-tight">
             Where you stand
@@ -185,25 +185,25 @@ export default function CompetitionStandardsLadder({
             style={{
               transform: 'translateY(-0.5px)',
               background:
-                'linear-gradient(90deg, transparent 0%, rgba(249,115,22,0.5) 12%, rgba(249,115,22,0.9) 50%, rgba(249,115,22,0.5) 88%, transparent 100%)',
-              boxShadow: '0 0 10px rgba(249,115,22,0.35)',
+                'linear-gradient(90deg, transparent 0%, rgba(79,60,240,0.5) 12%, rgba(79,60,240,0.9) 50%, rgba(79,60,240,0.5) 88%, transparent 100%)',
+              boxShadow: '0 0 10px rgba(79,60,240,0.35)',
             }}
           />
           <div className="relative flex items-center gap-2.5">
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                background: '#f97316',
+                background: '#4F3CF0',
                 boxShadow:
-                  '0 0 14px rgba(249,115,22,0.55), 0 0 0 3px rgba(249,115,22,0.12), 0 0 0 6px rgba(249,115,22,0.05)',
+                  '0 0 14px rgba(79,60,240,0.55), 0 0 0 3px rgba(79,60,240,0.12), 0 0 0 6px rgba(79,60,240,0.05)',
               }}
             >
               <span className="text-[8px] font-bold text-white mono-font tracking-wider">YOU</span>
             </div>
-            <span className="mono-font text-sm font-bold tabular-nums text-orange-400">
-              {fmtMark(pb)}<span className="text-[10px] text-orange-500/60 ml-0.5">{unit}</span>
+            <span className="mono-font text-sm font-bold tabular-nums text-indigo-400">
+              {fmtMark(pb)}<span className="text-[10px] text-indigo-500/60 ml-0.5">{unit}</span>
             </span>
-            <span className="mono-font text-[9px] uppercase tracking-[0.22em] text-orange-500/60 ml-auto">
+            <span className="mono-font text-[9px] uppercase tracking-[0.22em] text-indigo-500/60 ml-auto">
               Personal best
             </span>
           </div>
@@ -233,9 +233,9 @@ export default function CompetitionStandardsLadder({
           {tier !== 'all' && ` · ${TIER_META[tier].label} only`}
         </span>
         {nextTarget && (
-          <span className="mono-font text-[10px] tabular-nums text-orange-400/90">
+          <span className="mono-font text-[10px] tabular-nums text-indigo-400/90">
             Next&nbsp;·&nbsp;+{fmtGap(nextTarget.value)}{unit} to {MARK_META[nextTarget.type].short}
-            <span className="text-orange-500/50"> · {nextTarget.comp}</span>
+            <span className="text-indigo-500/50"> · {nextTarget.comp}</span>
           </span>
         )}
       </div>
@@ -249,9 +249,9 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
     <div
       className="relative flex items-center gap-1.5 sm:gap-3 py-1.5 pl-1 pr-1 sm:pr-2 rounded-lg transition-all"
       style={{
-        background: isNext ? 'rgba(249,115,22,0.05)' : 'transparent',
-        border: `1px solid ${isNext ? 'rgba(249,115,22,0.28)' : 'transparent'}`,
-        boxShadow: isNext ? '0 0 22px rgba(249,115,22,0.08)' : 'none',
+        background: isNext ? 'rgba(79,60,240,0.05)' : 'transparent',
+        border: `1px solid ${isNext ? 'rgba(79,60,240,0.28)' : 'transparent'}`,
+        boxShadow: isNext ? '0 0 22px rgba(79,60,240,0.08)' : 'none',
       }}
     >
       {/* Rail indicator */}
@@ -270,8 +270,8 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
           <div
             className="w-[14px] h-[14px] rounded-full"
             style={{
-              background: '#f97316',
-              boxShadow: '0 0 10px rgba(249,115,22,0.9), 0 0 0 3px rgba(249,115,22,0.18)',
+              background: '#4F3CF0',
+              boxShadow: '0 0 10px rgba(79,60,240,0.9), 0 0 0 3px rgba(79,60,240,0.18)',
             }}
           />
         ) : (
@@ -331,7 +331,7 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
         style={{
           minWidth: '48px',
           textAlign: 'right',
-          color: cleared ? '#10b981' : (isNext ? '#f97316' : '#64748b'),
+          color: cleared ? '#10b981' : (isNext ? '#4F3CF0' : '#64748b'),
           fontWeight: isNext ? 700 : 400,
         }}
       >
@@ -341,7 +341,7 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
       {isNext && (
         <span
           className="mono-font text-[8px] font-bold uppercase tracking-[0.14em] px-1.5 py-[3px] rounded flex-shrink-0"
-          style={{ background: '#f97316', color: '#fff' }}
+          style={{ background: '#4F3CF0', color: '#fff' }}
         >
           Next
         </span>
