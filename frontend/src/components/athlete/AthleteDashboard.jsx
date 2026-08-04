@@ -468,7 +468,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(170deg, #F6F7FB 0%, #FFFFFF 45%, #EDEBFE 100%)' }}>
         <div className="text-center">
           <div className="w-10 h-10 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Loading your data...</p>
@@ -481,7 +481,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   const Header = () => (
     <header
       className="sticky top-0 z-10 backdrop-blur-xl"
-      style={{ background: 'rgba(2,6,23,0.7)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+      style={{ background: 'rgba(246,247,251,0.82)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
     >
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <button
@@ -508,7 +508,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         <button
           onClick={onSignOut}
           className="p-2 rounded-lg text-slate-500 hover:text-indigo-300 transition-colors"
-          style={{ border: '1px solid rgba(0,0,0,0.06)' }}
+          style={{ border: '1px solid #E7E9F2' }}
           title="Sign out"
         >
           <LogOut className="w-4 h-4" />
@@ -542,7 +542,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   const BottomNav = () => (
     <nav
       className="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-xl"
-      style={{ background: 'rgba(2,6,23,0.85)', borderTop: '1px solid rgba(0,0,0,0.06)' }}
+      style={{ background: 'rgba(255,255,255,0.9)', borderTop: '1px solid rgba(0,0,0,0.06)' }}
     >
       <div className="max-w-2xl mx-auto px-6 py-2 flex items-center justify-between">
         <button
@@ -609,7 +609,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     // Still allow the Log tab to render its form when empty
     if (tab === 'log') {
       return (
-        <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+        <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #F6F7FB 0%, #FFFFFF 45%, #EDEBFE 100%)' }}>
           <Header />
           <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
             <MetricLogView
@@ -632,7 +632,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
     // Programs don't require any logged results — let the tab render when empty.
     if (tab === 'programs') {
       return (
-        <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+        <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #F6F7FB 0%, #FFFFFF 45%, #EDEBFE 100%)' }}>
           <Header />
           <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
             <ProgramsPanel user={user} fetchContext={buildAssistantContext} />
@@ -642,14 +642,14 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       )
     }
     return (
-      <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+      <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #F6F7FB 0%, #FFFFFF 45%, #EDEBFE 100%)' }}>
         <Header />
         <main className="max-w-2xl mx-auto px-4 py-12">
           <div
             className="relative overflow-hidden rounded-2xl p-8 text-center"
             style={{
-              background: 'rgba(0,0,0,0.02)',
-              border: '1px solid rgba(0,0,0,0.06)',
+              background: '#FFFFFF',
+              border: '1px solid #E7E9F2',
             }}
           >
             <div
@@ -706,7 +706,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
 
   // ── Main shell ──────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+    <div className="min-h-screen text-slate-200 pb-24" style={{ background: 'linear-gradient(170deg, #F6F7FB 0%, #FFFFFF 45%, #EDEBFE 100%)' }}>
       <Header />
 
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
@@ -861,8 +861,8 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
         <section
           className="relative overflow-hidden rounded-2xl flex items-stretch"
           style={{
-            background: 'rgba(0,0,0,0.02)',
-            border: '1px solid rgba(0,0,0,0.06)',
+            background: '#FFFFFF',
+            border: '1px solid #E7E9F2',
           }}
         >
           <div className="w-1" style={{ background: 'linear-gradient(180deg, #4F3CF0, #8B83FF)' }} />
@@ -888,8 +888,8 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
       <section
         className="relative overflow-hidden rounded-2xl"
         style={{
-          background: 'rgba(0,0,0,0.02)',
-          border: '1px solid rgba(0,0,0,0.06)',
+          background: '#FFFFFF',
+          border: '1px solid #E7E9F2',
         }}
       >
         <div
@@ -1443,8 +1443,8 @@ function RecentMetricsPanel({ athleteId, refreshKey, preloaded = null }) {
     <section
       className="relative overflow-hidden rounded-2xl"
       style={{
-        background: 'rgba(0,0,0,0.02)',
-        border: '1px solid rgba(0,0,0,0.06)',
+        background: '#FFFFFF',
+        border: '1px solid #E7E9F2',
       }}
     >
       <header className="relative px-5 pt-5 pb-3 flex items-end justify-between">
