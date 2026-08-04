@@ -3829,7 +3829,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             .stagger-4 { animation: fadeSlideUp 0.7s ease-out 0.55s both; }
             .stagger-5 { animation: fadeSlideUp 0.7s ease-out 0.7s both; }
             .stagger-6 { animation: fadeSlideUp 0.7s ease-out 0.85s both; }
-            .bento-card { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease; }
+            .bento-card { box-shadow: 0 8px 24px -16px rgba(20,22,46,0.22); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease; }
             .bento-card:hover { transform: translateY(-2px); border-color: rgba(79,60,240,0.3); }
             .cta-primary { background: linear-gradient(135deg, #3B34C9 0%, #4F3CF0 50%, #8B83FF 100%); transition: all 0.3s ease; }
             .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(79,60,240,0.35); }
@@ -4012,7 +4012,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 onMouseLeave={() => setShowcasePaused(false)}
               >
                 {/* Main trajectory card */}
-                <div className={`bento-card rounded-2xl p-6 relative overflow-hidden showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`} style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div className={`bento-card rounded-2xl p-6 relative overflow-hidden showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`} style={{background: 'linear-gradient(160deg, rgba(255,255,255,0.94), rgba(237,235,254,0.9))', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(79,60,240,0.22)', boxShadow: '0 24px 60px -24px rgba(20,22,46,0.4)'}}>
 
                   {/* Ambient glow behind chart — colored per athlete */}
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -4163,7 +4163,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 {/* Floating mini bento cards */}
                 <div className={`grid grid-cols-2 gap-3 mt-3 showcase-fade ${showcaseTransition ? 'showcase-fade-out' : 'showcase-fade-in'}`}>
                   {/* Percentile gauge card */}
-                  <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                  <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] text-slate-500 mono-font uppercase tracking-wider">Percentile</p>
                       <p className="text-[9px] text-slate-600 mono-font">vs Olympic field</p>
@@ -4192,7 +4192,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   </div>
 
                   {/* Discipline coverage card */}
-                  <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                  <div className="bento-card rounded-xl p-4 relative overflow-hidden" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] text-slate-500 mono-font uppercase tracking-wider">Event Group</p>
                       <p className="text-[9px] text-slate-600 mono-font">{showcaseAthlete.tags.length} events</p>
@@ -4835,7 +4835,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 { value: STATS.disciplines, label: 'Disciplines', sub: 'Sprints, hurdles, distance, throws & jumps' },
                 { value: '7', label: 'Olympic Games', sub: 'Two decades of data' },
               ].map((stat, i) => (
-                <div key={i} className="bento-card rounded-xl p-3 sm:p-5 text-center" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div key={i} className="bento-card rounded-xl p-3 sm:p-5 text-center" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                   <p className="text-xl sm:text-3xl font-bold mono-font" style={{color: '#4F3CF0'}}>{stat.value}</p>
                   <p className="text-sm font-semibold text-white mt-1 landing-font">{stat.label}</p>
                   <p className="text-xs text-slate-600 mt-0.5 landing-font">{stat.sub}</p>
@@ -4844,7 +4844,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             </div>
 
             {/* ── Discipline coverage — categorised ── */}
-            <div className="bento-card rounded-2xl p-6 sm:p-8 mb-10 stagger-5" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-2xl p-6 sm:p-8 mb-10 stagger-5" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background: 'rgba(79,60,240,0.1)'}}>
                   <BarChart3 className="w-4 h-4" style={{color: '#4F3CF0'}} />
@@ -4995,7 +4995,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               ].map((card, i) => {
                 const Icon = card.icon;
                 return (
-                  <div key={i} className="bento-card rounded-xl p-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                  <div key={i} className="bento-card rounded-xl p-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{background: `${card.accent}12`}}>
                         <Icon className="w-5 h-5" style={{color: card.accent}} />
@@ -5261,7 +5261,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             <p className="stagger-3 text-sm sm:text-base text-slate-500 mb-6 sm:mb-8 landing-font">Browse career trajectories, personal bests, and Olympic results across {STATS.athletes} athletes.</p>
 
             {/* Search + Filter Bar */}
-            <div className="bento-card rounded-xl p-3 sm:p-6 mb-4 sm:mb-6 stagger-3" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-xl p-3 sm:p-6 mb-4 sm:mb-6 stagger-3" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
@@ -5367,7 +5367,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 ) : athleteProfile ? (
                   <div className="space-y-6">
                     {/* Profile Header Card */}
-                    <div className="bento-card rounded-xl p-4 sm:p-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                    <div className="bento-card rounded-xl p-4 sm:p-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div>
                           <h2 className="text-xl sm:text-2xl font-bold text-white landing-font tracking-tight">{athleteProfile.name}</h2>
@@ -5428,7 +5428,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
                     {/* Career Trajectory Chart */}
                     {athleteTrajectory && athleteTrajectory.seasons && athleteTrajectory.seasons.length > 0 && (
-                      <div className="bento-card rounded-xl p-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                      <div className="bento-card rounded-xl p-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 landing-font">
                           <TrendingUp className="w-5 h-5" style={{color: '#4F3CF0'}} />
                           Career Trajectory — {athleteTrajectory.discipline || ''}
@@ -5633,7 +5633,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* Manual Entry Tab */}
             {activeTab === 'manual' && !user && (
-              <div className="bento-card rounded-xl p-8 sm:p-12 text-center" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-8 sm:p-12 text-center" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <Lock className="w-10 h-10 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2 landing-font">Sign up to unlock Manual Entry</h3>
                 <p className="text-slate-400 text-sm mb-6 landing-font max-w-md mx-auto">Create a free account to enter your full race history, get trajectory modelling, and rate of development analysis.</p>
@@ -5649,7 +5649,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             )}
 
             {activeTab === 'manual' && user && (
-              <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">Discipline</label>
@@ -5781,7 +5781,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* URL Import Tab */}
             {activeTab === 'url' && !user && (
-              <div className="bento-card rounded-xl p-8 sm:p-12 text-center" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-8 sm:p-12 text-center" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <Lock className="w-10 h-10 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2 landing-font">Sign up to unlock URL Import</h3>
                 <p className="text-slate-400 text-sm mb-6 landing-font max-w-md mx-auto">Create a free account to import your full career data directly from World Athletics and get detailed trajectory analysis.</p>
@@ -5797,7 +5797,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             )}
 
             {activeTab === 'url' && user && (
-              <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-4 sm:p-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-400 mb-2 landing-font">World Athletics Profile URL</label>
                   <input type="text" placeholder="https://worldathletics.org/athletes/..." value={urlInput}
@@ -5958,7 +5958,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-10 py-6 sm:py-10">
             {/* ── DISCIPLINE TABS (for multi-discipline scrape results) ── */}
             {multiResults && (
-              <div className="bento-card rounded-xl p-4 mb-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-4 mb-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <div className="flex items-center gap-2 mb-3">
                   <Activity className="w-5 h-5 " style={{color: '#4F3CF0'}} />
                   <span className="font-semibold text-white">Disciplines Analyzed</span>
@@ -6073,7 +6073,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                   statusColor: analysisResults.standards && analysisResults.standards.filter(s => s.met).length === analysisResults.standards.length ? '#10b981' : analysisResults.standards && analysisResults.standards.filter(s => s.met).length > 0 ? '#f59e0b' : '#9AA0AC',
                 },
               ].map((card, i) => (
-                <div key={i} className="bento-card rounded-xl p-3 sm:p-4" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div key={i} className="bento-card rounded-xl p-3 sm:p-4" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                   <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider mono-font mb-2">{card.label}</p>
                   <p className="text-xl sm:text-2xl font-bold text-white mono-font leading-none mb-1.5">{card.value}</p>
                   <p className="text-[10px] sm:text-xs font-semibold" style={{color: card.statusColor}}>{card.status}</p>
@@ -6201,7 +6201,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               })();
 
               return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                   <div className="mb-5">
                     <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                       <Award className="w-3 h-3" />
@@ -6345,7 +6345,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               const order = { high: 0, medium: 1, low: 2 };
               const sorted = [...recs].sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3));
               return (
-                <div className="bento-card rounded-2xl p-5 sm:p-7 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div className="bento-card rounded-2xl p-5 sm:p-7 mb-4 sm:mb-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                   {/* Section header — matches bento pattern */}
                   <div className="mb-5">
                     <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-indigo-300 mb-1">Actions</p>
@@ -6423,7 +6423,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 return new Date(b.date) - new Date(a.date);
               });
               return (
-                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+                <div className="bento-card rounded-xl p-4 sm:p-6 mb-4 sm:mb-6" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" style={{color: '#4F3CF0'}} />
@@ -6526,7 +6526,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {dashTab === 'trajectory' && (<>
 
             {/* ── PERFORMANCE TRAJECTORY CHART WITH TABBED VIEWS ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="mb-4 sm:mb-6">
                 <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" />
@@ -6732,7 +6732,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── PROGRESSION MATRIX (in Trajectory tab) ── */}
             {analysisResults.raceHistory && analysisResults.raceHistory.length > 0 && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <div className="mb-5">
                   <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                     <Layers className="w-3 h-3" />
@@ -6786,7 +6786,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
             {/* ── ROD / RODP (in Trajectory tab) ── */}
             {analysisResults.rodData && analysisResults.rodData.length > 1 && (
-              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+              <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <div className="mb-5">
                   <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                     <TrendingUp className="w-3 h-3" />
@@ -6842,7 +6842,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {dashTab === 'benchmarks' && (<>
 
             {/* ── PERCENTILE RANKING (in Benchmarks tab) ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="mb-6">
                 <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <Target className="w-3 h-3" />
@@ -6877,7 +6877,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             </div>
 
             {/* ── CAREER TRAJECTORY VS BENCHMARKS (in Benchmarks tab) ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="mb-4">
                 <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" />
@@ -6936,7 +6936,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             </div>
 
             {/* ── SIMILAR ATHLETES (in Benchmarks tab) ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="mb-6">
                 <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <Users className="w-3 h-3" />
@@ -7002,7 +7002,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             {dashTab === 'insights' && (<>
 
             {/* ── PEAK PROJECTION (in Insights tab) ── */}
-            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)', border: '1px solid rgba(0,0,0,0.06)'}}>
+            <div className="bento-card rounded-xl p-4 sm:p-8 mb-6 sm:mb-8" style={{background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)'}}>
               <div className="mb-6">
                 <p className="mono-font text-[10px] uppercase tracking-[0.2em] text-indigo-400/80 mb-1.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" />
