@@ -136,7 +136,7 @@ const CSS = `
 .vf-ns{font-size:11.5px;color:rgba(255,255,255,0.82);line-height:1.3;margin-top:1px;text-shadow:0 1px 6px rgba(0,0,0,0.5)}
 
 .vf-personas{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:880px;margin:18px auto 0}
-.vf-p{display:flex;align-items:flex-start;gap:11px;text-align:left;padding:14px 16px;border-radius:14px;background:rgba(0,0,0,0.025);border:1px solid rgba(0,0,0,0.06)}
+.vf-p{display:flex;align-items:flex-start;gap:11px;text-align:left;padding:16px 18px;border-radius:14px;background:#FFFFFF;border:1px solid #E7E9F2;box-shadow:0 10px 28px -18px rgba(20,22,46,0.25)}
 .vf-pic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .vf-pn{font-size:14px;font-weight:700;color:#16181D;margin-bottom:2px}
 .vf-psub{font-size:12.5px;line-height:1.45;color:#5B5F6B}
