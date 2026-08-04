@@ -83,11 +83,11 @@ export default function QuickAnalysisFlow({
 
   return (
     <div ref={stage} className="relative overflow-hidden rounded-2xl p-6 sm:p-9"
-      style={{ background: 'linear-gradient(160deg, rgba(0,0,0,0.045) 0%, rgba(255,255,255,0.012) 40%, rgba(255,255,255,0.006) 100%)', border: '1px solid rgba(0,0,0,0.08)' }}>
+      style={{ background: '#FFFFFF', border: '1px solid #E7E9F2', boxShadow: '0 12px 34px -20px rgba(20,22,46,0.2)' }}>
 
       {/* ghost step numeral */}
       <span data-ghost aria-hidden="true" className="landing-font pointer-events-none select-none"
-        style={{ position: 'absolute', top: -34, right: 8, fontSize: 200, lineHeight: 1, fontWeight: 800, letterSpacing: '-0.05em', color: 'rgba(255,255,255,0.035)' }}>
+        style={{ position: 'absolute', top: -34, right: 8, fontSize: 200, lineHeight: 1, fontWeight: 800, letterSpacing: '-0.05em', color: 'rgba(79,60,240,0.06)' }}>
         {String(step + 1).padStart(2, '0')}
       </span>
 
@@ -107,7 +107,7 @@ export default function QuickAnalysisFlow({
         <div data-panel key={step}>
           {step === 0 && (
             <>
-              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>What's your event?</h3>
+              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#16181D', marginBottom: 6, letterSpacing: '-0.025em' }}>What's your event?</h3>
               <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 26, fontSize: 15 }}>Pick the discipline you want to benchmark.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5" style={{ maxWidth: 520 }}>
                 {disciplines.map((d) => (
@@ -119,7 +119,7 @@ export default function QuickAnalysisFlow({
 
           {step === 1 && (
             <>
-              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>Which standards?</h3>
+              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#16181D', marginBottom: 6, letterSpacing: '-0.025em' }}>Which standards?</h3>
               <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 26, fontSize: 15 }}>We grade you against age- and sex-specific Olympic data.</p>
               <div className="grid grid-cols-2 gap-3" style={{ maxWidth: 420 }}>
                 {[{ g: 'Male', a: '#60a5fa', t: "Men's" }, { g: 'Female', a: '#f472b6', t: "Women's" }].map(({ g, a, t }) => (
@@ -134,7 +134,7 @@ export default function QuickAnalysisFlow({
 
           {step === 2 && (
             <>
-              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>How old are you?</h3>
+              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#16181D', marginBottom: 6, letterSpacing: '-0.025em' }}>How old are you?</h3>
               <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 30, fontSize: 15 }}>Your age sets the development cohort we compare you to.</p>
               <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-indigo-500 transition-colors duration-200" style={{ maxWidth: 260 }}>
                 <input autoFocus type="text" inputMode="numeric" placeholder="22" value={data.age}
@@ -142,7 +142,7 @@ export default function QuickAnalysisFlow({
                   onKeyDown={(e) => onEnter(e, () => ageValid && go(3))}
                   aria-label="Current age"
                   className="landing-font placeholder-slate-700"
-                  style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 56, fontWeight: 700, letterSpacing: '-0.03em', padding: '2px 0', fontVariantNumeric: 'tabular-nums' }} />
+                  style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#16181D', fontSize: 56, fontWeight: 700, letterSpacing: '-0.03em', padding: '2px 0', fontVariantNumeric: 'tabular-nums' }} />
                 <span className="mono-font" style={{ color: '#52525b', fontSize: 16 }}>yrs</span>
               </div>
               {!ageValid && String(data.age).trim() !== '' && (
@@ -153,7 +153,7 @@ export default function QuickAnalysisFlow({
 
           {step === 3 && (
             <>
-              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>Your personal best?</h3>
+              <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#16181D', marginBottom: 6, letterSpacing: '-0.025em' }}>Your personal best?</h3>
               <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 30, fontSize: 15 }}>{data.discipline} · {isThrowsMode ? 'best mark' : 'best time'}</p>
               <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-indigo-500 transition-colors duration-200" style={{ maxWidth: 340 }}>
                 <input autoFocus type="text" inputMode="decimal" placeholder={pbPlaceholder} value={data.personalBest}
@@ -161,7 +161,7 @@ export default function QuickAnalysisFlow({
                   onKeyDown={(e) => onEnter(e, () => pbValid && onSubmit())}
                   aria-label="Personal best"
                   className="landing-font placeholder-slate-700"
-                  style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', padding: '2px 0', fontVariantNumeric: 'tabular-nums' }} />
+                  style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#16181D', fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', padding: '2px 0', fontVariantNumeric: 'tabular-nums' }} />
                 <span className="mono-font" style={{ color: '#52525b', fontSize: 15 }}>{pbUnit}</span>
               </div>
 
@@ -169,7 +169,7 @@ export default function QuickAnalysisFlow({
                 <div style={{ marginTop: 22, maxWidth: 340 }}>
                   <label className="landing-font" style={{ display: 'block', fontSize: 12, color: '#71717a', marginBottom: 6, letterSpacing: '0.04em' }}>Implement weight</label>
                   <select value={data.implementWeight} onChange={(e) => set({ implementWeight: parseFloat(e.target.value) })}
-                    className="landing-font" style={{ width: '100%', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, padding: '10px 14px', color: '#fff', outline: 'none' }}>
+                    className="landing-font" style={{ width: '100%', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 10, padding: '10px 14px', color: '#16181D', outline: 'none' }}>
                     {getWeightOptions(data.discipline, data.gender).map((opt) => (<option key={opt.kg} value={opt.kg}>{opt.label}</option>))}
                   </select>
                 </div>

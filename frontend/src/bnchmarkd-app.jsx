@@ -5079,7 +5079,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </span>
             </div>
             <h2 className="stagger-3 text-2xl sm:text-4xl font-bold text-white mb-3 text-center landing-font tracking-tight">Choose your discipline</h2>
-            <p className="stagger-3 text-sm sm:text-base text-slate-500 mb-8 sm:mb-10 text-center landing-font">Select an event group to benchmark against Olympic-level data.</p>
+            <p className="stagger-3 text-sm sm:text-base mb-8 sm:mb-10 text-center landing-font" style={{color:'#5B5F6B'}}>Select an event group to benchmark against Olympic-level data.</p>
 
             <div data-disc-grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 w-full max-w-4xl">
 
@@ -5087,7 +5087,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <button
                 onClick={() => { setDisciplineCategory('sprints'); setAthleteData(d => ({...d, discipline: '100m'})); setQuickAnalysisData(d => ({...d, discipline: '100m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(79,60,240,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.15) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(79,60,240,0.30)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(79,60,240,0.1)', border: '1px solid rgba(79,60,240,0.15)'}}>
                   <Zap className="w-6 h-6 text-indigo-400" />
@@ -5108,7 +5108,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <button
                 onClick={() => { setDisciplineCategory('throws'); setAthleteData(d => ({...d, discipline: 'Discus Throw'})); setQuickAnalysisData(d => ({...d, discipline: 'Discus Throw'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(79,60,240,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(79,60,240,0.15) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(79,60,240,0.30)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(79,60,240,0.1)', border: '1px solid rgba(79,60,240,0.15)'}}>
                   <Target className="w-6 h-6 text-indigo-400" />
@@ -5129,7 +5129,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <button
                 onClick={() => { setDisciplineCategory('jumps'); setAthleteData(d => ({...d, discipline: 'High Jump'})); setQuickAnalysisData(d => ({...d, discipline: 'High Jump'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(16,185,129,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(16,185,129,0.30)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)'}}>
                   <TrendingUp className="w-6 h-6 text-emerald-400" />
@@ -5150,7 +5150,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <button
                 onClick={() => { setDisciplineCategory('distance'); setAthleteData(d => ({...d, discipline: '800m'})); setQuickAnalysisData(d => ({...d, discipline: '800m'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(168,85,247,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(168,85,247,0.30)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.15)'}}>
                   <Activity className="w-6 h-6 text-purple-400" />
@@ -5171,7 +5171,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               <button
                 onClick={() => { setDisciplineCategory('distance'); setAthleteData(d => ({...d, discipline: '3000m Steeplechase'})); setQuickAnalysisData(d => ({...d, discipline: '3000m Steeplechase'})); if (!user) setActiveTab('quick'); setCurrentView('input'); }}
                 data-disc-card className="group relative bento-card rounded-xl p-4 sm:p-6 text-left cursor-pointer"
-                style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.15) 0%, rgba(18,20,27,0.94) 60%)', border: '1px solid rgba(244,63,94,0.30)'}}
+                style={{background: 'linear-gradient(135deg, rgba(244,63,94,0.15) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(244,63,94,0.30)'}}
               >
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.15)'}}>
                   <Flag className="w-6 h-6 text-rose-400" />
@@ -5189,7 +5189,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </button>
 
               {/* ── COMBINED EVENTS (COMPILING DATA) ── */}
-              <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.10) 0%, rgba(18,20,27,0.90) 60%)', border: '1px solid rgba(245,158,11,0.16)'}}>
+              <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.10) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(245,158,11,0.16)'}}>
                 <div className="rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{width: '48px', height: '48px',background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)'}}>
                   <Layers className="w-6 h-6 text-amber-400/50" />
                 </div>
@@ -5202,7 +5202,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
 
               {/* ── RACE WALKS & ROAD (COMPILING DATA) ── */}
-              <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed sm:col-span-2 lg:col-span-3" style={{background: 'linear-gradient(135deg, rgba(6,182,212,0.10) 0%, rgba(18,20,27,0.90) 60%)', border: '1px solid rgba(6,182,212,0.16)'}}>
+              <div className="relative bento-card rounded-xl p-6 text-left opacity-50 cursor-not-allowed sm:col-span-2 lg:col-span-3" style={{background: 'linear-gradient(135deg, rgba(6,182,212,0.10) 0%, rgba(255,255,255,0.95) 60%)', border: '1px solid rgba(6,182,212,0.16)'}}>
                 <div className="flex items-center gap-6">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.12)'}}>
                     <Globe className="w-6 h-6 text-cyan-400/50" />
