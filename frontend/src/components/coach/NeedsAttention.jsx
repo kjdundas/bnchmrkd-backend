@@ -78,7 +78,7 @@ export default function NeedsAttention({ onViewAthlete }) {
   const checkedToday = athletes.filter((a) => isToday(a.latest_checkin)).length
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-2xl p-5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-4 h-4 text-indigo-400" />
         <h3 className="text-[13px] font-bold text-white landing-font">Needs attention</h3>
@@ -97,12 +97,12 @@ export default function NeedsAttention({ onViewAthlete }) {
       ) : (
         <div className="space-y-2">
           {items.map((it) => {
-            const color = it.kind === 'readiness' ? READINESS_COLORS[it.level] : it.kind === 'compliance' ? '#8B83FF' : '#64748b'
+            const color = it.kind === 'readiness' ? READINESS_COLORS[it.level] : it.kind === 'compliance' ? '#8B83FF' : '#9AA0AC'
             const Icon = it.kind === 'readiness' ? HeartPulse : it.kind === 'compliance' ? Dumbbell : Clock
             return (
               <button key={it.key} onClick={() => onViewAthlete && onViewAthlete(buildLinkedPayload(it.a))}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all hover:bg-white/[0.03]"
-                style={{ border: '1px solid rgba(255,255,255,0.04)' }}>
+                style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
                 <span className="w-1.5 h-9 rounded-full flex-shrink-0" style={{ background: color, opacity: 0.85 }} />
                 <Icon className="w-4 h-4 flex-shrink-0" style={{ color }} />
                 <div className="flex-1 min-w-0">

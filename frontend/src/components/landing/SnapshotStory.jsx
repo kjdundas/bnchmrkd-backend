@@ -81,7 +81,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
   }
 
   return (
-    <div ref={stage} className="landing-font" style={{ color: '#f5f5f7' }}>
+    <div ref={stage} className="landing-font" style={{ color: '#16181D' }}>
       <style>{`
         @media (max-width: 680px) {
           .ss-rail { grid-template-columns: 1fr !important; gap: 10px !important; margin: 18px 0 !important; }
@@ -96,8 +96,8 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
         }
       `}</style>
       {/* subject line */}
-      <div className="mono-font" style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#6b7280', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: 22 }}>
-        <span>Snapshot</span><span>Discipline <b style={{ color: '#f5f5f7' }}>{disc}</b></span><span><b style={{ color: '#f5f5f7' }}>{gender} · {pl?.ageGroup || getAgeGroup(age)}</b></span><span>Age <b style={{ color: '#f5f5f7' }}>{age}</b></span>
+      <div className="mono-font" style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#9AA0AC', paddingBottom: 16, borderBottom: '1px solid rgba(0,0,0,0.07)', marginBottom: 22 }}>
+        <span>Snapshot</span><span>Discipline <b style={{ color: '#16181D' }}>{disc}</b></span><span><b style={{ color: '#16181D' }}>{gender} · {pl?.ageGroup || getAgeGroup(age)}</b></span><span>Age <b style={{ color: '#16181D' }}>{age}</b></span>
       </div>
 
       {/* verdict */}
@@ -105,7 +105,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
         <h1 data-a="v" className="ss-verdict" style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.12 }}>
           A <span style={{ color: O }}>{pl ? pl.name.toLowerCase() : 'developing'}-level</span> {noun}{nextName ? <> — one step from the <span style={{ color: O }}>{nextName.toLowerCase()}</span> tier.</> : ' — at the top tier for this age.'}
         </h1>
-        <p data-a="v" style={{ color: '#9aa1ac', fontSize: 15, marginTop: 8 }}>Here's the read on {bare(pb)}{unit}, in three steps.</p>
+        <p data-a="v" style={{ color: '#5B5F6B', fontSize: 15, marginTop: 8 }}>Here's the read on {bare(pb)}{unit}, in three steps.</p>
       </div>
 
       <div style={{ margin: '18px 0 4px' }}>
@@ -114,7 +114,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
 
       {/* story rail */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', alignItems: 'stretch', margin: '24px 0 20px' }} className="ss-rail">
-        <Beat cls="s1" accent="#94a3b8" step={`Step 1 · Where ${she} is`}>
+        <Beat cls="s1" accent="#5B5F6B" step={`Step 1 · Where ${she} is`}>
           <div style={numS} className="ss-num">{bare(pb)}<span style={numU}>{unit}</span></div>
           <div style={sayS}>{Her} personal best — <b style={bS}>a {noun === 'sprinter' ? 'strong' : 'solid'} {disc} for age {age}</b>. The starting point for everything below.</div>
         </Beat>
@@ -122,7 +122,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
         <Beat cls="s2" accent={O} step="Step 2 · How good that is">
           {pct != null ? (<>
             <Dots pct={pct} />
-            <div style={{ fontSize: 32, fontWeight: 700 }} className="ss-num">{dotN}<span style={{ fontSize: 15, color: '#9aa1ac' }}> of 100</span></div>
+            <div style={{ fontSize: 32, fontWeight: 700 }} className="ss-num">{dotN}<span style={{ fontSize: 15, color: '#5B5F6B' }}> of 100</span></div>
             <div style={sayS}>Rated against the full standards for a {age}-year-old {gender === 'Male' ? 'male' : 'female'} {noun} — from entry level to world class. <b style={bS}>{Her} PB scores {pct} out of 100.</b></div>
           </>) : (<div style={sayS}>Percentile data is still being built for this event.</div>)}
         </Beat>
@@ -137,28 +137,28 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
 
       {/* PRO COMPARISON */}
       {pro && (
-        <div className="ss-pro" style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, padding: '28px 30px 24px', margin: '6px 0 18px', border: '1px solid rgba(79,60,240,0.3)', background: 'radial-gradient(120% 140% at 50% 0%, rgba(79,60,240,0.14) 0%, rgba(79,60,240,0.04) 38%, rgba(10,10,12,0) 72%), #101014', boxShadow: '0 30px 80px -40px rgba(79,60,240,0.5)' }}>
+        <div className="ss-pro" style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, padding: '28px 30px 24px', margin: '6px 0 18px', border: '1px solid rgba(79,60,240,0.3)', background: 'radial-gradient(120% 140% at 50% 0%, rgba(79,60,240,0.14) 0%, rgba(79,60,240,0.04) 38%, rgba(10,10,12,0) 72%), #FFFFFF', boxShadow: '0 30px 80px -40px rgba(79,60,240,0.5)' }}>
           <div className="mono-font" style={{ textAlign: 'center', fontSize: 11, letterSpacing: '.22em', textTransform: 'uppercase', color: O, marginBottom: 20 }}>{Her} closest pro at the same age</div>
           <div className="ss-pro-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1.1fr', alignItems: 'center', gap: 18 }}>
             <div data-side="you" style={{ textAlign: 'right' }}>
               <div style={lblS}>{Her.toUpperCase()} · AT AGE {age}</div>
-              <div className="ss-you-num" style={{ fontSize: 54, fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{bare(pb)}<span style={{ fontSize: 22, color: '#9aa1ac' }}>{unit}</span></div>
+              <div className="ss-you-num" style={{ fontSize: 54, fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{bare(pb)}<span style={{ fontSize: 22, color: '#5B5F6B' }}>{unit}</span></div>
             </div>
             <div data-side="mid" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <span className="ss-badge mono-font" style={{ fontSize: 11, color: '#0a0a0b', background: O, padding: '6px 12px', borderRadius: 999, whiteSpace: 'nowrap' }}>{Math.abs(pro.timeDiff).toFixed(2)}{unit} apart</span>
               <span style={{ fontSize: 32, color: O, lineHeight: 1 }}>≈</span>
-              <span className="mono-font" style={{ fontSize: 9.5, letterSpacing: '.1em', color: '#6b7280', textTransform: 'uppercase' }}>{isTime ? 'same speed' : 'same distance'} · same age</span>
+              <span className="mono-font" style={{ fontSize: 9.5, letterSpacing: '.1em', color: '#9AA0AC', textTransform: 'uppercase' }}>{isTime ? 'same speed' : 'same distance'} · same age</span>
             </div>
-            <div data-side="pro" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.13)', borderRadius: 14, padding: '16px 20px' }}>
+            <div data-side="pro" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.13)', borderRadius: 14, padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)', color: '#0a0a0b', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pro.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
-                <div><div style={{ fontSize: 17, fontWeight: 700 }}>{pro.name}</div><div className="mono-font" style={{ fontSize: 11, color: '#6b7280' }}>{pro.nationality} · {disc}</div></div>
+                <div><div style={{ fontSize: 17, fontWeight: 700 }}>{pro.name}</div><div className="mono-font" style={{ fontSize: 11, color: '#9AA0AC' }}>{pro.nationality} · {disc}</div></div>
               </div>
               <div style={lblS}>AT AGE {pro.closestAge}</div>
-              <div className="ss-pro-num" style={{ fontSize: 42, fontWeight: 800, color: O, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{bare(pro.timeAtSimilarAge)}<span style={{ fontSize: 18, color: '#9aa1ac' }}>{unit}</span></div>
+              <div className="ss-pro-num" style={{ fontSize: 42, fontWeight: 800, color: O, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{bare(pro.timeAtSimilarAge)}<span style={{ fontSize: 18, color: '#5B5F6B' }}>{unit}</span></div>
             </div>
           </div>
-          <div className="ss-provenance" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.07)', fontSize: 13, color: '#9aa1ac' }}>
+          <div className="ss-provenance" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.07)', fontSize: 13, color: '#5B5F6B' }}>
             Went on to →
             <span style={chipS}>{pro.classification === 'F' ? 'Olympic finalist' : pro.classification === 'SF' ? 'Olympic semi-finalist' : 'Olympic qualifier'}</span>
             <span style={chipS}>Career best {bare(pro.pb)}{unit}</span>
@@ -170,13 +170,13 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
 
       {/* interactive ladder */}
       {ladder.length > 1 && (
-        <div className="ss-ladder-card" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 22px', marginBottom: 14 }}>
+        <div className="ss-ladder-card" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: '18px 22px', marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
             <h3 style={{ fontSize: 15, fontWeight: 600 }}>How elite is that mark?</h3>
-            <span className="mono-font" style={{ fontSize: 11, color: '#6b7280' }}>{pl?.ageGroup} {gender.toLowerCase()}</span>
+            <span className="mono-font" style={{ fontSize: 11, color: '#9AA0AC' }}>{pl?.ageGroup} {gender.toLowerCase()}</span>
           </div>
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 22 }}>Tap or hover a level to see what it would take.</div>
-          <div style={{ display: 'flex', height: 44, borderRadius: 9, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.13)' }}>
+          <div style={{ fontSize: 12, color: '#9AA0AC', marginBottom: 22 }}>Tap or hover a level to see what it would take.</div>
+          <div style={{ display: 'flex', height: 44, borderRadius: 9, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.13)' }}>
             {ladder.map((t, i) => {
               const f = ladder.length > 1 ? i / (ladder.length - 1) : 0
               const isYou = t.level === curLevel
@@ -189,21 +189,21 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
               )
             })}
           </div>
-          <div className="mono-font" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6b7280' }}>
+          <div className="mono-font" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#9AA0AC' }}>
             <span>{ladder[0].name}</span><span>{ladder[ladder.length - 1].name}</span>
           </div>
-          <div style={{ marginTop: 22, minHeight: 44, background: 'rgba(255,255,255,0.03)', border: `1px solid ${read ? read.tag[2] : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, padding: '11px 15px', fontSize: 14, color: '#9aa1ac', display: 'flex', alignItems: 'center', gap: 12, transition: 'border-color .2s' }}>
+          <div style={{ marginTop: 22, minHeight: 44, background: 'rgba(0,0,0,0.03)', border: `1px solid ${read ? read.tag[2] : 'rgba(0,0,0,0.07)'}`, borderRadius: 10, padding: '11px 15px', fontSize: 14, color: '#5B5F6B', display: 'flex', alignItems: 'center', gap: 12, transition: 'border-color .2s' }}>
             {read ? (<><span className="mono-font" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: read.tag[1], color: read.tag[2] }}>{read.tag[0]}</span><span dangerouslySetInnerHTML={{ __html: read.msg }} /></>)
-              : (<><span className="mono-font" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: 'rgba(79,60,240,0.15)', color: O }}>NOW</span><span>{She}'s at <b style={{ color: '#f5f5f7' }}>{pl?.name}</b> level. <b style={{ color: '#f5f5f7' }}>Hover a level</b> to see the gap.</span></>)}
+              : (<><span className="mono-font" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: 'rgba(79,60,240,0.15)', color: O }}>NOW</span><span>{She}'s at <b style={{ color: '#16181D' }}>{pl?.name}</b> level. <b style={{ color: '#16181D' }}>Hover a level</b> to see the gap.</span></>)}
           </div>
         </div>
       )}
 
       {/* what now */}
-      <div className="ss-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 22, flexWrap: 'wrap', background: 'linear-gradient(135deg, rgba(96,165,250,0.07), rgba(255,255,255,0.01))', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 14, padding: '20px 24px' }}>
+      <div className="ss-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 22, flexWrap: 'wrap', background: 'linear-gradient(135deg, rgba(96,165,250,0.07), rgba(0,0,0,0.01))', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 14, padding: '20px 24px' }}>
         <div>
           <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 5 }}>So — what now?</div>
-          <div style={{ fontSize: 14, color: '#9aa1ac', lineHeight: 1.5, maxWidth: '66ch' }}>This is one time: a <b style={{ color: '#f5f5f7' }}>dot</b>, not a line. Add {her} past PBs and we'll chart {her} real improvement curve, project {her} peak age, and match {her} whole career to Olympic athletes.</div>
+          <div style={{ fontSize: 14, color: '#5B5F6B', lineHeight: 1.5, maxWidth: '66ch' }}>This is one time: a <b style={{ color: '#16181D' }}>dot</b>, not a line. Add {her} past PBs and we'll chart {her} real improvement curve, project {her} peak age, and match {her} whole career to Olympic athletes.</div>
         </div>
         <button onClick={onAddPBs} className="landing-font" style={{ whiteSpace: 'nowrap', fontSize: 14, fontWeight: 600, padding: '12px 20px', borderRadius: 11, background: O, color: '#0a0a0b', border: 'none', cursor: 'pointer' }}>+ Add past PBs</button>
       </div>
@@ -214,7 +214,7 @@ export default function SnapshotStory({ results, formatTime, onAddPBs }) {
 function Beat({ cls, accent, step, children }) {
   const bg = cls === 's1' ? 'rgba(148,163,184,0.05)' : cls === 's2' ? 'rgba(79,60,240,0.07)' : 'rgba(52,211,153,0.07)'
   return (
-    <div className="ss-beat" style={{ position: 'relative', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', background: bg }}>
+    <div className="ss-beat" style={{ position: 'relative', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden', background: bg }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accent }} />
       <div className="mono-font" style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 14, color: accent }}>{step}</div>
       {children}
@@ -225,15 +225,15 @@ function Dots({ pct }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(20,1fr)', gap: 3, marginBottom: 12 }}>
       {Array.from({ length: 100 }).map((_, i) => (
-        <div key={i} style={{ aspectRatio: '1', borderRadius: '50%', background: i < pct ? '#4F3CF0' : 'rgba(255,255,255,0.09)' }} />
+        <div key={i} style={{ aspectRatio: '1', borderRadius: '50%', background: i < pct ? '#4F3CF0' : 'rgba(0,0,0,0.09)' }} />
       ))}
     </div>
   )
 }
 const numS = { fontSize: 50, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }
-const numU = { fontSize: 21, color: '#9aa1ac' }
-const sayS = { color: '#9aa1ac', fontSize: 14.5, lineHeight: 1.5, marginTop: 'auto', paddingTop: 16 }
-const bS = { color: '#f5f5f7', fontWeight: 600 }
+const numU = { fontSize: 21, color: '#5B5F6B' }
+const sayS = { color: '#5B5F6B', fontSize: 14.5, lineHeight: 1.5, marginTop: 'auto', paddingTop: 16 }
+const bS = { color: '#16181D', fontWeight: 600 }
 const arrowS = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, color: '#4F3CF0', fontSize: 26 }
-const lblS = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.14em', color: '#6b7280', marginBottom: 6 }
+const lblS = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '.14em', color: '#9AA0AC', marginBottom: 6 }
 const chipS = { fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#8B83FF', background: 'rgba(139,131,255,0.1)', border: '1px solid rgba(139,131,255,0.22)', padding: '4px 10px', borderRadius: 6 }

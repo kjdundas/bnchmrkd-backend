@@ -75,7 +75,7 @@ export default function InviteAthletePanel({ onClose }) {
   const active = links.filter(l => l.status === 'active')
 
   return (
-    <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+    <div className="rounded-xl p-5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4 text-indigo-400" />
@@ -94,7 +94,7 @@ export default function InviteAthletePanel({ onClose }) {
           onKeyDown={e => e.key === 'Enter' && sendInvite()}
           placeholder="athlete@email.com"
           className="flex-1 px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
         />
         <button onClick={sendInvite} disabled={sending}
           className="px-4 py-2 rounded-lg text-[11px] font-bold text-black landing-font hover:brightness-110 transition-all disabled:opacity-60 flex items-center gap-1.5"
@@ -125,7 +125,7 @@ export default function InviteAthletePanel({ onClose }) {
           <div className="flex gap-2">
             <input readOnly value={shareLink}
               className="flex-1 px-2.5 py-1.5 rounded text-[10px] text-slate-300 landing-font"
-              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }} />
+              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,0,0,0.08)' }} />
             <button onClick={copyShare} className="px-2.5 py-1.5 rounded text-[10px] font-bold text-white flex items-center gap-1"
               style={{ background: 'rgba(59,130,246,0.2)', border: '1px solid rgba(59,130,246,0.3)' }}>
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}{copied ? 'Copied' : 'Copy'}
@@ -143,7 +143,7 @@ export default function InviteAthletePanel({ onClose }) {
           <p className="text-[10px] uppercase tracking-wider text-slate-500 mono-font mb-2">Pending invites</p>
           <div className="space-y-1.5">
             {pending.map(l => (
-              <div key={l.link_id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div key={l.link_id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
                 <div className="flex items-center gap-2 min-w-0">
                   <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <span className="text-[12px] text-white landing-font truncate">{l.counterparty_name || l.invite_email}</span>
@@ -161,7 +161,7 @@ export default function InviteAthletePanel({ onClose }) {
           <p className="text-[10px] uppercase tracking-wider text-slate-500 mono-font mb-2">Linked athletes</p>
           <div className="space-y-1.5">
             {active.map(l => (
-              <div key={l.link_id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div key={l.link_id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
                 <div className="flex items-center gap-2 min-w-0">
                   <UserCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                   <span className="text-[12px] text-white landing-font truncate">{l.counterparty_name || l.invite_email}</span>

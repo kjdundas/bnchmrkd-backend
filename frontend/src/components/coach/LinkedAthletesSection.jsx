@@ -173,7 +173,7 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
                 disciplines_data: dd,
               })}
               className="text-left rounded-xl p-3.5 transition-all hover:translate-y-[-1px] flex items-center gap-3"
-              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(16,185,129,0.18)' }}
+              style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(16,185,129,0.18)' }}
             >
               <span title={readyTitle} className="flex-shrink-0 w-2.5 h-2.5 rounded-full"
                 style={{ background: readyColor, boxShadow: freshCheck && readiness.level !== 'none' ? `0 0 8px ${readyColor}` : 'none' }} />
@@ -195,8 +195,8 @@ export default function LinkedAthletesSection({ onViewAthlete }) {
                 </p>
                 {a.program_compliance && a.program_compliance.sessions_per_week && (
                   <div className="flex items-center gap-1.5 mt-1">
-                    <Dumbbell className="w-2.5 h-2.5 flex-shrink-0" style={{ color: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#64748b' }} />
-                    <div className="w-14 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <Dumbbell className="w-2.5 h-2.5 flex-shrink-0" style={{ color: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#9AA0AC' }} />
+                    <div className="w-14 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
                       <div className="h-full rounded-full" style={{
                         width: `${Math.min(100, Math.round((a.program_compliance.done_this_week / a.program_compliance.sessions_per_week) * 100))}%`,
                         background: a.program_compliance.done_this_week >= a.program_compliance.sessions_per_week ? '#34d399' : '#8B83FF',

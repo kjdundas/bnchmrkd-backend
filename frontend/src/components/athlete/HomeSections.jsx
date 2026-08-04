@@ -49,8 +49,8 @@ function AlmanacCard({ number, kicker, title, accent = ORANGE, children, classNa
     <section
       className={`relative overflow-hidden rounded-2xl ${className}`}
       style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(0,0,0,0.02)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       {/* Soft accent bloom in the top-right corner */}
@@ -282,8 +282,8 @@ export function TierUpCelebration({ celebrating, onDismiss }) {
   const { from, to, percent } = celebrating
   const accent = (typeof window !== 'undefined' && {
     'Novice':        '#475569',
-    'School':        '#64748b',
-    'Club':          '#94a3b8',
+    'School':        '#9AA0AC',
+    'Club':          '#5B5F6B',
     'National':      '#f59e0b',
     'Continental':   '#8B83FF',
     'Olympic Final': '#4F3CF0',
@@ -328,7 +328,7 @@ export function TierUpCelebration({ celebrating, onDismiss }) {
         style={{
           background: 'linear-gradient(170deg, rgba(15,23,42,0.95) 0%, rgba(12,18,34,0.92) 100%)',
           border: `1px solid ${accent}55`,
-          boxShadow: `0 20px 80px ${accent}33, 0 0 0 1px rgba(255,255,255,0.04)`,
+          boxShadow: `0 20px 80px ${accent}33, 0 0 0 1px rgba(0,0,0,0.04)`,
           animation: 'tierPop 0.7s cubic-bezier(.2,.9,.3,1.4)',
         }}
       >
@@ -501,7 +501,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
         className="pointer-events-none absolute inset-0 opacity-30"
         style={{
           background:
-            'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%)',
+            'linear-gradient(110deg, transparent 30%, rgba(0,0,0,0.04) 50%, transparent 70%)',
           backgroundSize: '200% 100%',
           animation: 'shimmer 6s linear infinite',
         }}
@@ -580,7 +580,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
           {/* ─── SEASON BEST ─── */}
           <div
             className="relative pl-3"
-            style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ borderLeft: '1px solid rgba(0,0,0,0.06)' }}
           >
             <div className="flex items-center gap-1.5">
               <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
@@ -609,7 +609,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
               <p
                 className="mono-font text-[10px] tabular-nums font-semibold mt-1.5"
                 style={{
-                  color: sbDelta.tone === 'up' ? '#34d399' : sbDelta.tone === 'down' ? '#fb7185' : '#94a3b8',
+                  color: sbDelta.tone === 'up' ? '#34d399' : sbDelta.tone === 'down' ? '#fb7185' : '#5B5F6B',
                 }}
               >
                 {sbDelta.text} <span className="text-slate-500">vs PB</span>
@@ -625,7 +625,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
           {/* ─── LAST RACE ─── */}
           <div
             className="relative pl-3"
-            style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ borderLeft: '1px solid rgba(0,0,0,0.06)' }}
           >
             <p className="mono-font text-[9px] uppercase tracking-[0.22em] text-slate-500">
               Last race
@@ -640,7 +640,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
               <p
                 className="mono-font text-[10px] tabular-nums font-semibold mt-1.5"
                 style={{
-                  color: lastDelta.tone === 'up' ? '#34d399' : lastDelta.tone === 'down' ? '#fb7185' : '#94a3b8',
+                  color: lastDelta.tone === 'up' ? '#34d399' : lastDelta.tone === 'down' ? '#fb7185' : '#5B5F6B',
                 }}
               >
                 {lastDelta.text} <span className="text-slate-500">vs PB</span>
@@ -665,7 +665,7 @@ export function TrajectoryHero({ athleteId, races, pb, discipline, sex = 'M' }) 
       {nextTier && nextTier !== currentTier && (
         <footer
           className="relative px-5 py-3 flex items-center gap-2"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
         >
           <Target className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
           <p className="landing-font text-slate-300 text-[12px] flex-1 truncate">
@@ -790,7 +790,7 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }) {
 
       {/* Comparison bar */}
       <div className="relative px-5 pt-6 pb-8">
-        <div className="relative h-[3px] w-full rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        <div className="relative h-[3px] w-full rounded-full" style={{ background: 'rgba(0,0,0,0.07)' }}>
           {/* Connector segment between the two markers */}
           <div
             className="absolute inset-y-0 rounded-full"
@@ -859,8 +859,8 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }) {
 // ═══════════════════════════════════════════════════════════════════════
 const TIER_ACCENT = {
   'Novice':        { swatch: '#475569', tag: 'starter' },
-  'School':        { swatch: '#64748b', tag: 'developing' },
-  'Club':          { swatch: '#94a3b8', tag: 'local' },
+  'School':        { swatch: '#9AA0AC', tag: 'developing' },
+  'Club':          { swatch: '#5B5F6B', tag: 'local' },
   'National':      { swatch: '#f59e0b', tag: 'national' },
   'Continental':   { swatch: '#8B83FF', tag: 'regional' },
   'Olympic Final': { swatch: '#4F3CF0', tag: 'international' },
@@ -907,8 +907,8 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
       className="relative overflow-hidden rounded-2xl"
       style={{
         background:
-          'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 60%, rgba(79,60,240,0.04) 100%)',
-        border: '1px solid rgba(255,255,255,0.06)',
+          'linear-gradient(160deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.015) 60%, rgba(79,60,240,0.04) 100%)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       {/* Ambient orange glow — atmospheric, anchors the eye to the right side */}
@@ -960,7 +960,7 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
         {/* Base rail */}
         <div
           className="relative h-[3px] w-full rounded-full"
-          style={{ background: 'rgba(255,255,255,0.07)' }}
+          style={{ background: 'rgba(0,0,0,0.07)' }}
         >
           {/* Filled progress */}
           <div
@@ -974,7 +974,7 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
 
           {/* Tier waypoints */}
           {tiers.map((t, i) => {
-            const accent = TIER_ACCENT[t.label] || { swatch: '#94a3b8', tag: '' }
+            const accent = TIER_ACCENT[t.label] || { swatch: '#5B5F6B', tag: '' }
             const above = labelRow(i) === 'above'
             const reached = percent >= t.percent
             return (
@@ -1056,7 +1056,7 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }) {
       {/* Footer dispatch */}
       <footer
         className="relative px-5 py-4 flex items-start gap-3"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}
       >
         <div
           className="flex-shrink-0 w-1 h-10 rounded-full mt-0.5"
@@ -1159,7 +1159,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
       {/* Segmented 5-tier bar */}
       <div
         className="relative h-2 rounded-full overflow-hidden flex"
-        style={{ background: 'rgba(255,255,255,0.03)' }}
+        style={{ background: 'rgba(0,0,0,0.03)' }}
       >
         {DNA_TIERS.map((t, i) => (
           <div
@@ -1169,7 +1169,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
               width: '20%',
               background: measured
                 ? `${t.color}${tier && tier.index >= i ? '55' : '18'}`
-                : 'rgba(255,255,255,0.03)',
+                : 'rgba(0,0,0,0.03)',
               borderRight: i < DNA_TIERS.length - 1 ? '1px solid rgba(15,23,42,0.8)' : 'none',
             }}
           />
@@ -1181,7 +1181,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
             style={{
               left: '85%',
               backgroundImage:
-                'repeating-linear-gradient(180deg,#94a3b8 0 2px,transparent 2px 4px)',
+                'repeating-linear-gradient(180deg,#5B5F6B 0 2px,transparent 2px 4px)',
             }}
             aria-label="Finalist level"
           />
@@ -1193,7 +1193,7 @@ function LadderRow({ row, isTopPriority, isInfoOpen, onToggleInfo, disciplineLab
             style={{
               left: `${Math.max(2, Math.min(98, adjusted))}%`,
               background: tier.color,
-              border: '2px solid #0f172a',
+              border: '2px solid #F6F7FB',
               boxShadow: `0 0 0 1.5px ${tier.color}`,
             }}
           />
@@ -1381,7 +1381,7 @@ export function AthleteDNALadder({ metrics, discipline, dob }) {
       {/* Legend footer — finalist tick key */}
       <div
         className="px-5 py-3 flex items-center justify-center gap-6 mono-font text-[9px] uppercase tracking-[0.18em]"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}
       >
         <span className="flex items-center gap-2 text-slate-400">
           <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: ORANGE }} />
@@ -1392,7 +1392,7 @@ export function AthleteDNALadder({ metrics, discipline, dob }) {
             className="inline-block w-4 h-[8px]"
             style={{
               backgroundImage:
-                'repeating-linear-gradient(180deg,#94a3b8 0 2px,transparent 2px 4px)',
+                'repeating-linear-gradient(180deg,#5B5F6B 0 2px,transparent 2px 4px)',
             }}
           />
           finalist
@@ -1484,7 +1484,7 @@ export function LimitingFactorCard({ metrics, pb, discipline, sex = 'M' }) {
         </div>
       </div>
 
-      <div className="px-5 pt-3 pb-4 mt-3 flex items-start gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="px-5 pt-3 pb-4 mt-3 flex items-start gap-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
         <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: `linear-gradient(180deg, ${ORANGE}, ${ORANGE_LITE})` }} />
         <p className="landing-font text-slate-300 text-[13px] leading-snug flex-1">
           {sprintLike && limiter.estImpactSec > 0 ? (
@@ -1586,8 +1586,8 @@ export function SinceLastVisit({ athleteId, metrics, races, pb, discipline }) {
     <section
       className="relative overflow-hidden rounded-2xl flex items-stretch"
       style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(0,0,0,0.02)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       <div className="w-1" style={{ background: `linear-gradient(180deg, ${ORANGE}, ${ORANGE_LITE})` }} />
@@ -1754,23 +1754,23 @@ function downloadShareImage({ recap, discipline, athleteName, higher }) {
   <rect width="${W}" height="${H}" fill="url(#orb2)"/>
 
   <text x="80" y="140" fill="#8B83FF" font-family="DM Mono, monospace" font-size="28" letter-spacing="6">WEEKLY RECAP</text>
-  <text x="80" y="200" fill="#64748b" font-family="DM Mono, monospace" font-size="22" letter-spacing="4">${(discipline || '').toUpperCase()}</text>
+  <text x="80" y="200" fill="#9AA0AC" font-family="DM Mono, monospace" font-size="22" letter-spacing="4">${(discipline || '').toUpperCase()}</text>
 
   <line x1="80" y1="240" x2="${W - 80}" y2="240" stroke="#1e293b" stroke-width="2"/>
 
-  <text x="80" y="340" fill="#94a3b8" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">PERSONAL BEST</text>
+  <text x="80" y="340" fill="#5B5F6B" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">PERSONAL BEST</text>
   <text x="80" y="440" fill="url(#num)" font-family="Instrument Sans, sans-serif" font-size="110" font-weight="600">${pbLine}</text>
   ${deltaLine ? `<text x="80" y="490" fill="#34d399" font-family="DM Mono, monospace" font-size="28">${deltaLine}</text>` : ''}
 
-  <text x="80" y="620" fill="#94a3b8" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">SESSIONS LOGGED</text>
+  <text x="80" y="620" fill="#5B5F6B" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">SESSIONS LOGGED</text>
   <text x="80" y="740" fill="#ffffff" font-family="Instrument Sans, sans-serif" font-size="160" font-weight="700">${recap.sessions}</text>
-  <text x="350" y="740" fill="#64748b" font-family="DM Mono, monospace" font-size="32">${recap.races} races · ${recap.metricsLogged} metrics</text>
+  <text x="350" y="740" fill="#9AA0AC" font-family="DM Mono, monospace" font-size="32">${recap.races} races · ${recap.metricsLogged} metrics</text>
 
-  <text x="80" y="870" fill="#94a3b8" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">CURRENT TIER</text>
+  <text x="80" y="870" fill="#5B5F6B" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">CURRENT TIER</text>
   <text x="80" y="970" fill="#ffffff" font-family="Instrument Sans, sans-serif" font-size="84" font-weight="600">${tierLabel}</text>
 
   ${topMetricLine ? `
-  <text x="80" y="1080" fill="#94a3b8" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">TOP MOVER</text>
+  <text x="80" y="1080" fill="#5B5F6B" font-family="DM Mono, monospace" font-size="22" letter-spacing="3">TOP MOVER</text>
   <text x="80" y="1170" fill="#8B83FF" font-family="Instrument Sans, sans-serif" font-size="64" font-weight="600">${topMetricLine}</text>
   ` : ''}
 
@@ -1824,7 +1824,7 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
     <section
       className="relative overflow-hidden rounded-2xl"
       style={{
-        background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(79,60,240,0.04) 100%)',
+        background: 'linear-gradient(160deg, rgba(0,0,0,0.03) 0%, rgba(79,60,240,0.04) 100%)',
         border: '1px solid rgba(79,60,240,0.18)',
       }}
     >
@@ -1850,7 +1850,7 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
       <div className="relative px-5 pb-4 grid grid-cols-3 gap-3">
         <div
           className="rounded-xl px-3 py-3"
-          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
+          style={{ background: 'rgba(0,0,0,0.025)', border: '1px solid rgba(0,0,0,0.05)' }}
         >
           <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">Sessions</p>
           <p className="landing-font text-white text-2xl font-semibold tabular-nums mt-1">
@@ -1859,7 +1859,7 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
         </div>
         <div
           className="rounded-xl px-3 py-3"
-          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
+          style={{ background: 'rgba(0,0,0,0.025)', border: '1px solid rgba(0,0,0,0.05)' }}
         >
           <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">PB</p>
           <p
@@ -1871,7 +1871,7 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
         </div>
         <div
           className="rounded-xl px-3 py-3"
-          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
+          style={{ background: 'rgba(0,0,0,0.025)', border: '1px solid rgba(0,0,0,0.05)' }}
         >
           <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">Tier</p>
           <p className="landing-font text-white text-base font-semibold mt-1 leading-tight">
@@ -1897,7 +1897,7 @@ export function WeeklyRecap({ athleteId, races, metrics, pb, discipline, sex = '
 
       <div
         className="relative px-5 py-3 flex items-center justify-between gap-3"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}
       >
         <p className="mono-font text-[9px] uppercase tracking-[0.18em] text-slate-500">
           Friday drop

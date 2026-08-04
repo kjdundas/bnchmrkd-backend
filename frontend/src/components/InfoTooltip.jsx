@@ -58,7 +58,7 @@ export default function InfoTooltip({
       : {
           background: 'rgba(148,163,184,0.08)',
           border: '1px solid rgba(148,163,184,0.22)',
-          color: '#94a3b8',
+          color: '#5B5F6B',
         };
 
   // Position the popup
@@ -132,7 +132,7 @@ export default function InfoTooltip({
               background: 'rgba(10,13,20,0.96)',
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(79,60,240,0.22)',
-              boxShadow: '0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.02)',
             }}
           >
             {title && (

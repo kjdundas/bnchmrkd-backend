@@ -150,9 +150,9 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
 
       {open && (
         <div className="fixed bottom-4 right-4 z-[120] w-[92vw] max-w-sm rounded-2xl overflow-hidden flex flex-col"
-          style={{ height: 'min(78vh, 640px)', background: 'linear-gradient(170deg,#11131a,#0a0a0f)', border: '1px solid rgba(79,60,240,0.25)', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
+          style={{ height: 'min(78vh, 640px)', background: 'linear-gradient(170deg,#11131a,#F6F7FB)', border: '1px solid rgba(79,60,240,0.25)', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
           {/* Header */}
-          <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }}>
               <Bot className="w-4 h-4 text-black" />
             </div>
@@ -177,7 +177,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
               <label className="block text-[9px] uppercase tracking-wider text-slate-500 mono-font mb-1">Build for</label>
               <select value={targetId} onChange={(e) => setTargetId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-                style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(0,0,0,0.08)' }}>
                 <option value="">Select an athlete…</option>
                 {athletes.map((a) => (
                   <option key={a.athlete_user_id} value={a.athlete_user_id}>
@@ -198,7 +198,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
                 {suggestions.map((s, i) => (
                   <button key={i} onClick={() => setInput(s)}
                     className="block w-full text-left text-[11px] text-slate-300 landing-font rounded-lg px-3 py-2 hover:text-white transition-colors"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                     {s}
                   </button>
                 ))}
@@ -212,7 +212,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
                     <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-[12px] landing-font leading-relaxed whitespace-pre-wrap ${m.role === 'user' ? 'text-black' : 'text-slate-200'}`}
                       style={m.role === 'user'
                         ? { background: 'linear-gradient(135deg,#4F3CF0,#8B83FF)' }
-                        : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        : { background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}>
                       {m.content}
                     </div>
                   </div>
@@ -220,7 +220,7 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
             ))}
             {sending && (
               <div className="flex justify-start">
-                <div className="rounded-2xl px-3 py-2 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="rounded-2xl px-3 py-2 flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}>
                   <Loader2 className="w-3.5 h-3.5 text-slate-400 animate-spin" />
                   {mode === 'program' && <span className="text-[11px] text-slate-400 landing-font">Building the program…</span>}
                 </div>
@@ -229,14 +229,14 @@ export default function AssistantChat({ role = 'coach', fetchContext, title = 'A
           </div>
 
           {/* Input */}
-          <div className="p-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="p-2.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
             <div className="flex gap-2">
               <input
                 value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && send()}
                 placeholder={mode === 'program' ? 'e.g. 6-week pre-season speed block, 4 days…' : 'Ask a question…'}
                 className="flex-1 px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
               />
               <button onClick={send} disabled={sending || !input.trim()}
                 className="px-3 rounded-lg text-black disabled:opacity-50 flex items-center justify-center"
@@ -260,7 +260,7 @@ function ModeTab({ active, onClick, icon: Icon, label }) {
       className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold landing-font transition-colors"
       style={active
         ? { background: 'rgba(79,60,240,0.16)', color: '#8B83FF', border: '1px solid rgba(79,60,240,0.35)' }
-        : { background: 'rgba(255,255,255,0.03)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)' }}>
+        : { background: 'rgba(0,0,0,0.03)', color: '#5B5F6B', border: '1px solid rgba(0,0,0,0.06)' }}>
       <Icon className="w-3.5 h-3.5" /> {label}
     </button>
   )
@@ -273,7 +273,7 @@ function ProgramMessage({ msg, onSave }) {
   const sessions = Array.isArray(p.sessions) ? p.sessions : []
   const chips = [r.season_phase, r.primary_quality, r.days_per_week ? `${r.days_per_week}×/wk` : null, r.weeks ? `${r.weeks} wk` : null].filter(Boolean)
   return (
-    <div className="rounded-2xl px-3 py-3 space-y-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(79,60,240,0.25)' }}>
+    <div className="rounded-2xl px-3 py-3 space-y-2.5" style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(79,60,240,0.25)' }}>
       <div>
         <p className="text-[12px] font-bold text-white landing-font">{p.title}</p>
         {p.summary && <p className="text-[10px] text-slate-400 landing-font mt-0.5 leading-snug">{p.summary}</p>}

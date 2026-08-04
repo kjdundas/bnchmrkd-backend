@@ -21,7 +21,7 @@ export function XPBar({ totalXP = 0, compact = false }) {
   const lvl = getLevelFromXP(totalXP)
   const pct = Math.max(0, Math.min(100, Math.round(lvl.progress * 100)))
   return (
-    <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span style={{ fontSize: 18 }}>{lvl.icon}</span>
@@ -36,7 +36,7 @@ export function XPBar({ totalXP = 0, compact = false }) {
         </div>
         <div className="mono-font text-[11px] font-bold text-indigo-400">{totalXP.toLocaleString()} XP</div>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.07)' }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#4F3CF0,#8B83FF)', transition: 'width .5s ease' }} />
       </div>
     </div>
@@ -128,7 +128,7 @@ export function LogCelebration({ show, data, onClose }) {
           <div className="flex flex-wrap gap-2 mt-2">
             {data.newBadges.map((badge) => (
               <div key={badge.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                style={{ background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.1)' }}>
                 <span style={{ fontSize: 14 }}>{badge.icon}</span>
                 <span className="landing-font text-[11px] font-semibold text-white">{badge.title}</span>
               </div>

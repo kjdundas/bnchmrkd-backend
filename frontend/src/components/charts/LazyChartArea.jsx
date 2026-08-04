@@ -26,7 +26,7 @@ export default function LazyChartArea({ height = 320, children }) {
 
   if (!RC) {
     return (
-      <div style={{ height, minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: 13 }}>
+      <div style={{ height, minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9AA0AC', fontSize: 13 }}>
         Loading chart…
       </div>
     )

@@ -410,7 +410,7 @@ function CategoryCard({ cat, onClick }) {
       onClick={onClick}
       className="relative overflow-hidden rounded-2xl p-3.5 text-left transition-transform active:scale-[0.97]"
       style={{
-        background: `linear-gradient(160deg, ${cat.tint}10 0%, rgba(255,255,255,0.02) 100%)`,
+        background: `linear-gradient(160deg, ${cat.tint}10 0%, rgba(0,0,0,0.02) 100%)`,
         border: `1px solid ${cat.tint}26`,
       }}
     >
@@ -518,8 +518,8 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
     <section
       className="relative overflow-hidden rounded-2xl"
       style={{
-        background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 60%, rgba(79,60,240,0.04) 100%)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'linear-gradient(160deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.015) 60%, rgba(79,60,240,0.04) 100%)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       <div
@@ -547,8 +547,8 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
             onChange={(e) => setMetricKey(e.target.value)}
             className="landing-font w-full appearance-none px-3.5 py-3 rounded-xl text-white text-sm focus:outline-none"
             style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(0,0,0,0.04)',
+              border: '1px solid rgba(0,0,0,0.08)',
             }}
           >
             {spec.metrics.map(m => (
@@ -569,7 +569,7 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
         <div
           className="relative rounded-2xl px-4 py-5 flex items-baseline gap-3"
           style={{
-            background: 'rgba(255,255,255,0.025)',
+            background: 'rgba(0,0,0,0.025)',
             border: `1px solid ${spec.tint}40`,
             boxShadow: `0 0 0 3px ${spec.tint}10`,
           }}
@@ -612,8 +612,8 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
                 onChange={(e) => setDate(e.target.value)}
                 className="landing-font w-full px-3.5 py-2.5 rounded-xl text-white text-sm focus:outline-none"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(0,0,0,0.08)',
                   colorScheme: 'dark',
                 }}
               />
@@ -629,8 +629,8 @@ function MetricForm({ athleteId, category, spec, initialMetricKey, onSaved }) {
                 placeholder="e.g. fresh legs, indoor, 3rd attempt"
                 className="landing-font w-full px-3.5 py-2.5 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(0,0,0,0.08)',
                 }}
               />
             </div>
@@ -694,7 +694,7 @@ function ToastSlot({ toast }) {
         style={{
           background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(12,18,34,0.95) 100%)',
           border: `1px solid ${ORANGE}55`,
-          boxShadow: `0 10px 40px ${ORANGE}33, 0 0 0 1px rgba(255,255,255,0.05)`,
+          boxShadow: `0 10px 40px ${ORANGE}33, 0 0 0 1px rgba(0,0,0,0.05)`,
         }}
       >
         <div

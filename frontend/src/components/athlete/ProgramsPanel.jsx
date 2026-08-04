@@ -43,7 +43,7 @@ const EMPTY_INTAKE = {
   target_competition_date: '', injuries: [], goal: '',
 }
 
-const inputStyle = { background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)' }
+const inputStyle = { background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(0,0,0,0.08)' }
 
 export default function ProgramsPanel({ user, fetchContext }) {
   const [programs, setPrograms] = useState([])
@@ -108,7 +108,7 @@ export default function ProgramsPanel({ user, fetchContext }) {
   const fld = 'w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30'
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Dumbbell className="w-4 h-4 text-indigo-400" />
@@ -175,7 +175,7 @@ export default function ProgramsPanel({ user, fetchContext }) {
                     className="px-2.5 py-1 rounded-full text-[10px] font-semibold landing-font transition-colors"
                     style={on
                       ? { background: 'rgba(251,113,133,0.18)', color: '#fb7185', border: '1px solid rgba(251,113,133,0.4)' }
-                      : { background: 'rgba(255,255,255,0.03)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      : { background: 'rgba(0,0,0,0.03)', color: '#5B5F6B', border: '1px solid rgba(0,0,0,0.08)' }}>
                     {a.l}
                   </button>
                 )
@@ -237,7 +237,7 @@ function ExerciseRow({ ex }) {
   if (skip(ex.rest)) meta.push(`rest ${ex.rest}`)
   if (skip(ex.tempo)) meta.push(`tempo ${ex.tempo}`)
   return (
-    <div className="rounded-md px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+    <div className="rounded-md px-2.5 py-1.5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-semibold text-slate-100 landing-font">{ex.name}</span>
         {skip(ex.prescription) && <span className="text-[11px] font-bold text-indigo-300 mono-font whitespace-nowrap flex-shrink-0">{ex.prescription}</span>}
@@ -283,7 +283,7 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
   const allDone = total > 0 && completed === total
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 text-left">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -298,17 +298,17 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
           </p>
           {total > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
                 <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: allDone ? '#34d399' : 'linear-gradient(90deg,#4F3CF0,#8B83FF)' }} />
               </div>
-              <span className="text-[9px] mono-font flex-shrink-0" style={{ color: allDone ? '#34d399' : '#94a3b8' }}>{completed}/{total} this wk</span>
+              <span className="text-[9px] mono-font flex-shrink-0" style={{ color: allDone ? '#34d399' : '#5B5F6B' }}>{completed}/{total} this wk</span>
             </div>
           )}
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-slate-500 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />}
       </button>
       {open && (
-        <div className="px-3.5 pb-3.5 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="px-3.5 pb-3.5 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
           {s.focus_rationale && (
             <div className="mt-3 rounded-lg p-2.5" style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}>
               <p className="text-[9px] uppercase tracking-wider text-sky-400 mono-font mb-1">Why this plan</p>
@@ -321,7 +321,7 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
           {sessions.map((sess, i) => {
             const isDone = done.has(i)
             return (
-            <div key={i} className="rounded-lg p-3" style={{ background: isDone ? 'rgba(52,211,153,0.06)' : 'rgba(255,255,255,0.02)', border: isDone ? '1px solid rgba(52,211,153,0.2)' : '1px solid transparent' }}>
+            <div key={i} className="rounded-lg p-3" style={{ background: isDone ? 'rgba(52,211,153,0.06)' : 'rgba(0,0,0,0.02)', border: isDone ? '1px solid rgba(52,211,153,0.2)' : '1px solid transparent' }}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[12px] font-bold text-white landing-font">{sess.label || `Session ${i + 1}`}</p>
@@ -329,7 +329,7 @@ function ProgramCard({ program, athleteId, open, onToggle, onDelete }) {
                 </div>
                 <button onClick={() => toggle(i)} disabled={busy === i}
                   className="flex items-center gap-1 text-[10px] font-bold landing-font flex-shrink-0 disabled:opacity-50"
-                  style={{ color: isDone ? '#34d399' : '#64748b' }}>
+                  style={{ color: isDone ? '#34d399' : '#9AA0AC' }}>
                   {isDone ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
                   {isDone ? 'Done' : 'Mark done'}
                 </button>

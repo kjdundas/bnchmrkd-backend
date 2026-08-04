@@ -79,11 +79,11 @@ export default function QuickAnalysisFlow({
       : 'text-slate-300 hover:text-white hover:-translate-y-0.5')
   const chipStyle = (active, accent = ORANGE) => active
     ? { background: `${accent}1f`, border: `1px solid ${accent}`, boxShadow: `0 0 0 1px ${accent}33, 0 8px 24px -12px ${accent}` }
-    : { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }
+    : { background: 'rgba(0,0,0,0.025)', border: '1px solid rgba(0,0,0,0.08)' }
 
   return (
     <div ref={stage} className="relative overflow-hidden rounded-2xl p-6 sm:p-9"
-      style={{ background: 'linear-gradient(160deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 40%, rgba(255,255,255,0.006) 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      style={{ background: 'linear-gradient(160deg, rgba(0,0,0,0.045) 0%, rgba(255,255,255,0.012) 40%, rgba(255,255,255,0.006) 100%)', border: '1px solid rgba(0,0,0,0.08)' }}>
 
       {/* ghost step numeral */}
       <span data-ghost aria-hidden="true" className="landing-font pointer-events-none select-none"
@@ -98,7 +98,7 @@ export default function QuickAnalysisFlow({
           <span style={{ color: ORANGE }}>{String(step + 1).padStart(2, '0')}</span> / {String(total).padStart(2, '0')} · {labels[step]}
         </span>
       </div>
-      <div className="relative z-10" style={{ height: 2, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: 34 }}>
+      <div className="relative z-10" style={{ height: 2, borderRadius: 2, background: 'rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 34 }}>
         <div data-rail-fill style={{ height: '100%', width: `${((step + 1) / total) * 100}%`, background: `linear-gradient(90deg, ${ORANGE}, #8B83FF)` }} />
       </div>
 
@@ -108,7 +108,7 @@ export default function QuickAnalysisFlow({
           {step === 0 && (
             <>
               <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>What's your event?</h3>
-              <p className="landing-font" style={{ color: '#94a3b8', marginBottom: 26, fontSize: 15 }}>Pick the discipline you want to benchmark.</p>
+              <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 26, fontSize: 15 }}>Pick the discipline you want to benchmark.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5" style={{ maxWidth: 520 }}>
                 {disciplines.map((d) => (
                   <button key={d.v} onClick={() => pickDiscipline(d.v)} className={chipCls(data.discipline === d.v)} style={chipStyle(data.discipline === d.v)}>{d.l}</button>
@@ -120,7 +120,7 @@ export default function QuickAnalysisFlow({
           {step === 1 && (
             <>
               <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>Which standards?</h3>
-              <p className="landing-font" style={{ color: '#94a3b8', marginBottom: 26, fontSize: 15 }}>We grade you against age- and sex-specific Olympic data.</p>
+              <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 26, fontSize: 15 }}>We grade you against age- and sex-specific Olympic data.</p>
               <div className="grid grid-cols-2 gap-3" style={{ maxWidth: 420 }}>
                 {[{ g: 'Male', a: '#60a5fa', t: "Men's" }, { g: 'Female', a: '#f472b6', t: "Women's" }].map(({ g, a, t }) => (
                   <button key={g} onClick={() => pickGender(g)} className={chipCls(data.gender === g)} style={{ ...chipStyle(data.gender === g, a), padding: '28px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
@@ -135,7 +135,7 @@ export default function QuickAnalysisFlow({
           {step === 2 && (
             <>
               <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>How old are you?</h3>
-              <p className="landing-font" style={{ color: '#94a3b8', marginBottom: 30, fontSize: 15 }}>Your age sets the development cohort we compare you to.</p>
+              <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 30, fontSize: 15 }}>Your age sets the development cohort we compare you to.</p>
               <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-indigo-500 transition-colors duration-200" style={{ maxWidth: 260 }}>
                 <input autoFocus type="text" inputMode="numeric" placeholder="22" value={data.age}
                   onChange={(e) => set({ age: e.target.value.replace(/[^\d]/g, '').slice(0, 2) })}
@@ -154,7 +154,7 @@ export default function QuickAnalysisFlow({
           {step === 3 && (
             <>
               <h3 className="landing-font" style={{ fontSize: 30, fontWeight: 700, color: '#fff', marginBottom: 6, letterSpacing: '-0.025em' }}>Your personal best?</h3>
-              <p className="landing-font" style={{ color: '#94a3b8', marginBottom: 30, fontSize: 15 }}>{data.discipline} · {isThrowsMode ? 'best mark' : 'best time'}</p>
+              <p className="landing-font" style={{ color: '#5B5F6B', marginBottom: 30, fontSize: 15 }}>{data.discipline} · {isThrowsMode ? 'best mark' : 'best time'}</p>
               <div className="flex items-baseline gap-3 border-b-2 border-white/10 focus-within:border-indigo-500 transition-colors duration-200" style={{ maxWidth: 340 }}>
                 <input autoFocus type="text" inputMode="decimal" placeholder={pbPlaceholder} value={data.personalBest}
                   onChange={(e) => set({ personalBest: e.target.value.replace(/[^\d.:]/g, '') })}
@@ -169,7 +169,7 @@ export default function QuickAnalysisFlow({
                 <div style={{ marginTop: 22, maxWidth: 340 }}>
                   <label className="landing-font" style={{ display: 'block', fontSize: 12, color: '#71717a', marginBottom: 6, letterSpacing: '0.04em' }}>Implement weight</label>
                   <select value={data.implementWeight} onChange={(e) => set({ implementWeight: parseFloat(e.target.value) })}
-                    className="landing-font" style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, padding: '10px 14px', color: '#fff', outline: 'none' }}>
+                    className="landing-font" style={{ width: '100%', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, padding: '10px 14px', color: '#fff', outline: 'none' }}>
                     {getWeightOptions(data.discipline, data.gender).map((opt) => (<option key={opt.kg} value={opt.kg}>{opt.label}</option>))}
                   </select>
                 </div>
@@ -179,7 +179,7 @@ export default function QuickAnalysisFlow({
                 onChange={(e) => set({ name: e.target.value })}
                 aria-label="Name (optional)"
                 className="landing-font placeholder-slate-700 focus:border-white/25"
-                style={{ marginTop: 24, width: '100%', maxWidth: 340, display: 'block', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '8px 2px', color: '#e2e8f0', outline: 'none', fontSize: 14, transition: 'border-color .2s ease' }} />
+                style={{ marginTop: 24, width: '100%', maxWidth: 340, display: 'block', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '8px 2px', color: '#16181D', outline: 'none', fontSize: 14, transition: 'border-color .2s ease' }} />
             </>
           )}
         </div>
@@ -191,7 +191,7 @@ export default function QuickAnalysisFlow({
       <div className="relative z-10 flex items-center justify-between" style={{ marginTop: 34 }}>
         <button onClick={() => go(step - 1)} disabled={step === 0} aria-label="Back"
           className="landing-font inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
-          style={{ color: step === 0 ? '#3f3f46' : '#94a3b8', background: 'transparent', cursor: step === 0 ? 'default' : 'pointer' }}>
+          style={{ color: step === 0 ? '#3f3f46' : '#5B5F6B', background: 'transparent', cursor: step === 0 ? 'default' : 'pointer' }}>
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
@@ -199,7 +199,7 @@ export default function QuickAnalysisFlow({
           <button onClick={() => go(step + 1)} disabled={step === 2 && !ageValid} aria-label="Next"
             className="landing-font inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-[15px] font-bold transition-all duration-150 active:scale-[0.98]"
             style={(step === 2 && !ageValid)
-              ? { color: '#52525b', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'not-allowed' }
+              ? { color: '#52525b', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', cursor: 'not-allowed' }
               : { color: '#0a0a0b', background: ORANGE, boxShadow: '0 8px 24px -10px rgba(79,60,240,0.8)' }}>
             Next <ArrowRight className="w-4 h-4" />
           </button>
@@ -207,7 +207,7 @@ export default function QuickAnalysisFlow({
           <button onClick={onSubmit} disabled={loading || !pbValid} aria-label="Benchmark"
             className="landing-font inline-flex items-center gap-2.5 rounded-xl px-8 py-4 text-base font-extrabold transition-transform duration-150 active:scale-[0.98]"
             style={(loading || !pbValid)
-              ? { color: '#52525b', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'not-allowed' }
+              ? { color: '#52525b', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', cursor: 'not-allowed' }
               : { color: '#fff', background: 'linear-gradient(135deg, #3B34C9 0%, #4F3CF0 50%, #8B83FF 100%)', border: '1px solid rgba(79,60,240,0.5)', boxShadow: '0 10px 30px -8px rgba(79,60,240,0.6)' }}>
             <Zap className="w-5 h-5" /> {loading ? 'Analysing…' : 'Benchmark'}
           </button>

@@ -11,7 +11,7 @@ import {
 const ORANGE = '#4F3CF0'
 const ORANGE_GLOW = 'rgba(79,60,240,0.25)'
 const BG = '#0a0a0a'
-const CARD_BORDER = 'rgba(255,255,255,0.06)'
+const CARD_BORDER = 'rgba(0,0,0,0.06)'
 const CARD_BORDER_SELECTED = 'rgba(79,60,240,0.5)'
 const CARD_BG_SELECTED = 'rgba(79,60,240,0.08)'
 
@@ -181,7 +181,7 @@ export default function CoachOnboarding({ onComplete }) {
               onChange={(e) => setFirstName(e.target.value)}
               className="w-full px-4 py-4 rounded-xl text-white text-lg placeholder-slate-700 focus:outline-none transition-all"
               style={{
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgba(0,0,0,0.04)',
                 border: `1px solid ${firstName ? CARD_BORDER_SELECTED : CARD_BORDER}`,
               }}
               placeholder="First name"
@@ -195,7 +195,7 @@ export default function CoachOnboarding({ onComplete }) {
               onChange={(e) => setLastName(e.target.value)}
               className="w-full px-4 py-4 rounded-xl text-white text-lg placeholder-slate-700 focus:outline-none transition-all"
               style={{
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgba(0,0,0,0.04)',
                 border: `1px solid ${lastName ? CARD_BORDER_SELECTED : CARD_BORDER}`,
               }}
               placeholder="Last name"
@@ -225,7 +225,7 @@ export default function CoachOnboarding({ onComplete }) {
           onChange={(e) => { setCountrySearch(e.target.value); if (!country) setCountry('') }}
           placeholder="Search countries..."
           className="w-full px-4 py-3.5 rounded-xl text-white placeholder-slate-700 focus:outline-none mb-4 text-sm"
-          style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${CARD_BORDER}` }}
+          style={{ background: 'rgba(0,0,0,0.04)', border: `1px solid ${CARD_BORDER}` }}
         />
         <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-1 -mr-1">
           {filteredCountries.map(c => (
@@ -234,9 +234,9 @@ export default function CoachOnboarding({ onComplete }) {
               onClick={() => { setCountry(c); setCountrySearch('') }}
               className="text-left px-4 py-3 rounded-xl text-sm font-medium transition-all"
               style={{
-                background: country === c ? CARD_BG_SELECTED : 'rgba(255,255,255,0.02)',
+                background: country === c ? CARD_BG_SELECTED : 'rgba(0,0,0,0.02)',
                 border: `1px solid ${country === c ? CARD_BORDER_SELECTED : CARD_BORDER}`,
-                color: country === c ? ORANGE : '#64748b',
+                color: country === c ? ORANGE : '#9AA0AC',
               }}
             >
               {c}
@@ -271,7 +271,7 @@ export default function CoachOnboarding({ onComplete }) {
           onChange={(e) => setOrganization(e.target.value)}
           className="w-full px-4 py-4 rounded-xl text-white text-lg placeholder-slate-700 focus:outline-none transition-all"
           style={{
-            background: 'rgba(255,255,255,0.04)',
+            background: 'rgba(0,0,0,0.04)',
             border: `1px solid ${organization ? CARD_BORDER_SELECTED : CARD_BORDER}`,
           }}
           placeholder="Organisation name"
@@ -303,7 +303,7 @@ export default function CoachOnboarding({ onComplete }) {
                 onClick={() => setCoachingLevel(level.id)}
                 className="w-full text-left px-5 py-4 rounded-xl transition-all"
                 style={{
-                  background: selected ? CARD_BG_SELECTED : 'rgba(255,255,255,0.02)',
+                  background: selected ? CARD_BG_SELECTED : 'rgba(0,0,0,0.02)',
                   border: `1px solid ${selected ? CARD_BORDER_SELECTED : CARD_BORDER}`,
                 }}
               >
@@ -346,7 +346,7 @@ export default function CoachOnboarding({ onComplete }) {
                 onClick={() => toggleDiscipline(group.id)}
                 className="text-left px-4 py-4 rounded-xl transition-all relative"
                 style={{
-                  background: selected ? CARD_BG_SELECTED : 'rgba(255,255,255,0.02)',
+                  background: selected ? CARD_BG_SELECTED : 'rgba(0,0,0,0.02)',
                   border: `1px solid ${selected ? CARD_BORDER_SELECTED : CARD_BORDER}`,
                 }}
               >
@@ -358,11 +358,11 @@ export default function CoachOnboarding({ onComplete }) {
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center mb-3"
                   style={{
-                    background: selected ? 'rgba(79,60,240,0.15)' : 'rgba(255,255,255,0.04)',
+                    background: selected ? 'rgba(79,60,240,0.15)' : 'rgba(0,0,0,0.04)',
                     border: `1px solid ${selected ? 'rgba(79,60,240,0.2)' : CARD_BORDER}`,
                   }}
                 >
-                  <GroupIcon style={{ color: selected ? ORANGE : '#64748b', width: 18, height: 18 }} />
+                  <GroupIcon style={{ color: selected ? ORANGE : '#9AA0AC', width: 18, height: 18 }} />
                 </div>
                 <div className="font-semibold text-sm" style={{ color: selected ? '#fff' : '#cbd5e1' }}>
                   {group.label}
@@ -393,7 +393,7 @@ export default function CoachOnboarding({ onComplete }) {
                 onClick={() => setSquadSize(size.id)}
                 className="w-full text-left px-5 py-4 rounded-xl transition-all"
                 style={{
-                  background: selected ? CARD_BG_SELECTED : 'rgba(255,255,255,0.02)',
+                  background: selected ? CARD_BG_SELECTED : 'rgba(0,0,0,0.02)',
                   border: `1px solid ${selected ? CARD_BORDER_SELECTED : CARD_BORDER}`,
                 }}
               >
@@ -452,7 +452,7 @@ export default function CoachOnboarding({ onComplete }) {
           ))}
         </div>
 
-        <div className="p-4 rounded-xl mb-6" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${CARD_BORDER}` }}>
+        <div className="p-4 rounded-xl mb-6" style={{ background: 'rgba(0,0,0,0.02)', border: `1px solid ${CARD_BORDER}` }}>
           <p className="text-xs text-slate-600 leading-relaxed">
             <span className="text-slate-500 font-medium">Coming later with Pro: </span>
             API integrations (Strava, Garmin), advanced exports, priority support, and more.
@@ -466,7 +466,7 @@ export default function CoachOnboarding({ onComplete }) {
             className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
             style={{
               background: acceptedTerms ? ORANGE : 'transparent',
-              border: `2px solid ${acceptedTerms ? ORANGE : 'rgba(255,255,255,0.12)'}`,
+              border: `2px solid ${acceptedTerms ? ORANGE : 'rgba(0,0,0,0.12)'}`,
               boxShadow: acceptedTerms ? `0 0 8px ${ORANGE_GLOW}` : 'none',
             }}
           >
@@ -490,7 +490,7 @@ export default function CoachOnboarding({ onComplete }) {
     <div className="min-h-screen flex flex-col" style={{ background: BG }}>
       {/* Progress bar */}
       {step > 1 && (
-        <div className="w-full h-0.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="w-full h-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
           <div
             className="h-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${ORANGE}, #8B83FF)` }}
@@ -504,7 +504,7 @@ export default function CoachOnboarding({ onComplete }) {
           <button
             onClick={back}
             className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${CARD_BORDER}` }}
+            style={{ background: 'rgba(0,0,0,0.05)', border: `1px solid ${CARD_BORDER}` }}
           >
             <ChevronLeft className="w-4 h-4 text-slate-400" />
           </button>
@@ -530,7 +530,7 @@ export default function CoachOnboarding({ onComplete }) {
           style={{
             background: !ctaDisabled && !loading
               ? `linear-gradient(135deg, #3B34C9 0%, ${ORANGE} 50%, #8B83FF 100%)`
-              : 'rgba(255,255,255,0.04)',
+              : 'rgba(0,0,0,0.04)',
             boxShadow: !ctaDisabled && !loading ? `0 4px 24px ${ORANGE_GLOW}` : 'none',
           }}
         >

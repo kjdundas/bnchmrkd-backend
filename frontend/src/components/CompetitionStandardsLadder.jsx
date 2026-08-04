@@ -97,8 +97,8 @@ export default function CompetitionStandardsLadder({
     <div
       className="bento-card rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6"
       style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       {/* Header */}
@@ -140,9 +140,9 @@ export default function CompetitionStandardsLadder({
                 onClick={() => setTier(t)}
                 className="mono-font text-[10px] uppercase tracking-[0.14em] px-2.5 py-1 rounded-md transition-all flex-shrink-0"
                 style={{
-                  background: on ? `${m.color}15` : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${on ? `${m.color}50` : 'rgba(255,255,255,0.05)'}`,
-                  color: on ? m.color : '#64748b',
+                  background: on ? `${m.color}15` : 'rgba(0,0,0,0.02)',
+                  border: `1px solid ${on ? `${m.color}50` : 'rgba(0,0,0,0.05)'}`,
+                  color: on ? m.color : '#9AA0AC',
                 }}
               >
                 {m.label}
@@ -226,7 +226,7 @@ export default function CompetitionStandardsLadder({
       {/* Footer */}
       <div
         className="mt-4 pt-3 flex items-center justify-between gap-3 flex-wrap"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}
       >
         <span className="mono-font text-[10px] text-slate-600">
           {cleared.length} of {rows.length} standards cleared
@@ -331,7 +331,7 @@ function LadderRow({ row, cleared, isNext, fmtMark, fmtGap, unit }) {
         style={{
           minWidth: '48px',
           textAlign: 'right',
-          color: cleared ? '#10b981' : (isNext ? '#4F3CF0' : '#64748b'),
+          color: cleared ? '#10b981' : (isNext ? '#4F3CF0' : '#9AA0AC'),
           fontWeight: isNext ? 700 : 400,
         }}
       >

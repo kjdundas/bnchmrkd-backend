@@ -50,14 +50,14 @@ export default class ErrorBoundary extends React.Component {
       <div
         className="min-h-screen flex items-center justify-center p-6"
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          background: 'linear-gradient(135deg, #F6F7FB 0%, #1e293b 100%)',
         }}
       >
         <div
           className="max-w-lg w-full rounded-2xl p-6 sm:p-8"
           style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)',
+            border: '1px solid rgba(0,0,0,0.06)',
           }}
         >
           <div className="mb-5">
@@ -79,7 +79,7 @@ export default class ErrorBoundary extends React.Component {
               className="flex-1 landing-font text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors focus:outline-none focus-visible:outline-none"
               style={{
                 background: 'linear-gradient(90deg, #4F3CF0 0%, #8B83FF 100%)',
-                color: '#0f172a',
+                color: '#F6F7FB',
               }}
             >
               Reload page
@@ -88,8 +88,8 @@ export default class ErrorBoundary extends React.Component {
               onClick={this.handleGoHome}
               className="flex-1 landing-font text-sm font-medium py-2.5 px-4 rounded-xl transition-colors focus:outline-none focus-visible:outline-none text-slate-300 hover:text-white"
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(0,0,0,0.03)',
+                border: '1px solid rgba(0,0,0,0.08)',
               }}
             >
               Go home
@@ -103,7 +103,7 @@ export default class ErrorBoundary extends React.Component {
                 Technical details
               </summary>
               <div className="mt-3 p-3 rounded-lg overflow-auto max-h-64"
-                   style={{background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                   style={{background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,0,0,0.06)'}}>
                 <p className="mono-font text-[11px] text-indigo-300 mb-2 break-all">
                   {error && (error.message || String(error))}
                 </p>

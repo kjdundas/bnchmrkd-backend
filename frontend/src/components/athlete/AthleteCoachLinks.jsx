@@ -88,7 +88,7 @@ export default function AthleteCoachLinks({ pendingOnly = false }) {
                   </button>
                   <button onClick={() => respond(l.link_id, false)} disabled={busy === l.link_id}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold text-slate-300 landing-font hover:text-white disabled:opacity-60"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    style={{ background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.1)' }}>
                     <X className="w-3.5 h-3.5" /> Decline
                   </button>
                 </div>
@@ -109,7 +109,7 @@ export default function AthleteCoachLinks({ pendingOnly = false }) {
           ) : (
             <div className="space-y-1.5">
               {active.map(l => (
-                <div key={l.link_id} className="flex items-center justify-between rounded-lg px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div key={l.link_id} className="flex items-center justify-between rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <div className="min-w-0">
                     <p className="text-[13px] text-white landing-font truncate">{l.counterparty_name || 'Coach'}</p>
                     {l.counterparty_org ? <p className="text-[10px] text-slate-500 landing-font truncate">{l.counterparty_org}</p> : null}

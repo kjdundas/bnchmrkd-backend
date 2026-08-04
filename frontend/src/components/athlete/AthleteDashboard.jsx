@@ -481,7 +481,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   const Header = () => (
     <header
       className="sticky top-0 z-10 backdrop-blur-xl"
-      style={{ background: 'rgba(2,6,23,0.7)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ background: 'rgba(2,6,23,0.7)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
     >
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <button
@@ -508,7 +508,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
         <button
           onClick={onSignOut}
           className="p-2 rounded-lg text-slate-500 hover:text-indigo-300 transition-colors"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ border: '1px solid rgba(0,0,0,0.06)' }}
           title="Sign out"
         >
           <LogOut className="w-4 h-4" />
@@ -542,7 +542,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   const BottomNav = () => (
     <nav
       className="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-xl"
-      style={{ background: 'rgba(2,6,23,0.85)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ background: 'rgba(2,6,23,0.85)', borderTop: '1px solid rgba(0,0,0,0.06)' }}
     >
       <div className="max-w-2xl mx-auto px-6 py-2 flex items-center justify-between">
         <button
@@ -648,8 +648,8 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
           <div
             className="relative overflow-hidden rounded-2xl p-8 text-center"
             style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: 'rgba(0,0,0,0.02)',
+              border: '1px solid rgba(0,0,0,0.06)',
             }}
           >
             <div
@@ -861,8 +861,8 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
         <section
           className="relative overflow-hidden rounded-2xl flex items-stretch"
           style={{
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'rgba(0,0,0,0.02)',
+            border: '1px solid rgba(0,0,0,0.06)',
           }}
         >
           <div className="w-1" style={{ background: 'linear-gradient(180deg, #4F3CF0, #8B83FF)' }} />
@@ -888,8 +888,8 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
       <section
         className="relative overflow-hidden rounded-2xl"
         style={{
-          background: 'rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(0,0,0,0.02)',
+          border: '1px solid rgba(0,0,0,0.06)',
         }}
       >
         <div
@@ -914,7 +914,7 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
               <div
                 key={i}
                 className="px-5 py-3 flex items-center justify-between gap-3"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}
               >
                 <div className="min-w-0 flex-1">
                   <p className="landing-font text-white truncate leading-tight text-sm font-medium">
@@ -927,7 +927,7 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
                 <div className="text-right flex-shrink-0">
                   <p
                     className="landing-font tabular-nums leading-none font-semibold text-base"
-                    style={{ color: isPB ? '#8B83FF' : '#e2e8f0' }}
+                    style={{ color: isPB ? '#8B83FF' : '#16181D' }}
                   >
                     {formatMark(r.value, view.discipline)}
                   </p>
@@ -1394,7 +1394,7 @@ function RecentMetricsPanel({ athleteId, refreshKey, preloaded = null }) {
     mobility:        { label: 'Mobility',       tint: '#14b8a6', order: 5 },
     anthropometrics: { label: 'Anthropometrics',tint: '#a78bfa', order: 6 },
   }
-  const catMeta = (k) => CATEGORY_META[k] || { label: k || 'Other', tint: '#94a3b8', order: 9 }
+  const catMeta = (k) => CATEGORY_META[k] || { label: k || 'Other', tint: '#5B5F6B', order: 9 }
 
   // Group cards by category, ordered by meta.order
   const grouped = []
@@ -1443,8 +1443,8 @@ function RecentMetricsPanel({ athleteId, refreshKey, preloaded = null }) {
     <section
       className="relative overflow-hidden rounded-2xl"
       style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(0,0,0,0.02)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
       <header className="relative px-5 pt-5 pb-3 flex items-end justify-between">
@@ -1492,7 +1492,7 @@ function RecentMetricsPanel({ athleteId, refreshKey, preloaded = null }) {
                   const delta = prevV != null ? latestV - prevV : null
                   const deltaPct = prevV != null && prevV !== 0 ? (delta / prevV) * 100 : null
                   const improved = delta == null ? null : (lowerBetter ? delta < 0 : delta > 0)
-                  const trendColor = improved == null ? '#64748b' : improved ? '#34d399' : '#fb7185'
+                  const trendColor = improved == null ? '#9AA0AC' : improved ? '#34d399' : '#fb7185'
                   const TrendIcon = improved == null ? null : improved ? TrendingUp : TrendingDown
 
                   return (
@@ -1500,7 +1500,7 @@ function RecentMetricsPanel({ athleteId, refreshKey, preloaded = null }) {
                       key={g.key}
                       className="relative overflow-hidden rounded-xl p-3"
                       style={{
-                        background: `linear-gradient(155deg, ${meta.tint}18 0%, rgba(255,255,255,0.02) 60%)`,
+                        background: `linear-gradient(155deg, ${meta.tint}18 0%, rgba(0,0,0,0.02) 60%)`,
                         border: `1px solid ${meta.tint}33`,
                       }}
                     >

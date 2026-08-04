@@ -78,7 +78,7 @@ export default function CoachFeed({ currentUserId, coachName }) {
   if (loading || events.length === 0) return null
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-2xl p-5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
       <div className="flex items-center gap-2 mb-3">
         <Activity className="w-4 h-4 text-indigo-400" />
         <h3 className="text-[13px] font-bold text-white landing-font">Squad activity</h3>
@@ -91,9 +91,9 @@ export default function CoachFeed({ currentUserId, coachName }) {
           const Icon = meta.icon
           const mine = reacts[ev.event_key] || new Set()
           return (
-            <div key={ev.event_key} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.04)' }}>
+            <div key={ev.event_key} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold mono-font flex-shrink-0"
-                style={{ background: 'rgba(255,255,255,0.04)', color: meta.color }}>{initials(ev.athlete_name)}</div>
+                style={{ background: 'rgba(0,0,0,0.04)', color: meta.color }}>{initials(ev.athlete_name)}</div>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-white landing-font truncate">
                   <span className="font-semibold">{ev.athlete_name}</span> <span className="text-slate-400">{meta.verb}</span>
@@ -112,7 +112,7 @@ export default function CoachFeed({ currentUserId, coachName }) {
                       className="w-7 h-7 rounded-lg text-[13px] leading-none transition-all disabled:opacity-50"
                       style={on
                         ? { background: 'rgba(79,60,240,0.18)', border: '1px solid rgba(79,60,240,0.45)' }
-                        : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', filter: 'grayscale(0.4)', opacity: 0.7 }}>
+                        : { background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)', filter: 'grayscale(0.4)', opacity: 0.7 }}>
                       {e}
                     </button>
                   )

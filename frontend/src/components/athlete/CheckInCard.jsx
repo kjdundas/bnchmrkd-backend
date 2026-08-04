@@ -14,7 +14,7 @@ const SLEEP_CHIPS = [
   { l: '7–8h', v: 7.5 }, { l: '8h+', v: 8.5 },
 ]
 const SCALE = [1, 2, 3, 4, 5]
-const inputStyle = { background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)' }
+const inputStyle = { background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(0,0,0,0.08)' }
 
 export default function CheckInCard({ athleteId }) {
   const [row, setRow] = useState(null)       // today's saved check-in (or null)
@@ -64,7 +64,7 @@ export default function CheckInCard({ athleteId }) {
   // ── Saved (collapsed) state ──────────────────────────────────────────
   if (row && !editing) {
     return (
-      <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${color}33` }}>
+      <div className="rounded-2xl p-4" style={{ background: 'rgba(0,0,0,0.02)', border: `1px solid ${color}33` }}>
         <div className="flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color, boxShadow: `0 0 10px ${color}` }} />
           <div className="flex-1 min-w-0">
@@ -117,7 +117,7 @@ export default function CheckInCard({ athleteId }) {
                 className="px-2.5 py-1 rounded-full text-[10px] font-semibold landing-font transition-colors"
                 style={form.pain_areas.includes(a.v)
                   ? { background: 'rgba(251,113,133,0.18)', color: '#fb7185', border: '1px solid rgba(251,113,133,0.4)' }
-                  : { background: 'rgba(255,255,255,0.03)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  : { background: 'rgba(0,0,0,0.03)', color: '#5B5F6B', border: '1px solid rgba(0,0,0,0.08)' }}>
                 {a.l}
               </button>
             ))}
@@ -160,7 +160,7 @@ function Chip({ on, danger, onClick, children }) {
         ? (danger
             ? { background: 'rgba(251,113,133,0.18)', color: '#fb7185', border: '1px solid rgba(251,113,133,0.45)' }
             : { background: 'rgba(79,60,240,0.18)', color: '#8B83FF', border: '1px solid rgba(79,60,240,0.45)' })
-        : { background: 'rgba(0,0,0,0.25)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.08)' }}>
+        : { background: 'rgba(0,0,0,0.25)', color: '#5B5F6B', border: '1px solid rgba(0,0,0,0.08)' }}>
       {children}
     </button>
   )

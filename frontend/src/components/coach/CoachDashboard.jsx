@@ -810,7 +810,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
   }
 
   const TierDot = ({ tier, size = 6 }) => (
-    <div className="rounded-full" style={{ width: size, height: size, background: tierConfig[tier]?.color || '#64748b' }} />
+    <div className="rounded-full" style={{ width: size, height: size, background: tierConfig[tier]?.color || '#9AA0AC' }} />
   )
 
   const stagger = (i) => mounted ? { opacity: 1, transform: 'translateY(0)', transition: `all 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 0.06}s` } : { opacity: 0, transform: 'translateY(12px)' }
@@ -826,7 +826,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       </div>
 
       {/* ── Sidebar (desktop/tablet) ── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-[220px] flex-col px-3 py-4" style={{ background: 'rgba(8,8,13,0.92)', borderRight: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-[220px] flex-col px-3 py-4" style={{ background: 'rgba(8,8,13,0.92)', borderRight: '1px solid rgba(0,0,0,0.06)', backdropFilter: 'blur(12px)' }}>
         <div className="px-3 pb-5 flex items-center gap-1 text-white font-black text-[19px] landing-font">bnchmrkd<span style={{ color: '#4F3CF0' }}>.</span></div>
         <div className="px-3 pb-1.5 text-[9px] tracking-[0.16em] uppercase text-slate-600 mono-font">Coach</div>
         {[
@@ -837,15 +837,15 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           { k: 'wellness', label: 'Wellness', Icon: Activity },
           { k: 'reports', label: 'Reports', Icon: FileSpreadsheet },
         ].map(({ k, label, Icon }) => (
-          <button key={k} onClick={() => setActiveSection(k)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium landing-font transition-colors mb-0.5" style={{ color: activeSection === k ? '#4F3CF0' : '#94a3b8', background: activeSection === k ? 'rgba(79,60,240,0.12)' : 'transparent' }}>
+          <button key={k} onClick={() => setActiveSection(k)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium landing-font transition-colors mb-0.5" style={{ color: activeSection === k ? '#4F3CF0' : '#5B5F6B', background: activeSection === k ? 'rgba(79,60,240,0.12)' : 'transparent' }}>
             <Icon className="w-4 h-4" /> {label}
           </button>
         ))}
         <div className="px-3 pt-4 pb-1.5 text-[9px] tracking-[0.16em] uppercase text-slate-600 mono-font">Tools</div>
-        <button onClick={() => setActiveSection('assistant')} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium landing-font transition-colors" style={{ color: activeSection === 'assistant' ? '#4F3CF0' : '#94a3b8', background: activeSection === 'assistant' ? 'rgba(79,60,240,0.12)' : 'transparent' }}>
+        <button onClick={() => setActiveSection('assistant')} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium landing-font transition-colors" style={{ color: activeSection === 'assistant' ? '#4F3CF0' : '#5B5F6B', background: activeSection === 'assistant' ? 'rgba(79,60,240,0.12)' : 'transparent' }}>
           <Bot className="w-4 h-4" /> AI Scanner
         </button>
-        <div className="mt-auto flex items-center gap-2.5 px-3 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="mt-auto flex items-center gap-2.5 px-3 py-2.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black text-black flex-shrink-0" style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)' }}>{(profile?.full_name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
           <div className="min-w-0"><p className="text-[12px] font-semibold text-white truncate landing-font">{profile?.full_name || 'Coach'}</p><p className="text-[10px] text-slate-500 mono-font">Head coach</p></div>
         </div>
@@ -853,7 +853,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       <div className="relative z-10 md:pl-[220px]">
         {/* ── Top bar ── */}
-        <header className="sticky top-0 z-50" style={{ background: 'rgba(2,6,23,0.7)', backdropFilter: 'blur(24px) saturate(1.4)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <header className="sticky top-0 z-50" style={{ background: 'rgba(2,6,23,0.7)', backdropFilter: 'blur(24px) saturate(1.4)', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button onClick={onBack} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-all">
@@ -878,7 +878,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
         {/* ── Section nav (phone) ── */}
         <div className="md:hidden px-4 pt-3 pb-1 flex gap-1.5 overflow-x-auto scrollbar-none">
           {[['overview','Overview'],['athletes','Athletes'],['training','Training'],['testing','Testing'],['wellness','Wellness'],['reports','Reports'],['assistant','Scanner']].map(([k, l]) => (
-            <button key={k} onClick={() => setActiveSection(k)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap landing-font" style={{ color: activeSection === k ? '#4F3CF0' : '#94a3b8', background: activeSection === k ? 'rgba(79,60,240,0.12)' : 'rgba(255,255,255,0.03)' }}>{l}</button>
+            <button key={k} onClick={() => setActiveSection(k)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap landing-font" style={{ color: activeSection === k ? '#4F3CF0' : '#5B5F6B', background: activeSection === k ? 'rgba(79,60,240,0.12)' : 'rgba(0,0,0,0.03)' }}>{l}</button>
           ))}
         </div>
 
@@ -894,7 +894,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
               {rosterWithAge.length === 0 ? (
                 <div className="space-y-6">
                   {/* Welcome hero */}
-                  <div className="relative overflow-hidden rounded-2xl p-8 sm:p-10" style={{ background: 'linear-gradient(135deg, rgba(79,60,240,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(59,130,246,0.04) 100%)', border: '1px solid rgba(79,60,240,0.12)', ...stagger(0) }}>
+                  <div className="relative overflow-hidden rounded-2xl p-8 sm:p-10" style={{ background: 'linear-gradient(135deg, rgba(79,60,240,0.06) 0%, rgba(0,0,0,0.02) 50%, rgba(59,130,246,0.04) 100%)', border: '1px solid rgba(79,60,240,0.12)', ...stagger(0) }}>
                     <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full blur-[100px]" style={{ background: 'radial-gradient(circle, rgba(79,60,240,0.08) 0%, transparent 70%)', transform: 'translate(30%, -40%)' }} />
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 mb-3">
@@ -915,7 +915,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <button
                       onClick={() => { setActiveSection('add'); setAddMethod('url'); }}
                       className="group relative overflow-hidden rounded-xl p-5 text-left transition-all hover:scale-[1.02]"
-                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}
                     >
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(79,60,240,0.06) 0%, transparent 100%)' }} />
                       <div className="relative z-10">
@@ -941,9 +941,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       onClick={() => { if (BULK_IMPORT_ENABLED) { setActiveSection('add'); setAddMethod('csv'); } }}
                       disabled={!BULK_IMPORT_ENABLED}
                       className={`group relative overflow-hidden rounded-xl p-5 text-left transition-all ${BULK_IMPORT_ENABLED ? 'hover:scale-[1.02]' : 'cursor-not-allowed opacity-50'}`}
-                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}
                     >
-                      {!BULK_IMPORT_ENABLED && <span className="absolute top-3 right-3 z-10 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#64748b15', color: '#94a3b8', border: '1px solid #64748b25' }}>Coming soon</span>}
+                      {!BULK_IMPORT_ENABLED && <span className="absolute top-3 right-3 z-10 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#9AA0AC15', color: '#5B5F6B', border: '1px solid #9AA0AC25' }}>Coming soon</span>}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 100%)' }} />
                       <div className="relative z-10">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.15)' }}>
@@ -967,9 +967,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       onClick={() => { if (MANUAL_ENTRY_ENABLED) { setActiveSection('add'); setAddMethod('manual'); } }}
                       disabled={!MANUAL_ENTRY_ENABLED}
                       className={`group relative overflow-hidden rounded-xl p-5 text-left transition-all ${MANUAL_ENTRY_ENABLED ? 'hover:scale-[1.02]' : 'cursor-not-allowed opacity-50'}`}
-                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}
                     >
-                      {!MANUAL_ENTRY_ENABLED && <span className="absolute top-3 right-3 z-10 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#64748b15', color: '#94a3b8', border: '1px solid #64748b25' }}>Coming soon</span>}
+                      {!MANUAL_ENTRY_ENABLED && <span className="absolute top-3 right-3 z-10 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#9AA0AC15', color: '#5B5F6B', border: '1px solid #9AA0AC25' }}>Coming soon</span>}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, transparent 100%)' }} />
                       <div className="relative z-10">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.15)' }}>
@@ -990,7 +990,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   </div>
 
                   {/* What you'll unlock — feature preview */}
-                  <div className="rounded-xl p-6" style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(2) }}>
+                  <div className="rounded-xl p-6" style={{ background: 'rgba(0,0,0,0.015)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(2) }}>
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-5 landing-font">What you'll see once you add athletes</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       {[
@@ -1000,7 +1000,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         { icon: Users, label: 'Squad Analytics', desc: 'Tier breakdown, improvement rates, and rankings', color: '#3b82f6' },
                       ].map(({ icon: Icon, label, desc, color }, i) => (
                         <div key={i} className="relative group">
-                          <div className="flex flex-col items-center text-center p-4 rounded-xl transition-all h-full" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                          <div className="flex flex-col items-center text-center p-4 rounded-xl transition-all h-full" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
                               <Icon className="w-5 h-5" style={{ color }} />
                             </div>
@@ -1013,7 +1013,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   </div>
 
                   {/* Sample insight teasers — blurred preview */}
-                  <div className="rounded-xl p-6 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(3) }}>
+                  <div className="rounded-xl p-6 relative overflow-hidden" style={{ background: 'rgba(0,0,0,0.015)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(3) }}>
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 landing-font">Sample Insights Preview</p>
                     <div className="space-y-2.5 relative">
                       {/* Sample alert cards — blurred */}
@@ -1023,7 +1023,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                           { name: 'Athlete B', disc: 'Discus', msg: 'Peak projection: 24 months — current trajectory targets 62.5m', trend: 'up', color: '#3b82f6' },
                           { name: 'Athlete C', disc: '400m', msg: 'Performance declining since March — 2 consecutive slower marks', trend: 'down', color: '#ef4444' },
                         ].map((a, i) => (
-                          <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                          <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
                             <div className={`w-1.5 h-8 rounded-full`} style={{ background: a.color, opacity: 0.7 }} />
                             <div className="flex-1">
                               <p className="text-[12px] text-white landing-font font-medium">{a.name} · {a.disc}</p>
@@ -1053,7 +1053,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 {/* Squad pulse */}
                 <div className="flex items-center gap-3 mb-1">
                   <span className="mono-font text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: '#4F3CF0' }}>Squad pulse</span>
-                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <div className="flex-1 h-px" style={{ background: 'rgba(0,0,0,0.06)' }} />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
@@ -1062,7 +1062,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     { value: trendingDown, label: 'Declining', color: '#ef4444' },
                     { value: totalSessions, label: 'Races logged', color: '#3b82f6' },
                   ].map((kpi, i) => (
-                    <div key={i} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={i} className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
                       <p className="text-3xl font-bold text-white mono-font leading-none tabular-nums">{kpi.value}</p>
                       <p className="text-[11px] font-semibold mt-1.5 landing-font" style={{ color: kpi.color }}>{kpi.label}</p>
                     </div>
@@ -1087,14 +1087,14 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     type="text" placeholder="Search athletes..."
                     value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
                   />
                 </div>
                 <div className="flex gap-1">
                   {['all', 'U13', 'U15', 'U17', 'U20', 'Senior'].map(ag => (
                     <button key={ag} onClick={() => setFilterAgeGroup(ag)}
                       className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all mono-font ${filterAgeGroup === ag ? 'text-white' : 'text-slate-400 hover:text-slate-300'}`}
-                      style={filterAgeGroup === ag ? { background: 'rgba(255,255,255,0.08)' } : {}}>
+                      style={filterAgeGroup === ag ? { background: 'rgba(0,0,0,0.08)' } : {}}>
                       {ag === 'all' ? 'All' : ag}
                     </button>
                   ))}
@@ -1110,7 +1110,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {displayRoster.map((a, i) => (
                     <div key={a.id} className="group relative rounded-xl p-4 cursor-pointer transition-all hover:translate-y-[-2px]"
-                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(i + 1) }}
+                      style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(i + 1) }}
                       onClick={() => { setDetailAthlete(a); setDetailTab('perf'); setActiveSection('detail') }}>
                       {/* Edit + Delete buttons */}
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -1135,17 +1135,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         </button>
                       </div>
                       {deleteConfirm === a.id && (
-                        <div className="absolute top-9 right-2 z-20 rounded-lg p-2.5 shadow-xl" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }} onClick={e => e.stopPropagation()}>
+                        <div className="absolute top-9 right-2 z-20 rounded-lg p-2.5 shadow-xl" style={{ background: '#1e293b', border: '1px solid rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
                           <p className="text-[10px] text-slate-400 mb-2 landing-font">Remove from roster?</p>
                           <div className="flex gap-1.5">
-                            <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 rounded text-[10px] text-slate-500 landing-font" style={{ background: 'rgba(255,255,255,0.05)' }}>Cancel</button>
+                            <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 rounded text-[10px] text-slate-500 landing-font" style={{ background: 'rgba(0,0,0,0.05)' }}>Cancel</button>
                             <button onClick={() => handleDeleteAthlete(a.id)} className="px-2 py-1 rounded text-[10px] font-bold text-white landing-font bg-red-600 hover:bg-red-500">Remove</button>
                           </div>
                         </div>
                       )}
                       {/* Header */}
                       <div className="flex items-center gap-2.5 mb-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold mono-font flex-shrink-0" style={{ background: `${tierConfig[a.tier]?.color || '#64748b'}18`, color: tierConfig[a.tier]?.color || '#64748b' }}>
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold mono-font flex-shrink-0" style={{ background: `${tierConfig[a.tier]?.color || '#9AA0AC'}18`, color: tierConfig[a.tier]?.color || '#9AA0AC' }}>
                           {a.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div className="min-w-0">
@@ -1172,7 +1172,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       {(() => {
                         const age = a.age != null ? a.age : calcAge(a.dob);
                         const pbVal = a.pb_value; const disc = a.discipline;
-                        let col = tierConfig[a.tier]?.color || '#64748b';
+                        let col = tierConfig[a.tier]?.color || '#9AA0AC';
                         let tierN = null, tName = tierConfig[a.tier]?.label || 'Developing';
                         if (age != null && pbVal && disc) {
                           const t = getTier(disc, a.gender === 'Male' ? 'M' : 'F', getAgeGroup(age), pbVal);
@@ -1185,14 +1185,14 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         );
                       })()}
                       {/* Body: PB + trajectory */}
-                      <div className="flex items-end justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="flex items-end justify-between pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
                         <div>
                           <p className="text-[24px] font-bold text-white mono-font leading-none tabular-nums">{a.pb || '—'}</p>
                           <p className="text-[8px] text-slate-500 uppercase tracking-wider landing-font mt-1.5">Personal best</p>
                         </div>
                         {(() => {
                           const up = a.trend === 'up', down = a.trend === 'down';
-                          const col = up ? '#34d399' : down ? '#fb7185' : '#9aa1ac';
+                          const col = up ? '#34d399' : down ? '#fb7185' : '#5B5F6B';
                           const pts = up ? '2,18 16,14 30,10 44,6 58,3' : down ? '2,4 16,6 30,10 44,14 58,17' : '2,10 16,11 30,10 44,11 58,10';
                           const lab = up ? '▲ improving' : down ? '▼ declining' : '→ steady';
                           return (
@@ -1204,7 +1204,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         })()}
                       </div>
                       {/* Footer */}
-                      <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
                         <span className="text-[9px] text-slate-500 mono-font">{a.races?.length > 0 ? `${a.races.length} races` : (a.last_result ? `last ${a.last_result}` : 'no results yet')}</span>
                         <span className="text-[10px] text-slate-500 group-hover:text-indigo-500 transition-colors landing-font flex items-center gap-0.5">View <ChevronRight className="w-3 h-3" /></span>
                       </div>
@@ -1227,7 +1227,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           {/* ═══════════════ EDIT ATHLETE MODAL ═══════════════ */}
           {editingAthlete && (
             <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setEditingAthlete(null)}>
-              <div className="w-full max-w-md rounded-2xl p-6 mx-4" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
+              <div className="w-full max-w-md rounded-2xl p-6 mx-4" style={{ background: '#F6F7FB', border: '1px solid rgba(0,0,0,0.08)' }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-[15px] font-bold text-white landing-font">Edit Athlete</h3>
                   <button onClick={() => setEditingAthlete(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5">
@@ -1240,14 +1240,14 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Name</label>
                     <input type="text" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                       className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }} />
                   </div>
                   {/* DOB */}
                   <div>
                     <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Date of Birth</label>
                     <input type="date" value={editForm.dob} onChange={e => setEditForm(f => ({ ...f, dob: e.target.value }))}
                       className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+                      style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', colorScheme: 'dark' }} />
                   </div>
                   {/* Gender */}
                   <div>
@@ -1256,7 +1256,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       {['Male', 'Female'].map(g => (
                         <button key={g} onClick={() => setEditForm(f => ({ ...f, gender: g }))}
                           className={`flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all landing-font ${editForm.gender === g ? 'text-white' : 'text-slate-400 hover:text-slate-400'}`}
-                          style={editForm.gender === g ? { background: 'rgba(79,60,240,0.15)', border: '1px solid rgba(79,60,240,0.3)' } : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          style={editForm.gender === g ? { background: 'rgba(79,60,240,0.15)', border: '1px solid rgba(79,60,240,0.3)' } : { background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                           {g}
                         </button>
                       ))}
@@ -1268,7 +1268,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <input type="text" value={editForm.discipline} onChange={e => setEditForm(f => ({ ...f, discipline: e.target.value }))}
                       placeholder="e.g. 100m, Discus Throw"
                       className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }} />
                   </div>
                   {/* Nationality */}
                   <div>
@@ -1276,7 +1276,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <input type="text" value={editForm.nationality} onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))}
                       placeholder="e.g. NZL"
                       className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }} />
                   </div>
                 </div>
                 {/* Error */}
@@ -1289,7 +1289,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 <div className="flex gap-2 mt-6">
                   <button onClick={() => setEditingAthlete(null)}
                     className="flex-1 px-4 py-2.5 rounded-lg text-[12px] font-semibold text-slate-500 hover:text-white transition-all landing-font"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}>
                     Cancel
                   </button>
                   <button onClick={handleEditSave} disabled={editSaving || !editForm.name.trim()}
@@ -1308,7 +1308,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             <div className="mt-6">
               <div className="flex items-center gap-3 mb-3">
                 <span className="mono-font text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: '#4F3CF0' }}>Recent activity</span>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <div className="flex-1 h-px" style={{ background: 'rgba(0,0,0,0.06)' }} />
               </div>
               <CoachFeed currentUserId={user?.id} coachName={profile?.full_name} />
             </div>
@@ -1317,17 +1317,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
           {activeSection === 'detail' && detailAthlete && (() => {
             const a = detailAthlete;
             const age = a.age != null ? a.age : calcAge(a.dob);
-            let tCol = tierConfig[a.tier]?.color || '#64748b', tN = null, tName = tierConfig[a.tier]?.label || 'Developing';
+            let tCol = tierConfig[a.tier]?.color || '#9AA0AC', tN = null, tName = tierConfig[a.tier]?.label || 'Developing';
             if (age != null && a.pb_value && a.discipline) {
               const t = getTier(a.discipline, a.gender === 'Male' ? 'M' : 'F', getAgeGroup(age), a.pb_value);
               if (t && t.tier > 0) { tCol = t.color; tN = t.tier; tName = t.tierName; }
             }
             const up = a.trend === 'up', down = a.trend === 'down';
-            const trajCol = up ? '#34d399' : down ? '#fb7185' : '#9aa1ac';
+            const trajCol = up ? '#34d399' : down ? '#fb7185' : '#5B5F6B';
             const trajLab = up ? '▲ improving' : down ? '▼ declining' : '→ steady';
             const tabs = [['perf', 'Performance'], ['test', 'Testing'], ['train', 'Training'], ['well', 'Wellness']];
             const stub = (what) => (
-              <div className="rounded-xl p-8 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="rounded-xl p-8 text-center" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
                 <p className="text-[13px] text-slate-400 landing-font">{what} for {a.name.split(' ')[0]} lives in the full profile.</p>
                 <button onClick={() => onViewAthlete?.(a)} className="mt-3 text-[12px] font-bold text-indigo-500 hover:text-indigo-400 landing-font">Open full profile →</button>
               </div>
@@ -1342,17 +1342,17 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <p className="text-[12px] text-slate-400 mono-font">{a.gender || '?'} · {age != null ? `${age}y · ${getAgeGroup(age)}` : '—'}{a.discipline ? ` · ${a.discipline}` : ''}{tN ? ` · T${tN} ${tName}` : ''}</p>
                   </div>
                 </div>
-                <div className="flex gap-0.5 mt-5 mb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex gap-0.5 mt-5 mb-5" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                   {tabs.map(([k, l]) => (
-                    <button key={k} onClick={() => setDetailTab(k)} className="px-4 py-2.5 text-[13px] font-semibold landing-font transition-colors" style={{ color: detailTab === k ? '#4F3CF0' : '#94a3b8', borderBottom: detailTab === k ? '2px solid #4F3CF0' : '2px solid transparent' }}>{l}</button>
+                    <button key={k} onClick={() => setDetailTab(k)} className="px-4 py-2.5 text-[13px] font-semibold landing-font transition-colors" style={{ color: detailTab === k ? '#4F3CF0' : '#5B5F6B', borderBottom: detailTab === k ? '2px solid #4F3CF0' : '2px solid transparent' }}>{l}</button>
                   ))}
                 </div>
                 {detailTab === 'perf' && (
                   <div className="space-y-5">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Personal best</p><p className="text-[24px] font-bold text-white mono-font mt-1">{a.pb || '—'}</p></div>
-                      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Tier</p><p className="text-[20px] font-bold mono-font mt-1" style={{ color: tCol }}>{tN ? `T${tN} · ` : ''}{tName}</p></div>
-                      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Recent trend</p><p className="text-[18px] font-bold mono-font mt-1" style={{ color: trajCol }}>{trajLab}</p></div>
+                      <div className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Personal best</p><p className="text-[24px] font-bold text-white mono-font mt-1">{a.pb || '—'}</p></div>
+                      <div className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Tier</p><p className="text-[20px] font-bold mono-font mt-1" style={{ color: tCol }}>{tN ? `T${tN} · ` : ''}{tName}</p></div>
+                      <div className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}><p className="mono-font text-[9px] tracking-wider uppercase text-slate-500">Recent trend</p><p className="text-[18px] font-bold mono-font mt-1" style={{ color: trajCol }}>{trajLab}</p></div>
                     </div>
                     <button onClick={() => onViewAthlete?.(a)} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-bold text-black landing-font transition-all hover:brightness-110" style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)' }}>Open full analysis — trajectory, benchmarking &amp; standards →</button>
                   </div>
@@ -1368,7 +1368,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             <div>
               <h1 className="text-[22px] font-bold text-white landing-font mb-1">{({ training: 'Training', testing: 'Testing & performance', wellness: 'Wellness & readiness', reports: 'Reports' })[activeSection]}</h1>
               <p className="text-[13px] text-slate-500 landing-font mb-5">{({ training: "Squad programs, session compliance, and this week's plan.", testing: 'Test batteries, PBs, and benchmarking across the squad.', wellness: 'Daily check-ins, readiness, sleep, and soreness.', reports: 'Export athlete and squad reports.' })[activeSection]}</p>
-              <div className="rounded-xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="rounded-xl p-10 text-center" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
                 <p className="text-[13px] text-slate-400 landing-font">Coming soon — this section is being built.</p>
                 <p className="text-[11px] text-slate-500 landing-font mt-1.5">Your athletes' data already flows in; the dedicated view lands next.</p>
               </div>
@@ -1388,8 +1388,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                     <button key={key} onClick={() => enabled && setAddMethod(key)} disabled={!enabled}
                       aria-disabled={!enabled}
                       className={`relative rounded-xl p-5 text-left transition-all group ${enabled ? 'hover:translate-y-[-2px] cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
-                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(i) }}>
-                      {(!enabled || tag) && <span className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: `${(!enabled ? '#64748b' : color)}15`, color: (!enabled ? '#94a3b8' : color), border: `1px solid ${(!enabled ? '#64748b' : color)}25` }}>{!enabled ? 'Coming soon' : tag}</span>}
+                      style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(i) }}>
+                      {(!enabled || tag) && <span className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: `${(!enabled ? '#9AA0AC' : color)}15`, color: (!enabled ? '#5B5F6B' : color), border: `1px solid ${(!enabled ? '#9AA0AC' : color)}25` }}>{!enabled ? 'Coming soon' : tag}</span>}
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${color}10` }}>
                         <Icon className="w-5 h-5" style={{ color }} />
                       </div>
@@ -1402,7 +1402,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 <InviteAthletePanel onClose={() => setAddMethod(null)} />
               ) : addMethod === 'url' ? (
                 /* URL Import */
-                <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
+                <div className="rounded-xl p-5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(0) }}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4 text-emerald-500" />
@@ -1416,7 +1416,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                       <input type="url" placeholder="https://worldathletics.org/athletes/..." value={urlInput} onChange={(e) => { setUrlInput(e.target.value); setUrlError('') }}
                         className="w-full pl-9 pr-4 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${urlError ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.06)'}` }}
+                        style={{ background: 'rgba(0,0,0,0.03)', border: `1px solid ${urlError ? 'rgba(239,68,68,0.3)' : 'rgba(0,0,0,0.06)'}` }}
                         onKeyDown={(e) => e.key === 'Enter' && !urlLoading && handleUrlImport()}
                         disabled={urlLoading} />
                     </div>
@@ -1441,7 +1441,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 </div>
               ) : addMethod === 'csv' ? (
                 /* CSV Upload */
-                <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
+                <div className="rounded-xl p-5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(0) }}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet className="w-4 h-4 text-blue-400" />
@@ -1464,20 +1464,20 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                         <span className="text-[11px] text-blue-300 landing-font flex-1">{csvFile.name}</span>
                         <span className="text-[11px] font-bold text-blue-400 mono-font">{csvPreview.totalRows} athletes</span>
                       </div>
-                      <div className="overflow-x-auto mb-4 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div className="overflow-x-auto mb-4 rounded-lg" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
                         <table className="w-full text-[11px]">
-                          <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                          <thead><tr style={{ background: 'rgba(0,0,0,0.02)' }}>
                             {csvPreview.headers.map((h, i) => <th key={i} className="text-left py-2 px-3 text-[9px] text-slate-400 uppercase tracking-wider landing-font">{h}</th>)}
                           </tr></thead>
                           <tbody>{csvPreview.rows.map((row, i) => (
-                            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                            <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                               {csvPreview.headers.map((h, j) => <td key={j} className="py-2 px-3 text-slate-400 mono-font">{row[h]}</td>)}
                             </tr>
                           ))}</tbody>
                         </table>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => { setCsvFile(null); setCsvPreview(null) }} className="px-4 py-2 rounded-lg text-[11px] text-slate-500 landing-font" style={{ background: 'rgba(255,255,255,0.03)' }}>Cancel</button>
+                        <button onClick={() => { setCsvFile(null); setCsvPreview(null) }} className="px-4 py-2 rounded-lg text-[11px] text-slate-500 landing-font" style={{ background: 'rgba(0,0,0,0.03)' }}>Cancel</button>
                         <button onClick={handleCsvConfirm} disabled={csvUploading}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold text-black landing-font"
                           style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
@@ -1489,7 +1489,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 </div>
               ) : (
                 /* Manual Entry */
-                <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
+                <div className="rounded-xl p-5" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(0) }}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <UserPlus className="w-4 h-4 text-indigo-400" />
@@ -1502,19 +1502,19 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Full Name *</label>
                       <input type="text" placeholder="Athlete name" value={manualForm.name}
                         onChange={e => setManualForm(f => ({ ...f, name: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Date of Birth *</label>
                       <input type="date" value={manualForm.dob}
                         onChange={e => setManualForm(f => ({ ...f, dob: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Discipline *</label>
                       <select value={manualForm.discipline}
                         onChange={e => setManualForm(f => ({ ...f, discipline: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                         <option value="">Select</option>
                         {['100m','200m','400m','110m Hurdles','100m Hurdles','400m Hurdles','Discus Throw','Shot Put','Javelin Throw','Hammer Throw'].map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
@@ -1523,7 +1523,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Gender *</label>
                       <select value={manualForm.gender}
                         onChange={e => setManualForm(f => ({ ...f, gender: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white landing-font focus:outline-none" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                         <option value="">Select</option>
                         <option value="M">Male</option>
                         <option value="F">Female</option>
@@ -1533,13 +1533,13 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Personal Best</label>
                       <input type="text" placeholder="e.g. 10.85, 1:52.30 or 65.40" value={manualForm.pb}
                         onChange={e => setManualForm(f => ({ ...f, pb: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-slate-400 mb-1 landing-font">Nationality</label>
                       <input type="text" placeholder="e.g. UAE" value={manualForm.nationality}
                         onChange={e => setManualForm(f => ({ ...f, nationality: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                        className="w-full px-3 py-2 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }} />
                     </div>
                   </div>
                   {manualError && (
@@ -1558,7 +1558,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
           {/* ═══════════════ AI SCANNER — UPGRADE PANEL (non-pro) ═══════════════ */}
           {activeSection === 'assistant' && !isPro && (
-            <div className="rounded-xl overflow-hidden p-8 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
+            <div className="rounded-xl overflow-hidden p-8 text-center" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(0) }}>
               <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)' }}>
                 <Bot className="w-6 h-6 text-black" />
               </div>
@@ -1576,9 +1576,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
           {/* ═══════════════ AI SCANNER ═══════════════ */}
           {activeSection === 'assistant' && isPro && (
-            <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', ...stagger(0) }}>
+            <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', ...stagger(0) }}>
               {/* Header */}
-              <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #4F3CF0, #8B83FF)' }}>
                   <Bot className="w-4 h-4 text-black" />
                 </div>
@@ -1604,9 +1604,9 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       <button key={t} onClick={() => { setScanInputType(t); setScanFile(null) }}
                         className="px-3 py-1.5 rounded-lg text-[11px] font-semibold landing-font uppercase tracking-wider transition-all"
                         style={{
-                          background: scanInputType === t ? 'rgba(79,60,240,0.15)' : 'rgba(255,255,255,0.03)',
-                          color: scanInputType === t ? '#4F3CF0' : '#64748b',
-                          border: `1px solid ${scanInputType === t ? 'rgba(79,60,240,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                          background: scanInputType === t ? 'rgba(79,60,240,0.15)' : 'rgba(0,0,0,0.03)',
+                          color: scanInputType === t ? '#4F3CF0' : '#9AA0AC',
+                          border: `1px solid ${scanInputType === t ? 'rgba(79,60,240,0.3)' : 'rgba(0,0,0,0.06)'}`,
                         }}>
                         {t}
                       </button>
@@ -1620,7 +1620,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                       placeholder="Paste competition results text here (any format — heats, finals, PDFs copied as text, etc.)"
                       rows={10}
                       className="w-full px-3.5 py-2.5 rounded-lg text-[12px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/30 resize-y"
-                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}
                     />
                   )}
 
@@ -1740,8 +1740,8 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                                     onClick={() => setScanAmbigPicks(prev => ({ ...prev, [ai]: m.roster_athlete_id }))}
                                     className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded text-left transition-colors"
                                     style={{
-                                      background: selected ? 'rgba(79,60,240,0.18)' : 'rgba(255,255,255,0.03)',
-                                      border: selected ? '1px solid rgba(79,60,240,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                                      background: selected ? 'rgba(79,60,240,0.18)' : 'rgba(0,0,0,0.03)',
+                                      border: selected ? '1px solid rgba(79,60,240,0.5)' : '1px solid rgba(0,0,0,0.06)',
                                     }}
                                   >
                                     <div className="min-w-0">
@@ -1781,7 +1781,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
                   <div className="space-y-3 max-h-[440px] overflow-y-auto">
                     {scanCandidates.map((cand, ci) => (
-                      <div key={ci} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div key={ci} className="rounded-lg p-3" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <p className="text-[12px] font-semibold text-white landing-font">{cand.roster_athlete_name}</p>
@@ -1837,7 +1837,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   )}
 
                   <div className="flex gap-2">
-                    <button onClick={resetScanner} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-slate-400 landing-font" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <button onClick={resetScanner} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-slate-400 landing-font" style={{ border: '1px solid rgba(0,0,0,0.08)' }}>
                       Back
                     </button>
                     <button
@@ -1875,7 +1875,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       {/* Add-result modal — manual single result for a roster athlete */}
       {addResultFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setAddResultFor(null)}>
-          <div className="w-full max-w-md rounded-2xl p-6 mx-4" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl p-6 mx-4" style={{ background: '#F6F7FB', border: '1px solid rgba(0,0,0,0.08)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[15px] font-bold text-white landing-font">Add result</h3>
               <button onClick={() => setAddResultFor(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5"><X className="w-4 h-4" /></button>
@@ -1886,7 +1886,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Discipline</label>
                 <select value={resultForm.discipline} onChange={e => setResultDiscipline(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                  style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', colorScheme: 'dark' }}>
                   <option value="">Select discipline…</option>
                   {DISCIPLINE_GROUPS.map(g => (
                     <optgroup key={g.group} label={g.group}>
@@ -1901,7 +1901,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Implement weight</label>
                   <select value={resultForm.implement ?? ''} onChange={e => setResultForm(f => ({ ...f, implement: e.target.value === '' ? null : Number(e.target.value) }))}
                     className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                    style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', colorScheme: 'dark' }}>
                     {implementOptions(resultForm.discipline, genderCode(addResultFor.gender)).map(w => (
                       <option key={w} value={w}>{weightLabel(resultForm.discipline, w)}</option>
                     ))}
@@ -1916,13 +1916,13 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                   <input type="text" value={resultForm.mark} onChange={e => setResultForm(f => ({ ...f, mark: e.target.value }))}
                     placeholder={resultInputHint(resultForm.discipline).placeholder}
                     className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                    style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }} />
                 </div>
                 <div>
                   <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 landing-font">Date</label>
                   <input type="date" value={resultForm.date} onChange={e => setResultForm(f => ({ ...f, date: e.target.value }))}
                     className="w-full px-3 py-2 rounded-lg text-[13px] text-white landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+                    style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', colorScheme: 'dark' }} />
                 </div>
               </div>
               <div>
@@ -1930,7 +1930,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
                 <input type="text" value={resultForm.competition} onChange={e => setResultForm(f => ({ ...f, competition: e.target.value }))}
                   placeholder="e.g. Club Champs"
                   className="w-full px-3 py-2 rounded-lg text-[13px] text-white placeholder-slate-500 landing-font focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }} />
               </div>
             </div>
             {resultError && (
@@ -1939,7 +1939,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
             <div className="flex gap-2 mt-6">
               <button onClick={() => setAddResultFor(null)}
                 className="flex-1 px-4 py-2.5 rounded-lg text-[12px] font-semibold text-slate-500 hover:text-white transition-all landing-font"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>Cancel</button>
+                style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}>Cancel</button>
               <button onClick={handleAddResult} disabled={resultSaving || !resultForm.mark.trim()}
                 className="flex-1 px-4 py-2.5 rounded-lg text-[12px] font-bold text-white transition-all landing-font flex items-center justify-center gap-1.5 disabled:opacity-40"
                 style={{ background: 'rgba(79,60,240,0.8)', border: '1px solid rgba(79,60,240,0.4)' }}>
