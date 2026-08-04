@@ -103,12 +103,12 @@ export default function AuthPage({ onBack }) {
         {/* Auth Card */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
           {/* Mode Toggle */}
-          <div className="flex bg-gray-800 rounded-lg p-1 mb-6">
+          <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
             <button
               onClick={() => { setMode('login'); setError(null) }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                 mode === 'login'
-                  ? 'bg-gray-700 text-white'
+                  ? 'bg-white text-[#16181D] shadow-sm'
                   : 'text-gray-400 hover:text-gray-300'
               }`}
             >
@@ -118,7 +118,7 @@ export default function AuthPage({ onBack }) {
               onClick={() => { setMode('signup'); setError(null) }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                 mode === 'signup'
-                  ? 'bg-gray-700 text-white'
+                  ? 'bg-white text-[#16181D] shadow-sm'
                   : 'text-gray-400 hover:text-gray-300'
               }`}
             >
@@ -142,9 +142,9 @@ export default function AuthPage({ onBack }) {
 
           {/* Divider */}
           <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1 h-px bg-gray-700" />
+            <div className="flex-1 h-px bg-gray-200" />
             <span className="text-gray-500 text-sm">or</span>
-            <div className="flex-1 h-px bg-gray-700" />
+            <div className="flex-1 h-px bg-gray-200" />
           </div>
 
           {/* Email Form */}
@@ -159,7 +159,7 @@ export default function AuthPage({ onBack }) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-[#16181D] placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 />
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function AuthPage({ onBack }) {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === 'signup' ? 'Min 6 characters' : 'Your password'}
                   required
-                  className="w-full pl-10 pr-12 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-lg text-[#16181D] placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 />
                 <button
                   type="button"
@@ -197,7 +197,7 @@ export default function AuthPage({ onBack }) {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
                     required
-                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-[#16181D] placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
               </div>

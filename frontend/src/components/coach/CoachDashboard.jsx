@@ -817,7 +817,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
   // ═══════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(170deg, #020617 0%, #0c1222 40%, #0a0f1c 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(170deg, #F6F7FB 0%, #FFFFFF 45%, #EDEBFE 100%)' }}>
 
       {/* ── Ambient glow ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
@@ -826,7 +826,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
       </div>
 
       {/* ── Sidebar (desktop/tablet) ── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-[220px] flex-col px-3 py-4" style={{ background: 'rgba(8,8,13,0.92)', borderRight: '1px solid rgba(0,0,0,0.06)', backdropFilter: 'blur(12px)' }}>
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-[220px] flex-col px-3 py-4" style={{ background: 'rgba(255,255,255,0.92)', borderRight: '1px solid #E7E9F2', backdropFilter: 'blur(12px)' }}>
         <div className="px-3 pb-5 flex items-center gap-1 text-white font-black text-[19px] landing-font">bnchmrkd<span style={{ color: '#4F3CF0' }}>.</span></div>
         <div className="px-3 pb-1.5 text-[9px] tracking-[0.16em] uppercase text-slate-600 mono-font">Coach</div>
         {[
@@ -853,7 +853,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       <div className="relative z-10 md:pl-[220px]">
         {/* ── Top bar ── */}
-        <header className="sticky top-0 z-50" style={{ background: 'rgba(2,6,23,0.7)', backdropFilter: 'blur(24px) saturate(1.4)', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+        <header className="sticky top-0 z-50" style={{ background: 'rgba(246,247,251,0.82)', backdropFilter: 'blur(24px) saturate(1.4)', borderBottom: '1px solid #E7E9F2' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button onClick={onBack} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-all">
