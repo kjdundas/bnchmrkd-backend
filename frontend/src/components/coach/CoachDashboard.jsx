@@ -827,7 +827,7 @@ export default function CoachDashboard({ user, profile, onBack, onViewAthlete })
 
       {/* ── Sidebar (desktop/tablet) ── */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-[220px] flex-col px-3 py-4" style={{ background: 'rgba(255,255,255,0.92)', borderRight: '1px solid #E7E9F2', backdropFilter: 'blur(12px)' }}>
-        <div className="px-3 pb-5 flex items-center gap-1 text-white font-black text-[19px] landing-font">bnchmrkd<span style={{ color: '#4F3CF0' }}>.</span></div>
+        <div className="px-3 pb-5 flex items-center"><img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-5 w-auto" /></div>
         <div className="px-3 pb-1.5 text-[9px] tracking-[0.16em] uppercase text-slate-600 mono-font">Coach</div>
         {[
           { k: 'overview', label: 'Overview', Icon: Zap },

@@ -3642,8 +3642,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
 
         {/* Logo */}
         <div className="mb-8 flex items-center gap-3 z-10">
-          <img src="/icon.svg" alt="bnchmrkd icon" className="w-10 h-10" />
-          <h1 className="text-4xl font-bold text-white" style={{fontFamily: "'Inter', 'Helvetica Neue', sans-serif"}}>bnchmrkd<span className="text-indigo-500">.</span></h1>
+          <img src="/bnchmrkd-wordmark-white.svg" alt="bnchmrkd." className="h-10 w-auto" />
         </div>
 
         {/* Track SVG */}
@@ -3896,11 +3895,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           {/* ── TOP NAV BAR ── */}
           <nav data-hero="nav" className="relative z-20">
             <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-8 h-8" />
-                <span className="text-xl font-bold text-white tracking-tight landing-font">
-                  bnchmrkd<span style={{color: '#4F3CF0'}}>.</span>
-                </span>
+              <div className="flex items-center">
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-9 w-auto" />
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setCurrentView('about')} className="hidden sm:block text-sm text-slate-500 hover:text-slate-300 transition-colors landing-font font-medium">
@@ -4753,8 +4749,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="text-sm font-medium">Back</span>
               </button>
               <div className="flex items-center gap-2.5">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-7 h-7" />
-                <span className="text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-7 w-auto" />
               </div>
               <div className="w-20"></div>
             </div>
@@ -5065,8 +5060,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-6 sm:h-7 w-auto" />
               </div>
               <div className="w-8 sm:w-20"></div>
             </div>
@@ -5243,8 +5237,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-6 sm:h-7 w-auto" />
               </div>
               <div className="w-8 sm:w-20"></div>
             </div>
@@ -5590,8 +5583,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-6 sm:h-7 w-auto" />
               </div>
               <div className="w-8 sm:w-20"></div>
             </div>
@@ -5896,8 +5888,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
                 <span className="hidden sm:inline text-sm font-medium">Home</span>
               </button>
               <div className="flex items-center gap-2">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-6 sm:h-7 w-auto" />
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 transition-colors landing-font" style={{border: '1px solid rgba(79,60,240,0.3)'}}>
@@ -5939,8 +5930,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <nav className="relative z-20" style={{borderBottom: '1px solid rgba(0,0,0,0.04)'}}>
             <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="/icon.svg" alt="bnchmrkd" className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="text-base sm:text-lg font-bold text-white tracking-tight landing-font">bnchmrkd<span style={{color: '#4F3CF0'}}>.</span></span>
+                <img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." className="h-6 sm:h-7 w-auto" />
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button onClick={() => import('./lib/pdfExport').then(m => m.exportQuickAnalysisPDF(analysisResults))} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 transition-colors landing-font" style={{border: '1px solid rgba(79,60,240,0.3)'}}>

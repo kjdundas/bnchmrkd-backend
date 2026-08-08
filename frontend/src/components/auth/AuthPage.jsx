@@ -92,10 +92,7 @@ export default function AuthPage({ onBack }) {
         {/* Logo / Brand */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2.5 mb-2">
-            <img src="/icon.svg" alt="bnchmrkd" className="w-8 h-8" />
-            <h1 className="text-4xl font-black text-white tracking-tight">
-              bnchmrkd<span style={{color: '#4F3CF0'}}>.</span>
-            </h1>
+            <img src="/bnchmrkd-wordmark-white.svg" alt="bnchmrkd." className="h-10 w-auto" />
           </div>
           <p className="text-gray-400 mt-2">Track your trajectory. Find your potential.</p>
         </div>
