@@ -6,9 +6,11 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { darkColors, lightColors, type ThemeColors } from '../lib/theme'
+import { lightColors, type ThemeColors } from '../lib/theme'
 
-const THEME_STORAGE_KEY = '@bnchmrkd_theme_mode'
+// v2: deliberately a NEW key, so a 'dark' or 'system' value written by the
+// pre-rebrand build is discarded rather than overriding the light theme.
+const THEME_STORAGE_KEY = '@bnchmrkd_theme_mode_v2'
 
 export type ThemeMode = 'dark' | 'light' | 'system'
 
@@ -26,16 +28,16 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  colors: darkColors,
-  isDark: true,
-  mode: 'dark',
+  colors: lightColors,
+  isDark: false,
+  mode: 'light',
   setMode: () => {},
   cycleTheme: () => {},
 })
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme() // 'dark' | 'light' | null
-  const [mode, setModeState] = useState<ThemeMode>('dark')
+  const [mode, setModeState] = useState<ThemeMode>('light')
   const [loaded, setLoaded] = useState(false)
 
   // Load persisted preference on mount
@@ -57,17 +59,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMode(mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark')
   }, [mode, setMode])
 
-  const isDark = useMemo(() => {
-    if (mode === 'system') return systemScheme !== 'light'
-    return mode === 'dark'
-  }, [mode, systemScheme])
+  // Always light — including under 'system', so the phone being in iOS dark
+  // mode cannot flip the app to a half-applied dark theme.
+  const isDark = false
 
-  // darkColors/lightColors are both `as const`, so their literal types differ
-  // (e.g. bg.primary '#0a0a0f' vs '#ffffff'). They're structurally identical,
-  // so widen to ThemeColors for the resolved palette.
+  // lightColors is `as const`, so its literal types differ from the
+  // ThemeColors shape (typeof darkColors); widen for the resolved palette.
   const colors = useMemo<ThemeColors>(
-    () => (isDark ? darkColors : lightColors) as unknown as ThemeColors,
-    [isDark],
+    () => lightColors as unknown as ThemeColors,
+    [],
   )
 
   const value = useMemo<ThemeContextValue>(

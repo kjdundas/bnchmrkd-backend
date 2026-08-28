@@ -5,7 +5,8 @@
 
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated } from 'react-native'
-import { colors } from '../lib/theme'
+import { darkColors as colors } from '../lib/theme'
+import Wordmark from '../components/Wordmark'
 
 export default function SplashScreen() {
   const pulseAnim = useRef(new Animated.Value(0.6)).current
@@ -22,7 +23,7 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={{ opacity: pulseAnim }}>
-        <Text style={styles.logo}>bnchmrkd.</Text>
+        <Wordmark variant="white" height={34} />
       </Animated.View>
       <Text style={styles.tagline}>LOADING YOUR DATA</Text>
     </View>
@@ -32,7 +33,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg.primary,
+    backgroundColor: colors.bg.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },

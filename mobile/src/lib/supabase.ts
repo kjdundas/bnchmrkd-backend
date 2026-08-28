@@ -29,6 +29,15 @@ export function getCachedToken() {
   return _cachedToken
 }
 
+/**
+ * Bearer header for calls to our OWN backend API (Railway), which verifies the
+ * Supabase JWT. Mirrors web's supabaseRest.authHeader(). Returns {} when signed
+ * out so callers can spread it unconditionally.
+ */
+export function authHeader(): Record<string, string> {
+  return _cachedToken ? { Authorization: `Bearer ${_cachedToken}` } : {}
+}
+
 // ── Raw REST helpers (same pattern as web supabaseRest.js) ────────────
 // Uses the cached JWT when available so RLS policies work correctly.
 // NEVER calls supabase.auth.getSession() — that hangs on Web Locks.

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Pressable,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -20,7 +21,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
-import { updateIn, selectFrom } from '../lib/supabase'
+import { AthleteDNALadder } from '../components/HomeSections'
+import { MetricTrendCards } from '../components/OuraSections'
+import { updateIn, selectFrom, upsertInto } from '../lib/supabase'
 import {
   HeroCard,
   AlmanacCard,
@@ -29,12 +32,12 @@ import {
   StreakChip,
   TierBadge,
   AnimatedBar,
-  Divider,
-} from '../components/ui'
+  Divider, Tappable, SectionLabel} from '../components/ui'
 import {
   RADAR_AXES,
   buildDnaProfile,
   scoreToTier,
+  findLimitingFactor,
 } from '../lib/disciplineScience'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 
@@ -51,6 +54,27 @@ export default function ProfileScreen() {
     weight_kg: profile?.weight_kg?.toString() || '',
   })
   const [saving, setSaving] = useState(false)
+  const [physical, setPhysical] = useState<{ height_cm: number | null; weight_kg: number | null }>({
+    height_cm: null,
+    weight_kg: null,
+  })
+
+  // athlete_profiles holds height/weight; user_profiles (via AuthContext) holds identity.
+  useEffect(() => {
+    if (!user) return
+    selectFrom('athlete_profiles', { filter: `id=eq.${user.id}`, limit: '1' })
+      .then((rows) => {
+        const r = rows?.[0]
+        if (!r) return
+        setPhysical({ height_cm: r.height_cm ?? null, weight_kg: r.weight_kg ?? null })
+        setForm((f) => ({
+          ...f,
+          height_cm: f.height_cm || (r.height_cm != null ? String(r.height_cm) : ''),
+          weight_kg: f.weight_kg || (r.weight_kg != null ? String(r.weight_kg) : ''),
+        }))
+      })
+      .catch(() => {})
+  }, [user])
 
   const loadMetrics = () => {
     if (!user) return
@@ -71,6 +95,9 @@ export default function ProfileScreen() {
     const unsub = navigation.addListener('focus', () => { loadMetrics() })
     return unsub
   }, [navigation, user])
+
+  // Discipline for the DNA ladder — same source of truth as Home.
+  const discipline = ((profile as any)?.primary_discipline || (profile as any)?.discipline || '').trim() || null
 
   // DNA summary
   const dnaProfile = useMemo(() => {
@@ -111,6 +138,8 @@ export default function ProfileScreen() {
       pbTracker[k] = v
     }
   }
+  const limitingFactor = useMemo(() => findLimitingFactor(dnaProfile, null, null), [dnaProfile])
+
   const pbCount = Object.keys(pbTracker).length
   const firstLog = metrics.length > 0 ? metrics[metrics.length - 1] : null
   const daysSinceStart = firstLog
@@ -130,10 +159,18 @@ export default function ProfileScreen() {
     if (!profile) return
     setSaving(true)
     try {
-      await updateIn('athlete_profiles', `id=eq.${profile.id}`, {
+      // Identity fields live on user_profiles; physical fields on athlete_profiles.
+      await updateIn('user_profiles', `id=eq.${profile.id}`, {
         full_name: form.full_name,
-        club: form.club || null,
+        club_school: form.club || null,
         country: form.country || null,
+      })
+      await upsertInto('athlete_profiles', {
+        id: profile.id,
+        height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
+        weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
+      })
+      setPhysical({
         height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
         weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
       })
@@ -165,6 +202,21 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      {/* Profile is pushed from the header avatar, so it needs its own back. */}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
+      }}>
+        <Tappable
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
+          hitSlop={12}
+          style={{ width: 44, height: 44, justifyContent: 'center' }}
+        >
+          <Ionicons name="chevron-back" size={24} color={c.text.primary} />
+        </Tappable>
+        <Text style={{ fontSize: 17, fontWeight: '700', color: c.text.primary }}>Profile</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ════════════════════════════════════════════════════════════════
             AVATAR HERO — Gradient card with identity
@@ -198,7 +250,7 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             STATS GRID
             ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard kicker="CAREER STATS" accent={c.orange[500]}>
+        <AlmanacCard kicker="CAREER STATS" accent={c.accent[500]}>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={[styles.statNum, { color: c.text.primary }]}>{totalLogs}</Text>
@@ -254,6 +306,44 @@ export default function ProfileScreen() {
             ))}
           </AlmanacCard>
         )}
+        {/* ── Full DNA ladder + limiting factor ────────────────────────
+            Moved off Home (2026-08-28). These describe the athlete's body,
+            not a race result, so they belong beside the DNA summary rather
+            than in the daily loop. ──────────────────────────────────── */}
+        <SectionLabel>Physical profile</SectionLabel>
+
+        <AthleteDNALadder metrics={metrics} discipline={discipline} dob={profile?.dob} />
+
+        {/* Per-metric trend charts, moved off Home where four of them ate
+            three screens. These are physical tests, so they belong here. */}
+        <MetricTrendCards metrics={metrics} limit={6} onLog={() => navigation.navigate('Log' as never)} />
+
+        {limitingFactor && (
+          <AlmanacCard kicker="FOCUS AREA" title="Limiting factor" accent={c.amber}>
+            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+              <View style={{
+                width: 38, height: 38, borderRadius: 19,
+                backgroundColor: c.amber + '1F',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Ionicons name="warning" size={19} color={c.amber} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: c.text.primary }}>
+                  {limitingFactor.axisLabel}
+                </Text>
+                <Text style={{ fontSize: 13, color: c.text.secondary, marginTop: 2 }}>
+                  Score: <Text style={{ color: c.amber, fontWeight: '700' }}>{limitingFactor.score}</Text>
+                </Text>
+                {!!limitingFactor.why && (
+                  <Text style={{ fontSize: 13, color: c.text.secondary, marginTop: 8, lineHeight: 19 }}>
+                    {limitingFactor.why}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </AlmanacCard>
+        )}
 
         {/* ════════════════════════════════════════════════════════════════
             PROFILE DETAILS — Editable info
@@ -286,8 +376,8 @@ export default function ProfileScreen() {
           ) : (
             <>
               <InfoRow icon="flag-outline" label="Country" value={profile?.country || '—'} />
-              <InfoRow icon="fitness-outline" label="Height" value={profile?.height_cm ? `${profile.height_cm} cm` : '—'} />
-              <InfoRow icon="scale-outline" label="Weight" value={profile?.weight_kg ? `${profile.weight_kg} kg` : '—'} />
+              <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
+              <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
               <InfoRow icon="calendar-outline" label="Tracking since" value={
                 firstLog
                   ? new Date(firstLog.recorded_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
@@ -296,39 +386,6 @@ export default function ProfileScreen() {
               <InfoRow icon="mail-outline" label="Email" value={user?.email || '—'} />
             </>
           )}
-        </AlmanacCard>
-
-        {/* ════════════════════════════════════════════════════════════════
-            APPEARANCE
-            ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard>
-          <MonoKicker>Appearance</MonoKicker>
-          <View style={styles.themeRow}>
-            <View style={styles.themeLabel}>
-              <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={16} color={c.text.muted} />
-              <Text style={[styles.themeLabelText, { color: c.text.primary }]}>Theme</Text>
-            </View>
-            <View style={[styles.themeToggle, { backgroundColor: c.glass.bg, borderColor: c.glass.border }]}>
-              {(['dark', 'light', 'system'] as ThemeMode[]).map(m => (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.themeOption, themeMode === m && { backgroundColor: c.orange[500] + '15' }]}
-                  onPress={() => setThemeMode(m)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={m === 'dark' ? 'moon' : m === 'light' ? 'sunny' : 'phone-portrait-outline'}
-                    size={14}
-                    color={themeMode === m ? c.orange[500] : c.text.dimmed}
-                  />
-                  <Text style={[styles.themeOptionText, { color: c.text.dimmed },
-                    themeMode === m && { color: c.orange[500] }]}>
-                    {m === 'system' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
         </AlmanacCard>
 
         {/* ════════════════════════════════════════════════════════════════

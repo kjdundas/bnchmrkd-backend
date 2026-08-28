@@ -361,13 +361,15 @@ interface WhereYouStandProps {
   sex?: string
 }
 
+// Kept byte-identical to frontend/src/components/athlete/HomeSections.jsx
+// TIER_ACCENT so the continuum reads the same on web and mobile.
 const TIER_ACCENT: Record<string, { swatch: string; tag: string }> = {
   Novice: { swatch: '#475569', tag: 'starter' },
-  School: { swatch: '#64748b', tag: 'developing' },
-  Club: { swatch: '#94a3b8', tag: 'local' },
+  School: { swatch: '#9AA0AC', tag: 'developing' },
+  Club: { swatch: '#5B5F6B', tag: 'local' },
   National: { swatch: '#f59e0b', tag: 'national' },
-  Continental: { swatch: '#fb923c', tag: 'regional' },
-  'Olympic Final': { swatch: '#f97316', tag: 'international' },
+  Continental: { swatch: '#8B83FF', tag: 'regional' },
+  'Olympic Final': { swatch: '#4F3CF0', tag: 'international' },
   'World Record': { swatch: '#fef3c7', tag: 'world' },
 }
 

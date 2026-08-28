@@ -466,7 +466,7 @@ export function SmartDailyInsight({ dnaProfile, discipline, pb, sex, totalLogs, 
     // Priority 1: No data yet — welcome
     if (totalLogs === 0) {
       return {
-        icon: '🧬',
+        icon: 'git-branch-outline',
         text: "Welcome to bnchmrkd. Start by logging your first physical metric — even one data point begins to build your DNA profile. Each metric you add sharpens the analysis engine.",
       }
     }
@@ -478,7 +478,7 @@ export function SmartDailyInsight({ dnaProfile, discipline, pb, sex, totalLogs, 
         .map((a: any) => a.label)
         .slice(0, 2)
       return {
-        icon: '🔬',
+        icon: 'flask-outline',
         text: `Your DNA profile has ${activeAxes.length} of 6 axes. Add ${missing.join(' and ')} metrics to unlock your full physical blueprint and more accurate limiting-factor analysis.`,
       }
     }
@@ -506,7 +506,7 @@ export function SmartDailyInsight({ dnaProfile, discipline, pb, sex, totalLogs, 
         const limiting = findLimitingFactor(dnaProfile, discipline, null)
         if (limiting?.estImpactSec) {
           return {
-            icon: '🎯',
+            icon: 'locate-outline',
             text: `Your ${limiting.axisLabel} axis (${limiting.score}/100) is your biggest limiting factor for ${discipline}. Improving ${limiting.metricLabel || limiting.metricKey?.replace(/_/g, ' ')} from ${limiting.currentValue} to ${limiting.expectedValue} could save ~${Math.abs(limiting.estImpactSec).toFixed(2)}s.`,
           }
         }
@@ -516,7 +516,7 @@ export function SmartDailyInsight({ dnaProfile, discipline, pb, sex, totalLogs, 
     // Priority 5: Streak acknowledgment
     if (streak >= 7) {
       return {
-        icon: '🔥',
+        icon: 'flame-outline',
         text: `${streak}-day streak. Athletes who maintain consistent logging identify trajectory inflections 40% faster and can benchmark against rivals sooner. Your data compounds.`,
       }
     }
@@ -534,7 +534,7 @@ export function SmartDailyInsight({ dnaProfile, discipline, pb, sex, totalLogs, 
       }
       if (categorySet.size >= 2) {
         return {
-          icon: '📊',
+          icon: 'bar-chart-outline',
           text: `You've logged across ${categorySet.size} physical qualities recently (${[...categorySet].join(', ')}). Multi-axis development is the hallmark of elite athletic profiles. Keep broadening your data.`,
         }
       }
@@ -542,14 +542,19 @@ export function SmartDailyInsight({ dnaProfile, discipline, pb, sex, totalLogs, 
 
     // Fallback
     return {
-      icon: '🧪',
+      icon: 'beaker-outline',
       text: `Consistency beats intensity. Athletes who log 3+ times per week see their trajectory patterns emerge faster and can benchmark against rivals sooner. You have ${totalLogs} total entries — keep building.`,
     }
   }, [dnaProfile, discipline, pb, totalLogs, streak, metrics])
 
   return (
     <View style={styles.insightRow}>
-      <Text style={styles.insightIcon}>{insight.icon}</Text>
+      <Ionicons
+        name={(insight.icon || 'information-circle-outline') as any}
+        size={15}
+        color={colors.accent[500]}
+        style={styles.insightIcon}
+      />
       <Text style={styles.insightText}>{insight.text}</Text>
     </View>
   )
@@ -860,6 +865,6 @@ const styles = StyleSheet.create({
 
   // ── Smart Insight ──
   insightRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  insightIcon: { fontSize: 22, marginTop: 2 },
+  insightIcon: { marginTop: 2 },
   insightText: { color: colors.text.secondary, fontSize: 14, lineHeight: 21, flex: 1 },
 })

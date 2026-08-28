@@ -16,15 +16,16 @@ import {
   Animated,
   Dimensions,
 } from 'react-native'
-import { colors, spacing, radius, fonts } from '../lib/theme'
+// Auth is a deliberately DARK surface (matches the web AuthPage), so this
+// screen pins the dark palette rather than following the theme toggle.
+import { darkColors as colors, spacing, radius, fonts } from '../lib/theme'
+import Wordmark from '../components/Wordmark'
 import { useAuth } from '../contexts/AuthContext'
-import { useTheme } from '../contexts/ThemeContext'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 
 export default function LoginScreen() {
   const { signIn, signUp } = useAuth()
-  const { colors: c } = useTheme()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -68,7 +69,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: c.bg.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg.secondary }]}>
       {/* Background glow effects */}
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />
@@ -90,7 +91,7 @@ export default function LoginScreen() {
               },
             ]}
           >
-            <Text style={styles.logo}>bnchmrkd.</Text>
+            <Wordmark variant="white" height={34} />
             <View style={styles.taglineWrap}>
               <View style={styles.taglineLine} />
               <Text style={styles.tagline}>YOUR PERFORMANCE. BENCHMARKED.</Text>

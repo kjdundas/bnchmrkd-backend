@@ -11,6 +11,8 @@ import {
   Animated,
   Dimensions,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { celebrationFeedback } from '../lib/haptics'
 import { colors, spacing, radius } from '../lib/theme'
 import { getLevelFromXP, type Badge } from '../lib/gamification'
 
@@ -34,7 +36,7 @@ export function XPBar({ totalXP }: { totalXP: number }) {
     <View style={xpStyles.container}>
       <View style={xpStyles.topRow}>
         <View style={xpStyles.levelBadge}>
-          <Text style={xpStyles.levelIcon}>{level.icon}</Text>
+          <Ionicons name={((level as any).ionicon || 'star') as any} size={12} color={colors.accent[500]} />
           <Text style={xpStyles.levelNum}>LV{level.level}</Text>
         </View>
         <Text style={xpStyles.levelTitle}>{level.title}</Text>
@@ -158,7 +160,11 @@ export function StreakChip({ streak }: { streak: number }) {
       isHot && streakStyles.chipHot,
       isFire && streakStyles.chipFire,
     ]}>
-      <Text style={streakStyles.icon}>{isFire ? '🔥' : isHot ? '⚡' : '🔗'}</Text>
+      <Ionicons
+        name={isFire ? 'flame' : isHot ? 'flash' : 'link'}
+        size={13}
+        color={isFire ? colors.accent[300] : isHot ? colors.accent[400] : colors.text.muted}
+      />
       <Text style={[
         streakStyles.text,
         isHot && { color: colors.orange[400] },
@@ -429,6 +435,8 @@ export function PBCelebration({
   useEffect(() => {
     if (visible) {
       setShow(true)
+      // A PB is the single moment in this app worth a heavy haptic.
+      celebrationFeedback()
       scaleAnim.setValue(0)
       glowAnim.setValue(0)
 
@@ -468,7 +476,7 @@ export function PBCelebration({
         { opacity: glowAnim, transform: [{ scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] },
       ]} />
 
-      <Text style={pbStyles.emoji}>🏆</Text>
+      <Ionicons name="trophy" size={34} color={colors.accent[500]} />
       <Text style={pbStyles.title}>PERSONAL BEST</Text>
       <Text style={pbStyles.metricName}>{metricLabel}</Text>
       <Text style={pbStyles.value}>

@@ -21,6 +21,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import AppHeader from '../components/AppHeader'
+import { ScienceSpotlight } from '../components/HomeSections'
 import { selectFrom, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import {
   AlmanacCard,
@@ -163,7 +165,7 @@ function DisciplinePicker({
         showsVerticalScrollIndicator={false}
       >
         <EmptyState
-          icon="🏃"
+          icon="walk-outline"
           title="No competition data yet"
           subtitle="Log your first race in the Log tab to see your trajectory analysis."
         />
@@ -674,7 +676,8 @@ export default function TrajectoryScreen() {
     : null
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]} edges={['top', 'left', 'right']}>
+      <AppHeader />
       {/* Header */}
       <View style={styles.header}>
         {selectedDiscipline && (
@@ -708,6 +711,10 @@ export default function TrajectoryScreen() {
           <ImprovementScenariosSection discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex} />
 
           <CompetitionLadderSection discipline={selectedDiscipline} pb={selectedPb} sex={sex} />
+
+          {/* Moved off Home — educational, read once, belongs with the
+              analysis rather than in the daily loop. */}
+          <ScienceSpotlight discipline={selectedDiscipline} />
 
           <View style={{ height: 24 }} />
         </ScrollView>

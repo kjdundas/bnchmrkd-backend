@@ -1,135 +1,158 @@
 // ── bnchmrkd. Design Tokens ───────────────────────────────────────────
-// Dual theme: dark (original) + light, with identical shape.
+// Electric Indigo identity — mirrors frontend/src/index.css :root tokens.
+//   --paper #F6F7FB · --card #FFFFFF · --ink #16181D · --muted #5B5F6B
+//   --dim #9AA0AC · --line #E7E9F2 · --indigo #4F3CF0
+//   --indigo-bright #8B83FF · --indigo-deep #141636 · --indigo-soft #EDEBFE
+//
+// Light is the primary theme (matches the web app). Dark is kept as a real
+// alternative, re-accented to indigo-bright for legibility on dark surfaces.
+//
+// NOTE ON `orange`: the accent key is still named `orange` because ~160 call
+// sites across the screens read `colors.orange[500]`. The VALUES are indigo.
+// `accent` is the preferred alias for new code — both point at the same object,
+// so migrating a screen is a rename with no visual change.
 
 export type ThemeColors = typeof darkColors
 
-// ── Dark palette (original) ──────────────────────────────────────────
+// ── Light accent (indigo on white) ───────────────────────────────────
+const lightAccent = {
+  500: '#4F3CF0',   // --indigo, primary accent
+  400: '#6B5BF5',
+  300: '#8B83FF',   // --indigo-bright
+  gradient: ['#4F3CF0', '#8B83FF'] as const,
+}
+
+// ── Dark accent (indigo-bright, lifted for dark surfaces) ────────────
+const darkAccent = {
+  500: '#8B83FF',   // --indigo-bright reads as the accent on dark
+  400: '#A79FFF',
+  300: '#C4BFFF',
+  gradient: ['#4F3CF0', '#8B83FF'] as const,
+}
+
+// ── Dark palette ─────────────────────────────────────────────────────
 export const darkColors = {
   bg: {
-    primary: '#0a0a0f',
-    secondary: '#0d1117',
-    card: 'rgba(255,255,255,0.02)',
-    cardBorder: 'rgba(255,255,255,0.06)',
-    input: '#1e293b',
-    inputBorder: '#334155',
+    primary: '#0B0C18',
+    secondary: '#141636',   // --indigo-deep
+    card: '#171935',
+    cardBorder: 'rgba(255,255,255,0.08)',
+    input: '#1C1F42',
+    inputBorder: '#2A2E58',
   },
-  orange: {
-    500: '#f97316',
-    400: '#fb923c',
-    300: '#fdba74',
-    gradient: ['#f97316', '#fb923c'] as const,
-  },
+  orange: darkAccent,
+  accent: darkAccent,
   text: {
-    primary: '#f8fafc',
-    secondary: '#94a3b8',
-    muted: '#64748b',
-    dimmed: '#475569',
+    primary: '#F5F6FA',
+    secondary: '#A8ADBD',
+    muted: '#7A8095',
+    dimmed: '#565C73',
   },
-  green: '#34d399',
-  red: '#fb7185',
-  blue: '#3b82f6',
-  teal: '#14b8a6',
-  amber: '#f59e0b',
-  purple: '#a78bfa',
+  green: '#34D399',
+  red: '#FF6B6B',
+  blue: '#60A5FA',
+  teal: '#43C6AC',
+  amber: '#F59E0B',
+  purple: '#C4A9FF',
   category: {
-    speed: '#f97316',
-    power: '#fb923c',
-    strength: '#f43f5e',
-    endurance: '#3b82f6',
-    mobility: '#14b8a6',
-    anthropometrics: '#a78bfa',
+    speed: '#8B83FF',
+    power: '#A79FFF',
+    strength: '#FF6B6B',
+    endurance: '#60A5FA',
+    mobility: '#43C6AC',
+    anthropometrics: '#C4A9FF',
   } as Record<string, string>,
   tier: {
-    emerging: '#64748b',
-    developing: '#3b82f6',
-    proficient: '#14b8a6',
-    excellent: '#f59e0b',
-    elite: '#f97316',
+    emerging: '#7A8095',
+    developing: '#60A5FA',
+    proficient: '#43C6AC',
+    excellent: '#F59E0B',
+    elite: '#8B83FF',
   },
-  // Semantic overlay tokens (for rgba patterns used throughout)
+  // Card / surface tokens. Kept under the `glass` name for call-site
+  // compatibility, but these are solid on light — translucent cards
+  // dissolved against the paper background (same fix as the web app).
   glass: {
-    bg: 'rgba(255,255,255,0.02)',
-    bgHover: 'rgba(255,255,255,0.04)',
-    border: 'rgba(255,255,255,0.06)',
-    borderHover: 'rgba(255,255,255,0.08)',
-    divider: 'rgba(255,255,255,0.03)',
-    overlay: 'rgba(255,255,255,0.04)',
-    shimmer: 'rgba(255,255,255,0.06)',
+    bg: '#171935',
+    bgHover: '#1D1F42',
+    border: 'rgba(255,255,255,0.08)',
+    borderHover: 'rgba(255,255,255,0.14)',
+    divider: 'rgba(255,255,255,0.06)',
+    overlay: 'rgba(139,131,255,0.10)',
+    shimmer: 'rgba(255,255,255,0.08)',
   },
   // Status bar style
   statusBar: 'light' as 'light' | 'dark',
   // Tab bar
   tabBar: {
-    bg: '#0a0a0f',
-    border: 'rgba(255,255,255,0.06)',
-    active: '#f97316',
-    inactive: '#475569',
+    bg: '#0B0C18',
+    border: 'rgba(255,255,255,0.08)',
+    active: '#8B83FF',
+    inactive: '#565C73',
   },
 } as const
 
-// ── Light palette ────────────────────────────────────────────────────
+// ── Light palette (primary — matches bnchmrkd.org) ───────────────────
 export const lightColors = {
   bg: {
-    primary: '#ffffff',
-    secondary: '#f8fafc',
-    card: 'rgba(0,0,0,0.02)',
-    cardBorder: 'rgba(0,0,0,0.08)',
-    input: '#f1f5f9',
-    inputBorder: '#cbd5e1',
+    primary: '#F6F7FB',     // --paper
+    secondary: '#FFFFFF',   // --card
+    card: '#FFFFFF',
+    cardBorder: '#E7E9F2',  // --line
+    input: '#FFFFFF',
+    inputBorder: '#E7E9F2',
   },
-  orange: {
-    500: '#ea580c',    // slightly deeper for light bg contrast
-    400: '#f97316',
-    300: '#fb923c',
-    gradient: ['#ea580c', '#f97316'] as const,
-  },
+  orange: lightAccent,
+  accent: lightAccent,
   text: {
-    primary: '#0f172a',    // slate-900
-    secondary: '#475569',  // slate-600
-    muted: '#64748b',      // slate-500
-    dimmed: '#94a3b8',     // slate-400
+    primary: '#16181D',     // --ink
+    secondary: '#5B5F6B',   // --muted
+    muted: '#9AA0AC',       // --dim
+    dimmed: '#B9BEC8',
   },
-  green: '#059669',
-  red: '#e11d48',
-  blue: '#2563eb',
-  teal: '#0d9488',
-  amber: '#d97706',
-  purple: '#7c3aed',
+  green: '#0E9F6E',
+  red: '#E84545',
+  blue: '#3B82F6',
+  teal: '#0D9488',
+  amber: '#D97706',
+  purple: '#7C3AED',
   category: {
-    speed: '#ea580c',
-    power: '#f97316',
-    strength: '#e11d48',
-    endurance: '#2563eb',
-    mobility: '#0d9488',
-    anthropometrics: '#7c3aed',
+    speed: '#4F3CF0',
+    power: '#6B5BF5',
+    strength: '#E84545',
+    endurance: '#3B82F6',
+    mobility: '#0D9488',
+    anthropometrics: '#7C3AED',
   } as Record<string, string>,
   tier: {
-    emerging: '#64748b',
-    developing: '#2563eb',
-    proficient: '#0d9488',
-    excellent: '#d97706',
-    elite: '#ea580c',
+    emerging: '#9AA0AC',
+    developing: '#3B82F6',
+    proficient: '#0D9488',
+    excellent: '#D97706',
+    elite: '#4F3CF0',
   },
   glass: {
-    bg: 'rgba(0,0,0,0.02)',
-    bgHover: 'rgba(0,0,0,0.04)',
-    border: 'rgba(0,0,0,0.08)',
-    borderHover: 'rgba(0,0,0,0.12)',
-    divider: 'rgba(0,0,0,0.06)',
-    overlay: 'rgba(0,0,0,0.03)',
-    shimmer: 'rgba(0,0,0,0.06)',
+    bg: '#FFFFFF',
+    bgHover: '#FBFBFE',
+    border: '#E7E9F2',
+    borderHover: '#D9DCEA',
+    divider: '#EEF0F7',
+    overlay: '#EDEBFE',            // --indigo-soft, tint fills
+    shimmer: 'rgba(79,60,240,0.06)',
   },
   statusBar: 'dark' as 'light' | 'dark',
   tabBar: {
-    bg: '#ffffff',
-    border: 'rgba(0,0,0,0.08)',
-    active: '#ea580c',
-    inactive: '#94a3b8',
+    bg: '#FFFFFF',
+    border: '#E7E9F2',
+    active: '#4F3CF0',
+    inactive: '#9AA0AC',
   },
 } as const
 
-// ── Default export (dark) — used by files that haven't migrated yet ──
-export const colors = darkColors
+// ── Default export — light, matching the web app.
+// Components that import `colors` directly (rather than useTheme()) are
+// pinned to this palette, so this is what flips them light.
+export const colors = lightColors
 
 export const spacing = {
   xs: 4,
@@ -153,4 +176,19 @@ export const fonts = {
   mono: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const },
   display: { fontSize: 16, fontWeight: '600' as const },
   hero: { fontSize: 32, fontWeight: '700' as const },
+} as const
+
+// Tabular figures. Proportional digits change width as values change, so a
+// counting number or a switching mark visibly jitters. Every numeral the user
+// reads as data should carry this.
+export const numerals = { fontVariant: ['tabular-nums' as const] }
+
+// Vertical rhythm between major sections. Deliberately larger than `spacing`,
+// which is for intra-component padding — airiness comes from the gaps BETWEEN
+// blocks, not from padding inside them.
+export const rhythm = {
+  tight: 12,
+  section: 20,
+  block: 28,
+  major: 40,
 } as const

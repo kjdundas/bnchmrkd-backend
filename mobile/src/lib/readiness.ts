@@ -18,6 +18,14 @@ export const READINESS_LABEL: Record<string, string> = {
   none: 'No check-in',
 }
 
+// Kept in step with frontend/src/lib/readiness.js PAIN_AREAS.
+export const PAIN_AREAS: { v: string; l: string }[] = [
+  { v: 'knee', l: 'Knee' }, { v: 'heel', l: 'Heel' }, { v: 'ankle', l: 'Ankle' },
+  { v: 'hip', l: 'Hip/groin' }, { v: 'shin', l: 'Shin' }, { v: 'back', l: 'Back' },
+  { v: 'hamstring', l: 'Hamstring' }, { v: 'calf', l: 'Calf' }, { v: 'foot', l: 'Foot' },
+  { v: 'shoulder', l: 'Shoulder' }, { v: 'other', l: 'Other' },
+]
+
 export type CheckinRow = {
   checkin_date?: string
   sleep_hours?: number | null

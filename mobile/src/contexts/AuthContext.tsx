@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         p.role = p.account_type || 'athlete'
         // Map date_of_birth → dob, gender → sex for consistency
         if (p.date_of_birth && !p.dob) p.dob = p.date_of_birth
+        if (p.club_school && !p.club) p.club = p.club_school
         if (p.gender && !p.sex) {
           p.sex = p.gender === 'Female' ? 'F' : p.gender === 'Male' ? 'M' : p.gender
         }
