@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   TrendingUp, TrendingDown, Minus, Target, Calendar,
   LogOut, RefreshCw, AlertCircle, Activity, Home, LineChart as LineChartIcon, Plus,
-  ChevronLeft, Save, X, Dumbbell
+  ChevronLeft, Save, X, Dumbbell, Bell, Zap
 } from 'lucide-react'
 import {
   Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -97,6 +97,22 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
   const [activeDiscipline, setActiveDiscipline] = useState(null)
   const [tab, setTab] = useState('home') // 'home' | 'log' | 'trajectory'
   const [showProfile, setShowProfile] = useState(false)
+  const [showCheers, setShowCheers] = useState(false)
+  const [cheerCount, setCheerCount] = useState(0)
+
+  // Recent coach cheers (last 7 days) for the header bell badge
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    selectFrom('activity_reactions', { filter: `athlete_user_id=eq.${user.id}`, order: 'created_at.desc', limit: '30' })
+      .then(rows => {
+        if (cancelled) return
+        const weekAgo = Date.now() - 7 * 24 * 3600 * 1000
+        setCheerCount((rows || []).filter(r => new Date(r.created_at).getTime() > weekAgo).length)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.id])
 
   // ── Gamification (XP / streak / badges) — persisted in athlete_progress ──
   const [totalXP, setTotalXP] = useState(0)
@@ -505,14 +521,32 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
             </p>
           </div>
         </button>
-        <button
-          onClick={onSignOut}
-          className="p-2 rounded-lg text-slate-500 hover:text-indigo-300 transition-colors"
-          style={{ border: '1px solid #E7E9F2' }}
-          title="Sign out"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCheers(v => !v)}
+            className="relative p-2 rounded-lg text-slate-500 hover:text-indigo-300 transition-colors"
+            style={{ border: '1px solid #E7E9F2' }}
+            title="Coach cheers"
+          >
+            <Bell className="w-4 h-4" />
+            {cheerCount > 0 && (
+              <span
+                className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold text-white flex items-center justify-center mono-font"
+                style={{ background: '#4F3CF0' }}
+              >
+                {cheerCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={onSignOut}
+            className="p-2 rounded-lg text-slate-500 hover:text-indigo-300 transition-colors"
+            style={{ border: '1px solid #E7E9F2' }}
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </header>
   )
@@ -573,12 +607,6 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
           >
             <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
           </div>
-          <span
-            className="mono-font text-[9px] uppercase tracking-[0.18em] mt-1.5"
-            style={{ color: tab === 'log' ? '#8B83FF' : '#475569' }}
-          >
-            Log
-          </span>
         </button>
         <button
           onClick={handleOpenTrajectory}
@@ -712,8 +740,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
         {tab === 'home' && (
           <>
-            <CoachReactionsStrip athleteId={user?.id} />
-            <CheckInCard athleteId={user?.id} />
+            {showCheers && <CoachReactionsStrip athleteId={user?.id} />}
             <HomeView
               view={view}
               athleteRow={athleteRow}
@@ -723,6 +750,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
               refreshing={refreshing}
               totalXP={totalXP}
               streak={streak}
+              onLog={() => setTab('log')}
             />
           </>
         )}
@@ -764,7 +792,7 @@ export default function AthleteDashboard({ user, profile, onSignOut, onViewTraje
 // ═══════════════════════════════════════════════════════════════════════
 // HOME VIEW — Hero PB + recent results
 // ═══════════════════════════════════════════════════════════════════════
-function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing, totalXP = 0, streak = 0 }) {
+function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing, totalXP = 0, streak = 0, onLog }) {
   // Fetch athlete_metrics once and share across all home sections
   const [metrics, setMetrics] = useState([])
   useEffect(() => {
@@ -796,6 +824,12 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
       {/* Pending coach requests (only renders when there are any) */}
       <AthleteCoachLinks pendingOnly />
 
+      {/* ── Oura-style top: metric rail → check-in → hero → trend cards ── */}
+      <MetricRail metrics={metrics} />
+      <CheckInCard athleteId={athleteId} />
+      <PerformanceHero view={view} />
+      <DetailTrendCards view={view} metrics={metrics} onLog={onLog} />
+
       {/* XP / level + streak — engagement layer (parity with mobile) */}
       <div className="flex items-stretch gap-2">
         <div className="flex-1"><XPBar totalXP={totalXP} /></div>
@@ -805,14 +839,6 @@ function HomeView({ view, athleteRow, profile, athleteId, onRefresh, refreshing,
           </div>
         )}
       </div>
-
-      <TrajectoryHero
-        athleteId={athleteId}
-        races={athleteRow?.races || []}
-        pb={view.pb}
-        discipline={view.discipline}
-        sex={sex}
-      />
 
       <WeeklyRecap
         athleteId={athleteId}
@@ -1283,6 +1309,268 @@ function ProfileEditView({ athleteRow, profile, user, onClose, onSave }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// OURA-STYLE HOME TOP — metric rail, performance hero, trend cards
+// ═══════════════════════════════════════════════════
+
+// Group athlete_metrics rows by key with latest / best / history (asc by date)
+function groupMetrics(metrics) {
+  const byKey = {}
+  for (const r of metrics || []) {
+    if (r?.value == null) continue
+    if (!byKey[r.metric_key]) {
+      byKey[r.metric_key] = { key: r.metric_key, label: r.metric_label, unit: r.unit, latest: r, best: r, history: [r] }
+    } else {
+      const g = byKey[r.metric_key]
+      g.history.push(r)
+      if (new Date(r.recorded_at) > new Date(g.latest.recorded_at)) g.latest = r
+      const lowerBetter = LOWER_IS_BETTER.has(r.metric_key)
+      if (lowerBetter ? Number(r.value) < Number(g.best.value) : Number(r.value) > Number(g.best.value)) g.best = r
+    }
+  }
+  const groups = Object.values(byKey)
+  for (const g of groups) g.history.sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at))
+  return groups.sort((a, b) => new Date(b.latest.recorded_at) - new Date(a.latest.recorded_at))
+}
+
+const fmtMetricValue = (v) => {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return String(v)
+  if (Math.abs(n) >= 100) return n.toFixed(0)
+  return String(parseFloat(n.toFixed(2)))
+}
+
+const timeAgo = (dateLike) => {
+  if (!dateLike) return ''
+  const d = new Date(dateLike).getTime()
+  if (!Number.isFinite(d)) return ''
+  const days = Math.floor((Date.now() - d) / 86400000)
+  if (days <= 0) return 'today'
+  if (days === 1) return '1d ago'
+  if (days < 7) return `${days}d ago`
+  if (days < 30) return `${Math.floor(days / 7)}w ago`
+  return `${Math.floor(days / 30)}mo ago`
+}
+
+// Horizontally scrollable rail of metric circles — latest value per logged metric,
+// ring fill = position within that metric's historical range (full ring + ★ = PB).
+function MetricRail({ metrics }) {
+  const groups = useMemo(() => groupMetrics(metrics), [metrics])
+  if (!groups.length) return null
+  const C = 2 * Math.PI * 27
+
+  return (
+    <div className="flex gap-3.5 overflow-x-auto -mx-4 px-4 pb-1" style={{ scrollbarWidth: 'none' }}>
+      {groups.slice(0, 12).map(g => {
+        const noPb = NO_PB.has(g.key)
+        const lowerBetter = LOWER_IS_BETTER.has(g.key)
+        const latest = Number(g.latest.value)
+        const vals = g.history.map(r => Number(r.value)).filter(Number.isFinite)
+        const best = lowerBetter ? Math.min(...vals) : Math.max(...vals)
+        const worst = lowerBetter ? Math.max(...vals) : Math.min(...vals)
+        const span = Math.abs(best - worst)
+        const frac = noPb || span === 0 ? 1 : Math.abs(latest - worst) / span
+        const isPb = !noPb && g.history.length > 1 && latest === best
+        return (
+          <div key={g.key} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px]">
+            <div className="relative w-16 h-16">
+              <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
+                <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(15,23,42,0.08)" strokeWidth="3" />
+                <circle
+                  cx="32" cy="32" r="27" fill="none"
+                  stroke={isPb ? '#8B83FF' : '#4F3CF0'} strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={C} strokeDashoffset={C * (1 - Math.max(0.04, frac))}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="mono-font text-[13px] font-medium text-slate-900 leading-none tabular-nums">{fmtMetricValue(latest)}</span>
+                <span className="mono-font text-[8px] text-slate-400 mt-0.5">{g.unit || ''}</span>
+              </div>
+            </div>
+            <p className="landing-font text-[10.5px] font-medium text-slate-500 text-center leading-tight">
+              {g.label || g.key}{isPb && <span style={{ color: '#4F3CF0' }}> ★</span>}
+            </p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Big central "latest performance" hero with a gauge running season-worst → PB
+function PerformanceHero({ view }) {
+  const last = view?.lastRace
+  if (!last || last.value == null || view.pb == null) return null
+  const { pb, isThrows } = view
+  const value = Number(last.value)
+  const isPb = value === pb
+  const vals = (view.sortedDesc || []).map(r => Number(r.value)).filter(Number.isFinite)
+  const worst = vals.length ? (isThrows ? Math.min(...vals) : Math.max(...vals)) : value
+  const span = Math.abs(worst - pb)
+  const frac = span > 0 ? Math.min(1, Math.abs(worst - value) / span) : 1
+  const L = Math.PI * 88
+  const ang = Math.PI * (1 - frac)
+  const mx = 108 + 88 * Math.cos(ang)
+  const my = 106 - 88 * Math.sin(ang)
+  const dateStr = last.date
+    ? new Date(last.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    : ''
+
+  return (
+    <section className="relative text-center pt-5 pb-2">
+      <div className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full" style={{ background: 'radial-gradient(circle, rgba(79,60,240,0.08) 0%, transparent 65%)' }} />
+      <div className="relative mx-auto" style={{ width: 216, height: 116 }}>
+        <svg viewBox="0 0 216 116" style={{ overflow: 'visible' }}>
+          <path d="M 20 106 A 88 88 0 0 1 196 106" fill="none" stroke="rgba(15,23,42,0.09)" strokeWidth="4.5" strokeLinecap="round" />
+          <path d="M 20 106 A 88 88 0 0 1 196 106" fill="none" stroke="#4F3CF0" strokeWidth="4.5" strokeLinecap="round" strokeDasharray={L} strokeDashoffset={L * (1 - frac)} />
+          <circle cx={mx} cy={my} r="5.5" fill="#4F3CF0" />
+          <circle cx={mx} cy={my} r="9" fill="none" stroke="rgba(79,60,240,0.3)" strokeWidth="1.5" />
+          <text x="20" y="116" textAnchor="middle" fontSize="10" fill="#94a3b8" className="mono-font">{formatMark(worst, view.discipline)}</text>
+          <text x="196" y="116" textAnchor="middle" fontSize="10" fill="#94a3b8" className="mono-font">PB {formatMark(pb, view.discipline)}</text>
+        </svg>
+      </div>
+      <div className="relative -mt-4 mx-auto w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#EDEBFE' }}>
+        <Zap className="w-4 h-4" style={{ color: '#4F3CF0' }} />
+      </div>
+      <p className="mono-font text-[10px] uppercase tracking-[0.22em] text-slate-500 mt-2.5">Latest performance · {view.discipline}</p>
+      <p className="landing-font text-slate-900 font-semibold tabular-nums" style={{ fontSize: 54, lineHeight: 1.1, letterSpacing: '-0.03em' }}>
+        {formatMark(value, view.discipline)}
+      </p>
+      <p className="text-slate-800" style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 23 }}>
+        {isPb
+          ? 'New personal best!'
+          : isThrows
+            ? `${(pb - value).toFixed(2)}m off your best`
+            : `${(value - pb).toFixed(2)} off your best`}
+      </p>
+      {(last.competition || dateStr) && (
+        <p className="landing-font text-sm text-slate-500 mt-1">
+          {[last.competition, dateStr].filter(Boolean).join(' · ')}
+        </p>
+      )}
+    </section>
+  )
+}
+
+// Small time-series chart. invert=true (times): faster values plot HIGHER.
+function MiniTrendChart({ points, invert, pbValue, valueFmt = fmtMetricValue }) {
+  const pts = (points || []).slice(-8)
+  if (pts.length < 2) return null
+  const W = 340, H = 124, padL = 10, padR = 36, padT = 14, padB = 24
+  const vs = pts.map(p => p.v)
+  let lo = Math.min(...vs, pbValue != null ? pbValue : Infinity)
+  let hi = Math.max(...vs, pbValue != null ? pbValue : -Infinity)
+  if (hi === lo) { hi += 1; lo -= 1 }
+  const range = hi - lo
+  lo -= range * 0.12; hi += range * 0.12
+  const X = i => padL + (i / (pts.length - 1)) * (W - padL - padR)
+  const Y = v => {
+    const f = (v - lo) / (hi - lo)
+    return invert ? padT + f * (H - padT - padB) : padT + (1 - f) * (H - padT - padB)
+  }
+  const topVal = invert ? lo : hi
+  const botVal = invert ? hi : lo
+  const line = pts.map((p, i) => `${X(i)},${Y(p.v)}`).join(' ')
+  const months = pts.map(p => new Date(p.t).toLocaleDateString('en-GB', { month: 'short' }))
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+      {[0.15, 0.5, 0.85].map(f => (
+        <line key={f} x1={padL} y1={padT + f * (H - padT - padB)} x2={W - padR} y2={padT + f * (H - padT - padB)} stroke="rgba(15,23,42,0.06)" strokeWidth="1" />
+      ))}
+      <text x={W - padR + 6} y={padT + 4} fontSize="9" fill="#94a3b8" className="mono-font">{valueFmt(topVal)}</text>
+      <text x={W - padR + 6} y={H - padB} fontSize="9" fill="#94a3b8" className="mono-font">{valueFmt(botVal)}</text>
+      {pbValue != null && (
+        <>
+          <line x1={padL} y1={Y(pbValue)} x2={W - padR} y2={Y(pbValue)} stroke="rgba(79,60,240,0.35)" strokeWidth="1" strokeDasharray="3 4" />
+          <text x={W - padR + 6} y={Y(pbValue) + 3} fontSize="9" fill="#4F3CF0" className="mono-font">PB</text>
+        </>
+      )}
+      <polyline points={line} fill="none" stroke="#4F3CF0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {pts.map((p, i) => i < pts.length - 1 ? (
+        <circle key={i} cx={X(i)} cy={Y(p.v)} r="3.5" fill="#4F3CF0" />
+      ) : (
+        <circle key={i} cx={X(i)} cy={Y(p.v)} r="4.5" fill="#FFFFFF" stroke="#4F3CF0" strokeWidth="2.5" />
+      ))}
+      <text x={X(0)} y={H - 6} fontSize="9" fill="#94a3b8" textAnchor="middle" className="mono-font">{months[0]}</text>
+      <text x={X(pts.length - 1)} y={H - 6} fontSize="9" fill="#94a3b8" textAnchor="middle" className="mono-font">{months[months.length - 1]}</text>
+    </svg>
+  )
+}
+
+// Oura-style detail cards: discipline performance over time, then richest metrics
+function DetailTrendCards({ view, metrics, onLog }) {
+  const groups = useMemo(
+    () => groupMetrics(metrics).filter(g => g.history.length >= 2 && !NO_PB.has(g.key)),
+    [metrics]
+  )
+  const racePts = (view?.chartData || []).map(d => ({ t: d.date, v: Number(d.value) })).filter(p => Number.isFinite(p.v))
+
+  const Card = ({ icon: Icon, title, ago, bigValue, unit, chart, action }) => (
+    <section className="relative overflow-hidden rounded-2xl p-5" style={{ background: '#FFFFFF', border: '1px solid #E7E9F2' }}>
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#EDEBFE' }}>
+          <Icon className="w-4 h-4" style={{ color: '#4F3CF0' }} />
+        </div>
+        <div className="min-w-0">
+          <p className="landing-font text-[15px] font-semibold text-slate-900 truncate">{title}</p>
+          {ago && <p className="mono-font text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: '#4F3CF0' }}>{ago}</p>}
+        </div>
+      </div>
+      <p className="landing-font text-slate-900 font-semibold tabular-nums mt-2.5" style={{ fontSize: 30, letterSpacing: '-0.02em' }}>
+        {bigValue}{unit && <span className="text-slate-500 font-medium" style={{ fontSize: 15 }}> {unit}</span>}
+      </p>
+      <div className="mt-1">{chart}</div>
+      {action && (
+        <button
+          onClick={onLog}
+          className="mt-3 w-full py-2.5 rounded-xl landing-font text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+          style={{ background: 'rgba(15,23,42,0.05)', border: '1px solid rgba(15,23,42,0.05)' }}
+        >
+          {action}
+        </button>
+      )}
+    </section>
+  )
+
+  const cards = []
+  if (racePts.length >= 2) {
+    cards.push(
+      <Card
+        key="race"
+        icon={Zap}
+        title={`${view.discipline} Performance`}
+        ago={timeAgo(view.lastRace?.date)}
+        bigValue={formatMark(Number(view.lastRace?.value), view.discipline)}
+        chart={<MiniTrendChart points={racePts} invert={!view.isThrows} pbValue={view.pb} valueFmt={v => Number(v).toFixed(2)} />}
+        action="Log a race result"
+      />
+    )
+  }
+  for (const g of groups.slice(0, 3)) {
+    cards.push(
+      <Card
+        key={g.key}
+        icon={Activity}
+        title={g.label || g.key}
+        ago={timeAgo(g.latest.recorded_at)}
+        bigValue={fmtMetricValue(g.latest.value)}
+        unit={g.unit}
+        chart={
+          <MiniTrendChart
+            points={g.history.map(r => ({ t: r.recorded_at, v: Number(r.value) })).filter(p => Number.isFinite(p.v))}
+            invert={LOWER_IS_BETTER.has(g.key)}
+            pbValue={Number(g.best.value)}
+          />
+        }
+        action={`Log ${(g.label || 'a test').toLowerCase()}`}
+      />
+    )
+  }
+  if (!cards.length) return null
+  return <div className="space-y-4">{cards}</div>
+}
+
+// ═══════════════════════════════════════════════════
 // RECENT METRICS PANEL — shows latest entries from athlete_metrics
 // ═══════════════════════════════════════════════════════════════════════
 // Metrics where a LOWER value is a better result (times, RHR, fat metrics).
