@@ -3900,7 +3900,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setCurrentView('about')} className="hidden sm:block text-sm text-slate-500 hover:text-slate-300 transition-colors landing-font font-medium">
-                  Methods
+                  Methodology
                 </button>
                 {user ? (
                   <div className="flex items-center gap-2 sm:gap-3">
