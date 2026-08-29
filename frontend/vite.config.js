@@ -10,7 +10,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           react: ['react', 'react-dom'],
-          recharts: ['recharts'],
           gsap: ['gsap', '@gsap/react'],
           supabase: ['@supabase/supabase-js'],
           analytics: ['posthog-js'],
