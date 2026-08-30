@@ -45,7 +45,8 @@ import CheckInCard from '../components/CheckInCard'
 import DnaStrip from '../components/DnaCard'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { PerformanceHero, RaceTrendCard, MetricRail, type HomeView, type TierBand } from '../components/OuraSections'
-import { isThrowsDiscipline, LOWER_IS_BETTER, groupMetrics } from '../lib/metricSemantics'
+import { LOWER_IS_BETTER, groupMetrics } from '../lib/metricSemantics'
+import { isLowerBetter } from '../lib/disciplineScience'
 import { countsForAnalysis } from '../lib/resultSemantics'
 import TodayCard from '../components/TodayCard'
 import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
@@ -406,11 +407,13 @@ export default function HomeScreen() {
 
   const sex = profile?.sex || 'M'
   const age = ageFromDob(profile?.dob)
-  // PB direction depends on the event: throws are higher-is-better, track lower.
-  const isThrows = isThrowsDiscipline(perfDiscipline)
+  // PB direction depends on the event. This asked isThrowsDiscipline, whose
+  // list contains no JUMPS — so a long jumper's PB was their SHORTEST jump,
+  // here and in every chart fed from this view.
+  const higherIsBetter = !isLowerBetter(perfDiscipline)
   const perfPb = perfRaces.length > 0
     ? perfRaces.reduce(
-        (best, r) => (best === null ? r.value : isThrows ? Math.max(best, r.value) : Math.min(best, r.value)),
+        (best, r) => (best === null ? r.value : higherIsBetter ? Math.max(best, r.value) : Math.min(best, r.value)),
         null as number | null,
       )
     : null
@@ -438,7 +441,7 @@ export default function HomeScreen() {
     return {
       discipline,
       pb: competitionPb,
-      isThrows: isThrowsDiscipline(discipline),
+      higherIsBetter: !isLowerBetter(discipline),
       lastRace: desc[0] || null,
       sortedDesc: desc,
       chartData: asc.map((r) => ({ date: r.date, value: r.value })),

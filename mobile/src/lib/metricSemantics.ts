@@ -17,15 +17,17 @@ export const THROWS = [
 export const isThrowsDiscipline = (d?: string | null) =>
   THROWS.some((t) => (d || '').toLowerCase().includes(t.toLowerCase()))
 
-/** Throws print in metres; everything else as ss.xx s or m:ss.xx. */
-export function formatMark(value: number | null | undefined, discipline?: string | null): string {
-  if (value == null || !Number.isFinite(Number(value))) return '—'
-  const v = Number(value)
-  if (isThrowsDiscipline(discipline)) return `${v.toFixed(2)}m`
-  const mins = Math.floor(v / 60)
-  const secs = (v % 60).toFixed(2)
-  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
-}
+/**
+ * Field events print in metres, combined events in points, everything else
+ * as a time. Re-exported from disciplineScience so there is one answer.
+ *
+ * This used to key off isThrowsDiscipline above, which lists no JUMPS — so a
+ * 7.20 m long jump printed as "7.20s" on every screen that formats a mark.
+ * The right question isn't "is this a throw", it's "is a bigger number
+ * better", which isLowerBetter already answers for jumps, throws and
+ * combined events alike.
+ */
+export { formatMark } from './disciplineScience'
 
 // ── PB direction ───────────────────────────────────────────────────
 // Metrics where a LOWER value is the better result. This is the UNION of the

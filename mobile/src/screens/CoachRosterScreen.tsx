@@ -31,21 +31,15 @@ import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
+import { formatMark, isLowerBetter } from '../lib/disciplineScience'
 import { ageFromDob } from '../lib/age'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
-const isThrowsDiscipline = (d: string) => THROWS.some(t => d?.toLowerCase().includes(t.toLowerCase()))
+// Helpers live in lib/disciplineScience. The local THROWS list that used to
+// sit here listed no JUMPS, so a long jumper's PB was computed as their
+// SHORTEST jump and printed in seconds.
 
-function formatMark(value: number | null, discipline: string): string {
-  if (!value) return '—'
-  if (isThrowsDiscipline(discipline)) return `${value.toFixed(2)}m`
-  const mins = Math.floor(value / 60)
-  const secs = (value % 60).toFixed(2)
-  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
-}
 
 
 function getGreeting(): string {
@@ -183,11 +177,11 @@ function AddAthleteModal({
       }))
 
       // Compute PB
-      const isThrows = isThrowsDiscipline(discipline || '')
+      const lowerIsBetter = isLowerBetter(discipline || '')
       let pbNumeric: number | null = null
       for (const race of races) {
         if (race.value == null) continue
-        if (pbNumeric == null || (isThrows ? race.value > pbNumeric : race.value < pbNumeric)) {
+        if (pbNumeric == null || (lowerIsBetter ? race.value < pbNumeric : race.value > pbNumeric)) {
           pbNumeric = race.value
         }
       }
@@ -201,9 +195,9 @@ function AddAthleteModal({
       if (sortedRaces.length >= 3) {
         const recent = sortedRaces.slice(0, 3).map((r: any) => r.value).filter(Boolean)
         if (recent.length >= 2) {
-          const improving = isThrows ? recent[0] > recent[recent.length - 1] : recent[0] < recent[recent.length - 1]
+          const improving = lowerIsBetter ? recent[0] < recent[recent.length - 1] : recent[0] > recent[recent.length - 1]
           if (improving) trend = 'up'
-          else if (isThrows ? recent[0] < recent[recent.length - 1] : recent[0] > recent[recent.length - 1]) trend = 'down'
+          else if (lowerIsBetter ? recent[0] > recent[recent.length - 1] : recent[0] < recent[recent.length - 1]) trend = 'down'
         }
       }
 

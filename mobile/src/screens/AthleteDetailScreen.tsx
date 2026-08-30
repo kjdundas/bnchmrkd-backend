@@ -20,20 +20,10 @@ import { useTheme } from '../contexts/ThemeContext'
 import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
-import { isLowerBetter, performancePercentile } from '../lib/disciplineScience'
+import { isLowerBetter, performancePercentile, formatMark } from '../lib/disciplineScience'
 import FullAnalysis from '../components/FullAnalysis'
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
-const isThrowsDiscipline = (d: string) => THROWS.some(t => d?.toLowerCase().includes(t.toLowerCase()))
-
-function formatMark(value: number | null, discipline: string): string {
-  if (!value) return '—'
-  if (isThrowsDiscipline(discipline)) return `${value.toFixed(2)}m`
-  const mins = Math.floor(value / 60)
-  const secs = (value % 60).toFixed(2)
-  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
-}
+// Helpers now live in lib/disciplineScience — see formatMark there.
 
 
 export default function AthleteDetailScreen() {

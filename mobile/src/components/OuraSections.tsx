@@ -77,7 +77,7 @@ function useSweep(to: number, delay = 0) {
 export interface HomeView {
   discipline: string | null
   pb: number | null
-  isThrows: boolean
+  higherIsBetter: boolean
   /** Most recent race: { value, date, competition? } */
   lastRace: { value: number; date?: string | null; competition?: string | null } | null
   /** All race values, newest first — used for the gauge's "worst" anchor. */
@@ -383,7 +383,7 @@ function PerformanceHeroInner({
   band?: TierBand | null
 }) {
   const { colors } = useTheme()
-  const { pb, isThrows } = view
+  const { pb, higherIsBetter } = view
   const value = Number(last.value)
   const isPb = value === pb
 
@@ -403,7 +403,7 @@ function PerformanceHeroInner({
 
   const delta = isPb
     ? 'New personal best!'
-    : isThrows
+    : higherIsBetter
       ? `${(pb - value).toFixed(2)}m off your best`
       : `${(value - pb).toFixed(2)} off your best`
 
@@ -424,7 +424,7 @@ function PerformanceHeroInner({
             latest={value}
             currentCut={band.currentCut}
             nextCut={band.nextCut}
-            lower={!isThrows}
+            lower={!higherIsBetter}
             tierName={band.tierName}
             nextTierName={band.nextTierName}
             color={band.color}
@@ -437,7 +437,7 @@ function PerformanceHeroInner({
             <RaceStrip
               races={strip}
               latest={value}
-              lower={!isThrows}
+              lower={!higherIsBetter}
               calibrated={false}
               discipline={view.discipline}
               valueFmt={(v) => formatMark(v, view.discipline)}
@@ -751,7 +751,7 @@ export function RaceTrendCard({
       chart={
         <MiniTrendChart
           points={racePts}
-          invert={!view.isThrows}
+          invert={!view.higherIsBetter}
           pbValue={view.pb}
           onImage={over}
           valueFmt={(v) => Number(v).toFixed(2)}
@@ -762,7 +762,7 @@ export function RaceTrendCard({
       detail={{
         title: `${view.discipline || 'Performance'} progression`,
         points: racePts,
-        lowerIsBetter: !view.isThrows,
+        lowerIsBetter: !view.higherIsBetter,
         valueFmt: (v: number) => formatMark(v, view.discipline),
       }}
     />
