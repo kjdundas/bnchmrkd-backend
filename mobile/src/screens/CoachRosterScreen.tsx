@@ -27,12 +27,13 @@ import CoachInvitePanel from '../components/CoachInvitePanel'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
+import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
+import { ageFromDob } from '../lib/age'
 
 const { width: SCREEN_W } = Dimensions.get('window')
-const API_BASE = 'https://web-production-295f1.up.railway.app'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
@@ -46,10 +47,6 @@ function formatMark(value: number | null, discipline: string): string {
   return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
 }
 
-function calcAge(dob: string | null): number | null {
-  if (!dob) return null
-  return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-}
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -395,7 +392,7 @@ function AddAthleteModal({
 
 // ── Roster Athlete Card ─────────────────────────────────────────────────────
 function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }) {
-  const age = calcAge(athlete.dob)
+  const age = ageFromDob(athlete.dob)
   const ageGroup = age ? getAgeGroup(age) : 'Senior'
   const genderCode = athlete.gender === 'Female' ? 'F' : 'M'
 
@@ -532,7 +529,7 @@ export default function CoachRosterScreen() {
     }
     if (filterAgeGroup !== 'all') {
       list = list.filter(a => {
-        const age = calcAge(a.dob)
+        const age = ageFromDob(a.dob)
         return age ? getAgeGroup(age) === filterAgeGroup : false
       })
     }
@@ -553,7 +550,7 @@ export default function CoachRosterScreen() {
       })() : null)
       if (pb) {
         withPb++
-        const age = calcAge(a.dob)
+        const age = ageFromDob(a.dob)
         const ageGroup = age ? getAgeGroup(age) : 'Senior'
         const genderCode = a.gender === 'Female' ? 'F' : 'M'
         const tier = getTier(a.discipline, genderCode, ageGroup, pb)

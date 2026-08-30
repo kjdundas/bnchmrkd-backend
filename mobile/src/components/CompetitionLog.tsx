@@ -14,9 +14,19 @@ import {
   Animated,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius, fonts } from '../lib/theme'
+// Rendered only from the Log tab, which runs on the dark ground under
+// <OnImageTheme/>. This file was still on the static LIGHT palette, so every
+// label was #16181D — near-black ink on #0B0C18. The event chips were
+// technically on screen the whole time and completely unreadable.
+import { onImageColors as colors, spacing, radius, fonts, onImage } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { insertInto, selectFrom } from '../lib/supabase'
+import {
+  RESULT_STATUSES, ROUNDS, PROGRESSIONS, ROUND_LABEL,
+  isWindAffected, isCompleted, countsForAnalysis, roundHasProgression,
+  countPersonalBests, optionalNumber, WIND_LIMIT, type ResultStatus,
+} from '../lib/resultSemantics'
 import { isLowerBetter, performancePercentile, performanceZoneLabel } from '../lib/disciplineScience'
 import { GlassCard, SectionHeader } from './ui'
 import { loadProgress, saveProgress } from '../lib/progress'
@@ -48,18 +58,27 @@ function parseCompetitionMark(raw: string, isTime: boolean): number | null {
 }
 
 // Count PBs set across a performance history (replay per discipline).
-function countCompetitionPBs(perfs: any[]): number {
-  const best: Record<string, number> = {}
-  let n = 0
-  const ordered = [...perfs]
-    .filter((p) => p.competition_date && p.mark != null)
-    .sort((a, b) => new Date(a.competition_date).getTime() - new Date(b.competition_date).getTime())
-  for (const p of ordered) {
-    const d = p.discipline || '_'
-    const lower = isLowerBetter(p.discipline)
-    if (best[d] == null || (lower ? p.mark < best[d] : p.mark > best[d])) { best[d] = p.mark; n++ }
-  }
-  return n
+// A selectable option. `danger` tints the non-completion statuses, so DNF and
+// DQ do not read as neutral alternatives to finishing.
+function Pill({
+  label, active, danger, onPress,
+}: { label: string; active: boolean; danger?: boolean; onPress: () => void }) {
+  const on = active ? (danger ? colors.red : colors.accent[500]) : null
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={label}
+      style={[
+        styles.pill,
+        on ? { backgroundColor: on + '2E', borderColor: on + '73' } : null,
+      ]}
+    >
+      <Text style={[styles.pillText, on ? { color: on } : null]}>{label}</Text>
+    </TouchableOpacity>
+  )
 }
 
 const DISCIPLINES = [
@@ -80,6 +99,13 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
   const [discipline, setDiscipline] = useState<string | null>(null)
   const [mark, setMark] = useState('')
   const [competition, setCompetition] = useState('')
+  // What actually happened. Status leads because it decides whether a mark is
+  // even a sensible thing to ask for.
+  const [status, setStatus] = useState<ResultStatus>('OK')
+  const [place, setPlace] = useState('')
+  const [round, setRound] = useState<string | null>(null)
+  const [progressed, setProgressed] = useState<string | null>(null)
+  const [wind, setWind] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -101,13 +127,28 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
     setSaving(true)
 
     const lower = isLowerBetter(discipline)
+    const completed = isCompleted(status)
     const numMark = parseCompetitionMark(mark, lower)
-    if (numMark == null) {
+
+    // A DNF has no time and a no-mark has no distance. Requiring one would
+    // make the honest answer unloggable, which is how results stop being
+    // logged at all.
+    if (completed && numMark == null) {
       setError(lower
         ? 'Enter a valid time — e.g. 10.52, 1:52.30, or 2:05:30.'
         : 'Enter a valid distance in metres — e.g. 7.85.')
       setSaving(false)
       return
+    }
+    const numPlace = optionalNumber(place)
+    if (place.trim() && (numPlace == null || numPlace < 1 || !Number.isInteger(numPlace))) {
+      setError('Finishing position should be a whole number — 1 for first.')
+      setSaving(false); return
+    }
+    const numWind = optionalNumber(wind)
+    if (wind.trim() && (numWind == null || numWind < -9.9 || numWind > 9.9)) {
+      setError('Wind should be a reading in m/s, e.g. 1.8 or -0.4.')
+      setSaving(false); return
     }
     const logDate = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : new Date().toISOString().slice(0, 10)
 
@@ -119,30 +160,62 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
         prior = (await selectFrom('performances', { filter: `user_id=eq.${user.id}`, limit: '1000' })) || []
       } catch { prior = [] }
 
+      // Only legal results set a personal best. A DQ'd time and a
+      // wind-assisted mark are both real numbers that the sport does not
+      // count, and `countsForAnalysis` is the one place that decides.
       let priorPB: number | null = null
       for (const p of prior.filter((x) => x.discipline === discipline)) {
-        if (p.mark == null) continue
-        if (priorPB == null || (lower ? p.mark < priorPB : p.mark > priorPB)) priorPB = p.mark
+        if (!countsForAnalysis(p, discipline)) continue
+        const m = Number(p.mark)
+        if (priorPB == null || (lower ? m < priorPB : m > priorPB)) priorPB = m
       }
-      const isPB = priorPB == null || (lower ? numMark < priorPB : numMark > priorPB)
+      const thisRow = {
+        status, mark: numMark, discipline,
+        wind_mps: isWindAffected(discipline) ? numWind : null,
+      }
+      const eligible = countsForAnalysis(thisRow, discipline)
+      const isPB = eligible && (priorPB == null
+        || (lower ? numMark! < priorPB : numMark! > priorPB))
 
       await insertInto('performances', {
         user_id: user.id,
         discipline,
+        // A DQ often carries the time it was recorded at before being voided,
+        // so the mark is kept where there is one — the status is what stops
+        // it counting, not its absence.
         mark: numMark,
+        status,
+        place: numPlace,
+        round: round || null,
+        // A final has nothing to progress to; storing "out" there would read
+        // as elimination from a round that does not exist.
+        progressed: roundHasProgression(round) ? progressed : null,
+        wind_mps: isWindAffected(discipline) ? numWind : null,
         competition_name: competition || null,
         competition_date: logDate,
         sex: profile?.sex || profile?.gender || 'M',
       })
 
-      // Benchmarks
+      // Benchmarks. Only a legal result has a percentile — ranking a DQ or a
+      // wind-assisted mark against the population would be a flattering lie,
+      // and there is no mark at all behind a DNF.
       const sex = profile?.sex || profile?.gender || 'M'
-      setPercentile(performancePercentile(numMark, discipline, sex))
-      setZoneLabel(performanceZoneLabel(numMark, discipline, sex))
+      if (eligible && numMark != null) {
+        setPercentile(performancePercentile(numMark, discipline, sex))
+        setZoneLabel(performanceZoneLabel(numMark, discipline, sex))
+      } else {
+        setPercentile(null)
+        setZoneLabel(null)
+      }
 
       // ── Gamification: award XP / streak / badges, persist (parity with web) ──
       try {
-        const allPerfs = [...prior, { discipline, mark: numMark, competition_date: logDate }]
+        // The new row carries its status so countCompetitionPBs, which reads
+        // marks, cannot count a DNF or a voided time as a best.
+        const allPerfs = [...prior, {
+          discipline, mark: numMark, competition_date: logDate,
+          status, wind_mps: thisRow.wind_mps,
+        }]
         const allDates = allPerfs.map((p) => p.competition_date).filter(Boolean)
         const newStreak = calculateStreak(allDates)
         const logsToday = allDates.filter((d) => String(d).slice(0, 10) === logDate).length
@@ -160,7 +233,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
 
         const stats = {
           totalLogs: allPerfs.length,
-          totalPBs: countCompetitionPBs(allPerfs),
+          totalPBs: countPersonalBests(allPerfs),
           currentStreak: newStreak.current,
           longestStreak: Math.max(progress?.longestStreak ?? 0, newStreak.longest),
           categoriesLogged: 0,
@@ -281,11 +354,14 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
     return (
       <ScrollView contentContainerStyle={styles.pickerContent}>
         <View style={styles.pickerHeader}>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={24} color={colors.text.secondary} />
+          <TouchableOpacity
+            onPress={onClose} hitSlop={12} style={styles.headerBtn}
+            accessibilityRole="button" accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={22} color={colors.text.secondary} />
           </TouchableOpacity>
           <Text style={styles.pickerTitle}>Log Competition</Text>
-          <View style={{ width: 24 }} />
+          <View style={{ width: 44 }} />
         </View>
         <Text style={styles.pickerSub}>Select your event</Text>
 
@@ -312,29 +388,134 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
 
   // ── Mark input ──
   const lower = isLowerBetter(discipline)
+  const completed = isCompleted(status)
+  const windy = isWindAffected(discipline)
+  const assisted = windy && (optionalNumber(wind) ?? -99) > WIND_LIMIT
+  // Field events qualify rather than run heats, so they are offered a
+  // different set of rounds.
+  const isField = !lower
   return (
     <ScrollView contentContainerStyle={styles.inputContent} keyboardShouldPersistTaps="handled">
       <View style={styles.pickerHeader}>
-        <TouchableOpacity onPress={() => setDiscipline(null)}>
-          <Ionicons name="arrow-back" size={24} color={colors.text.secondary} />
+        <TouchableOpacity
+          onPress={() => setDiscipline(null)} hitSlop={12} style={styles.headerBtn}
+          accessibilityRole="button" accessibilityLabel="Back to events"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.text.secondary} />
         </TouchableOpacity>
         <Text style={styles.pickerTitle}>{discipline}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 44 }} />
       </View>
 
-      <Text style={styles.inputLabel}>{lower ? 'Time' : 'Distance (metres)'}</Text>
+      {/* ── What happened ──────────────────────────────────────────
+          Asked before the mark, because it decides whether asking for one
+          makes sense at all. An athlete who pulled up at 60m should not have
+          to invent a time to record the race. */}
+      <Text style={styles.inputLabel}>Result</Text>
+      <View style={styles.chipRow}>
+        {RESULT_STATUSES.map((st) => (
+          <Pill
+            key={st.v} label={st.l} active={status === st.v}
+            danger={st.v !== 'OK'}
+            onPress={() => setStatus(st.v)}
+          />
+        ))}
+      </View>
+
+      {completed ? (
+        <>
+          <Text style={styles.inputLabel}>{lower ? 'Time' : 'Distance (metres)'}</Text>
+          <TextInput
+            style={styles.markInput}
+            keyboardType={lower ? 'default' : 'decimal-pad'}
+            placeholder={lower ? '1:52.30' : '7.85'}
+            placeholderTextColor={colors.text.dimmed}
+            value={mark}
+            onChangeText={setMark}
+            autoFocus
+          />
+          <Text style={styles.inputHint}>
+            {lower ? 'Seconds (10.52), m:ss (1:52.30), or h:mm:ss (2:05:30)' : 'Metres, e.g. 7.85'}
+          </Text>
+        </>
+      ) : (
+        <>
+          {/* A DQ usually has the time that was on the clock before it was
+              voided. Worth keeping — it just never counts. */}
+          <Text style={styles.inputLabel}>
+            {lower ? 'Time' : 'Distance'} (optional)
+          </Text>
+          <TextInput
+            style={styles.markInput}
+            keyboardType={lower ? 'default' : 'decimal-pad'}
+            placeholder={status === 'DQ' ? (lower ? '10.52' : '7.85') : '—'}
+            placeholderTextColor={colors.text.dimmed}
+            value={mark}
+            onChangeText={setMark}
+          />
+          <Text style={styles.inputHint}>
+            {RESULT_STATUSES.find((x) => x.v === status)?.hint}
+            {' It will not count toward your PB or trend.'}
+          </Text>
+        </>
+      )}
+
+      {/* ── Wind, only where it is measured ──────────────────────── */}
+      {windy && (
+        <>
+          <Text style={styles.inputLabel}>Wind (m/s, optional)</Text>
+          <TextInput
+            style={styles.compInput}
+            keyboardType="numbers-and-punctuation"
+            placeholder="e.g. 1.8 or -0.4"
+            placeholderTextColor={colors.text.dimmed}
+            value={wind}
+            onChangeText={setWind}
+          />
+          <Text style={[styles.inputHint, assisted && { color: colors.amber }]}>
+            {assisted
+              ? `Over +${WIND_LIMIT.toFixed(1)} — wind-assisted. It will show in your results but never as a PB.`
+              : `Tailwind is positive. Over +${WIND_LIMIT.toFixed(1)} is wind-assisted and cannot be a PB.`}
+          </Text>
+        </>
+      )}
+
+      {/* ── Where they came ─────────────────────────────────────── */}
+      <Text style={styles.inputLabel}>Finishing position (optional)</Text>
       <TextInput
-        style={styles.markInput}
-        keyboardType={lower ? 'default' : 'decimal-pad'}
-        placeholder={lower ? '1:52.30' : '7.85'}
+        style={styles.compInput}
+        keyboardType="number-pad"
+        placeholder="e.g. 2"
         placeholderTextColor={colors.text.dimmed}
-        value={mark}
-        onChangeText={setMark}
-        autoFocus
+        value={place}
+        onChangeText={setPlace}
       />
-      <Text style={styles.inputHint}>
-        {lower ? 'Seconds (10.52), m:ss (1:52.30), or h:mm:ss (2:05:30)' : 'Metres, e.g. 7.85'}
-      </Text>
+
+      {/* ── Which round ─────────────────────────────────────────── */}
+      <Text style={styles.inputLabel}>Round (optional)</Text>
+      <View style={styles.chipRow}>
+        {ROUNDS.filter((r) => (isField ? r.field : r.track)).map((r) => (
+          <Pill
+            key={r.v} label={r.l} active={round === r.v}
+            onPress={() => setRound(round === r.v ? null : r.v)}
+          />
+        ))}
+      </View>
+
+      {/* Only a round you can advance FROM asks whether you did. */}
+      {roundHasProgression(round) && (
+        <>
+          <Text style={styles.inputLabel}>Did you go through?</Text>
+          <View style={styles.chipRow}>
+            {PROGRESSIONS.map((pr) => (
+              <Pill
+                key={pr.v} label={pr.l} active={progressed === pr.v}
+                onPress={() => setProgressed(progressed === pr.v ? null : pr.v)}
+              />
+            ))}
+          </View>
+        </>
+      )}
 
       <Text style={styles.inputLabel}>Competition (optional)</Text>
       <TextInput
@@ -377,15 +558,23 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
 
 const styles = StyleSheet.create({
   // Discipline picker
-  pickerContent: { padding: spacing.lg },
+  pickerContent: { padding: spacing.lg, paddingBottom: TAB_BAR_CLEARANCE },
+  headerBtn: {
+    width: 44, height: 44, alignItems: 'flex-start', justifyContent: 'center',
+  },
   pickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  pickerTitle: { fontSize: 18, fontWeight: '700', color: colors.text.primary },
-  pickerSub: { color: colors.text.secondary, fontSize: 14, marginBottom: spacing.lg },
+  pickerTitle: {
+    fontSize: 20, fontWeight: '700', color: colors.text.primary,
+    letterSpacing: -0.3,
+  },
+  pickerSub: {
+    color: colors.text.secondary, fontSize: 14, marginBottom: spacing.xl,
+  },
 
   groupWrap: { marginBottom: spacing.lg },
   groupLabel: {
@@ -398,17 +587,28 @@ const styles = StyleSheet.create({
   },
   disciplineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   disciplineChip: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    // 4% fill with an 8% border on #0B0C18 is a 1.05:1 edge — the chips were
+    // technically drawn and effectively invisible. Lifted to the same values
+    // the rest of the app uses for a tappable surface, and given a real 44pt
+    // target (10pt padding round 14pt text came out at ~34).
+    backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    // 0.34, not the 0.18 the rest of the app uses for a passive card edge.
+    // Measured over #0B0C18: 0.18 gives a 1.65:1 border, and WCAG wants 3:1
+    // for the boundary of a control. 0.34 lands at 3.02:1. These chips are
+    // the only thing on the screen to tap, so their edge has to be findable.
+    borderColor: 'rgba(255,255,255,0.34)',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  disciplineText: { color: colors.text.primary, fontSize: 14, fontWeight: '500' },
+  disciplineText: {
+    color: colors.text.primary, fontSize: 14.5, fontWeight: '600',
+  },
 
   // Mark input
-  inputContent: { padding: spacing.xxl },
+  inputContent: { padding: spacing.xxl, paddingBottom: TAB_BAR_CLEARANCE },
   inputLabel: {
     color: colors.text.secondary,
     fontSize: 13,
@@ -488,7 +688,16 @@ const styles = StyleSheet.create({
   doneBtnText: { color: colors.text.primary, fontSize: 15, fontWeight: '600' },
 
   // Input hint + gamification on success screen
-  inputHint: { color: colors.text.muted, fontSize: 11, marginTop: 6 },
+  inputHint: { color: colors.text.muted, fontSize: 11, marginTop: 6, lineHeight: 16 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
+  pill: {
+    // 44pt minimum touch target (Apple HIG) — these read as small chips but
+    // are full-size targets.
+    minHeight: 44, minWidth: 44, paddingHorizontal: 14, justifyContent: 'center',
+    borderRadius: radius.md, borderWidth: 1,
+    borderColor: colors.glass.border, backgroundColor: colors.bg.primary,
+  },
+  pillText: { fontSize: 13, fontWeight: '700', color: colors.text.secondary },
   pbTag: {
     color: colors.orange[400], fontSize: 11, fontWeight: '700',
     letterSpacing: 2, marginTop: 4,
