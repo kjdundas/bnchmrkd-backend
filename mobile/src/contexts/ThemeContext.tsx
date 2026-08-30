@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { lightColors, type ThemeColors } from '../lib/theme'
+import { lightColors, onImageColors, type ThemeColors } from '../lib/theme'
 
 // v2: deliberately a NEW key, so a 'dark' or 'system' value written by the
 // pre-rebrand build is discarded rather than overriding the light theme.
@@ -78,6 +78,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Don't render until we've loaded the persisted preference
   if (!loaded) return null
 
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+}
+
+// ── On-image theme ─────────────────────────────────────────────────
+// Wrap a screen (or a subtree) that sits on a photographic backdrop. Every
+// component below re-resolves through useTheme() and repaints for the photo:
+// white ink, translucent card surfaces, indigo-bright as the accent.
+//
+// `isDark` is true so the shared card chrome takes its dark branch — on a
+// translucent surface the border carries the edge, and a drop shadow under a
+// veil is just a dirty mark.
+//
+// Everything else on the context (mode, setMode, cycleTheme) passes straight
+// through, so an Appearance control inside one of these screens would still
+// drive the app-wide setting rather than this local override.
+export function OnImageTheme({ children }: { children: React.ReactNode }) {
+  const parent = useContext(ThemeContext)
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      ...parent,
+      colors: onImageColors as unknown as ThemeColors,
+      isDark: true,
+    }),
+    [parent],
+  )
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 

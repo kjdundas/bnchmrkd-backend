@@ -95,7 +95,7 @@ export const darkColors = {
 // ── Light palette (primary — matches bnchmrkd.org) ───────────────────
 export const lightColors = {
   bg: {
-    primary: '#F6F7FB',     // --paper
+    primary: '#EDEFF7',     // --paper, deepened from #F6F7FB
     secondary: '#FFFFFF',   // --card
     card: '#FFFFFF',
     cardBorder: '#E7E9F2',  // --line
@@ -191,4 +191,126 @@ export const rhythm = {
   section: 20,
   block: 28,
   major: 40,
+} as const
+
+// ── Elevation ──────────────────────────────────────────────────────
+// The app read as "flat" for a measurable reason: a white card on the old
+// #F6F7FB paper is a 1.07:1 contrast ratio — mathematically almost the same
+// colour — under a 5%-black shadow that is invisible on a light ground.
+// Nothing could pop because the whole screen sat inside a ~1.2:1 band.
+//
+// Two fixes: the paper is deepened (above), and shadows are TINTED toward the
+// brand's deep indigo rather than neutral black. A grey shadow on a light UI
+// reads as dirt; a hue-matched one reads as depth. React Native allows one
+// shadow per view, so these are tuned singles rather than stacked layers.
+const SHADOW_HUE = '#2A2F6B'   // deep indigo-navy, not black
+
+export const elevation = {
+  /** Sits flat on the paper. Ambient content, list rows. */
+  flat: {
+    shadowColor: 'transparent' as const,
+    shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  /** The default card. Present, not shouting. */
+  raised: {
+    shadowColor: SHADOW_HUE,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 10, elevation: 3,
+  },
+  /** The focal element on a screen — one per screen, no more. */
+  lifted: {
+    shadowColor: SHADOW_HUE,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.13, shadowRadius: 28, elevation: 10,
+  },
+  /** Floating over content: FAB, sheets. */
+  floating: {
+    shadowColor: SHADOW_HUE,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.20, shadowRadius: 34, elevation: 16,
+  },
+} as const
+
+// ── On-dark surface ────────────────────────────────────────────────
+// The screen needs one anchored dark element or everything floats in the same
+// narrow tonal band. These are the tokens for content sitting on --indigo-deep.
+export const onDark = {
+  surface: '#141636',
+  surfaceTop: '#1E1E4E',      // for the top of a vertical wash
+  ink: '#FFFFFF',
+  muted: 'rgba(255,255,255,0.62)',
+  dim: 'rgba(255,255,255,0.38)',
+  line: 'rgba(255,255,255,0.12)',
+  accent: '#8B83FF',          // --indigo-bright reads as the accent on dark
+  glow: 'rgba(139,131,255,0.30)',
+} as const
+
+// ── On-image PALETTE ───────────────────────────────────────────────
+// A whole resolved palette, not a handful of tokens — for screens that sit on
+// a photographic backdrop end to end.
+//
+// The alternative was rewriting every `colors.*` reference in a 600-line
+// screen by hand. This lets a screen wrap itself in <OnImageTheme/> and have
+// every existing card, chip, divider and label repaint correctly in one move,
+// which also means the two on-image screens can never drift apart.
+//
+// It is the dark palette with its SURFACES made translucent: a card is a veil
+// over the photograph rather than a solid block on top of it.
+export const onImageColors = {
+  ...darkColors,
+  bg: {
+    primary: 'rgba(255,255,255,0.06)',   // inset rows — lighter, not darker
+    secondary: 'rgba(255,255,255,0.10)',
+    card: 'rgba(255,255,255,0.10)',
+    cardBorder: 'rgba(255,255,255,0.18)',
+    input: 'rgba(255,255,255,0.08)',
+    inputBorder: 'rgba(255,255,255,0.22)',
+  },
+  text: {
+    // Brighter than the dark palette across the board: text over a photo has
+    // to survive local contrast the flat dark surfaces never had.
+    primary: '#FFFFFF',
+    secondary: 'rgba(255,255,255,0.74)',
+    muted: 'rgba(255,255,255,0.54)',
+    dimmed: 'rgba(255,255,255,0.38)',
+  },
+  glass: {
+    bg: 'rgba(255,255,255,0.10)',
+    bgHover: 'rgba(255,255,255,0.14)',
+    border: 'rgba(255,255,255,0.18)',
+    borderHover: 'rgba(255,255,255,0.26)',
+    divider: 'rgba(255,255,255,0.13)',
+    overlay: 'rgba(139,131,255,0.18)',
+    shimmer: 'rgba(255,255,255,0.10)',
+  },
+  statusBar: 'light' as 'light' | 'dark',
+} as const
+
+// ── On-image surfaces ──────────────────────────────────────────────
+// For content laid over the stadium backdrop. Translucent rather than solid,
+// so the photograph reads through and the screen stays one thing — the Oura
+// move. Solid white cards on a photo look pasted on.
+export const onImage = {
+  card: 'rgba(255,255,255,0.10)',
+  cardBorder: 'rgba(255,255,255,0.16)',
+  cardStrong: 'rgba(11,12,24,0.42)',
+  ink: '#FFFFFF',
+  muted: 'rgba(255,255,255,0.68)',
+  dim: 'rgba(255,255,255,0.44)',
+  divider: 'rgba(255,255,255,0.14)',
+
+  // ── Navigation chrome ───────────────────────────────────────────
+  // The floating tab bar has to stay legible over two opposite grounds:
+  // a blown-out photo on Home, and the flat #0B0C18 ground everywhere
+  // else. `cardStrong` above cannot do the second — it IS the ground
+  // colour, so any opacity of it over that ground composites to 1.00:1
+  // and the pill dissolves. navGlass is a LIFTED tone: dark enough to
+  // read over a bright photo, light enough to sit above the dark ground.
+  // Measured worst case (blur assumed to contribute nothing): inactive
+  // label 5.08:1 over a near-white photo region, 8.03:1 over the ground.
+  navGlass: 'rgba(28,30,48,0.80)',
+  navEdge: 'rgba(255,255,255,0.28)',
+  navSpecular: 'rgba(255,255,255,0.30)',
+  navDim: 'rgba(255,255,255,0.66)',
 } as const

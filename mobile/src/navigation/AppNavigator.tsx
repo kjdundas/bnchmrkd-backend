@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // APP NAVIGATOR — Auth-gated, role-based navigation with theme support
 // Logged out  → Login screen
-// Athlete     → Home, Programs, [+ Log FAB], Trajectory  (Profile via header avatar)
+// Athlete     → (+) Log on the left · Home / Programs / Trajectory in a
+//               floating pill on the right   (Profile via header avatar)
 // Coach       → Roster, Results, Analyse, Profile
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -15,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { spacing } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
+import FloatingTabBar from './FloatingTabBar'
 
 // Athlete screens
 import LoginScreen from '../screens/LoginScreen'
@@ -40,79 +42,18 @@ const Stack = createNativeStackNavigator()
 // Profile is deliberately NOT a tab — it lives behind the header avatar, the
 // same as on web, which is what frees the fourth slot for Programs.
 
-/** The raised centre action button. Overhangs the bar like the web FAB. */
-function LogTabButton({ onPress, accessibilityState }: any) {
-  const { colors } = useTheme()
-  const focused = !!accessibilityState?.selected
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start' }}>
-      <Pressable
-        onPress={(e) => { tapFeedback(); onPress?.(e) }}
-        accessibilityRole="button"
-        accessibilityLabel="Log a result or test"
-        style={{
-          width: 56, height: 56, borderRadius: 28, marginTop: -20,
-          alignItems: 'center', justifyContent: 'center',
-          backgroundColor: colors.accent[500],
-          shadowColor: colors.accent[500],
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
-          opacity: focused ? 0.9 : 1,
-        }}
-      >
-        <Ionicons name="add" size={30} color="#FFFFFF" />
-      </Pressable>
-      <Text style={{
-        fontSize: 10, letterSpacing: 1.5, fontWeight: '600', marginTop: 6,
-        color: focused ? colors.tabBar.active : colors.tabBar.inactive,
-      }}>LOG</Text>
-    </View>
-  )
-}
-
 function AthleteTabs() {
-  const { colors } = useTheme()
-  const tabBarOptions = useMemo(() => ({
-    headerShown: false,
-    tabBarStyle: {
-      backgroundColor: colors.tabBar.bg,
-      borderTopColor: colors.tabBar.border,
-      borderTopWidth: 1,
-      height: Platform.OS === 'ios' ? 88 : 74,
-      paddingBottom: Platform.OS === 'ios' ? 26 : 12,
-      paddingTop: 10,
-      elevation: 0,
-    },
-    tabBarActiveTintColor: colors.tabBar.active,
-    tabBarInactiveTintColor: colors.tabBar.inactive,
-    tabBarLabelStyle: {
-      fontSize: 10,
-      letterSpacing: 1.5,
-      fontWeight: '600' as const,
-      marginTop: 4,
-    },
-  }), [colors])
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        ...tabBarOptions,
-        tabBarIcon: ({ color, size, focused }) => {
-          let iconName: string = 'home-outline'
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline'
-          else if (route.name === 'Programs') iconName = focused ? 'barbell' : 'barbell-outline'
-          else if (route.name === 'Trajectory') iconName = focused ? 'trending-up' : 'trending-up-outline'
-          return <Ionicons name={iconName as any} size={size} color={color} />
-        },
-      })}
+      // A custom bar, so none of the tabBarStyle / tint options apply — the
+      // component owns its own appearance. `tabBarLabel` is still read, for
+      // the pill's labels and for VoiceOver.
+      tabBar={(props) => <FloatingTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'HOME' }} />
       <Tab.Screen name="Programs" component={ProgramsScreen} options={{ tabBarLabel: 'PROGRAMS' }} />
-      <Tab.Screen
-        name="Log"
-        component={LogScreen}
-        options={{ tabBarButton: (props) => <LogTabButton {...props} /> }}
-      />
+      <Tab.Screen name="Log" component={LogScreen} options={{ tabBarLabel: 'LOG' }} />
       <Tab.Screen name="Trajectory" component={TrajectoryScreen} options={{ tabBarLabel: 'TRAJECTORY' }} />
     </Tab.Navigator>
   )

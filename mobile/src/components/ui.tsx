@@ -20,8 +20,10 @@ import {
   Dimensions,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { BlurView } from 'expo-blur'
+import { LinearGradient as Gradient } from 'expo-linear-gradient'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm, numerals } from '../lib/theme'
+import { spacing, radius, rhythm, numerals, elevation, onImage } from '../lib/theme'
 import { DURATION, EASE, STAGGER_STEP, STAGGER_MAX_INDEX, useReducedMotion } from '../lib/motion'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -66,13 +68,8 @@ function useCardSurface(level: Surface = 'primary') {
     borderWidth: 1,
     borderColor: colors.glass.border,
     marginBottom: rhythm.section,
-    // Light: a soft lift off the paper background. Dark: no shadow, the
-    // border carries the edge (shadows are invisible on near-black).
-    shadowColor: '#16181D',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.05,
-    shadowRadius: 12,
-    elevation: isDark ? 0 : 2,
+    // On dark the border carries the edge — shadows are invisible on near-black.
+    ...(isDark ? elevation.flat : elevation.raised),
   }
 }
 
@@ -126,13 +123,15 @@ function CardHeader({
 // A quiet anchor between groups of blocks. Nineteen cards with no grouping
 // gives the eye nothing to hold onto; three or four of these do most of the
 // work of a hierarchy on their own.
-export function SectionLabel({ children, style }: { children: string; style?: ViewStyle }) {
+export function SectionLabel({ children, style, color }: {
+  children: string; style?: ViewStyle; color?: string
+}) {
   const { colors } = useTheme()
   return (
     <View style={[{ marginTop: rhythm.block, marginBottom: rhythm.tight }, style]}>
       <Text style={{
         fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
-        color: colors.text.muted, fontWeight: '700',
+        color: color || colors.text.muted, fontWeight: '700',
       }}>{children}</Text>
     </View>
   )
@@ -213,6 +212,68 @@ export function Tappable({
   )
 }
 
+// ── Glass Panel ────────────────────────────────────────────────────
+// The one material for content that sits ON the stadium backdrop rather than
+// on paper. Four layers, in this order, because each fixes a failure of the
+// one before:
+//
+//   1. BlurView          — separates the text from the photograph's local
+//                          contrast without hiding the image
+//   2. a translucent veil — blur alone still lets a bright cloud punch
+//                          through; the veil sets a floor for legibility
+//   3. a hairline border  — a blurred panel with no edge has no shape; this
+//                          is exactly why the bare GlassView read as invisible
+//   4. a 1px specular top — light catching the upper edge is what makes a
+//                          translucent rectangle read as glass and not as fog
+//
+// `tone`: 'light' is the frosted veil used over the photo itself; 'deep' is
+// the smoked panel for blocks below the fold, where the ground is already
+// dark and the panel needs to sit ON it rather than dissolve into it.
+export function GlassPanel({
+  children, style, onPress, accessibilityLabel,
+  intensity = 26, tone = 'light', radius: r = 22,
+}: {
+  children: React.ReactNode
+  style?: ViewStyle | ViewStyle[]
+  onPress?: () => void
+  accessibilityLabel?: string
+  intensity?: number
+  tone?: 'light' | 'deep'
+  radius?: number
+}) {
+  const shell: ViewStyle = {
+    position: 'relative',
+    borderRadius: r,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: onImage.cardBorder,
+    backgroundColor: 'transparent',
+  }
+
+  const body = (
+    <>
+      <BlurView intensity={intensity} tint="dark" style={StyleSheet.absoluteFill} />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, {
+        backgroundColor: tone === 'deep' ? onImage.cardStrong : onImage.card,
+      }]} />
+      <View pointerEvents="none" style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+        backgroundColor: 'rgba(255,255,255,0.22)',
+      }} />
+      {children}
+    </>
+  )
+
+  if (onPress) {
+    return (
+      <Tappable onPress={onPress} accessibilityLabel={accessibilityLabel} style={[shell, style as any]}>
+        {body}
+      </Tappable>
+    )
+  }
+  return <View style={[shell, style]}>{body}</View>
+}
+
 // ── Almanac Card (the standard dashboard card) ──────────────────────
 interface AlmanacCardProps {
   children: React.ReactNode
@@ -228,25 +289,54 @@ interface AlmanacCardProps {
   right?: React.ReactNode
   style?: ViewStyle
   noPadding?: boolean
+  /**
+   * Render as the same glass as the on-image panels rather than a flat
+   * translucent rectangle.
+   *
+   * `useCardSurface` gives a dark card a fill and a border but no blur and no
+   * specular edge, which is what made Trajectory's blocks read as a different,
+   * cheaper material than Home's — same colours, no light in them.
+   */
+  glass?: boolean
 }
 
 export function AlmanacCard({
-  children, level = 'primary', kicker, title, subtitle, number, accent, right, style, noPadding,
+  children, level = 'primary', kicker, title, subtitle, number, accent, right, style, noPadding, glass,
 }: AlmanacCardProps) {
   const { colors } = useTheme()
   const surface = useCardSurface(level)
   const accentColor = accent || colors.accent[500]
 
   return (
-    <View style={[surface, style]}>
-      {/* Corner bloom — the faint accent wash the web cards carry.
-          Ambient blocks skip it; decoration is what makes them compete. */}
+    <View style={[surface, glass && { backgroundColor: 'transparent' }, style]}>
+      {glass && (
+        <>
+          <BlurView intensity={24} tint="dark" style={StyleSheet.absoluteFill} />
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, {
+            backgroundColor: onImage.cardStrong,
+          }]} />
+          {/* The light on the top edge. One pixel, and the single thing that
+              separates glass from a grey rectangle. */}
+          <View pointerEvents="none" style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+            backgroundColor: 'rgba(255,255,255,0.20)',
+          }} />
+        </>
+      )}
+      {/* Corner wash.
+          This was a 150pt circle of flat accent colour hung off the top-right
+          corner. At 5% on white paper it read as the faint bloom it was meant
+          to be; at 10% on a dark card it became a visible coloured disc — a
+          bubble sitting in the corner of all eleven blocks on Trajectory.
+          A corner-anchored gradient gives the same lift with no edge to see. */}
       {level === 'primary' && (
-        <View pointerEvents="none" style={{
-          position: 'absolute', borderRadius: 9999,
-          top: -50, right: -50, width: 150, height: 150,
-          backgroundColor: accentColor, opacity: 0.05,
-        }} />
+        <Gradient
+          pointerEvents="none"
+          colors={[accentColor + (glass ? '2A' : '14'), accentColor + '00']}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0.15, y: 0.85 }}
+          style={StyleSheet.absoluteFill}
+        />
       )}
       <CardHeader kicker={kicker} title={title} subtitle={subtitle} number={number} right={right} />
       <View style={[!noPadding && { paddingHorizontal: 20, paddingBottom: 20 }]}>{children}</View>
@@ -317,20 +407,19 @@ export function HeroCard({ children, style }: HeroCardProps) {
       borderWidth: 1, borderColor: accent + (isDark ? '40' : '26'),
       marginBottom: spacing.md, padding: 20,
       backgroundColor: isDark ? accent + '14' : colors.glass.overlay,
+      ...(isDark ? elevation.flat : elevation.lifted),
       shadowColor: accent,
-      shadowOffset: { width: 0, height: 6 }, shadowOpacity: isDark ? 0 : 0.10,
-      shadowRadius: 20, elevation: isDark ? 0 : 3,
     }, style]}>
-      <View pointerEvents="none" style={{
-        position: 'absolute', borderRadius: 9999,
-        top: -60, left: -60, width: 160, height: 160,
-        backgroundColor: accent, opacity: isDark ? 0.12 : 0.07,
-      }} />
-      <View pointerEvents="none" style={{
-        position: 'absolute', borderRadius: 9999,
-        bottom: -60, right: -60, width: 160, height: 160,
-        backgroundColor: colors.blue, opacity: 0.05,
-      }} />
+      {/* Two 160pt discs, one accent and one blue, hung off opposite corners.
+          Replaced by a single diagonal wash — same lift, no visible edges,
+          and one light source instead of two competing ones. */}
+      <Gradient
+        pointerEvents="none"
+        colors={[accent + (isDark ? '2E' : '1A'), accent + '00']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={{ position: 'relative' }}>{children}</View>
     </View>
   )
@@ -474,13 +563,13 @@ export function EmptyState({ icon, title, subtitle }: { icon: string; title: str
   const { colors } = useTheme()
   return (
     <View style={{ alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.xxl }}>
-      <View style={{
-        width: 56, height: 56, borderRadius: 28, marginBottom: spacing.lg,
-        backgroundColor: colors.glass.overlay,
-        alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Ionicons name={icon as any} size={24} color={colors.accent[500]} />
-      </View>
+      {/* The icon, not an icon in a bubble. A 56pt tinted disc behind a 24pt
+          glyph is the "empty folder" illustration every consumer app shipped in
+          2016 — it adds a shape without adding meaning. */}
+      <Ionicons
+        name={icon as any} size={30} color={colors.accent[500]}
+        style={{ marginBottom: spacing.md, opacity: 0.85 }}
+      />
       <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary, marginBottom: 6 }}>{title}</Text>
       <Text style={{ fontSize: 14, color: colors.text.secondary, textAlign: 'center', lineHeight: 20 }}>{subtitle}</Text>
     </View>
