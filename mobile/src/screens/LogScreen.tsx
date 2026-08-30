@@ -18,15 +18,23 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { BlurView } from 'expo-blur'
+import { LinearGradient as Gradient } from 'expo-linear-gradient'
+// The whole screen runs on the dark ground under <OnImageTheme/>, so the
+// module palette is the ON-IMAGE one. This is the same one-line swap that
+// fixed Trajectory, and it does two things at once here: it repaints ~50
+// static colour references, and it un-breaks the white-alpha literals in the
+// StyleSheet below (rgba(255,255,255,0.02) fills, 0.06 borders). Those were
+// written for a dark surface and were never migrated — the screen has been
+// sitting in a half-state ever since, light-mode ink on dark-era chrome.
+import { onImageColors as colors, spacing, radius, rhythm, onImage } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
-import { useTheme } from '../contexts/ThemeContext'
+import { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
 import { insertInto, selectFrom } from '../lib/supabase'
 import { loadProgress, saveProgress, bootstrapXPFromLogs } from '../lib/progress'
-import {
-  AlmanacCard,
-  MonoKicker,
-} from '../components/ui'
+import { AlmanacCard, EmptyState, MonoKicker, NoteBlock, SectionLabel, Tappable } from '../components/ui'
 import CompetitionLog from '../components/CompetitionLog'
 import { DnaShiftCard, MetricImpactLine } from '../components/IntelligenceCards'
 import { XPBar, StreakChip, XPPopup, PBCelebration } from '../components/GamificationUI'
@@ -117,7 +125,7 @@ const METRIC_CATALOG = [
     metrics: [
       { key: 'back_squat_1rm',  label: 'Back Squat 1RM',     unit: 'kg', step: 0.5, min: 20, max: 400, protocol: 'True 1RM or estimated via Epley from a clean rep ≤5 RIR 0. Note depth (parallel/below).' },
       { key: 'front_squat_1rm', label: 'Front Squat 1RM',    unit: 'kg', step: 0.5, min: 20, max: 300, protocol: 'Full depth, clean grip.' },
-      { key: 'bench_press_1rm', label: 'Bench Press 1RM',    unit: 'kg', step: 0.5, min: 20, max: 300, protocol: 'Pause on chest, no bounce, full lockout. Spotter present.' },
+      { key: 'bench_1rm', label: 'Bench Press 1RM',    unit: 'kg', step: 0.5, min: 20, max: 300, protocol: 'Pause on chest, no bounce, full lockout. Spotter present.' },
       { key: 'deadlift_1rm',    label: 'Deadlift 1RM',       unit: 'kg', step: 0.5, min: 20, max: 400, protocol: 'Conventional or sumo (note which). Full lockout.' },
       { key: 'power_clean_1rm', label: 'Power Clean 1RM',    unit: 'kg', step: 0.5, min: 20, max: 220, protocol: 'Floor to front rack. No full squat catch.' },
       { key: 'snatch_1rm',      label: 'Snatch 1RM',         unit: 'kg', step: 0.5, min: 20, max: 200, protocol: 'Full snatch or power snatch.' },
@@ -153,7 +161,7 @@ const METRIC_CATALOG = [
     color: colors.category.endurance,
     description: 'Aerobic capacity & conditioning',
     metrics: [
-      { key: 'vo2max',          label: 'VO₂max',               unit: 'ml/kg/min', step: 0.1, min: 25, max: 95, protocol: 'Lab graded exercise test or validated field estimate (beep test, Cooper).' },
+      { key: 'vo2_max',          label: 'VO₂max',               unit: 'ml/kg/min', step: 0.1, min: 25, max: 95, protocol: 'Lab graded exercise test or validated field estimate (beep test, Cooper).' },
       { key: 'yoyo_ir1',        label: 'Yo-Yo IR1 Distance',   unit: 'm',   step: 40,  min: 200, max: 3500, protocol: '20m shuttles with 10s active recovery, increasing speed. Stop at 2nd failure.' },
       { key: 'yoyo_ir2',        label: 'Yo-Yo IR2 Distance',   unit: 'm',   step: 40,  min: 80, max: 2200, protocol: 'Higher-intensity version of IR1.' },
       { key: 'iftt_30_15',      label: '30-15 IFT Velocity',   unit: 'km/h', step: 0.5, min: 12, max: 24, protocol: '30s shuttle / 15s walk protocol. Final stage velocity = VIFT.' },
@@ -201,7 +209,19 @@ METRIC_CATALOG.forEach((cat) => {
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN LOG SCREEN
 // ═══════════════════════════════════════════════════════════════════════
+// The shell owns the theme override; the body is everything that repaints
+// under it. Separate components by necessity — useTheme() inside the shell
+// would read the OUTER (light) palette, since a provider is only visible to
+// its own children.
 export default function LogScreen() {
+  return (
+    <OnImageTheme>
+      <LogBody />
+    </OnImageTheme>
+  )
+}
+
+function LogBody() {
   const { user, profile } = useAuth()
   const { colors: c } = useTheme()
   const [logMode, setLogMode] = useState<'physical' | 'competition'>('physical')
@@ -559,7 +579,7 @@ export default function LogScreen() {
   if (selectedMetric && selectedCategory) {
     const cat = selectedCategory
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.inputScreenContent} keyboardShouldPersistTaps="handled">
           {/* Back */}
           <TouchableOpacity
@@ -581,17 +601,14 @@ export default function LogScreen() {
 
           {/* Metric header */}
           <View style={styles.inputHeader}>
-            <View style={[styles.inputIconWrap, { backgroundColor: cat.color + '15' }]}>
-              <Ionicons name={cat.icon as any} size={20} color={cat.color} />
-            </View>
-            <MonoKicker color={cat.color}>{cat.category}</MonoKicker>
+              <MonoKicker color={cat.color}>{cat.category}</MonoKicker>
             <Text style={styles.metricTitle}>{selectedMetric.label}</Text>
           </View>
 
           {/* Current PB indicator */}
           {currentPB !== null && (
             <View style={styles.pbRow}>
-              <View style={styles.pbDot} />
+              
               <Text style={styles.pbLabel}>CURRENT PB</Text>
               <View style={{ flex: 1 }} />
               <Text style={styles.pbValue}>
@@ -786,17 +803,14 @@ export default function LogScreen() {
   // ══════════════════════════════════════════════════════════════════════
   if (selectedCategory) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => setSelectedCategory(null)}>
             <Ionicons name="arrow-back" size={20} color={colors.text.secondary} />
             <Text style={styles.backText}>Categories</Text>
           </TouchableOpacity>
           <View style={styles.catTitleRow}>
-            <View style={[styles.catTitleIcon, { backgroundColor: selectedCategory.color + '15' }]}>
-              <Ionicons name={selectedCategory.icon as any} size={20} color={selectedCategory.color} />
-            </View>
-            <View>
+                <View>
               <MonoKicker color={selectedCategory.color}>{selectedCategory.category}</MonoKicker>
               <Text style={styles.catDesc}>{selectedCategory.description}</Text>
             </View>
@@ -838,7 +852,7 @@ export default function LogScreen() {
   // rest of the render — the mode toggle below still needs the full union.
   if ((logMode as string) === 'competition') {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      <SafeAreaView style={styles.safe}>
         <CompetitionLog onClose={() => setLogMode('physical')} />
       </SafeAreaView>
     )
@@ -848,7 +862,7 @@ export default function LogScreen() {
   // CATEGORY PICKER (default view) + Quick-log + Performance Hero
   // ══════════════════════════════════════════════════════════════════════
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
           <View style={{ flex: 1 }}>
@@ -911,52 +925,63 @@ export default function LogScreen() {
         )}
 
         {/* Performance Hero Card */}
-        <TouchableOpacity
-          style={styles.perfHero}
-          onPress={() => setLogMode('competition')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.perfHeroGlow} />
-          <View style={styles.perfHeroContent}>
-            <View style={{ flex: 1 }}>
-              <View style={styles.perfHeroTop}>
-                <View style={styles.perfHeroIcon}>
-                  <Ionicons name="trophy" size={16} color="#0a0a0f" />
-                </View>
-                <Text style={styles.perfHeroKicker}>PRIMARY</Text>
-              </View>
-              <Text style={styles.perfHeroTitle}>Performance</Text>
-              <Text style={styles.perfHeroSub}>Race or training mark in your discipline. Feeds your trajectory.</Text>
-            </View>
-            <Ionicons name="add" size={22} color={colors.orange[300]} />
-          </View>
-        </TouchableOpacity>
+        <Tappable
+      onPress={() => setLogMode('competition')}
+      accessibilityLabel="Log a competition result"
+      style={styles.perfHero}
+    >
+      {/* Was a 140pt circular orb hung off the corner behind a 36pt solid
+          accent well with a trophy in it. Both gone: the block is the same
+          glass as every other card in the app, and the accent lives in the
+          type and the corner wash. */}
+      <BlurView intensity={24} tint="dark" style={StyleSheet.absoluteFill} />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: onImage.cardStrong }]} />
+      <Gradient
+        pointerEvents="none"
+        colors={[colors.accent[500] + '38', colors.accent[500] + '00']}
+        start={{ x: 1, y: 0 }} end={{ x: 0.1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none" style={styles.specular} />
+
+      <View style={styles.perfHeroContent}>
+        <View style={{ flex: 1 }}>
+          <MonoKicker color={colors.accent[500]}>Primary</MonoKicker>
+          <Text style={styles.perfHeroTitle}>Performance</Text>
+          <Text style={styles.perfHeroSub}>
+            Race or training mark in your discipline. Feeds your trajectory.
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.text.dimmed} />
+      </View>
+    </Tappable>
 
         {/* Category grid label */}
         <Text style={styles.catGridLabel}>PHYSICAL QUALITIES</Text>
 
         {/* Category cards */}
         {METRIC_CATALOG.map((cat) => (
-          <TouchableOpacity
+          <Tappable
             key={cat.category}
-            style={styles.catCard}
             onPress={() => setSelectedCategory(cat)}
-            activeOpacity={0.7}
+            accessibilityLabel={`${cat.category}, ${cat.metrics.length} tests`}
+            style={styles.catCard}
           >
-            {/* Subtle glow */}
-            <View style={[styles.catCardGlow, { backgroundColor: cat.color }]} />
-            <View style={[styles.catIconWrap, { backgroundColor: cat.color + '15' }]}>
-              <Ionicons name={cat.icon as any} size={22} color={cat.color} />
-            </View>
+            {/* An 80pt circular orb per card (six of them down the screen) and
+                a 44pt tinted well around the glyph. The category's colour now
+                lives in a 2pt spine and in the count — the same "rule, not
+                bubble" language as Trajectory. */}
+            <View style={[styles.catSpine, { backgroundColor: cat.color }]} />
             <View style={{ flex: 1 }}>
               <Text style={styles.catCardTitle}>{cat.category}</Text>
               <Text style={styles.catCardDesc}>{cat.description}</Text>
             </View>
-            <View style={styles.catBadge}>
-              <Text style={[styles.catBadgeText, { color: cat.color }]}>{cat.metrics.length}</Text>
-            </View>
+            <Text style={[styles.catCount, { color: cat.color }]}>
+              {cat.metrics.length}
+              <Text style={styles.catCountUnit}> tests</Text>
+            </Text>
             <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
-          </TouchableOpacity>
+          </Tappable>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -966,7 +991,9 @@ export default function LogScreen() {
 // ── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  // The ground Home and Programs resolve to once their photographs scroll
+  // away, and the one Trajectory starts on.
+  safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
   header: { padding: spacing.lg, paddingBottom: spacing.sm },
   headerTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   screenTitle: { fontSize: 26, fontWeight: '700', color: colors.text.primary, marginTop: 4 },
@@ -993,15 +1020,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   modeBtnActive: {
-    backgroundColor: 'rgba(249,115,22,0.12)',
+    backgroundColor: 'rgba(139,131,255,0.16)',
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.25)',
+    borderColor: 'rgba(139,131,255,0.34)',
   },
   modeBtnText: { color: colors.text.muted, fontSize: 13, fontWeight: '600' },
   modeBtnTextActive: { color: colors.orange[500] },
 
   // Back button
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.md },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.md,
+    minHeight: 44,
+  },
   backText: { color: colors.text.secondary, fontSize: 14 },
 
   // Quick-log section
@@ -1015,62 +1044,29 @@ const styles = StyleSheet.create({
   },
   quickLogRow: { gap: 8 },
   quickLogPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingHorizontal: 14, minHeight: 44, justifyContent: 'center',
+    borderRadius: 12, borderWidth: 1,
   },
   quickLogPillText: { color: colors.text.primary, fontSize: 13, fontWeight: '600' },
   quickLogPillUnit: { color: colors.text.muted, fontSize: 10, fontWeight: '500' },
 
   // Performance Hero Card
   perfHero: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.3)',
-    backgroundColor: 'rgba(249,115,22,0.06)',
+    position: 'relative', overflow: 'hidden',
+    borderRadius: 20, borderWidth: 1, borderColor: onImage.cardBorder,
+    padding: 20, marginBottom: rhythm.section,
   },
-  perfHeroGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.orange[500],
-    opacity: 0.08,
+  // The 1pt of light on the top edge — the single thing that separates glass
+  // from a grey rectangle, and the detail every other card in the app has.
+  specular: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+    backgroundColor: 'rgba(255,255,255,0.20)',
   },
   perfHeroContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.md,
-  },
-  perfHeroTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  perfHeroIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.orange[500],
-  },
-  perfHeroKicker: {
-    fontSize: 10,
-    letterSpacing: 2,
-    color: colors.orange[300],
-    fontWeight: '600',
   },
   perfHeroTitle: {
     fontSize: 20,
@@ -1095,62 +1091,30 @@ const styles = StyleSheet.create({
   },
 
   // Category list
-  catList: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm },
+  catList: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm, paddingBottom: TAB_BAR_CLEARANCE },
   catCard: {
-    position: 'relative',
-    overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
+    position: 'relative', overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingVertical: 16, paddingRight: 16, paddingLeft: 18,
+    marginBottom: 10,
   },
-  catCardGlow: {
-    position: 'absolute',
-    top: -30,
-    right: -30,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    opacity: 0.04,
+  catSpine: {
+    position: 'absolute', left: 0, top: 12, bottom: 12,
+    width: 3, borderRadius: 2,
   },
-  catIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  catCount: { fontSize: 16, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  catCountUnit: { fontSize: 11, fontWeight: '600', color: colors.text.dimmed },
   catCardTitle: { color: colors.text.primary, fontSize: 16, fontWeight: '600' },
   catCardDesc: { color: colors.text.muted, fontSize: 12, marginTop: 2 },
-  catBadge: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: radius.full,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-  },
-  catBadgeText: { fontSize: 12, fontWeight: '700' },
 
   // Category header (metric picker)
   catTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
-  catTitleIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   catDesc: { color: colors.text.secondary, fontSize: 13, marginTop: 2 },
 
   // Metric list
-  metricList: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
+  metricList: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm, paddingBottom: TAB_BAR_CLEARANCE },
   metricCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1166,16 +1130,8 @@ const styles = StyleSheet.create({
   metricUnit: { fontSize: 13, fontWeight: '600' },
 
   // Input screen
-  inputScreenContent: { padding: spacing.xxl, paddingTop: spacing.lg },
+  inputScreenContent: { padding: spacing.xxl, paddingTop: spacing.lg, paddingBottom: TAB_BAR_CLEARANCE },
   inputHeader: { alignItems: 'center', marginBottom: spacing.lg },
-  inputIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
   metricTitle: {
     fontSize: 22,
     fontWeight: '700',
@@ -1188,7 +1144,7 @@ const styles = StyleSheet.create({
   pbRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(52,211,153,0.08)',
+    backgroundColor: 'rgba(52,211,153,0.10)',
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
@@ -1197,7 +1153,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52,211,153,0.2)',
     gap: 8,
   },
-  pbDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
   pbLabel: { fontSize: 10, letterSpacing: 1.5, color: colors.green, fontWeight: '700' },
   pbValue: { fontSize: 16, fontWeight: '700', color: colors.green },
   pbUnit: { fontSize: 12, fontWeight: '400' },
@@ -1236,6 +1191,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     marginBottom: spacing.sm,
+    minHeight: 44,
   },
   moreToggleText: {
     fontSize: 10,
@@ -1245,7 +1201,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   moreSection: { marginBottom: spacing.md, gap: spacing.md },
-  fieldGroup: {},
+  fieldGroup: { gap: 8 },
   fieldLabel: {
     fontSize: 9,
     letterSpacing: 1.5,
@@ -1270,6 +1226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     marginBottom: spacing.sm,
+    minHeight: 44,
   },
   protocolToggleText: {
     fontSize: 10,
@@ -1301,9 +1258,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: 'rgba(244,63,94,0.08)',
+    backgroundColor: 'rgba(255,107,107,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(244,63,94,0.25)',
+    borderColor: 'rgba(255,107,107,0.28)',
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
@@ -1313,20 +1270,12 @@ const styles = StyleSheet.create({
 
   // Save button
   saveBtn: {
-    backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.lg,
-    shadowColor: colors.orange[500],
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderRadius: radius.lg, paddingVertical: 18,
+    backgroundColor: colors.accent[500],
+    marginTop: rhythm.section,
   },
-  saveBtnDisabled: { opacity: 0.4, shadowOpacity: 0 },
+  saveBtnDisabled: { opacity: 0.4 },
   saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
 
   // History
@@ -1342,12 +1291,7 @@ const styles = StyleSheet.create({
   historyUnit: { fontSize: 12, fontWeight: '400', color: colors.text.muted },
   historyDate: { color: colors.text.dimmed, fontSize: 11, marginTop: 2 },
   historyPB: {
-    backgroundColor: colors.green + '20',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: colors.green + '40',
+    paddingHorizontal: 0, paddingVertical: 0, backgroundColor: 'transparent',
   },
   historyPBText: { color: colors.green, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
 

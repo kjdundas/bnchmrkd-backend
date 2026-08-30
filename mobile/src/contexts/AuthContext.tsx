@@ -29,12 +29,36 @@ interface AuthState {
   profile: UserProfile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string, fullName: string, role?: 'athlete' | 'coach') => Promise<{ error: any }>
+  signUp: (
+    email: string, password: string, fullName: string,
+    role?: 'athlete' | 'coach',
+    extra?: { date_of_birth?: string | null; gender?: string | null },
+  ) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
+
+/**
+ * One shape for the rest of the app, whichever table or code path produced it.
+ *
+ * `user_profiles` stores date_of_birth / gender / club_school; every screen
+ * reads dob / sex / club. That aliasing used to live inline in ONE of the four
+ * branches of fetchProfile, so the legacy-table path and the trigger-retry
+ * path both handed back a profile with dob undefined — the app then graded
+ * those athletes against Senior standards with no sign anything was wrong.
+ */
+function normaliseProfile(row: any, fallbackRole: 'athlete' | 'coach' = 'athlete'): UserProfile {
+  const p = { ...row }
+  p.role = p.account_type || p.role || fallbackRole
+  if (!p.dob && p.date_of_birth) p.dob = p.date_of_birth
+  if (!p.club && p.club_school) p.club = p.club_school
+  if (!p.sex && p.gender) {
+    p.sex = p.gender === 'Female' ? 'F' : p.gender === 'Male' ? 'M' : p.gender
+  }
+  return p as UserProfile
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -83,20 +107,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authRole = currentSession?.user?.user_metadata?.role || 'athlete'
       const authName = currentSession?.user?.user_metadata?.full_name || ''
       const authEmail = currentSession?.user?.email || ''
+      // Sign-up stashes these on auth metadata, because the profile row is
+      // created HERE on first fetch rather than by the sign-up call itself.
+      const authMeta: any = currentSession?.user?.user_metadata || {}
+      const authDob = authMeta.date_of_birth || null
+      const authGender = authMeta.gender || null
+
       try {
         await insertInto('user_profiles', {
           id: userId,
           email: authEmail,
           account_type: authRole,
           full_name: authName,
+          date_of_birth: authDob,
+          gender: authGender,
         })
-        setProfile({
+        setProfile(normaliseProfile({
           id: userId,
           email: authEmail,
           account_type: authRole,
           full_name: authName,
-          role: authRole,
-        } as UserProfile)
+          date_of_birth: authDob,
+          gender: authGender,
+        }, authRole))
       } catch (insertErr) {
         // Insert might fail if trigger already created a row — try fetching again
         const retry = await selectFrom('user_profiles', {
@@ -105,14 +138,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => [])
         if (retry && retry.length > 0) {
           const p = retry[0]
-          p.role = p.account_type || authRole
           // If the trigger created it with wrong account_type, fix it
           if (p.account_type !== authRole) {
             await updateIn('user_profiles', `id=eq.${userId}`, { account_type: authRole }).catch(() => {})
             p.account_type = authRole
-            p.role = authRole
           }
-          setProfile(p)
+          // A DB trigger creates the row from auth metadata it may not read in
+          // full, so back-fill whatever sign-up collected that the row lacks.
+          // Without this a signup that raced the trigger lost its date of
+          // birth permanently — and this branch also skipped the aliasing
+          // below, so dob/sex/club came back undefined even when present.
+          const patch: Record<string, any> = {}
+          if (!p.date_of_birth && authDob) patch.date_of_birth = authDob
+          if (!p.gender && authGender) patch.gender = authGender
+          if (!p.full_name && authName) patch.full_name = authName
+          if (Object.keys(patch).length) {
+            await updateIn('user_profiles', `id=eq.${userId}`, patch).catch(() => {})
+            Object.assign(p, patch)
+          }
+          setProfile(normaliseProfile(p, authRole))
         } else {
           setProfile(null)
         }
@@ -162,11 +206,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
-  const signUp = async (email: string, password: string, fullName: string, role: 'athlete' | 'coach' = 'athlete') => {
-    const { error, data } = await supabase.auth.signUp({
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'athlete' | 'coach' = 'athlete',
+    extra?: { date_of_birth?: string | null; gender?: string | null },
+  ) => {
+    // Everything the profile row needs travels on auth metadata, because the
+    // row itself is created later — on the first fetchProfile — and may
+    // instead be created by a DB trigger that only sees this metadata.
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, role } },
+      options: {
+        data: {
+          full_name: fullName,
+          role,
+          date_of_birth: extra?.date_of_birth || null,
+          gender: extra?.gender || null,
+        },
+      },
     })
     return { error }
   }

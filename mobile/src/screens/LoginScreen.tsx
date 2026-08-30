@@ -21,6 +21,7 @@ import {
 import { darkColors as colors, spacing, radius, fonts } from '../lib/theme'
 import Wordmark from '../components/Wordmark'
 import { useAuth } from '../contexts/AuthContext'
+import DobField from '../components/DobField'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 
@@ -31,6 +32,12 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [role, setRole] = useState<'athlete' | 'coach'>('athlete')
+  // Athletes only. Every tier, percentile and projection in the app is graded
+  // by age group and sex; without these two the app silently falls back to
+  // Senior and male, so a 14-year-old girl is measured against men's Olympic
+  // finalist standards with nothing on screen saying so.
+  const [dob, setDob] = useState<string | null>(null)
+  const [sex, setSex] = useState<'M' | 'F' | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -58,7 +65,20 @@ export default function LoginScreen() {
         if (e) setError(e.message)
       } else {
         if (!fullName.trim()) { setError('Name is required'); setLoading(false); return }
-        const { error: e } = await signUp(email.trim(), password, fullName.trim(), role)
+        if (role === 'athlete' && !dob) {
+          setError('Your date of birth sets which standards you are compared against.')
+          setLoading(false); return
+        }
+        if (role === 'athlete' && !sex) {
+          setError('Pick the category you compete in.')
+          setLoading(false); return
+        }
+        const { error: e } = await signUp(
+          email.trim(), password, fullName.trim(), role,
+          role === 'athlete'
+            ? { date_of_birth: dob, gender: sex === 'F' ? 'Female' : 'Male' }
+            : undefined,
+        )
         if (e) setError(e.message)
         else setError('Check your email for a verification link.')
       }
@@ -141,6 +161,30 @@ export default function LoginScreen() {
                     ))}
                   </View>
                 </View>
+
+                {/* Athletes only — nothing in the app grades a coach, so
+                    asking them for a birth date would be collecting personal
+                    data with no use for it. */}
+                {role === 'athlete' && (
+                  <>
+                    <DobField value={dob} onChange={setDob} required />
+
+                    <View style={styles.inputWrap}>
+                      <Text style={styles.inputLabel}>I COMPETE IN</Text>
+                      <View style={styles.roleRow}>
+                        {([['M', "Men's"], ['F', "Women's"]] as const).map(([v, l]) => (
+                          <TouchableOpacity
+                            key={v}
+                            style={[styles.roleBtn, sex === v && styles.roleBtnActive]}
+                            onPress={() => setSex(v)}
+                          >
+                            <Text style={[styles.roleText, sex === v && styles.roleTextActive]}>{l}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  </>
+                )}
               </>
             )}
 

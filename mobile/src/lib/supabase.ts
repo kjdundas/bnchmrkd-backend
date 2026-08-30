@@ -83,8 +83,14 @@ export async function insertInto(table: string, data: any) {
  * Uses PostgREST's `resolution=merge-duplicates` so a repeat write to the
  * same key updates the existing row instead of erroring.
  */
-export async function upsertInto(table: string, data: any) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+export async function upsertInto(table: string, data: any, onConflict?: string) {
+  // PostgREST resolves a conflict against the PRIMARY KEY unless told
+  // otherwise. Where the uniqueness lives in a separate unique index — as it
+  // does for a logged set, keyed on where the exercise sits — the target has
+  // to be named or the upsert inserts a duplicate instead of merging.
+  const url = `${SUPABASE_URL}/rest/v1/${table}`
+    + (onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : '')
+  const res = await fetch(url, {
     method: 'POST',
     headers: { ...headers(), Prefer: 'resolution=merge-duplicates,return=representation' },
     body: JSON.stringify(data),

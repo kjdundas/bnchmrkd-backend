@@ -13,7 +13,11 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { celebrationFeedback } from '../lib/haptics'
-import { colors, spacing, radius } from '../lib/theme'
+// Rendered only by Home and Log, both of which run on the dark ground. This
+// file was still on the static LIGHT palette — the swap repaints every
+// reference below in one line, and is safe precisely because there is no
+// light-surface caller to preserve.
+import { onImageColors as colors, spacing, radius } from '../lib/theme'
 import { getLevelFromXP, type Badge } from '../lib/gamification'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -90,12 +94,12 @@ const xpStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(249,115,22,0.12)',
+    backgroundColor: 'rgba(139,131,255,0.16)',
     borderRadius: radius.full,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.25)',
+    borderColor: 'rgba(139,131,255,0.34)',
   },
   levelIcon: { fontSize: 12 },
   levelNum: {
@@ -193,8 +197,8 @@ const streakStyles = StyleSheet.create({
     borderColor: 'rgba(249,115,22,0.2)',
   },
   chipFire: {
-    backgroundColor: 'rgba(249,115,22,0.12)',
-    borderColor: 'rgba(249,115,22,0.3)',
+    backgroundColor: 'rgba(139,131,255,0.16)',
+    borderColor: 'rgba(139,131,255,0.30)',
   },
   icon: { fontSize: 12 },
   text: {
@@ -312,10 +316,10 @@ const popupStyles = StyleSheet.create({
     zIndex: 100,
   },
   card: {
-    backgroundColor: 'rgba(10,10,20,0.97)',
+    backgroundColor: 'rgba(11,12,24,0.96)',
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.35)',
+    borderColor: 'rgba(139,131,255,0.40)',
     padding: spacing.lg,
     shadowColor: colors.orange[500],
     shadowOffset: { width: 0, height: 8 },
@@ -333,7 +337,7 @@ const popupStyles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.3)',
+    borderColor: 'rgba(139,131,255,0.30)',
   },
   levelUpIcon: { fontSize: 20 },
   levelUpText: {

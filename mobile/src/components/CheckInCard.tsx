@@ -6,14 +6,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, ActivityIndicator } from 'react-native'
+import { View, Text, ActivityIndicator, Modal, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { selectFrom, insertInto, updateIn } from '../lib/supabase'
 import { checkinStatus, READINESS_COLORS, PAIN_AREAS, todayStr } from '../lib/readiness'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm } from '../lib/theme'
+import { spacing, radius, rhythm, onImage } from '../lib/theme'
 import { successFeedback, errorFeedback } from '../lib/haptics'
-import { Tappable } from './ui'
+import { Tappable, GlassPanel, MonoKicker } from './ui'
 
 const SLEEP_CHIPS = [
   { l: '<5h', v: 4.5 }, { l: '5–6h', v: 5.5 }, { l: '6–7h', v: 6.5 },
@@ -73,12 +73,19 @@ function Scale({ label, hint, children }: any) {
   )
 }
 
-export default function CheckInCard({ athleteId }: { athleteId?: string | null }) {
+export default function CheckInCard({
+  athleteId, onImage: over,
+}: {
+  athleteId?: string | null
+  /** True when the card sits over the stadium backdrop rather than on paper. */
+  onImage?: boolean
+}) {
   const { colors } = useTheme()
   const [row, setRow] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [sheet, setSheet] = useState(false)
   const [form, setForm] = useState<Form>({ ...EMPTY })
 
   const load = useCallback(async () => {
@@ -126,6 +133,7 @@ export default function CheckInCard({ athleteId }: { athleteId?: string | null }
       setRow(saved || { ...payload, checkin_date: todayStr() })
       successFeedback()
       setEditing(false)
+      setSheet(false)
     } catch {
       // Stay in edit mode so the athlete can retry — and say so physically.
       errorFeedback()
@@ -137,58 +145,15 @@ export default function CheckInCard({ athleteId }: { athleteId?: string | null }
   const status = checkinStatus(row)
   const color = READINESS_COLORS[status.level]
 
-  // ── Saved (collapsed) state ──────────────────────────────────────
-  if (row && !editing) {
-    // Ambient level: once you've checked in this is a status line, not a
-    // task. A left rule in the readiness colour carries the state instead of
-    // a 10pt dot — amber should be legible at arm's length.
-    return (
-      <View style={{
-        borderRadius: 16, marginBottom: rhythm.section,
-        backgroundColor: color + '12',
-        flexDirection: 'row', alignItems: 'center', gap: 14,
-        paddingRight: 16, overflow: 'hidden',
-      }}>
-        <View style={{ width: 4, alignSelf: 'stretch', backgroundColor: color }} />
-        <View style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>
-            Checked in today · {status.label}
-          </Text>
-          <Text numberOfLines={1} style={{ fontSize: 11, color: colors.text.muted, marginTop: 2 }}>
-            {status.reasons.length ? status.reasons.join(' · ') : 'All green — have a great session.'}
-          </Text>
-        </View>
-        <Tappable
-          onPress={() => setEditing(true)}
-          accessibilityLabel="Edit today's check-in"
-          hitSlop={12}
-          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
-        >
-          <Text style={{ fontSize: 13, color: colors.accent[500], fontWeight: '600' }}>Edit</Text>
-        </Tappable>
-        </View>
-      </View>
-    )
-  }
-
-  // ── Edit / first-time state ──────────────────────────────────────
   const canSave =
     form.soreness != null || form.mood != null || form.energy != null ||
     form.sleep_hours != null || form.pain
 
-  return (
-    <View style={{
-      borderRadius: 20, padding: 18, marginBottom: rhythm.section,
-      backgroundColor: colors.glass.overlay,
-      borderWidth: 1, borderColor: colors.accent[500] + '33',
-    }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ionicons name="pulse" size={16} color={colors.accent[500]} />
-        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>Daily check-in</Text>
-        <Text style={{ fontSize: 11, color: colors.text.muted }}>· 30 seconds</Text>
-      </View>
-
+  // ── The form itself ──────────────────────────────────────────────
+  // Extracted so it can render inline on paper OR inside the sheet that the
+  // on-image pill opens. One implementation, two hosts.
+  const formBody = (
+    <>
       <Scale label="Sleep last night">
         {SLEEP_CHIPS.map((c) => (
           <Chip key={c.l} on={form.sleep_hours === c.v} onPress={() => set('sleep_hours', c.v)}>{c.l}</Chip>
@@ -252,7 +217,7 @@ export default function CheckInCard({ athleteId }: { athleteId?: string | null }
             {saving ? 'Saving…' : row ? 'Update check-in' : 'Check in'}
           </Text>
         </Tappable>
-        {row && (
+        {row && !over && (
           <Tappable
             onPress={() => setEditing(false)}
             accessibilityLabel="Cancel"
@@ -268,6 +233,157 @@ export default function CheckInCard({ athleteId }: { athleteId?: string | null }
           If pain persists or worsens, stop and see a physio or doctor. Your coach will see this flagged.
         </Text>
       )}
+    </>
+  )
+
+  // ── The sheet the on-image pill opens ────────────────────────────
+  const formSheet = (
+    <Modal
+      visible={sheet}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={() => setSheet(false)}
+    >
+      <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
+        <View style={{ alignItems: 'center', paddingTop: 10 }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.glass.border }} />
+        </View>
+        <View style={{
+          flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+          paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm,
+        }}>
+          <View>
+            <MonoKicker>30 seconds</MonoKicker>
+            <Text style={{
+              fontSize: 26, fontWeight: '700', color: colors.text.primary,
+              letterSpacing: -0.5, marginTop: 4,
+            }}>
+              Daily check-in
+            </Text>
+          </View>
+          <Tappable
+            onPress={() => setSheet(false)}
+            accessibilityLabel="Close check-in"
+            style={{
+              width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: colors.glass.bg, borderWidth: 1, borderColor: colors.glass.border,
+            }}
+          >
+            <Ionicons name="close" size={20} color={colors.text.secondary} />
+          </Tappable>
+        </View>
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 48 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {formBody}
+        </ScrollView>
+      </View>
+    </Modal>
+  )
+
+  // ══ ON-IMAGE ═══════════════════════════════════════════════════════
+  // Oura's "Confirm yesterday's activity": one translucent row on the
+  // photograph, never a form. A five-scale questionnaire competing with the
+  // hero is the fastest way to make a beautiful screen look busy — so the
+  // whole thing collapses to a single line and opens in a sheet.
+  if (over) {
+    const done = !!row
+    return (
+      <>
+        <GlassPanel
+          onPress={() => { if (row) setEditing(true); setSheet(true) }}
+          accessibilityLabel={done
+            ? `Checked in today, ${status.label}. Tap to update.`
+            : 'Daily check-in, takes 30 seconds. Tap to start.'}
+          radius={18}
+          style={{
+            flexDirection: 'row', alignItems: 'center', gap: 13,
+            paddingHorizontal: 16, minHeight: 62,
+            marginBottom: rhythm.section,
+          }}
+        >
+          <View style={{
+            width: 34, height: 34, borderRadius: 17,
+            alignItems: 'center', justifyContent: 'center',
+            backgroundColor: done ? color + '2E' : 'rgba(255,255,255,0.14)',
+            borderWidth: 1, borderColor: done ? color + '66' : 'rgba(255,255,255,0.20)',
+          }}>
+            <Ionicons
+              name={done ? 'checkmark' : 'pulse'}
+              size={16}
+              color={done ? color : onImage.ink}
+            />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: onImage.ink }}>
+              {done ? `Checked in · ${status.label}` : 'Daily check-in'}
+            </Text>
+            <Text numberOfLines={1} style={{ fontSize: 12, color: onImage.muted, marginTop: 2 }}>
+              {done
+                ? (status.reasons.length ? status.reasons.join(' · ') : 'All green — have a great session.')
+                : 'Sleep, soreness, energy · 30 seconds'}
+            </Text>
+          </View>
+
+          <Ionicons name="chevron-forward" size={17} color={onImage.dim} />
+        </GlassPanel>
+
+        {formSheet}
+      </>
+    )
+  }
+
+  // ══ ON PAPER ═══════════════════════════════════════════════════════
+  // ── Saved (collapsed) state ──────────────────────────────────────
+  if (row && !editing) {
+    // Ambient level: once you've checked in this is a status line, not a
+    // task. A left rule in the readiness colour carries the state instead of
+    // a 10pt dot — amber should be legible at arm's length.
+    return (
+      <View style={{
+        borderRadius: 16, marginBottom: rhythm.section,
+        backgroundColor: color + '12',
+        flexDirection: 'row', alignItems: 'center', gap: 14,
+        paddingRight: 16, overflow: 'hidden',
+      }}>
+        <View style={{ width: 4, alignSelf: 'stretch', backgroundColor: color }} />
+        <View style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>
+            Checked in today · {status.label}
+          </Text>
+          <Text numberOfLines={1} style={{ fontSize: 11, color: colors.text.muted, marginTop: 2 }}>
+            {status.reasons.length ? status.reasons.join(' · ') : 'All green — have a great session.'}
+          </Text>
+        </View>
+        <Tappable
+          onPress={() => setEditing(true)}
+          accessibilityLabel="Edit today's check-in"
+          hitSlop={12}
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
+        >
+          <Text style={{ fontSize: 13, color: colors.accent[500], fontWeight: '600' }}>Edit</Text>
+        </Tappable>
+        </View>
+      </View>
+    )
+  }
+
+  // ── Edit / first-time state ──────────────────────────────────────
+  return (
+    <View style={{
+      borderRadius: 20, padding: 18, marginBottom: rhythm.section,
+      backgroundColor: colors.glass.overlay,
+      borderWidth: 1, borderColor: colors.accent[500] + '33',
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="pulse" size={16} color={colors.accent[500]} />
+        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>Daily check-in</Text>
+        <Text style={{ fontSize: 11, color: colors.text.muted }}>· 30 seconds</Text>
+      </View>
+      {formBody}
     </View>
   )
 }

@@ -21,8 +21,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
-import { AthleteDNALadder } from '../components/HomeSections'
-import { MetricTrendCards } from '../components/OuraSections'
+import DnaStrip from '../components/DnaCard'
+import ResultsTable from '../components/ResultsTable'
+import { countPersonalBests } from '../lib/resultSemantics'
+import DobField from '../components/DobField'
+import { ageFromDob } from '../lib/age'
 import { updateIn, selectFrom, upsertInto } from '../lib/supabase'
 import {
   HeroCard,
@@ -46,6 +49,7 @@ export default function ProfileScreen() {
   const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
+  const [performances, setPerformances] = useState<any[]>([])
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
     club: profile?.club || '',
@@ -53,6 +57,10 @@ export default function ProfileScreen() {
     height_cm: profile?.height_cm?.toString() || '',
     weight_kg: profile?.weight_kg?.toString() || '',
   })
+  // Kept out of `form` because these have their own validated controls rather
+  // than being free text.
+  const [dob, setDob] = useState<string | null>(profile?.dob || null)
+  const [sex, setSex] = useState<string | null>(profile?.sex || null)
   const [saving, setSaving] = useState(false)
   const [physical, setPhysical] = useState<{ height_cm: number | null; weight_kg: number | null }>({
     height_cm: null,
@@ -85,6 +93,15 @@ export default function ProfileScreen() {
     })
       .then((rows) => setMetrics(rows || []))
       .catch(() => {})
+    // The whole competition record, not a recent window: this table is where
+    // an athlete goes to see their career, and it groups by season.
+    selectFrom('performances', {
+      filter: `user_id=eq.${user.id}`,
+      order: 'competition_date.desc',
+      limit: '1000',
+    })
+      .then((rows) => setPerformances(rows || []))
+      .catch(() => setPerformances([]))
   }
 
   useEffect(() => { loadMetrics() }, [user])
@@ -128,19 +145,26 @@ export default function ProfileScreen() {
   // Stats
   const totalLogs = metrics.length
   const uniqueMetrics = new Set(metrics.map((m) => m.metric_key)).size
-  // Compute PB count client-side
-  const pbTracker: Record<string, number> = {}
-  for (const m of metrics) {
-    const k = m.metric_key
-    const v = parseFloat(m.value)
-    const lower = (k || '').match(/^(sprint_|flying_|split_|resting_hr|rhr|body_fat|tt_|bronco)/) != null
-    if (!(k in pbTracker) || (lower ? v < pbTracker[k] : v > pbTracker[k])) {
-      pbTracker[k] = v
-    }
-  }
-  const limitingFactor = useMemo(() => findLimitingFactor(dnaProfile, null, null), [dnaProfile])
 
-  const pbCount = Object.keys(pbTracker).length
+  // ── PBs ──────────────────────────────────────────────────────────
+  // A personal best is a RACE you improved on. This used to be built from
+  // athlete_metrics, which had three problems stacked on each other:
+  //
+  //   1. it counted training tests — squatting more than last month is
+  //      progress, not a personal best in the sense an athlete means it;
+  //   2. it then returned Object.keys(...).length, which is just the number
+  //      of distinct metrics logged — so "PBs" and "METRICS" were the same
+  //      number by construction, and the card showed 9 and 9;
+  //   3. its direction test was a third, divergent copy of LOWER_IS_BETTER
+  //      written as a regex, which knew nothing of the metrics that have no
+  //      better direction at all (body mass, height, wingspan) and happily
+  //      counted a taller reading as a personal best.
+  //
+  // One shared definition now, over competition results only, and it agrees
+  // with the PB count gamification awards XP for.
+  const pbCount = useMemo(() => countPersonalBests(performances), [performances])
+
+  const limitingFactor = useMemo(() => findLimitingFactor(dnaProfile, null, null), [dnaProfile])
   const firstLog = metrics.length > 0 ? metrics[metrics.length - 1] : null
   const daysSinceStart = firstLog
     ? Math.ceil((Date.now() - new Date(firstLog.recorded_at).getTime()) / 86400000)
@@ -155,6 +179,22 @@ export default function ProfileScreen() {
     else break
   }
 
+  // `form` is seeded at mount, but profile arrives asynchronously on a cold
+  // start — without this the fields sit empty over data that has since loaded,
+  // and saving would blank the athlete's own details.
+  useEffect(() => {
+    if (!profile) return
+    setForm((f) => ({
+      full_name: f.full_name || profile.full_name || '',
+      club: f.club || profile.club || '',
+      country: f.country || profile.country || '',
+      height_cm: f.height_cm || profile.height_cm?.toString() || '',
+      weight_kg: f.weight_kg || profile.weight_kg?.toString() || '',
+    }))
+    setDob((d) => d || profile.dob || null)
+    setSex((x) => x || profile.sex || null)
+  }, [profile?.id, profile?.dob, profile?.sex])
+
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
@@ -164,6 +204,10 @@ export default function ProfileScreen() {
         full_name: form.full_name,
         club_school: form.club || null,
         country: form.country || null,
+        // Real column names. The app reads dob / sex; AuthContext maps these
+        // back to those aliases on the way in.
+        date_of_birth: dob || null,
+        gender: sex === 'F' ? 'Female' : sex === 'M' ? 'Male' : null,
       })
       await upsertInto('athlete_profiles', {
         id: profile.id,
@@ -276,47 +320,24 @@ export default function ProfileScreen() {
           </View>
         </AlmanacCard>
 
-        {/* ════════════════════════════════════════════════════════════════
-            DNA MINI SUMMARY — Animated bars per axis
-            ════════════════════════════════════════════════════════════ */}
-        {activeAxes.length > 0 && (
-          <AlmanacCard kicker="ATHLETE BLUEPRINT" title="DNA Summary" accent={colors.orange[500]}>
-            {dnaAxes.map((axis, i) => (
-              <View key={axis.key} style={styles.dnaRow}>
-                <View style={styles.dnaLabelRow}>
-                  <Text style={styles.dnaLabel}>{axis.label}</Text>
-                  {axis.tier ? (
-                    <View style={styles.dnaScoreRow}>
-                      <View style={[styles.dnaDot, { backgroundColor: axis.tier.color }]} />
-                      <Text style={[styles.dnaTierText, { color: axis.tier.color }]}>
-                        {axis.score} · {axis.tier.label}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.dnaNoData}>—</Text>
-                  )}
-                </View>
-                <AnimatedBar
-                  progress={axis.score ?? 0}
-                  color={axis.tier?.color || colors.text.dimmed}
-                  height={5}
-                  delay={i * 80}
-                />
-              </View>
-            ))}
-          </AlmanacCard>
-        )}
-        {/* ── Full DNA ladder + limiting factor ────────────────────────
-            Moved off Home (2026-08-28). These describe the athlete's body,
-            not a race result, so they belong beside the DNA summary rather
-            than in the daily loop. ──────────────────────────────────── */}
+        {/* ── Physical profile ─────────────────────────────────────────
+            ONE DNA implementation. The strip opens the full ladder (and the
+            tests behind it) in a sheet — the same component Home renders, so
+            the detail can't drift or duplicate. ──────────────────────────── */}
+        {/* ── Competition record ──────────────────────────────────────
+            Every result, including the ones that do not count. See
+            ResultsTable for why a DNF has to be visible here. ─────────── */}
+        <SectionLabel>Competition results</SectionLabel>
+        <ResultsTable performances={performances} />
+
         <SectionLabel>Physical profile</SectionLabel>
 
-        <AthleteDNALadder metrics={metrics} discipline={discipline} dob={profile?.dob} />
-
-        {/* Per-metric trend charts, moved off Home where four of them ate
-            three screens. These are physical tests, so they belong here. */}
-        <MetricTrendCards metrics={metrics} limit={6} onLog={() => navigation.navigate('Log' as never)} />
+        <DnaStrip
+          metrics={metrics}
+          discipline={discipline}
+          dob={profile?.dob}
+          onLog={() => navigation.navigate('Log' as never)}
+        />
 
         {limitingFactor && (
           <AlmanacCard kicker="FOCUS AREA" title="Limiting factor" accent={c.amber}>
@@ -359,6 +380,40 @@ export default function ProfileScreen() {
           {editing ? (
             <>
               <Field label="Full Name" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
+
+              {/* The two fields the whole analysis layer depends on. Trajectory
+                  has been telling athletes to "add your date of birth in
+                  Profile" at a screen that had no such field. */}
+              <DobField value={dob} onChange={setDob} />
+
+              <View style={{ marginBottom: spacing.lg }}>
+                <Text style={{
+                  fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
+                  color: colors.text.muted, fontWeight: '600', marginBottom: 8,
+                }}>I compete in</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {([['M', "Men's"], ['F', "Women's"]] as const).map(([v, l]) => (
+                    <TouchableOpacity
+                      key={v}
+                      onPress={() => setSex(v)}
+                      accessibilityLabel={`${l} category${sex === v ? ', selected' : ''}`}
+                      style={{
+                        flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center',
+                        borderRadius: radius.md,
+                        backgroundColor: sex === v ? colors.orange[500] : colors.bg.primary,
+                        borderWidth: 1,
+                        borderColor: sex === v ? colors.orange[500] : colors.glass.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontSize: 13, fontWeight: '700',
+                        color: sex === v ? '#FFFFFF' : colors.text.secondary,
+                      }}>{l}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
               <Field label="Club" value={form.club} onChange={(v) => setForm({ ...form, club: v })} />
               <Field label="Country" value={form.country} onChange={(v) => setForm({ ...form, country: v })} />
               <Field label="Height (cm)" value={form.height_cm} onChange={(v) => setForm({ ...form, height_cm: v })} keyboard="decimal-pad" />
@@ -375,6 +430,16 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
+              <InfoRow
+                icon="calendar-number-outline" label="Date of birth"
+                value={profile?.dob
+                  ? `${new Date(profile.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${ageFromDob(profile.dob)} yrs`
+                  : 'Not set — tap Edit'}
+              />
+              <InfoRow
+                icon="body-outline" label="Category"
+                value={profile?.sex === 'F' ? "Women's" : profile?.sex === 'M' ? "Men's" : 'Not set — tap Edit'}
+              />
               <InfoRow icon="flag-outline" label="Country" value={profile?.country || '—'} />
               <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
               <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
