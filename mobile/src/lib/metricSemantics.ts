@@ -100,6 +100,39 @@ export function groupMetrics(metrics: MetricRow[] | null | undefined): MetricGro
   )
 }
 
+/**
+ * How a metric draws as a ring: how full, and whether the latest reading is
+ * the best one.
+ *
+ * Fill is the latest reading's position within that metric's OWN historical
+ * range, not against any external standard — a full ring means "your best
+ * ever", an empty one "your worst ever". Metrics in NO_PB (body mass, height)
+ * have no better direction, so they always draw full.
+ *
+ * This lives here, rather than inside the rail, because the picker draws the
+ * same rings from the same data. Two implementations of "how full is this
+ * ring" is two chances for the preview to disagree with the thing it previews.
+ */
+export interface RingModel {
+  latest: number
+  /** 0.04–1. Floored so a metric at its own worst still shows a visible arc. */
+  shown: number
+  isPb: boolean
+}
+
+export function ringModel(g: MetricGroup): RingModel {
+  const noPb = NO_PB.has(g.key)
+  const lowerBetter = LOWER_IS_BETTER.has(g.key)
+  const latest = Number(g.latest.value)
+  const vals = g.history.map((r) => Number(r.value)).filter(Number.isFinite)
+  const best = lowerBetter ? Math.min(...vals) : Math.max(...vals)
+  const worst = lowerBetter ? Math.max(...vals) : Math.min(...vals)
+  const span = Math.abs(best - worst)
+  const frac = noPb || span === 0 ? 1 : Math.abs(latest - worst) / span
+  const isPb = !noPb && g.history.length > 1 && latest === best
+  return { latest, shown: Math.max(0.04, frac), isPb }
+}
+
 // ── Display ────────────────────────────────────────────────────────
 export const fmtMetricValue = (v: number | string): string => {
   const n = Number(v)

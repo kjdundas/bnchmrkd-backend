@@ -935,8 +935,33 @@ const IMPROVEMENT_CURVES = {
  * @param {string} gender      'Male' or 'Female'
  * @returns {Object|null} { early, late, steady } each with { rates, p25, p75, n }
  */
+/**
+ * Normalise however a caller spells sex into the table's own spelling.
+ *
+ * The table is keyed '100m_Female'. Callers had it as 'female' (Trajectory)
+ * and 'M' (FullAnalysis) — so BOTH missed on every lookup, every time, and
+ * because the miss returns null and the components guard with `return null`,
+ * the entire Improvement Scenarios feature has never once rendered for any
+ * athlete in either app. Normalising here rather than at each call site means
+ * a third caller can't reintroduce it with a fourth spelling.
+ */
+function normaliseGender(gender) {
+  const g = String(gender || '').trim().toLowerCase();
+  if (g === 'f' || g === 'female' || g === 'w' || g === 'women') return 'Female';
+  return 'Male';
+}
+
+/** Disciplines we hold curves for, as the table spells them. */
+export function curveDisciplines() {
+  return [...new Set(Object.keys(IMPROVEMENT_CURVES).map((k) => k.replace(/_(Male|Female)$/, '')))];
+}
+
+export function hasImprovementCurves(discipline, gender) {
+  return getImprovementCurves(discipline, gender) != null;
+}
+
 export function getImprovementCurves(discipline, gender) {
-  const key = `${discipline}_${gender}`;
+  const key = `${discipline}_${normaliseGender(gender)}`;
   return IMPROVEMENT_CURVES[key] || null;
 }
 

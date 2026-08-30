@@ -90,9 +90,59 @@ const CALIBRATION = {
   'Javelin Throw_F':{ mean: 63.0, std: 3.00, rocOptimal: 66.5, rocS90: 63.0, rocS80: 64.5, rocS70: 66.5, higher: true },
 }
 
+// ── Calibration lookup ─────────────────────────────────────────────────
+// The CALIBRATION table stores its hurdles rows compactly ('110mH_M'), but a
+// discipline arrives from the database however the athlete typed or picked it
+// ('110m Hurdles', '110M HURDLES', '100m ' with a trailing space). Without
+// this normaliser every long-form hurdles name missed the table and fell
+// through to the 100m fallback below.
+const CAL_ALIASES = {
+  '100m hurdles': '100mH', '100mh': '100mH', '100 mh': '100mH',
+  '110m hurdles': '110mH', '110mh': '110mH', '110 mh': '110mH',
+  '400m hurdles': '400mH', '400mh': '400mH', '400 mh': '400mH',
+  '3000m steeplechase': '3000m Steeplechase',
+  '3000m sc': '3000m Steeplechase', 'steeplechase': '3000m Steeplechase',
+}
+
+/** Canonical CALIBRATION key for a discipline as stored, or null. */
+export function calibrationKey(discipline, sex = 'M') {
+  if (!discipline) return null
+  const raw = String(discipline).trim()
+  const canonical = CAL_ALIASES[raw.toLowerCase()] || raw
+  const key = `${canonical}_${sex}`
+  return CALIBRATION[key] ? key : null
+}
+
+/**
+ * Whether we hold real reference numbers for this event.
+ *
+ * Callers MUST check this before presenting anything derived from the
+ * calibration as fact. The table has no rows for 60m, 75m, or 3000m flat,
+ * and only one sex for some hurdles events.
+ */
+export function isCalibrated(discipline, sex = 'M') {
+  return calibrationKey(discipline, sex) != null
+}
+
+/**
+ * Reference numbers for an event.
+ *
+ * This used to end `|| CALIBRATION['100m_' + sex]` with nothing marking the
+ * substitution, so an uncalibrated event was handed the 100m row and every
+ * downstream number was computed against sprint times — silently. That is
+ * what showed a 7.43 60m as "World Record zone, 2.15s to go": it was being
+ * measured against the 9.58s 100m record.
+ *
+ * The fallback is retained so that callers reading only the SHAPE (notably
+ * `higher`, for which direction is better) don't crash — but it is now tagged
+ * `estimated: true`, and the three functions below refuse to return a number
+ * at all when it is in play. Check `isCalibrated()` before displaying
+ * anything derived from this.
+ */
 export function getCalibration(discipline, sex = 'M') {
-  const key = `${discipline}_${sex}`
-  return CALIBRATION[key] || CALIBRATION[`100m_${sex}`]
+  const key = calibrationKey(discipline, sex)
+  if (key) return CALIBRATION[key]
+  return { ...CALIBRATION[`100m_${sex}`] || CALIBRATION['100m_M'], estimated: true }
 }
 
 // ── Stats helpers ──────────────────────────────────────────────────────
@@ -113,6 +163,8 @@ export const normCdf = (z) => 0.5 * (1 + erf(z / Math.SQRT2))
 export function performancePercentile(pb, discipline, sex = 'M') {
   if (pb == null) return null
   const cal = getCalibration(discipline, sex)
+  // No real numbers for this event — say nothing rather than something wrong.
+  if (cal.estimated) return null
   const higher = !!cal.higher
   const z = (pb - cal.mean) / cal.std
   // For lower-is-better events, a negative z is better → percentile = 1 - CDF(z)
@@ -122,6 +174,7 @@ export function performancePercentile(pb, discipline, sex = 'M') {
 
 export function qualifierZones(discipline, sex = 'M') {
   const cal = getCalibration(discipline, sex)
+  if (cal.estimated) return null
   return {
     finalist: cal.rocS70,
     semifinalist: cal.rocS80,
@@ -134,6 +187,7 @@ export function qualifierZones(discipline, sex = 'M') {
 export function performanceZoneLabel(pb, discipline, sex = 'M') {
   if (pb == null) return 'No data'
   const z = qualifierZones(discipline, sex)
+  if (!z) return null
   const better = (a, b) => z.higher ? a >= b : a <= b
   if (better(pb, z.finalist))      return 'Finalist zone'
   if (better(pb, z.semifinalist))  return 'Semifinalist zone'
