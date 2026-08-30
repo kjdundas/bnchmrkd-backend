@@ -2,7 +2,7 @@
 // HOME SCREEN — The athlete's dashboard.
 // Home is the DAILY loop and nothing else: am I okay today, and what was my
 // last mark. It ends after ~2 screens on purpose.
-//   coach requests → MetricRail → CheckInCard → PerformanceHero →
+//   coach requests → MetricRail → CheckInCard → PerformanceHero →   (rings first)
 //   discipline switcher → race trend → since-last-visit
 //
 // Exploration lives on Trajectory (per-discipline analysis) and physical
@@ -12,7 +12,7 @@
 // If a user logs sprint_100m = 11.23s, that populates the hero as a "100m" PB.
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import {
   View,
   Text,
@@ -20,23 +20,18 @@ import {
   RefreshControl,
   Animated,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, rhythm } from '../lib/theme'
+import { colors, spacing, onImage } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom } from '../lib/supabase'
-import {
-  AlmanacCard,
-  MonoKicker,
-  EmptyState, Tappable, Stagger, SectionLabel} from '../components/ui'
+import { AlmanacCard, MonoKicker, EmptyState, Stagger, SectionLabel } from '../components/ui'
 import {
   RivalCard,
   WhereYouStand,
-  AthleteDNALadder,
   ScienceSpotlight,
   SinceLastVisit,
   WeeklyRecap,
@@ -45,9 +40,21 @@ import {
 import { XPBar, StreakChip as GamStreakChip } from '../components/GamificationUI'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 import AppHeader from '../components/AppHeader'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import CheckInCard from '../components/CheckInCard'
-import { MetricRail, PerformanceHero, RaceTrendCard, type HomeView } from '../components/OuraSections'
-import { isThrowsDiscipline, LOWER_IS_BETTER } from '../lib/metricSemantics'
+import DnaStrip from '../components/DnaCard'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import { PerformanceHero, RaceTrendCard, MetricRail, type HomeView, type TierBand } from '../components/OuraSections'
+import { isThrowsDiscipline, LOWER_IS_BETTER, groupMetrics } from '../lib/metricSemantics'
+import { countsForAnalysis } from '../lib/resultSemantics'
+import TodayCard from '../components/TodayCard'
+import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
+import { fetchEvents } from '../lib/events'
+import IndicatorPicker from '../components/IndicatorPicker'
+import { loadIndicators, saveIndicators } from '../lib/indicators'
+import { getTier } from '../lib/performanceTiers'
+import { getAgeGroup } from '../lib/performanceLevels'
+import { ageFromDob } from '../lib/age'
 import { calculateStreak, type UserStats } from '../lib/gamification'
 import { loadProgress } from '../lib/progress'
 import {
@@ -145,7 +152,19 @@ export default function HomeScreen() {
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null)
   const [persistedXP, setPersistedXP] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  // Which rings the athlete has chosen for the rail, and the picker that
+  // edits them. Empty means automatic — see src/lib/indicators.ts.
+  const [indicators, setIndicators] = useState<string[]>([])
+  const [pickerFor, setPickerFor] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  // Just enough to answer "what am I doing today" — the schedule tab owns the
+  // full picture; this is a window onto the same model.
+  const [todayPrograms, setTodayPrograms] = useState<any[]>([])
+  const [todayEvents, setTodayEvents] = useState<any[]>([])
+  const [todayLogs, setTodayLogs] = useState<any[]>([])
   const [fadeAnim] = useState(new Animated.Value(0))
+  // Drives the hero's blur/parallax. Native-driven, so scrolling stays smooth.
+  const scrollY = useRef(new Animated.Value(0)).current
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -228,6 +247,65 @@ export default function HomeScreen() {
     })
     return () => { cancelled = true }
   }, [user, metrics.length])
+
+  // The saved indicator order. Read once per athlete; the rail falls back to
+  // its automatic order while this is in flight, so a slow read never leaves
+  // the rings blank.
+  useEffect(() => {
+    if (!user) { setIndicators([]); return }
+    let cancelled = false
+    loadIndicators(user.id).then((keys) => { if (!cancelled) setIndicators(keys) })
+    return () => { cancelled = true }
+  }, [user])
+
+  // Written through on every edit rather than on dismiss: the sheet can be
+  // swiped away, and a swipe is not a cancel.
+  const changeIndicators = useCallback((keys: string[]) => {
+    setIndicators(keys)
+    if (user) saveIndicators(user.id, keys)
+  }, [user])
+
+  // The picker lists what the athlete has actually logged, in the same
+  // automatic order the rail would use.
+  const metricGroups = useMemo(() => groupMetrics(metrics), [metrics])
+
+  // ── Today ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    const week = mondayOf(todayDay())
+    Promise.all([
+      selectFrom('programs', {
+        filter: `athlete_user_id=eq.${user.id}&status=eq.active`, order: 'created_at.desc',
+      }).catch(() => []),
+      fetchEvents(user.id, todayDay(), todayDay()).catch(() => []),
+      selectFrom('program_session_logs', {
+        filter: `athlete_id=eq.${user.id}&week_start=eq.${week}`, limit: '200',
+      }).catch(() => []),
+    ]).then(([p, e, l]) => {
+      if (cancelled) return
+      setTodayPrograms(Array.isArray(p) ? p : [])
+      setTodayEvents(Array.isArray(e) ? e : [])
+      setTodayLogs(Array.isArray(l) ? l : [])
+    })
+    return () => { cancelled = true }
+  }, [user])
+
+  const todayCell = useMemo(() => {
+    const week = buildWeek({
+      weekStart: mondayOf(todayDay()),
+      programs: todayPrograms, sessionLogs: todayLogs, events: todayEvents,
+    })
+    return week.days.find((d) => d.isToday) || null
+  }, [todayPrograms, todayLogs, todayEvents])
+
+  const todayBlock = useMemo(() => {
+    for (const p of todayPrograms) {
+      const b = blockWeekFor(p, mondayOf(todayDay()))
+      if (b) return b
+    }
+    return null
+  }, [todayPrograms])
 
   // ── XP + Gamification stats ──
   const gamStats = useMemo((): UserStats => {
@@ -314,8 +392,12 @@ export default function HomeScreen() {
     const want = (perfDiscipline || '').trim().toLowerCase()
     return performances
       .filter((p: any) => !want || (p.discipline || '').trim().toLowerCase() === want)
+      // A DNF, a DQ'd time and a wind-assisted mark all reach this screen and
+      // none of them may set the PB the gauge is anchored on or bend the
+      // trend line. Number.isFinite alone does not catch the last two.
+      .filter((p: any) => countsForAnalysis(p, p.discipline))
       .map((p: any) => ({
-        value: parseFloat(p.mark || p.result),
+        value: parseFloat(p.mark),
         date: p.competition_date || p.created_at,
         competition: p.competition_name || null,
       }))
@@ -323,6 +405,7 @@ export default function HomeScreen() {
   }, [performances, perfDiscipline])
 
   const sex = profile?.sex || 'M'
+  const age = ageFromDob(profile?.dob)
   // PB direction depends on the event: throws are higher-is-better, track lower.
   const isThrows = isThrowsDiscipline(perfDiscipline)
   const perfPb = perfRaces.length > 0
@@ -376,28 +459,58 @@ export default function HomeScreen() {
       .map((l) => parseFloat(l.value))
   }
 
+  // ── The tier band the gauge runs between ─────────────────────────
+  // Both ends come from the tier table for this event, sex and age group, so
+  // the arc means the same thing week to week. Null when we hold no tiers for
+  // the event — the hero then falls back to the range strip, which builds an
+  // axis from the athlete's own marks and says so.
+  const tierBand = useMemo<TierBand | null>(() => {
+    if (!discipline || competitionPb == null) return null
+    const ageGroup = age ? getAgeGroup(age) : 'Senior'
+    const t: any = getTier(discipline, sex, ageGroup, competitionPb)
+    if (!t || t.currentCut == null) return null
+    return {
+      currentCut: t.currentCut,
+      nextCut: t.nextCut,
+      tierName: t.tierName,
+      nextTierName: t.nextTierName,
+      color: t.color,
+      atTop: t.nextCut == null,
+      floorIsSynthetic: !!t.floorIsSynthetic,
+    }
+  }, [discipline, competitionPb, sex, age])
+
   // Greeting
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const firstName = profile?.full_name?.split(' ')[0] || 'Athlete'
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]} edges={['top', 'left', 'right']}>
+    // The photograph is the screen. It sits BEHIND the scroll view rather than
+    // inside it, so content slides over the image instead of dragging it along.
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop scrollY={scrollY} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       {/* Persistent top bar — identity + the way into Profile, as on web. */}
-      <AppHeader />
+      <AppHeader onImage />
       <Animated.ScrollView
-        style={[styles.scroll, { opacity: fadeAnim }]}
+        style={[styles.scroll, { opacity: fadeAnim, backgroundColor: 'transparent' }]}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent[500]} />
         }
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
       >
         {/* ── Greeting line (identity moved to AppHeader) ── */}
         <View style={styles.greetingSection}>
           <View style={styles.greetingTopRow}>
             <View style={{ flex: 1 }}>
-              <MonoKicker>{greeting + ', ' + firstName}</MonoKicker>
+              <MonoKicker color="rgba(255,255,255,0.62)">{greeting + ', ' + firstName}</MonoKicker>
             </View>
             {streak > 0 && <GamStreakChip streak={streak} />}
           </View>
@@ -410,57 +523,61 @@ export default function HomeScreen() {
 
         {/* ══ Oura-style top: rail → check-in → hero → trend cards ══
             Order mirrors the web HomeView so both apps read the same. */}
-        <Stagger index={0}><MetricRail metrics={metrics} /></Stagger>
-
-        <Stagger index={1}><CheckInCard athleteId={user?.id} /></Stagger>
-
-        <Stagger index={2}><PerformanceHero view={homeView} /></Stagger>
-
-        {/* ── Discipline switcher — sits directly under the hero result so
-            switching event is right where you're reading the mark. Only
-            renders when there's more than one event to switch between. ── */}
-        {availableDisciplines.length > 1 && (
-          <Stagger index={3}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              gap: 8,
-              paddingHorizontal: spacing.lg,
-              // flexGrow + center keeps a short row centred under the hero,
-              // while still scrolling once there are too many to fit.
-              flexGrow: 1,
-              justifyContent: 'center',
-            }}
-            style={{ marginHorizontal: -spacing.lg, marginTop: spacing.lg, marginBottom: rhythm.section }}
-          >
-            {availableDisciplines.map((d) => {
-              const on = (perfDiscipline || '').toLowerCase() === d.toLowerCase()
-              return (
-                <Tappable
-                  key={d}
-                  onPress={() => setActiveDiscipline(d)}
-                  accessibilityLabel={`Show ${d} results${on ? ', currently selected' : ''}`}
-                  style={{
-                    paddingHorizontal: 20, minHeight: 44, justifyContent: 'center',
-                    borderRadius: 999,
-                    backgroundColor: on ? c.accent[500] : c.glass.bg,
-                    borderWidth: 1, borderColor: on ? c.accent[500] : c.glass.border,
-                  }}
-                >
-                  <Text style={{
-                    fontSize: 14, fontWeight: '700', letterSpacing: 0.3,
-                    color: on ? '#FFFFFF' : c.text.secondary,
-                  }}>{d}</Text>
-                </Tappable>
-              )
-            })}
-          </ScrollView>
+        {/* Rings first, in the sky. They were nested inside PerformanceHero,
+            which had two problems: they sat below the check-in bar, and they
+            vanished entirely for any athlete with no race result — the hero
+            returns null without one, taking the day's readings with it. They
+            are their own block now. */}
+        {!!metrics.length && (
+          <Stagger index={0}>
+            <MetricRail
+              metrics={metrics}
+              onDarkSurface
+              withLightPool
+              order={indicators}
+              discipline={perfDiscipline || activeDiscipline || storedDiscipline}
+              onCustomise={(key) => { setPickerFor(key); setPickerOpen(true) }}
+            />
           </Stagger>
         )}
 
+        {/* What is actually happening today, before any of the retrospective
+            material below it. */}
+        <Stagger index={1}>
+          <TodayCard
+            day={todayCell}
+            block={todayBlock}
+            onOpen={() => navigation.navigate('Programs' as never)}
+          />
+        </Stagger>
+
+        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage /></Stagger>
+
+        <Stagger index={2}>
+          <PerformanceHero
+            view={homeView}
+            disciplines={availableDisciplines}
+            onSelectDiscipline={setActiveDiscipline}
+            scrollY={scrollY}
+            band={tierBand}
+          />
+        </Stagger>
+
         <Stagger index={4}>
-          <RaceTrendCard view={homeView} onLog={() => navigation.navigate('Log' as never)} />
+          <RaceTrendCard view={homeView} onLog={() => navigation.navigate('Log' as never)} onImage />
+        </Stagger>
+
+        {/* Athlete DNA — compact by design. One tap opens the full ladder and
+            the tests behind it in a sheet, which keeps the daily screen short
+            without burying the feature. */}
+        <Stagger index={5}>
+          <DnaStrip
+            metrics={metrics}
+            discipline={discipline}
+            dob={profile?.dob}
+            onLog={() => navigation.navigate('Log' as never)}
+            onImage
+          />
         </Stagger>
 
         {/* ── Since you were last here ──────────────────────────────
@@ -482,14 +599,26 @@ export default function HomeScreen() {
               Weekly recap,
               Daily insight   → folded into Since-last-visit
             ──────────────────────────────────────────────────────────── */}
-        <Stagger index={5}>
-          <SectionLabel>Since you were last here</SectionLabel>
-          <SinceLastVisit metrics={metrics} performances={performances} />
+        <Stagger index={6}>
+          <SectionLabel color={onImage.dim}>Since you were last here</SectionLabel>
+          <SinceLastVisit metrics={metrics} performances={performances} onImage />
         </Stagger>
 
-        <View style={{ height: 24 }} />
+        {/* The tab bar floats over the content now, so the feed has to end
+            above it rather than behind it. */}
+        <View style={{ height: TAB_BAR_CLEARANCE }} />
       </Animated.ScrollView>
-    </SafeAreaView>
+
+      <IndicatorPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        groups={metricGroups}
+        chosen={indicators}
+        onChange={changeIndicators}
+        focusKey={pickerFor}
+      />
+      </SafeAreaView>
+    </View>
   )
 }
 

@@ -17,7 +17,11 @@ import {
   Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+// Rendered only by Home and Log, both of which run on the dark ground. This
+// file was still on the static LIGHT palette — the swap repaints every
+// reference below in one line, and is safe precisely because there is no
+// light-surface caller to preserve.
+import { onImageColors as colors, spacing, radius } from '../lib/theme'
 import {
   buildDnaProfile,
   scoreToTier,
@@ -584,7 +588,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(249,115,22,0.12)',
+    backgroundColor: 'rgba(139,131,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },

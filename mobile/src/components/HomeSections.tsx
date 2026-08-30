@@ -15,8 +15,9 @@ import {
 } from 'react-native'
 import Svg, { Path, Defs, LinearGradient as SvgGrad, Stop, Circle, Line } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
-import { AlmanacCard, HeroCard, MonoKicker, TierBadge, StreakChip } from './ui'
+import { colors, spacing, radius, onImage, onDark } from '../lib/theme'
+import { useTheme } from '../contexts/ThemeContext'
+import { AlmanacCard, HeroCard, MonoKicker, TierBadge, StreakChip, GlassPanel } from './ui'
 import {
   performancePercentile,
   performanceZoneLabel,
@@ -33,16 +34,34 @@ import {
   AXIS_INFO,
   disciplinePriority,
 } from '../lib/disciplineScience'
-import { findRival, ageFromDob } from '../lib/historicalRivals'
+import { findRival } from '../lib/historicalRivals'
+// Not historicalRivals' own ageFromDob: that file is synced verbatim from the
+// web frontend, so mobile points its callers at the shared helper instead of
+// forking the sync.
+import { ageFromDob } from '../lib/age'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const ORANGE = colors.orange[500]
 const ORANGE_LITE = colors.orange[400]
 
 // ── Format helpers ─────────────────────────────────────────────────────
-const fmtMark = (v: number | null | undefined, higher: boolean) => {
+/**
+ * A mark, formatted the way the event is actually read.
+ *
+ * This used to be `toFixed(2) + 's'` unconditionally, so an 800m pacer's
+ * 1:44.50 printed as "104.50s" — a number no athlete has ever said out loud.
+ */
+const fmtMark = (v: number | null | undefined, higher: boolean, discipline?: string | null) => {
   if (v == null || !Number.isFinite(v)) return '—'
-  return higher ? `${Number(v).toFixed(2)}m` : `${Number(v).toFixed(2)}s`
+  const n = Number(v)
+  if (higher) return `${n.toFixed(2)}m`
+  // Anything from 800m up is quoted in minutes and seconds.
+  if (n >= 60) {
+    const min = Math.floor(n / 60)
+    const sec = n % 60
+    return `${min}:${sec.toFixed(2).padStart(5, '0')}`
+  }
+  return `${n.toFixed(2)}s`
 }
 
 const relTime = (date: Date | null) => {
@@ -246,6 +265,7 @@ interface RivalCardProps {
 }
 
 export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
+  const { colors: c } = useTheme()
   const cal = discipline ? getCalibration(discipline, sex) : null
   const higher = !!cal?.higher
   const athleteAge = useMemo(() => (dob ? ageFromDob(dob) : null), [dob])
@@ -255,6 +275,11 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
   )
 
   if (!rival || pb == null) return null
+
+  // findRival falls back to `bucket.M` when an event has no women's pool, so a
+  // female athlete could be silently benchmarked against men with nothing on
+  // screen saying so. Say so.
+  const crossSex = sex === 'F' && (rival as any).poolSex === 'M'
 
   const unit = higher ? 'm' : 's'
   const diff = Math.abs(rival.diff)
@@ -269,76 +294,81 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
       ? `at age ${rival.age}`
       : ''
 
-  return (
-    <View style={s.rivalCard}>
-      {/* Glow orbs */}
-      <View style={[s.rivalOrb, { top: -40, left: -40, backgroundColor: colors.purple }]} />
-      <View style={[s.rivalOrb, { bottom: -40, right: -40, backgroundColor: ORANGE }]} />
+  const youPct = barPct(pb, rival.mark, higher)
+  const themPct = barPct(rival.mark, rival.mark, higher)
+  const lo = Math.min(youPct, themPct)
+  const span = Math.abs(youPct - themPct)
 
-      {/* Header */}
+  return (
+    // Was a bespoke purple card with two 120pt blurred "glow orbs" bleeding
+    // out of the corners, white text on a 6%-purple fill. On the light paper
+    // it was unreadable; on the dark ground the orbs were just smudges. It is
+    // the same glass as every other block now, and the accent lives in the
+    // type rather than in decoration behind it.
+    <GlassPanel tone="deep" intensity={24} radius={20} style={s.rivalCard}>
       <View style={s.rivalHeader}>
         <View style={{ flex: 1 }}>
-          <MonoKicker color="#c4b5fd">YOUR PACER</MonoKicker>
-          <Text style={s.rivalName}>{rival.name}</Text>
-          {rival.note && <Text style={s.rivalNote}>{rival.note}</Text>}
+          <MonoKicker color={c.text.muted}>Your pacer</MonoKicker>
+          <Text style={[s.rivalName, { color: c.text.primary }]}>{rival.name}</Text>
+          {!!rival.note && (
+            <Text style={[s.rivalNote, { color: c.text.dimmed }]}>{rival.note}</Text>
+          )}
         </View>
-        <Text style={s.rivalCountry}>{rival.country}</Text>
+        <Text style={[s.rivalCountry, { color: c.text.dimmed }]}>{rival.country}</Text>
       </View>
 
-      {/* Description */}
       <View style={s.rivalBody}>
-        <Text style={s.rivalDesc}>
-          {rival.name.split(' ').slice(-1)[0]}'s breakthrough at age{' '}
-          <Text style={s.rivalBold}>{rival.age}</Text>:{' '}
-          <Text style={s.rivalBold}>{fmtMark(rival.mark, higher)}</Text>.
+        <Text style={[s.rivalDesc, { color: c.text.secondary }]}>
+          {rival.name.split(' ').slice(-1)[0]}'s breakthrough{ageLabel ? ` ${ageLabel}` : ''}:{' '}
+          <Text style={[s.rivalBold, { color: c.text.primary }]}>
+            {fmtMark(rival.mark, higher, discipline)}
+          </Text>.
         </Text>
-        <Text
-          style={[
-            s.rivalDiff,
-            { color: rival.ahead ? colors.green : colors.red },
-          ]}
-        >
-          Your PB is {diff.toFixed(2)}
-          {unit}{' '}
+        <Text style={[s.rivalDiff, { color: rival.ahead ? c.green : c.amber }]}>
+          Your PB is {diff.toFixed(2)}{unit}{' '}
           {rival.ahead
-            ? higher
-              ? 'beyond'
-              : 'faster than'
-            : higher
-            ? 'short of'
-            : 'off'}{' '}
+            ? higher ? 'beyond' : 'faster than'
+            : higher ? 'short of' : 'off'}{' '}
           that benchmark
         </Text>
       </View>
 
-      {/* Comparison bar */}
       <View style={s.rivalBarWrap}>
-        <View style={s.rivalBarTrack}>
-          {/* Connector */}
+        <View style={[s.rivalBarTrack, { backgroundColor: 'rgba(255,255,255,0.10)' }]}>
           <View
             style={[
               s.rivalBarFill,
               {
-                left: `${Math.min(barPct(pb, rival.mark, higher), barPct(rival.mark, rival.mark, higher))}%` as any,
-                width: `${Math.abs(barPct(pb, rival.mark, higher) - barPct(rival.mark, rival.mark, higher))}%` as any,
-                backgroundColor: rival.ahead ? colors.green : colors.red,
+                left: `${lo}%` as any,
+                width: `${span}%` as any,
+                backgroundColor: rival.ahead ? c.green : c.amber,
               },
             ]}
           />
         </View>
-        {/* Labels */}
         <View style={s.rivalBarLabels}>
           <View>
-            <Text style={s.rivalBarTag}>YOU</Text>
-            <Text style={s.rivalBarVal}>{fmtMark(pb, higher)}</Text>
+            <Text style={[s.rivalBarTag, { color: c.text.muted }]}>YOU</Text>
+            <Text style={[s.rivalBarVal, { color: c.text.primary }]}>
+              {fmtMark(pb, higher, discipline)}
+            </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[s.rivalBarTag, { color: '#c4b5fd' }]}>RIVAL</Text>
-            <Text style={[s.rivalBarVal, { color: '#c4b5fd' }]}>{fmtMark(rival.mark, higher)}</Text>
+            <Text style={[s.rivalBarTag, { color: c.accent[500] }]}>PACER</Text>
+            <Text style={[s.rivalBarVal, { color: c.accent[500] }]}>
+              {fmtMark(rival.mark, higher, discipline)}
+            </Text>
           </View>
         </View>
       </View>
-    </View>
+
+      {crossSex && (
+        <Text style={[s.rivalNote, { color: c.text.muted, marginTop: 12, letterSpacing: 0 }]}>
+          We don't hold a women's pool for {discipline} yet, so this comparison is
+          against a men's mark. Read it as a shape, not a target.
+        </Text>
+      )}
+    </GlassPanel>
   )
 }
 
@@ -518,7 +548,7 @@ interface DNALadderProps {
   dob?: string | null
 }
 
-export function AthleteDNALadder({ metrics, discipline, dob }: DNALadderProps) {
+export function AthleteDNALadder({ metrics, discipline, dob, bare }: DNALadderProps & { bare?: boolean }) {
   const profile = useMemo(() => buildDnaProfile(metrics || []), [metrics])
   const age = useMemo(() => (dob ? ageFromDob(dob) : null), [dob])
   const priorityOrder = useMemo(
@@ -561,7 +591,15 @@ export function AthleteDNALadder({ metrics, discipline, dob }: DNALadderProps) {
     .map((r) => r.label)
 
   return (
-    <AlmanacCard kicker="THE PROFILE" title="Athlete DNA" accent={ORANGE}>
+    // `bare` skips the card chrome — used inside the DNA sheet, which
+    // already has its own title. Two "Athlete DNA" headings stacked was the
+    // duplication this component was pulled out to fix.
+    <AlmanacCard
+      kicker={bare ? undefined : 'THE PROFILE'}
+      title={bare ? undefined : 'Athlete DNA'}
+      accent={ORANGE}
+      level={bare ? 'ambient' : 'primary'}
+    >
       {/* Meta line */}
       <Text style={s.ladderMeta}>
         {measuredRows.length}/{rows.length} axes measured
@@ -691,16 +729,21 @@ interface ScienceSpotlightProps {
 }
 
 export function ScienceSpotlight({ discipline }: ScienceSpotlightProps) {
+  // Theme-aware, unlike its neighbours in this file: this one is rendered on
+  // Trajectory, which runs on the dark ground. The static `colors` import at
+  // the top of this module is pinned LIGHT, so `colors.text.secondary` would
+  // paint #5B5F6B — dark grey ink on a dark card.
+  const { colors: c } = useTheme()
   const card = useMemo(() => (discipline ? getDailyScienceCard(discipline) : null), [discipline])
   if (!card) return null
 
   return (
-    <AlmanacCard kicker="SCIENCE SPOTLIGHT" title={card.title || 'Training Science'} accent={colors.teal}>
-      <Text style={s.sciText}>{card.body || ''}</Text>
+    <AlmanacCard kicker="SCIENCE SPOTLIGHT" title={card.title || 'Training Science'} accent={c.teal}>
+      <Text style={[s.sciText, { color: c.text.secondary }]}>{card.body || ''}</Text>
       {card.target && (
-        <View style={s.sciRec}>
-          <Ionicons name="bulb-outline" size={14} color={colors.amber} />
-          <Text style={s.sciRecText}>{card.target}</Text>
+        <View style={[s.sciRec, { borderTopColor: c.glass.divider }]}>
+          <Ionicons name="bulb-outline" size={14} color={c.amber} />
+          <Text style={[s.sciRecText, { color: c.text.secondary }]}>{card.target}</Text>
         </View>
       )}
     </AlmanacCard>
@@ -713,9 +756,11 @@ export function ScienceSpotlight({ discipline }: ScienceSpotlightProps) {
 interface SinceLastVisitProps {
   metrics: any[]
   performances: any[]
+  /** Renders on the stadium backdrop rather than on paper. */
+  onImage?: boolean
 }
 
-export function SinceLastVisit({ metrics, performances }: SinceLastVisitProps) {
+export function SinceLastVisit({ metrics, performances, onImage: over }: SinceLastVisitProps) {
   // Approximate "last visit" as 24h ago (no localStorage on mobile)
   const cutoff = Date.now() - 24 * 60 * 60 * 1000
   const recentMetrics = metrics.filter((m) => new Date(m.recorded_at).getTime() > cutoff)
@@ -733,21 +778,38 @@ export function SinceLastVisit({ metrics, performances }: SinceLastVisitProps) {
 
   if (recentMetrics.length === 0 && recentPerfs.length === 0) return null
 
-  return (
-    <View style={s.sinceCard}>
+  const inner = (
+    <>
       <View style={s.sinceDot} />
-      <Text style={s.sinceText}>
-        Since last visit · <Text style={{ color: colors.text.secondary }}>24h ago</Text>
+      <Text style={[s.sinceText, over && { color: onImage.dim }]}>
+        Since last visit · <Text style={{ color: over ? onImage.muted : colors.text.secondary }}>24h ago</Text>
       </Text>
-      <Text style={s.sinceSummary}>
+      <Text style={[s.sinceSummary, over && { color: onImage.muted }]}>
         {newPBs > 0 && (
-          <Text style={{ color: ORANGE }}>{newPBs} new PB{newPBs > 1 ? 's' : ''} · </Text>
+          <Text style={{ color: over ? onDark.accent : ORANGE }}>
+            {newPBs} new PB{newPBs > 1 ? 's' : ''} ·{' '}
+          </Text>
         )}
         {recentPerfs.length > 0 && <Text>{recentPerfs.length} result{recentPerfs.length > 1 ? 's' : ''} · </Text>}
         {recentMetrics.length} metric{recentMetrics.length > 1 ? 's' : ''}
       </Text>
-    </View>
+    </>
   )
+
+  // The paper version is a 2%-white fill on a light ground, i.e. invisible
+  // over the backdrop. On image it becomes the same glass as everything else.
+  if (over) {
+    return (
+      <GlassPanel tone="deep" intensity={20} radius={14} style={{
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        paddingVertical: 12, paddingHorizontal: 16, marginBottom: spacing.md,
+      }}>
+        {inner}
+      </GlassPanel>
+    )
+  }
+
+  return <View style={s.sinceCard}>{inner}</View>
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -900,22 +962,14 @@ const s = StyleSheet.create({
   heroFooterBold: { color: '#fff', fontWeight: '600' },
 
   // RivalCard
-  rivalCard: {
-    position: 'relative', overflow: 'hidden', borderRadius: 16,
-    borderWidth: 1, borderColor: 'rgba(167,139,250,0.25)',
-    padding: 20, marginBottom: spacing.md,
-    backgroundColor: 'rgba(124,58,237,0.06)',
-  },
-  rivalOrb: {
-    position: 'absolute', width: 120, height: 120, borderRadius: 60, opacity: 0.1,
-  },
+  rivalCard: { padding: 20, marginBottom: spacing.md },
   rivalHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  rivalName: { fontSize: 20, fontWeight: '600', color: '#fff', marginTop: 4 },
+  rivalName: { fontSize: 22, fontWeight: '700', letterSpacing: -0.4, marginTop: 4 },
   rivalNote: { fontSize: 9, letterSpacing: 1.5, color: colors.text.dimmed, textTransform: 'uppercase', marginTop: 2 },
   rivalCountry: { fontSize: 10, letterSpacing: 2, color: colors.text.dimmed, fontWeight: '600' },
   rivalBody: { marginBottom: spacing.md },
   rivalDesc: { color: colors.text.secondary, fontSize: 14, lineHeight: 20 },
-  rivalBold: { color: '#fff', fontWeight: '600' },
+  rivalBold: { fontWeight: '700' },
   rivalDiff: { fontSize: 15, fontWeight: '600', marginTop: 8 },
 
   rivalBarWrap: { marginTop: spacing.sm },
