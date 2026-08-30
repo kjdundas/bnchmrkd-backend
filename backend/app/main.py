@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="BnchMrkd API",
     description="Talent identification and performance analysis for athletics",
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
@@ -89,7 +89,7 @@ async def health_check() -> JSONResponse:
     """
     return JSONResponse(
         status_code=200,
-        content={"status": "healthy", "version": "0.2.0"},
+        content={"status": "healthy", "version": "0.3.0"},
     )
 
 
@@ -105,7 +105,7 @@ async def root() -> JSONResponse:
         status_code=200,
         content={
             "name": "BnchMrkd API",
-            "version": "0.2.0",
+            "version": "0.3.0",
             "description": "Talent identification and performance analysis for athletics",
             "documentation": "/docs",
         },
