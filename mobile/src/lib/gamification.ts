@@ -20,19 +20,20 @@ export const XP_REWARDS = {
 
 // ── LEVELS ────────────────────────────────────────────────────────────
 // XP thresholds for each level. Exponential curve, gets harder.
+// `ionicon` is what mobile renders; `icon` (emoji) is kept for the web copy.
 export const LEVELS = [
-  { level: 1,  xpRequired: 0,     title: 'Rookie',        icon: '🌱' },
-  { level: 2,  xpRequired: 100,   title: 'Trainee',       icon: '🏃' },
-  { level: 3,  xpRequired: 300,   title: 'Competitor',    icon: '⚡' },
-  { level: 4,  xpRequired: 600,   title: 'Contender',     icon: '🔥' },
-  { level: 5,  xpRequired: 1000,  title: 'Prospect',      icon: '💪' },
-  { level: 6,  xpRequired: 1600,  title: 'Varsity',       icon: '🎯' },
-  { level: 7,  xpRequired: 2500,  title: 'All-Star',      icon: '⭐' },
-  { level: 8,  xpRequired: 4000,  title: 'National',      icon: '🏅' },
-  { level: 9,  xpRequired: 6000,  title: 'Elite',         icon: '🥇' },
-  { level: 10, xpRequired: 10000, title: 'World Class',   icon: '🏆' },
-  { level: 11, xpRequired: 15000, title: 'Legend',         icon: '👑' },
-  { level: 12, xpRequired: 25000, title: 'GOAT',          icon: '🐐' },
+  { level: 1,  xpRequired: 0,     title: 'Rookie',        icon: '🌱', ionicon: 'leaf' },
+  { level: 2,  xpRequired: 100,   title: 'Trainee',       icon: '🏃', ionicon: 'walk' },
+  { level: 3,  xpRequired: 300,   title: 'Competitor',    icon: '⚡', ionicon: 'flash' },
+  { level: 4,  xpRequired: 600,   title: 'Contender',     icon: '🔥', ionicon: 'flame' },
+  { level: 5,  xpRequired: 1000,  title: 'Prospect',      icon: '💪', ionicon: 'barbell' },
+  { level: 6,  xpRequired: 1600,  title: 'Varsity',       icon: '🎯', ionicon: 'locate' },
+  { level: 7,  xpRequired: 2500,  title: 'All-Star',      icon: '⭐', ionicon: 'star' },
+  { level: 8,  xpRequired: 4000,  title: 'National',      icon: '🏅', ionicon: 'ribbon' },
+  { level: 9,  xpRequired: 6000,  title: 'Elite',         icon: '🥇', ionicon: 'medal' },
+  { level: 10, xpRequired: 10000, title: 'World Class',   icon: '🏆', ionicon: 'trophy' },
+  { level: 11, xpRequired: 15000, title: 'Legend',         icon: '👑', ionicon: 'diamond' },
+  { level: 12, xpRequired: 25000, title: 'GOAT',          icon: '🐐', ionicon: 'planet' },
 ]
 
 export function getLevelFromXP(xp: number) {

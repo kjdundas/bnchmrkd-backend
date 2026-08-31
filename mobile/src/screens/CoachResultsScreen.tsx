@@ -23,11 +23,11 @@ import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
+import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
 import { isTimeDiscipline } from '../lib/performanceLevels'
 
 const { width: SCREEN_W } = Dimensions.get('window')
-const API_BASE = 'https://web-production-295f1.up.railway.app'
 
 // ── Step Indicator ──────────────────────────────────────────────────────────
 function StepIndicator({ current }: { current: 0 | 1 | 2 }) {

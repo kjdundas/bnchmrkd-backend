@@ -18,3 +18,7 @@ python-multipart>=0.0.9
 
 # Auth (JWT verification for protected routes)
 PyJWT>=2.8.0
+# Required for ES256/RS256 — Supabase's asymmetric signing keys. PyJWT can
+# only verify symmetric HS256 without it, and fails at import time for the
+# rest, so this is not optional on any project using JWT signing keys.
+cryptography>=42.0.0

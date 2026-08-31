@@ -8,6 +8,22 @@ and health check endpoint.
 import os
 from contextlib import asynccontextmanager
 
+# ── Load backend/.env before anything reads os.environ ───────────────────
+# python-dotenv has been a declared dependency since the start, but nothing
+# ever called it — so backend/.env was only ever decoration. It went unnoticed
+# because Railway injects environment variables straight into the process, so
+# production was always fine and only local runs were broken.
+#
+# This MUST come before the route imports below: several modules read
+# os.environ at import time, and a value loaded after that is too late.
+#
+# override=False is the default and is the behaviour we want — a real
+# environment variable always beats the file, so Railway is unaffected and a
+# stale .env can never shadow production config.
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -31,7 +47,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="BnchMrkd API",
     description="Talent identification and performance analysis for athletics",
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
@@ -73,7 +89,7 @@ async def health_check() -> JSONResponse:
     """
     return JSONResponse(
         status_code=200,
-        content={"status": "healthy", "version": "0.2.0"},
+        content={"status": "healthy", "version": "0.3.0"},
     )
 
 
@@ -89,7 +105,7 @@ async def root() -> JSONResponse:
         status_code=200,
         content={
             "name": "BnchMrkd API",
-            "version": "0.2.0",
+            "version": "0.3.0",
             "description": "Talent identification and performance analysis for athletics",
             "documentation": "/docs",
         },

@@ -212,8 +212,15 @@ export function findRival(discipline, sex, athleteAge, currentPb, higher) {
   const key = norm(discipline)
   const bucket = HISTORICAL_RIVALS[key]
   if (!bucket) return null
-  // Try requested sex first, then fall back to the other if empty
-  const pool = bucket[sex] || bucket.M || bucket.F
+  // Try requested sex first, then fall back to the other if empty.
+  // The fallback is silent to the caller unless we say which pool was used —
+  // a woman with no women's pool for her event was being benchmarked against
+  // men with nothing anywhere indicating it. `poolSex` is returned so the UI
+  // can disclose it.
+  let poolSex = sex
+  let pool = bucket[sex]
+  if (!pool || pool.length === 0) { poolSex = 'M'; pool = bucket.M }
+  if (!pool || pool.length === 0) { poolSex = 'F'; pool = bucket.F }
   if (!pool || pool.length === 0) return null
 
   const scored = pool.map(r => {
@@ -233,6 +240,8 @@ export function findRival(discipline, sex, athleteAge, currentPb, higher) {
     note: rival.note,
     diff,
     ahead: diff > 0,
+    /** Which pool this rival actually came from — may differ from `sex`. */
+    poolSex,
   }
 }
 

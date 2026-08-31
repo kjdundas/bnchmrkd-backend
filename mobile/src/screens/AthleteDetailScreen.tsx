@@ -19,6 +19,7 @@ import { colors, spacing, radius } from '../lib/theme'
 import { useTheme } from '../contexts/ThemeContext'
 import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
+import { ageFromDob } from '../lib/age'
 import { isLowerBetter, performancePercentile } from '../lib/disciplineScience'
 import FullAnalysis from '../components/FullAnalysis'
 
@@ -34,10 +35,6 @@ function formatMark(value: number | null, discipline: string): string {
   return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
 }
 
-function calcAge(dob: string | null): number | null {
-  if (!dob) return null
-  return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-}
 
 export default function AthleteDetailScreen() {
   const { colors: c } = useTheme()
@@ -56,7 +53,7 @@ export default function AthleteDetailScreen() {
     )
   }
 
-  const age = calcAge(athlete.dob)
+  const age = ageFromDob(athlete.dob)
   const ageGroup = age ? getAgeGroup(age) : 'Senior'
   const genderCode = athlete.gender === 'Female' ? 'F' : 'M'
   const lower = isLowerBetter(athlete.discipline)

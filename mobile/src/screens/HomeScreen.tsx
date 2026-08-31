@@ -1,39 +1,37 @@
 // ═══════════════════════════════════════════════════════════════════════
-// HOME SCREEN — The athlete's dashboard (full feature parity with web)
-// TrajectoryHero → SinceLastVisit → WhereYouStand → RivalCard →
-// AthleteDNALadder → LimitingFactor → ScienceSpotlight →
-// RecentActivity → WeeklyRecap → DailyInsight
+// HOME SCREEN — The athlete's dashboard.
+// Home is the DAILY loop and nothing else: am I okay today, and what was my
+// last mark. It ends after ~2 screens on purpose.
+//   coach requests → MetricRail → CheckInCard → PerformanceHero →   (rings first)
+//   discipline switcher → race trend → since-last-visit
+//
+// Exploration lives on Trajectory (per-discipline analysis) and physical
+// profile on Profile. See the block comment mid-file for what moved where.
 //
 // KEY: Physical metrics (athlete_metrics) bridge to competition data.
-// If user logs sprint_100m = 11.23s, that populates the Trajectory Hero
-// as a "100m" PB, enabling WhereYouStand / RivalCard / etc.
+// If a user logs sprint_100m = 11.23s, that populates the hero as a "100m" PB.
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   RefreshControl,
   Animated,
+  ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing } from '../lib/theme'
+import { colors, spacing, onImage } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom } from '../lib/supabase'
+import { AlmanacCard, MonoKicker, EmptyState, Stagger, SectionLabel } from '../components/ui'
 import {
-  AlmanacCard,
-  MonoKicker,
-  EmptyState,
-} from '../components/ui'
-import {
-  TrajectoryHero,
   RivalCard,
   WhereYouStand,
-  AthleteDNALadder,
   ScienceSpotlight,
   SinceLastVisit,
   WeeklyRecap,
@@ -41,6 +39,22 @@ import {
 } from '../components/HomeSections'
 import { XPBar, StreakChip as GamStreakChip } from '../components/GamificationUI'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
+import AppHeader from '../components/AppHeader'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import CheckInCard from '../components/CheckInCard'
+import DnaStrip from '../components/DnaCard'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import { PerformanceHero, RaceTrendCard, MetricRail, type HomeView, type TierBand } from '../components/OuraSections'
+import { isThrowsDiscipline, LOWER_IS_BETTER, groupMetrics } from '../lib/metricSemantics'
+import { countsForAnalysis } from '../lib/resultSemantics'
+import TodayCard from '../components/TodayCard'
+import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
+import { fetchEvents } from '../lib/events'
+import IndicatorPicker from '../components/IndicatorPicker'
+import { loadIndicators, saveIndicators } from '../lib/indicators'
+import { getTier } from '../lib/performanceTiers'
+import { getAgeGroup } from '../lib/performanceLevels'
+import { ageFromDob } from '../lib/age'
 import { calculateStreak, type UserStats } from '../lib/gamification'
 import { loadProgress } from '../lib/progress'
 import {
@@ -55,12 +69,6 @@ import {
   SmartDailyInsight,
 } from '../components/IntelligenceCards'
 
-const LOWER_IS_BETTER = new Set([
-  'sprint_10m', 'sprint_20m', 'sprint_30m', 'sprint_40m', 'sprint_60m',
-  'sprint_100m', 'flying_10m', 'flying_20m', 'split_300m',
-  'resting_hr', 'rhr', 'body_fat', 'body_fat_pct',
-  'tt_1200m', 'tt_2km', 'bronco',
-])
 
 // ── Bridge: physical metric keys → competition disciplines ───────────
 // Maps metric_key from athlete_metrics to a discipline string that
@@ -137,14 +145,31 @@ export default function HomeScreen() {
   const { colors: c } = useTheme()
   const [metrics, setMetrics] = useState<any[]>([])
   const [performances, setPerformances] = useState<any[]>([])
+  // athlete_profiles.discipline — user_profiles has NO discipline column, so
+  // this row is the only place the athlete's stored event actually lives.
+  const [storedDiscipline, setStoredDiscipline] = useState<string | null>(null)
+  // Which discipline Home is currently showing (web calls this activeDiscipline).
+  const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null)
   const [persistedXP, setPersistedXP] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  // Which rings the athlete has chosen for the rail, and the picker that
+  // edits them. Empty means automatic — see src/lib/indicators.ts.
+  const [indicators, setIndicators] = useState<string[]>([])
+  const [pickerFor, setPickerFor] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  // Just enough to answer "what am I doing today" — the schedule tab owns the
+  // full picture; this is a window onto the same model.
+  const [todayPrograms, setTodayPrograms] = useState<any[]>([])
+  const [todayEvents, setTodayEvents] = useState<any[]>([])
+  const [todayLogs, setTodayLogs] = useState<any[]>([])
   const [fadeAnim] = useState(new Animated.Value(0))
+  // Drives the hero's blur/parallax. Native-driven, so scrolling stays smooth.
+  const scrollY = useRef(new Animated.Value(0)).current
 
   const loadData = useCallback(async () => {
     if (!user) return
     try {
-      const [mets, perfs] = await Promise.all([
+      const [mets, perfs, athleteRows] = await Promise.all([
         selectFrom('athlete_metrics', {
           filter: `athlete_id=eq.${user.id}`,
           order: 'recorded_at.desc',
@@ -155,9 +180,14 @@ export default function HomeScreen() {
           order: 'competition_date.desc',
           limit: '50',
         }).catch((e) => { console.warn('[Home] performances query failed:', e.message); return [] }),
+        selectFrom('athlete_profiles', { filter: `id=eq.${user.id}`, limit: '1' })
+          .catch(() => []),
       ])
       setMetrics(mets || [])
       setPerformances(perfs || [])
+      // Stored values have been seen with trailing whitespace ("100m "), which
+      // silently fails every discipline lookup — normalise on the way in.
+      setStoredDiscipline((athleteRows?.[0]?.discipline || '').trim() || null)
     } catch (e: any) {
       console.warn('[Home] Load failed:', e.message)
     }
@@ -218,6 +248,65 @@ export default function HomeScreen() {
     return () => { cancelled = true }
   }, [user, metrics.length])
 
+  // The saved indicator order. Read once per athlete; the rail falls back to
+  // its automatic order while this is in flight, so a slow read never leaves
+  // the rings blank.
+  useEffect(() => {
+    if (!user) { setIndicators([]); return }
+    let cancelled = false
+    loadIndicators(user.id).then((keys) => { if (!cancelled) setIndicators(keys) })
+    return () => { cancelled = true }
+  }, [user])
+
+  // Written through on every edit rather than on dismiss: the sheet can be
+  // swiped away, and a swipe is not a cancel.
+  const changeIndicators = useCallback((keys: string[]) => {
+    setIndicators(keys)
+    if (user) saveIndicators(user.id, keys)
+  }, [user])
+
+  // The picker lists what the athlete has actually logged, in the same
+  // automatic order the rail would use.
+  const metricGroups = useMemo(() => groupMetrics(metrics), [metrics])
+
+  // ── Today ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    const week = mondayOf(todayDay())
+    Promise.all([
+      selectFrom('programs', {
+        filter: `athlete_user_id=eq.${user.id}&status=eq.active`, order: 'created_at.desc',
+      }).catch(() => []),
+      fetchEvents(user.id, todayDay(), todayDay()).catch(() => []),
+      selectFrom('program_session_logs', {
+        filter: `athlete_id=eq.${user.id}&week_start=eq.${week}`, limit: '200',
+      }).catch(() => []),
+    ]).then(([p, e, l]) => {
+      if (cancelled) return
+      setTodayPrograms(Array.isArray(p) ? p : [])
+      setTodayEvents(Array.isArray(e) ? e : [])
+      setTodayLogs(Array.isArray(l) ? l : [])
+    })
+    return () => { cancelled = true }
+  }, [user])
+
+  const todayCell = useMemo(() => {
+    const week = buildWeek({
+      weekStart: mondayOf(todayDay()),
+      programs: todayPrograms, sessionLogs: todayLogs, events: todayEvents,
+    })
+    return week.days.find((d) => d.isToday) || null
+  }, [todayPrograms, todayLogs, todayEvents])
+
+  const todayBlock = useMemo(() => {
+    for (const p of todayPrograms) {
+      const b = blockWeekFor(p, mondayOf(todayDay()))
+      if (b) return b
+    }
+    return null
+  }, [todayPrograms])
+
   // ── XP + Gamification stats ──
   const gamStats = useMemo((): UserStats => {
     const uniqueKeys = new Set(metrics.map((m) => m.metric_key))
@@ -276,15 +365,54 @@ export default function HomeScreen() {
 
   // ── Competition data (with metric bridge fallback) ──────────────────
   // Priority: 1) actual performances table, 2) physical metrics that map to disciplines
-  const perfRaces = performances.map((p: any) => ({
-    value: parseFloat(p.mark || p.result),
-    date: p.competition_date || p.created_at,
-  })).filter((r) => Number.isFinite(r.value))
+  // Every discipline this athlete has actually competed in, most recent first.
+  // `performances` is ordered competition_date.desc, so first-seen == latest.
+  const availableDisciplines = useMemo(() => {
+    const seen: string[] = []
+    for (const p of performances) {
+      const d = (p.discipline || '').trim()
+      if (d && !seen.some((x) => x.toLowerCase() === d.toLowerCase())) seen.push(d)
+    }
+    return seen
+  }, [performances])
 
-  const perfDiscipline = profile?.primary_discipline || performances[0]?.discipline || null
+  // The discipline Home is showing: an explicit pick wins, else the athlete's
+  // stored event (if they have results in it), else their most recent event.
+  const perfDiscipline = useMemo(() => {
+    if (activeDiscipline) return activeDiscipline
+    const stored = storedDiscipline
+    if (stored && availableDisciplines.some((d) => d.toLowerCase() === stored.toLowerCase())) return stored
+    return availableDisciplines[0] || stored || null
+  }, [activeDiscipline, storedDiscipline, availableDisciplines])
+
+  // CRITICAL: filter to the active discipline. Without this a 60m result and a
+  // 100m result land on the same trend line and gauge, which makes a 60m PB
+  // look like a 3-second improvement on a 100m.
+  const perfRaces = useMemo(() => {
+    const want = (perfDiscipline || '').trim().toLowerCase()
+    return performances
+      .filter((p: any) => !want || (p.discipline || '').trim().toLowerCase() === want)
+      // A DNF, a DQ'd time and a wind-assisted mark all reach this screen and
+      // none of them may set the PB the gauge is anchored on or bend the
+      // trend line. Number.isFinite alone does not catch the last two.
+      .filter((p: any) => countsForAnalysis(p, p.discipline))
+      .map((p: any) => ({
+        value: parseFloat(p.mark),
+        date: p.competition_date || p.created_at,
+        competition: p.competition_name || null,
+      }))
+      .filter((r) => Number.isFinite(r.value))
+  }, [performances, perfDiscipline])
+
   const sex = profile?.sex || 'M'
+  const age = ageFromDob(profile?.dob)
+  // PB direction depends on the event: throws are higher-is-better, track lower.
+  const isThrows = isThrowsDiscipline(perfDiscipline)
   const perfPb = perfRaces.length > 0
-    ? perfRaces.reduce((best, r) => (best === null ? r.value : Math.min(best, r.value)), null as number | null)
+    ? perfRaces.reduce(
+        (best, r) => (best === null ? r.value : isThrows ? Math.max(best, r.value) : Math.min(best, r.value)),
+        null as number | null,
+      )
     : null
 
   // Fallback: derive from physical metrics when no competition data
@@ -297,6 +425,25 @@ export default function HomeScreen() {
   const discipline = perfDiscipline || metricDerived.discipline
   const competitionPb = perfPb ?? metricDerived.pb
   const races = perfRaces.length > 0 ? perfRaces : metricDerived.races
+
+  // Shape the race data the way the Oura sections expect. `chartData` is
+  // chronological (oldest → newest) for the trend line; `sortedDesc` is
+  // newest-first, and its extreme anchors the gauge's "season worst" end.
+  const homeView = useMemo<HomeView>(() => {
+    const valid = (races || [])
+      .filter((r: any) => Number.isFinite(Number(r.value)) && r.date)
+      .map((r: any) => ({ value: Number(r.value), date: r.date, competition: r.competition ?? null }))
+    const asc = [...valid].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const desc = [...asc].reverse()
+    return {
+      discipline,
+      pb: competitionPb,
+      isThrows: isThrowsDiscipline(discipline),
+      lastRace: desc[0] || null,
+      sortedDesc: desc,
+      chartData: asc.map((r) => ({ date: r.date, value: r.value })),
+    }
+  }, [races, discipline, competitionPb])
 
   // Sparkline data per metric (last 7 values, chronological)
   const sparklineData: Record<string, number[]> = {}
@@ -312,218 +459,166 @@ export default function HomeScreen() {
       .map((l) => parseFloat(l.value))
   }
 
+  // ── The tier band the gauge runs between ─────────────────────────
+  // Both ends come from the tier table for this event, sex and age group, so
+  // the arc means the same thing week to week. Null when we hold no tiers for
+  // the event — the hero then falls back to the range strip, which builds an
+  // axis from the athlete's own marks and says so.
+  const tierBand = useMemo<TierBand | null>(() => {
+    if (!discipline || competitionPb == null) return null
+    const ageGroup = age ? getAgeGroup(age) : 'Senior'
+    const t: any = getTier(discipline, sex, ageGroup, competitionPb)
+    if (!t || t.currentCut == null) return null
+    return {
+      currentCut: t.currentCut,
+      nextCut: t.nextCut,
+      tierName: t.tierName,
+      nextTierName: t.nextTierName,
+      color: t.color,
+      atTop: t.nextCut == null,
+      floorIsSynthetic: !!t.floorIsSynthetic,
+    }
+  }, [discipline, competitionPb, sex, age])
+
   // Greeting
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const firstName = profile?.full_name?.split(' ')[0] || 'Athlete'
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    // The photograph is the screen. It sits BEHIND the scroll view rather than
+    // inside it, so content slides over the image instead of dragging it along.
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop scrollY={scrollY} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      {/* Persistent top bar — identity + the way into Profile, as on web. */}
+      <AppHeader onImage />
       <Animated.ScrollView
-        style={[styles.scroll, { opacity: fadeAnim }]}
+        style={[styles.scroll, { opacity: fadeAnim, backgroundColor: 'transparent' }]}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.orange[500]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent[500]} />
         }
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
       >
-        {/* ── Greeting + Gamification ── */}
+        {/* ── Greeting line (identity moved to AppHeader) ── */}
         <View style={styles.greetingSection}>
           <View style={styles.greetingTopRow}>
             <View style={{ flex: 1 }}>
-              <MonoKicker>{greeting}</MonoKicker>
-              <Text style={styles.greetingName}>{firstName}</Text>
-              {profile?.club && <Text style={styles.clubText}>{profile.club}</Text>}
+              <MonoKicker color="rgba(255,255,255,0.62)">{greeting + ', ' + firstName}</MonoKicker>
             </View>
             {streak > 0 && <GamStreakChip streak={streak} />}
           </View>
         </View>
-
-        {/* ── XP Progress ── */}
-        <XPBar totalXP={gamStats.totalXP} />
 
         {/* ── Pending coach requests (only renders if any) ── */}
         <View style={{ marginTop: spacing.md }}>
           <AthleteCoachLinks pendingOnly />
         </View>
 
-        {/* ════════════════════════════════════════════════════
-            NEXT MILESTONE — nearest meaningful target
-            ════════════════════════════════════════════════ */}
-        <NextMilestone
-          dnaProfile={dnaProfile}
-          discipline={discipline}
-          pb={competitionPb}
-          sex={sex}
-        />
-
-        {/* ════════════════════════════════════════════════════
-            0. TRAJECTORY HERO — PB | SB | Last Race
-            ════════════════════════════════════════════════ */}
-        <TrajectoryHero
-          races={races}
-          pb={competitionPb}
-          discipline={discipline}
-          sex={sex}
-          streak={streak}
-        />
-
-        {/* ════════════════════════════════════════════════════
-            SINCE LAST VISIT — activity banner
-            ════════════════════════════════════════════════ */}
-        <SinceLastVisit metrics={metrics} performances={performances} />
-
-        {/* ════════════════════════════════════════════════════
-            1. WHERE YOU STAND — tier continuum
-            ════════════════════════════════════════════════ */}
-        <WhereYouStand pb={competitionPb} discipline={discipline} sex={sex} />
-
-        {/* ════════════════════════════════════════════════════
-            0b. RIVAL CARD — pacer comparison
-            ════════════════════════════════════════════════ */}
-        <RivalCard
-          pb={competitionPb}
-          discipline={discipline}
-          sex={sex}
-          dob={profile?.dob || null}
-        />
-
-        {/* ════════════════════════════════════════════════════
-            2. DNA LADDER — sorted tiered bars
-            ════════════════════════════════════════════════ */}
-        <AthleteDNALadder
-          metrics={metricsForDna}
-          discipline={discipline}
-          dob={profile?.dob || null}
-        />
-
-        {/* ════════════════════════════════════════════════════
-            LIMITING FACTOR
-            ════════════════════════════════════════════════ */}
-        {limitingFactor && (
-          <AlmanacCard kicker="FOCUS AREA" title="Limiting Factor" accent={colors.amber}>
-            <View style={styles.limitingRow}>
-              <View style={styles.limitingIconWrap}>
-                <Ionicons name="warning" size={20} color={colors.amber} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.limitingAxis}>{limitingFactor.axisLabel}</Text>
-                <Text style={styles.limitingScore}>
-                  Score: <Text style={{ color: colors.amber, fontWeight: '700' }}>{limitingFactor.score}</Text>
-                </Text>
-                <Text style={styles.limitingDesc}>
-                  {limitingFactor.estImpactSec
-                    ? `Improving this axis could save ~${limitingFactor.estImpactSec.toFixed(2)}s in sprints.`
-                    : 'Your weakest axis — focus training here for the biggest gains.'}
-                </Text>
-              </View>
-            </View>
-          </AlmanacCard>
+        {/* ══ Oura-style top: rail → check-in → hero → trend cards ══
+            Order mirrors the web HomeView so both apps read the same. */}
+        {/* Rings first, in the sky. They were nested inside PerformanceHero,
+            which had two problems: they sat below the check-in bar, and they
+            vanished entirely for any athlete with no race result — the hero
+            returns null without one, taking the day's readings with it. They
+            are their own block now. */}
+        {!!metrics.length && (
+          <Stagger index={0}>
+            <MetricRail
+              metrics={metrics}
+              onDarkSurface
+              withLightPool
+              order={indicators}
+              discipline={perfDiscipline || activeDiscipline || storedDiscipline}
+              onCustomise={(key) => { setPickerFor(key); setPickerOpen(true) }}
+            />
+          </Stagger>
         )}
 
-        {/* ════════════════════════════════════════════════════
-            WHAT-IF SCENARIO EXPLORER
-            ════════════════════════════════════════════════ */}
-        <WhatIfExplorer
-          dnaProfile={dnaProfile}
-          discipline={discipline}
-          pb={competitionPb}
-          sex={sex}
-          metrics={metrics}
-        />
-
-        {/* ════════════════════════════════════════════════════
-            SCIENCE SPOTLIGHT
-            ════════════════════════════════════════════════ */}
-        <ScienceSpotlight discipline={discipline} />
-
-        {/* ════════════════════════════════════════════════════
-            RECENT ACTIVITY — with sparklines
-            ════════════════════════════════════════════════ */}
-        <AlmanacCard
-          kicker="TRAINING LOG"
-          title="Recent Activity"
-          number={recentLogs.length > 0 ? `${recentLogs.length}` : undefined}
-          accent={colors.teal}
-        >
-          {recentLogs.length === 0 ? (
-            <EmptyState
-              icon="📊"
-              title="No logs yet"
-              subtitle="Tap the Log tab to record your first metric and start building your trajectory."
-            />
-          ) : (
-            recentLogs.map((log, i) => {
-              const label = log.metric_key?.replace(/_/g, ' ') || 'Unknown'
-              const val = parseFloat(log.value)
-              const isPB = pbMap[log.metric_key]?.value === val
-              const isLast = i === recentLogs.length - 1
-              const sparkData = sparklineData[log.metric_key]
-              return (
-                <View
-                  key={`${log.metric_key}_${i}`}
-                  style={[styles.activityRow, isLast && { borderBottomWidth: 0 }]}
-                >
-                  <View style={styles.activityDot}>
-                    <View
-                      style={[
-                        styles.dotInner,
-                        isPB && { backgroundColor: colors.green, shadowColor: colors.green, shadowOpacity: 0.6, shadowRadius: 4 },
-                      ]}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.activityTitleRow}>
-                      <Text style={styles.activityLabel}>{label}</Text>
-                      {isPB && (
-                        <View style={styles.pbBadge}>
-                          <Text style={styles.pbText}>PB</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.activityDate}>
-                      {formatDate(log.recorded_at || log.created_at)}
-                    </Text>
-                  </View>
-                  {/* Sparkline */}
-                  {sparkData && sparkData.length >= 2 && (
-                    <View style={{ marginRight: 8 }}>
-                      <Sparkline data={sparkData} color={isPB ? colors.green : colors.orange[400]} width={48} height={20} />
-                    </View>
-                  )}
-                  <Text style={[styles.activityValue, isPB && { color: colors.green }]}>
-                    {val}
-                    <Text style={styles.activityUnit}> {log.unit || ''}</Text>
-                  </Text>
-                </View>
-              )
-            })
-          )}
-        </AlmanacCard>
-
-        {/* ════════════════════════════════════════════════════
-            WEEKLY RECAP
-            ════════════════════════════════════════════════ */}
-        <WeeklyRecap metrics={metrics} overallTier={overallTier} />
-
-        {/* ════════════════════════════════════════════════════
-            DAILY INSIGHT — Smart, data-driven
-            ════════════════════════════════════════════════ */}
-        <AlmanacCard kicker="DAILY INSIGHT" accent={colors.purple}>
-          <SmartDailyInsight
-            dnaProfile={dnaProfile}
-            discipline={discipline}
-            pb={competitionPb}
-            sex={sex}
-            totalLogs={totalLogs}
-            streak={streak}
-            metrics={metrics}
+        {/* What is actually happening today, before any of the retrospective
+            material below it. */}
+        <Stagger index={1}>
+          <TodayCard
+            day={todayCell}
+            block={todayBlock}
+            onOpen={() => navigation.navigate('Programs' as never)}
           />
-        </AlmanacCard>
+        </Stagger>
 
-        <View style={{ height: 24 }} />
+        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage /></Stagger>
+
+        <Stagger index={2}>
+          <PerformanceHero
+            view={homeView}
+            disciplines={availableDisciplines}
+            onSelectDiscipline={setActiveDiscipline}
+            scrollY={scrollY}
+            band={tierBand}
+          />
+        </Stagger>
+
+        <Stagger index={4}>
+          <RaceTrendCard view={homeView} onLog={() => navigation.navigate('Log' as never)} onImage />
+        </Stagger>
+
+        {/* Athlete DNA — compact by design. One tap opens the full ladder and
+            the tests behind it in a sheet, which keeps the daily screen short
+            without burying the feature. */}
+        <Stagger index={5}>
+          <DnaStrip
+            metrics={metrics}
+            discipline={discipline}
+            dob={profile?.dob}
+            onLog={() => navigation.navigate('Log' as never)}
+            onImage
+          />
+        </Stagger>
+
+        {/* ── Since you were last here ──────────────────────────────
+            The only ambient block that stays on Home. Recent activity, the
+            weekly recap and the daily insight were three more full cards
+            saying overlapping things; this is the digest.
+
+            REMOVED from Home and why:
+              WhereYouStand   → Trajectory already has TierPositioning +
+                                CompetitionLadder for the same question
+              RivalCard       → Trajectory has SimilarAthletes
+              WhatIfExplorer  → Trajectory has ImprovementScenarios
+              NextMilestone   → covered by Trajectory's tier positioning
+              DNA ladder,
+              Limiting factor → moved to Profile (physical, not per-race)
+              ScienceSpotlight→ moved to Trajectory
+              XP bar          → now a level chip in AppHeader
+              Recent activity,
+              Weekly recap,
+              Daily insight   → folded into Since-last-visit
+            ──────────────────────────────────────────────────────────── */}
+        <Stagger index={6}>
+          <SectionLabel color={onImage.dim}>Since you were last here</SectionLabel>
+          <SinceLastVisit metrics={metrics} performances={performances} onImage />
+        </Stagger>
+
+        {/* The tab bar floats over the content now, so the feed has to end
+            above it rather than behind it. */}
+        <View style={{ height: TAB_BAR_CLEARANCE }} />
       </Animated.ScrollView>
-    </SafeAreaView>
+
+      <IndicatorPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        groups={metricGroups}
+        chosen={indicators}
+        onChange={changeIndicators}
+        focusKey={pickerFor}
+      />
+      </SafeAreaView>
+    </View>
   )
 }
 

@@ -86,7 +86,7 @@ function formatPerf(value: number | null, discipline: string): string {
 // ── Editorial narrative builder ─────────────────────────────────────────────
 function buildEditorial(
   age: number, discipline: string, sex: string, pb: number,
-  tier: any, percentile: number, similarAthletes: any[]
+  tier: any, percentile: number | null, similarAthletes: any[]
 ): string {
   const ageGroup = getAgeGroup(age)
   const lower = isLowerBetter(discipline)
@@ -126,8 +126,11 @@ function buildEditorial(
     : currentTier >= 3 ? 'mid'
     : 'low'
 
-  const pct = Math.max(1, 100 - percentile)
-  let editorial = `At ${age}, this athlete outperforms ${percentile}% of ${ageGroup} ${discNoun} in our Olympic-outcome database.`
+  // Without a percentile the sentence has to stand on the tier alone rather
+  // than quietly dropping to 0%.
+  let editorial = percentile != null
+    ? `At ${age}, this athlete outperforms ${percentile}% of ${ageGroup} ${discNoun} in our Olympic-outcome database.`
+    : `At ${age}, this athlete sits in the ${tier?.tierName || 'unrated'} band for ${ageGroup} ${discNoun}. We don't yet hold reference numbers for ${discipline}, so there is no percentile to report.`
 
   if (ageBucket === 'youth') {
     if (tierBucket === 'high') {
@@ -235,9 +238,11 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
   const ageGroup = getAgeGroup(age)
   const lower = isLowerBetter(discipline)
   const tier = getTier(discipline, sex, ageGroup, mark)
-  // mark is always a number here, so performancePercentile never returns null;
-  // the `?? 0` only satisfies the type checker (dead fallback).
-  const percentile = performancePercentile(mark, discipline, sex) ?? 0
+  // Null when the event has no reference numbers (60m, 3000m flat, and the
+  // hurdles rows we only hold one sex for). The `?? 0` that used to be here
+  // was described as a dead fallback — it is not dead any more, and it would
+  // print "0%" as though the athlete were last in the world.
+  const percentile = performancePercentile(mark, discipline, sex)
   const zones = qualifierZones(discipline, sex)
   const peakAge = TYPICAL_PEAK_AGES[discipline] || 27
   const yearsToPeak = Math.max(0, peakAge - age)
@@ -280,8 +285,14 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
   // ── Improvement trajectories (Act IV) ──
   const trajectories = useMemo(() => {
     try {
+      // `sex` here is 'M'/'F'; the curve table is keyed '_Male'/'_Female'.
+      // improvementCurves normalises both now — before that, this call missed
+      // on every lookup and this block silently produced nothing.
       return projectAllTrajectories(mark, age, discipline, sex, 35)
-    } catch { return null }
+    } catch (e) {
+      console.warn('[FullAnalysis] projection failed for', discipline, sex, e)
+      return null
+    }
   }, [mark, age, discipline, sex])
 
   // ── Improvement scenarios table (Act IV) ──
@@ -341,8 +352,8 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
           )}
           <View style={s.heroStats}>
             <View style={s.heroStat}>
-              <Text style={s.heroStatVal}>{percentile}%</Text>
-              <Text style={s.heroStatLabel}>Percentile</Text>
+              <Text style={s.heroStatVal}>{percentile != null ? `${percentile}%` : '—'}</Text>
+              <Text style={s.heroStatLabel}>{percentile != null ? 'Percentile' : 'Not calibrated'}</Text>
             </View>
             <View style={s.heroStatDiv} />
             <View style={s.heroStat}>

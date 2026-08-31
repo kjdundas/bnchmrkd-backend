@@ -90,9 +90,59 @@ const CALIBRATION = {
   'Javelin Throw_F':{ mean: 63.0, std: 3.00, rocOptimal: 66.5, rocS90: 63.0, rocS80: 64.5, rocS70: 66.5, higher: true },
 }
 
+// ── Calibration lookup ─────────────────────────────────────────────────
+// The CALIBRATION table stores its hurdles rows compactly ('110mH_M'), but a
+// discipline arrives from the database however the athlete typed or picked it
+// ('110m Hurdles', '110M HURDLES', '100m ' with a trailing space). Without
+// this normaliser every long-form hurdles name missed the table and fell
+// through to the 100m fallback below.
+const CAL_ALIASES = {
+  '100m hurdles': '100mH', '100mh': '100mH', '100 mh': '100mH',
+  '110m hurdles': '110mH', '110mh': '110mH', '110 mh': '110mH',
+  '400m hurdles': '400mH', '400mh': '400mH', '400 mh': '400mH',
+  '3000m steeplechase': '3000m Steeplechase',
+  '3000m sc': '3000m Steeplechase', 'steeplechase': '3000m Steeplechase',
+}
+
+/** Canonical CALIBRATION key for a discipline as stored, or null. */
+export function calibrationKey(discipline, sex = 'M') {
+  if (!discipline) return null
+  const raw = String(discipline).trim()
+  const canonical = CAL_ALIASES[raw.toLowerCase()] || raw
+  const key = `${canonical}_${sex}`
+  return CALIBRATION[key] ? key : null
+}
+
+/**
+ * Whether we hold real reference numbers for this event.
+ *
+ * Callers MUST check this before presenting anything derived from the
+ * calibration as fact. The table has no rows for 60m, 75m, or 3000m flat,
+ * and only one sex for some hurdles events.
+ */
+export function isCalibrated(discipline, sex = 'M') {
+  return calibrationKey(discipline, sex) != null
+}
+
+/**
+ * Reference numbers for an event.
+ *
+ * This used to end `|| CALIBRATION['100m_' + sex]` with nothing marking the
+ * substitution, so an uncalibrated event was handed the 100m row and every
+ * downstream number was computed against sprint times — silently. That is
+ * what showed a 7.43 60m as "World Record zone, 2.15s to go": it was being
+ * measured against the 9.58s 100m record.
+ *
+ * The fallback is retained so that callers reading only the SHAPE (notably
+ * `higher`, for which direction is better) don't crash — but it is now tagged
+ * `estimated: true`, and the three functions below refuse to return a number
+ * at all when it is in play. Check `isCalibrated()` before displaying
+ * anything derived from this.
+ */
 export function getCalibration(discipline, sex = 'M') {
-  const key = `${discipline}_${sex}`
-  return CALIBRATION[key] || CALIBRATION[`100m_${sex}`]
+  const key = calibrationKey(discipline, sex)
+  if (key) return CALIBRATION[key]
+  return { ...CALIBRATION[`100m_${sex}`] || CALIBRATION['100m_M'], estimated: true }
 }
 
 // ── Stats helpers ──────────────────────────────────────────────────────
@@ -113,6 +163,8 @@ export const normCdf = (z) => 0.5 * (1 + erf(z / Math.SQRT2))
 export function performancePercentile(pb, discipline, sex = 'M') {
   if (pb == null) return null
   const cal = getCalibration(discipline, sex)
+  // No real numbers for this event — say nothing rather than something wrong.
+  if (cal.estimated) return null
   const higher = !!cal.higher
   const z = (pb - cal.mean) / cal.std
   // For lower-is-better events, a negative z is better → percentile = 1 - CDF(z)
@@ -122,6 +174,7 @@ export function performancePercentile(pb, discipline, sex = 'M') {
 
 export function qualifierZones(discipline, sex = 'M') {
   const cal = getCalibration(discipline, sex)
+  if (cal.estimated) return null
   return {
     finalist: cal.rocS70,
     semifinalist: cal.rocS80,
@@ -134,6 +187,7 @@ export function qualifierZones(discipline, sex = 'M') {
 export function performanceZoneLabel(pb, discipline, sex = 'M') {
   if (pb == null) return 'No data'
   const z = qualifierZones(discipline, sex)
+  if (!z) return null
   const better = (a, b) => z.higher ? a >= b : a <= b
   if (better(pb, z.finalist))      return 'Finalist zone'
   if (better(pb, z.semifinalist))  return 'Semifinalist zone'
@@ -539,7 +593,6 @@ export function performancePosition(pb, discipline, sex = 'M') {
 // ══════════════════════════════════════════════════════════════════════
 // Reference ranges: [development, club, good, elite, world]
 // Scores map linearly so: development→40, club→55, good→70, elite→85, world→98
-/** @type {Record<string, any>} */
 export const REFERENCE_RANGES = {
   // Lower is better for splits and times → ranges listed worst→best
   sprint_10m:   { worst: 2.10, best: 1.50, lowerBetter: true },
@@ -739,6 +792,59 @@ const AXIS_PRIORITY = {
 
 export function disciplinePriority(discipline) {
   return AXIS_PRIORITY[disciplineFamily(discipline)] || AXIS_PRIORITY.sprint
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DNA SUMMARY — a compact, serialisable read of an athlete's test scores
+// for the AI program generator. Places each physical axis on the age-
+// adjusted tier ladder, orders by the event's quality priorities, and
+// flags the limiters (high-priority axes the athlete scores low on).
+// Returns null if there are no scoreable metrics.
+// ══════════════════════════════════════════════════════════════════════
+export function buildDnaSummary(metrics, discipline, age) {
+  const arr = Array.isArray(metrics) ? metrics : []
+  if (arr.length === 0) return null
+  const profile = buildDnaProfile(arr)                 // { axisKey: {score, metrics:[...]} }
+  const priority = disciplinePriority(discipline)      // [axisKey, ...] most → least important
+  const labelByKey = Object.fromEntries(RADAR_AXES.map((a) => [a.key, a.label]))
+
+  const axes = priority.map((key, idx) => {
+    const p = profile[key] || { score: null, metrics: [] }
+    const adj = p.score != null ? ageAdjustScore(p.score, key, age) : null
+    const score = adj ? adj.adjusted : null
+    const tier = score != null ? scoreToTier(score) : null
+    return {
+      key,
+      label: labelByKey[key] || key,
+      priority_rank: idx + 1,                          // 1 = most important for this event
+      score,                                           // age-adjusted 0–100 (null if untested)
+      tier: tier ? tier.label : null,
+      n_tests: p.metrics.length,
+      top_metrics: p.metrics.slice(0, 3).map((m) => ({ label: m.label, value: m.value, unit: m.unit, score: m.score })),
+    }
+  })
+
+  const tested = axes.filter((a) => a.score != null)
+  if (tested.length === 0) return null
+
+  // Limiters: among the event's key qualities (top-4 priority), the lowest-
+  // scoring axes that aren't already excellent/elite.
+  const limiters = tested
+    .filter((a) => a.priority_rank <= 4)
+    .sort((a, b) => a.score - b.score)
+    .filter((a) => a.score < 60)
+    .slice(0, 3)
+    .map((a) => ({
+      axis: a.key, label: a.label, score: a.score, tier: a.tier, priority_rank: a.priority_rank,
+      why: AXIS_INFO[a.key]?.why || null, how: AXIS_INFO[a.key]?.how || null,
+    }))
+
+  const strengths = [...tested].sort((a, b) => b.score - a.score).slice(0, 2)
+    .map((a) => ({ axis: a.key, label: a.label, score: a.score, tier: a.tier }))
+
+  const untested_priority = axes.filter((a) => a.priority_rank <= 4 && a.score == null).map((a) => a.label)
+
+  return { axes, limiters, strengths, untested_priority }
 }
 
 // Expected metric values at a given performance level (percentile 0-100).

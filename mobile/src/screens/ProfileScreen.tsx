@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Pressable,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -20,7 +21,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
-import { updateIn, selectFrom } from '../lib/supabase'
+import DnaStrip from '../components/DnaCard'
+import ResultsTable from '../components/ResultsTable'
+import { countPersonalBests } from '../lib/resultSemantics'
+import DobField from '../components/DobField'
+import { ageFromDob } from '../lib/age'
+import { updateIn, selectFrom, upsertInto } from '../lib/supabase'
 import {
   HeroCard,
   AlmanacCard,
@@ -29,12 +35,12 @@ import {
   StreakChip,
   TierBadge,
   AnimatedBar,
-  Divider,
-} from '../components/ui'
+  Divider, Tappable, SectionLabel} from '../components/ui'
 import {
   RADAR_AXES,
   buildDnaProfile,
   scoreToTier,
+  findLimitingFactor,
 } from '../lib/disciplineScience'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 
@@ -43,6 +49,7 @@ export default function ProfileScreen() {
   const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
+  const [performances, setPerformances] = useState<any[]>([])
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
     club: profile?.club || '',
@@ -50,7 +57,32 @@ export default function ProfileScreen() {
     height_cm: profile?.height_cm?.toString() || '',
     weight_kg: profile?.weight_kg?.toString() || '',
   })
+  // Kept out of `form` because these have their own validated controls rather
+  // than being free text.
+  const [dob, setDob] = useState<string | null>(profile?.dob || null)
+  const [sex, setSex] = useState<string | null>(profile?.sex || null)
   const [saving, setSaving] = useState(false)
+  const [physical, setPhysical] = useState<{ height_cm: number | null; weight_kg: number | null }>({
+    height_cm: null,
+    weight_kg: null,
+  })
+
+  // athlete_profiles holds height/weight; user_profiles (via AuthContext) holds identity.
+  useEffect(() => {
+    if (!user) return
+    selectFrom('athlete_profiles', { filter: `id=eq.${user.id}`, limit: '1' })
+      .then((rows) => {
+        const r = rows?.[0]
+        if (!r) return
+        setPhysical({ height_cm: r.height_cm ?? null, weight_kg: r.weight_kg ?? null })
+        setForm((f) => ({
+          ...f,
+          height_cm: f.height_cm || (r.height_cm != null ? String(r.height_cm) : ''),
+          weight_kg: f.weight_kg || (r.weight_kg != null ? String(r.weight_kg) : ''),
+        }))
+      })
+      .catch(() => {})
+  }, [user])
 
   const loadMetrics = () => {
     if (!user) return
@@ -61,6 +93,15 @@ export default function ProfileScreen() {
     })
       .then((rows) => setMetrics(rows || []))
       .catch(() => {})
+    // The whole competition record, not a recent window: this table is where
+    // an athlete goes to see their career, and it groups by season.
+    selectFrom('performances', {
+      filter: `user_id=eq.${user.id}`,
+      order: 'competition_date.desc',
+      limit: '1000',
+    })
+      .then((rows) => setPerformances(rows || []))
+      .catch(() => setPerformances([]))
   }
 
   useEffect(() => { loadMetrics() }, [user])
@@ -71,6 +112,9 @@ export default function ProfileScreen() {
     const unsub = navigation.addListener('focus', () => { loadMetrics() })
     return unsub
   }, [navigation, user])
+
+  // Discipline for the DNA ladder — same source of truth as Home.
+  const discipline = ((profile as any)?.primary_discipline || (profile as any)?.discipline || '').trim() || null
 
   // DNA summary
   const dnaProfile = useMemo(() => {
@@ -101,17 +145,26 @@ export default function ProfileScreen() {
   // Stats
   const totalLogs = metrics.length
   const uniqueMetrics = new Set(metrics.map((m) => m.metric_key)).size
-  // Compute PB count client-side
-  const pbTracker: Record<string, number> = {}
-  for (const m of metrics) {
-    const k = m.metric_key
-    const v = parseFloat(m.value)
-    const lower = (k || '').match(/^(sprint_|flying_|split_|resting_hr|rhr|body_fat|tt_|bronco)/) != null
-    if (!(k in pbTracker) || (lower ? v < pbTracker[k] : v > pbTracker[k])) {
-      pbTracker[k] = v
-    }
-  }
-  const pbCount = Object.keys(pbTracker).length
+
+  // ── PBs ──────────────────────────────────────────────────────────
+  // A personal best is a RACE you improved on. This used to be built from
+  // athlete_metrics, which had three problems stacked on each other:
+  //
+  //   1. it counted training tests — squatting more than last month is
+  //      progress, not a personal best in the sense an athlete means it;
+  //   2. it then returned Object.keys(...).length, which is just the number
+  //      of distinct metrics logged — so "PBs" and "METRICS" were the same
+  //      number by construction, and the card showed 9 and 9;
+  //   3. its direction test was a third, divergent copy of LOWER_IS_BETTER
+  //      written as a regex, which knew nothing of the metrics that have no
+  //      better direction at all (body mass, height, wingspan) and happily
+  //      counted a taller reading as a personal best.
+  //
+  // One shared definition now, over competition results only, and it agrees
+  // with the PB count gamification awards XP for.
+  const pbCount = useMemo(() => countPersonalBests(performances), [performances])
+
+  const limitingFactor = useMemo(() => findLimitingFactor(dnaProfile, null, null), [dnaProfile])
   const firstLog = metrics.length > 0 ? metrics[metrics.length - 1] : null
   const daysSinceStart = firstLog
     ? Math.ceil((Date.now() - new Date(firstLog.recorded_at).getTime()) / 86400000)
@@ -126,14 +179,42 @@ export default function ProfileScreen() {
     else break
   }
 
+  // `form` is seeded at mount, but profile arrives asynchronously on a cold
+  // start — without this the fields sit empty over data that has since loaded,
+  // and saving would blank the athlete's own details.
+  useEffect(() => {
+    if (!profile) return
+    setForm((f) => ({
+      full_name: f.full_name || profile.full_name || '',
+      club: f.club || profile.club || '',
+      country: f.country || profile.country || '',
+      height_cm: f.height_cm || profile.height_cm?.toString() || '',
+      weight_kg: f.weight_kg || profile.weight_kg?.toString() || '',
+    }))
+    setDob((d) => d || profile.dob || null)
+    setSex((x) => x || profile.sex || null)
+  }, [profile?.id, profile?.dob, profile?.sex])
+
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
     try {
-      await updateIn('athlete_profiles', `id=eq.${profile.id}`, {
+      // Identity fields live on user_profiles; physical fields on athlete_profiles.
+      await updateIn('user_profiles', `id=eq.${profile.id}`, {
         full_name: form.full_name,
-        club: form.club || null,
+        club_school: form.club || null,
         country: form.country || null,
+        // Real column names. The app reads dob / sex; AuthContext maps these
+        // back to those aliases on the way in.
+        date_of_birth: dob || null,
+        gender: sex === 'F' ? 'Female' : sex === 'M' ? 'Male' : null,
+      })
+      await upsertInto('athlete_profiles', {
+        id: profile.id,
+        height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
+        weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
+      })
+      setPhysical({
         height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
         weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
       })
@@ -165,6 +246,21 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      {/* Profile is pushed from the header avatar, so it needs its own back. */}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
+      }}>
+        <Tappable
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
+          hitSlop={12}
+          style={{ width: 44, height: 44, justifyContent: 'center' }}
+        >
+          <Ionicons name="chevron-back" size={24} color={c.text.primary} />
+        </Tappable>
+        <Text style={{ fontSize: 17, fontWeight: '700', color: c.text.primary }}>Profile</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ════════════════════════════════════════════════════════════════
             AVATAR HERO — Gradient card with identity
@@ -198,7 +294,7 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             STATS GRID
             ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard kicker="CAREER STATS" accent={c.orange[500]}>
+        <AlmanacCard kicker="CAREER STATS" accent={c.accent[500]}>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={[styles.statNum, { color: c.text.primary }]}>{totalLogs}</Text>
@@ -224,34 +320,49 @@ export default function ProfileScreen() {
           </View>
         </AlmanacCard>
 
-        {/* ════════════════════════════════════════════════════════════════
-            DNA MINI SUMMARY — Animated bars per axis
-            ════════════════════════════════════════════════════════════ */}
-        {activeAxes.length > 0 && (
-          <AlmanacCard kicker="ATHLETE BLUEPRINT" title="DNA Summary" accent={colors.orange[500]}>
-            {dnaAxes.map((axis, i) => (
-              <View key={axis.key} style={styles.dnaRow}>
-                <View style={styles.dnaLabelRow}>
-                  <Text style={styles.dnaLabel}>{axis.label}</Text>
-                  {axis.tier ? (
-                    <View style={styles.dnaScoreRow}>
-                      <View style={[styles.dnaDot, { backgroundColor: axis.tier.color }]} />
-                      <Text style={[styles.dnaTierText, { color: axis.tier.color }]}>
-                        {axis.score} · {axis.tier.label}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.dnaNoData}>—</Text>
-                  )}
-                </View>
-                <AnimatedBar
-                  progress={axis.score ?? 0}
-                  color={axis.tier?.color || colors.text.dimmed}
-                  height={5}
-                  delay={i * 80}
-                />
+        {/* ── Physical profile ─────────────────────────────────────────
+            ONE DNA implementation. The strip opens the full ladder (and the
+            tests behind it) in a sheet — the same component Home renders, so
+            the detail can't drift or duplicate. ──────────────────────────── */}
+        {/* ── Competition record ──────────────────────────────────────
+            Every result, including the ones that do not count. See
+            ResultsTable for why a DNF has to be visible here. ─────────── */}
+        <SectionLabel>Competition results</SectionLabel>
+        <ResultsTable performances={performances} />
+
+        <SectionLabel>Physical profile</SectionLabel>
+
+        <DnaStrip
+          metrics={metrics}
+          discipline={discipline}
+          dob={profile?.dob}
+          onLog={() => navigation.navigate('Log' as never)}
+        />
+
+        {limitingFactor && (
+          <AlmanacCard kicker="FOCUS AREA" title="Limiting factor" accent={c.amber}>
+            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+              <View style={{
+                width: 38, height: 38, borderRadius: 19,
+                backgroundColor: c.amber + '1F',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Ionicons name="warning" size={19} color={c.amber} />
               </View>
-            ))}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: c.text.primary }}>
+                  {limitingFactor.axisLabel}
+                </Text>
+                <Text style={{ fontSize: 13, color: c.text.secondary, marginTop: 2 }}>
+                  Score: <Text style={{ color: c.amber, fontWeight: '700' }}>{limitingFactor.score}</Text>
+                </Text>
+                {!!limitingFactor.why && (
+                  <Text style={{ fontSize: 13, color: c.text.secondary, marginTop: 8, lineHeight: 19 }}>
+                    {limitingFactor.why}
+                  </Text>
+                )}
+              </View>
+            </View>
           </AlmanacCard>
         )}
 
@@ -269,6 +380,40 @@ export default function ProfileScreen() {
           {editing ? (
             <>
               <Field label="Full Name" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
+
+              {/* The two fields the whole analysis layer depends on. Trajectory
+                  has been telling athletes to "add your date of birth in
+                  Profile" at a screen that had no such field. */}
+              <DobField value={dob} onChange={setDob} />
+
+              <View style={{ marginBottom: spacing.lg }}>
+                <Text style={{
+                  fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
+                  color: colors.text.muted, fontWeight: '600', marginBottom: 8,
+                }}>I compete in</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {([['M', "Men's"], ['F', "Women's"]] as const).map(([v, l]) => (
+                    <TouchableOpacity
+                      key={v}
+                      onPress={() => setSex(v)}
+                      accessibilityLabel={`${l} category${sex === v ? ', selected' : ''}`}
+                      style={{
+                        flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center',
+                        borderRadius: radius.md,
+                        backgroundColor: sex === v ? colors.orange[500] : colors.bg.primary,
+                        borderWidth: 1,
+                        borderColor: sex === v ? colors.orange[500] : colors.glass.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontSize: 13, fontWeight: '700',
+                        color: sex === v ? '#FFFFFF' : colors.text.secondary,
+                      }}>{l}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
               <Field label="Club" value={form.club} onChange={(v) => setForm({ ...form, club: v })} />
               <Field label="Country" value={form.country} onChange={(v) => setForm({ ...form, country: v })} />
               <Field label="Height (cm)" value={form.height_cm} onChange={(v) => setForm({ ...form, height_cm: v })} keyboard="decimal-pad" />
@@ -285,9 +430,19 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
+              <InfoRow
+                icon="calendar-number-outline" label="Date of birth"
+                value={profile?.dob
+                  ? `${new Date(profile.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${ageFromDob(profile.dob)} yrs`
+                  : 'Not set — tap Edit'}
+              />
+              <InfoRow
+                icon="body-outline" label="Category"
+                value={profile?.sex === 'F' ? "Women's" : profile?.sex === 'M' ? "Men's" : 'Not set — tap Edit'}
+              />
               <InfoRow icon="flag-outline" label="Country" value={profile?.country || '—'} />
-              <InfoRow icon="fitness-outline" label="Height" value={profile?.height_cm ? `${profile.height_cm} cm` : '—'} />
-              <InfoRow icon="scale-outline" label="Weight" value={profile?.weight_kg ? `${profile.weight_kg} kg` : '—'} />
+              <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
+              <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
               <InfoRow icon="calendar-outline" label="Tracking since" value={
                 firstLog
                   ? new Date(firstLog.recorded_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
@@ -296,39 +451,6 @@ export default function ProfileScreen() {
               <InfoRow icon="mail-outline" label="Email" value={user?.email || '—'} />
             </>
           )}
-        </AlmanacCard>
-
-        {/* ════════════════════════════════════════════════════════════════
-            APPEARANCE
-            ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard>
-          <MonoKicker>Appearance</MonoKicker>
-          <View style={styles.themeRow}>
-            <View style={styles.themeLabel}>
-              <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={16} color={c.text.muted} />
-              <Text style={[styles.themeLabelText, { color: c.text.primary }]}>Theme</Text>
-            </View>
-            <View style={[styles.themeToggle, { backgroundColor: c.glass.bg, borderColor: c.glass.border }]}>
-              {(['dark', 'light', 'system'] as ThemeMode[]).map(m => (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.themeOption, themeMode === m && { backgroundColor: c.orange[500] + '15' }]}
-                  onPress={() => setThemeMode(m)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={m === 'dark' ? 'moon' : m === 'light' ? 'sunny' : 'phone-portrait-outline'}
-                    size={14}
-                    color={themeMode === m ? c.orange[500] : c.text.dimmed}
-                  />
-                  <Text style={[styles.themeOptionText, { color: c.text.dimmed },
-                    themeMode === m && { color: c.orange[500] }]}>
-                    {m === 'system' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
         </AlmanacCard>
 
         {/* ════════════════════════════════════════════════════════════════

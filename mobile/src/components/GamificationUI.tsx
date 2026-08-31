@@ -11,7 +11,13 @@ import {
   Animated,
   Dimensions,
 } from 'react-native'
-import { colors, spacing, radius } from '../lib/theme'
+import { Ionicons } from '@expo/vector-icons'
+import { celebrationFeedback } from '../lib/haptics'
+// Rendered only by Home and Log, both of which run on the dark ground. This
+// file was still on the static LIGHT palette — the swap repaints every
+// reference below in one line, and is safe precisely because there is no
+// light-surface caller to preserve.
+import { onImageColors as colors, spacing, radius } from '../lib/theme'
 import { getLevelFromXP, type Badge } from '../lib/gamification'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -34,7 +40,7 @@ export function XPBar({ totalXP }: { totalXP: number }) {
     <View style={xpStyles.container}>
       <View style={xpStyles.topRow}>
         <View style={xpStyles.levelBadge}>
-          <Text style={xpStyles.levelIcon}>{level.icon}</Text>
+          <Ionicons name={((level as any).ionicon || 'star') as any} size={12} color={colors.accent[500]} />
           <Text style={xpStyles.levelNum}>LV{level.level}</Text>
         </View>
         <Text style={xpStyles.levelTitle}>{level.title}</Text>
@@ -88,12 +94,12 @@ const xpStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(249,115,22,0.12)',
+    backgroundColor: 'rgba(139,131,255,0.16)',
     borderRadius: radius.full,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.25)',
+    borderColor: 'rgba(139,131,255,0.34)',
   },
   levelIcon: { fontSize: 12 },
   levelNum: {
@@ -158,7 +164,11 @@ export function StreakChip({ streak }: { streak: number }) {
       isHot && streakStyles.chipHot,
       isFire && streakStyles.chipFire,
     ]}>
-      <Text style={streakStyles.icon}>{isFire ? '🔥' : isHot ? '⚡' : '🔗'}</Text>
+      <Ionicons
+        name={isFire ? 'flame' : isHot ? 'flash' : 'link'}
+        size={13}
+        color={isFire ? colors.accent[300] : isHot ? colors.accent[400] : colors.text.muted}
+      />
       <Text style={[
         streakStyles.text,
         isHot && { color: colors.orange[400] },
@@ -187,8 +197,8 @@ const streakStyles = StyleSheet.create({
     borderColor: 'rgba(249,115,22,0.2)',
   },
   chipFire: {
-    backgroundColor: 'rgba(249,115,22,0.12)',
-    borderColor: 'rgba(249,115,22,0.3)',
+    backgroundColor: 'rgba(139,131,255,0.16)',
+    borderColor: 'rgba(139,131,255,0.30)',
   },
   icon: { fontSize: 12 },
   text: {
@@ -306,10 +316,10 @@ const popupStyles = StyleSheet.create({
     zIndex: 100,
   },
   card: {
-    backgroundColor: 'rgba(10,10,20,0.97)',
+    backgroundColor: 'rgba(11,12,24,0.96)',
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.35)',
+    borderColor: 'rgba(139,131,255,0.40)',
     padding: spacing.lg,
     shadowColor: colors.orange[500],
     shadowOffset: { width: 0, height: 8 },
@@ -327,7 +337,7 @@ const popupStyles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.3)',
+    borderColor: 'rgba(139,131,255,0.30)',
   },
   levelUpIcon: { fontSize: 20 },
   levelUpText: {
@@ -429,6 +439,8 @@ export function PBCelebration({
   useEffect(() => {
     if (visible) {
       setShow(true)
+      // A PB is the single moment in this app worth a heavy haptic.
+      celebrationFeedback()
       scaleAnim.setValue(0)
       glowAnim.setValue(0)
 
@@ -468,7 +480,7 @@ export function PBCelebration({
         { opacity: glowAnim, transform: [{ scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] },
       ]} />
 
-      <Text style={pbStyles.emoji}>🏆</Text>
+      <Ionicons name="trophy" size={34} color={colors.accent[500]} />
       <Text style={pbStyles.title}>PERSONAL BEST</Text>
       <Text style={pbStyles.metricName}>{metricLabel}</Text>
       <Text style={pbStyles.value}>

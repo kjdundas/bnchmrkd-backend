@@ -27,6 +27,7 @@ from pydantic import BaseModel
 
 from app.core.auth import rate_limit, require_user
 from app.core.program_skeleton import build_skeleton
+from app.core.program_validator import validate_program, align_week_guidance, normalise_types
 
 # Signed-in users only + rate limited (these routes spend OpenAI credits).
 router = APIRouter(
@@ -239,6 +240,8 @@ _BRIEF_SYSTEM = (
     f"  primary_quality: one of {list(_QUALITY_KEYS)} | null  (the main emphasis)\n"
     f"  secondary_quality: one of {list(_QUALITY_KEYS)} | null\n"
     "  days_per_week: integer 2-6 | null\n"
+    "  training_days: array of integers 1-7 (Monday=1 ... Sunday=7) | null — ONLY when the\n"
+    "    coach names actual days ('Mon/Wed/Fri' -> [1,3,5]); never infer days from a count\n"
     f"  equipment: one of {list(_EQUIPMENT_KEYS)} | null\n"
     f"  injuries: array of any of {list(_INJURY_KEYS)} (only ones the coach explicitly mentions)\n"
     "  weeks: integer 1-12 | null (block length)\n"
@@ -293,6 +296,11 @@ def _intake_from_brief(brief: str, context: dict[str, Any]) -> dict[str, Any]:
         out["secondary_quality"] = parsed["secondary_quality"]
     if isinstance(parsed.get("days_per_week"), int) and 2 <= parsed["days_per_week"] <= 6:
         out["days_per_week"] = parsed["days_per_week"]
+    td = parsed.get("training_days")
+    if isinstance(td, list):
+        days = sorted({d for d in td if isinstance(d, int) and 1 <= d <= 7})
+        if days:
+            out["training_days"] = days
     if parsed.get("equipment") in _EQUIPMENT_KEYS:
         out["equipment"] = parsed["equipment"]
     inj = parsed.get("injuries")
@@ -321,6 +329,43 @@ FOLLOW THE SKELETON EXACTLY:
   · Apply EVERY injury_modification: reduce the named loads and tell the athlete to see a
     physio/doctor. Never diagnose; never program through pain.
   · Honour days_per_week, equipment, and session_minutes where given.
+  · The SKELETON's focus_source says where primary_quality came from. "limiters" means the
+    athlete asked for the block to target their tested weak points and the DATA named them —
+    say so in focus_rationale, citing their tier and score. "event_default" means there is
+    nothing to diagnose from: do NOT claim to have analysed them, say in one line what to
+    test to change that.
+  · The SKELETON's week_plan already decides which weeks build and which unload — that is not
+    yours to change. Emit `week_guidance` with EXACTLY ONE entry per week in week_plan, in
+    order, each naming the concrete change for that week in this event's terms ("add one 30m
+    rep", "hold load, add a rep on the squat", "drop to 60% volume, keep sprint intensity").
+    On a week the plan marks `deload`, the adjustment must reduce work — never add.
+  · Emit sessions in the SAME ORDER as week_layout, one per entry. Each week_layout entry
+    names the weekday that session falls on — write the session for that day (e.g. a session
+    the day after a heavy one should not also be heavy), and START the label with that
+    weekday: "Monday — Acceleration + Max Strength".
+
+BLOCK TYPES — prescribe in the units the work is actually done in:
+Every block carries a "type". The SKELETON gives each session a session_type; use it for the
+session's main work and type the other blocks for what they are (a warm-up is "mobility", a
+lifting block inside a track session is "gym"). Allowed: track | gym | technical |
+conditioning | mobility | recovery.
+
+  track        distance x reps (and sets where grouped), intensity as % effort, and BOTH
+               recoveries: "rest" between reps and "rest_between_sets" between groups. Those
+               two numbers are the session — 6 x 30m with 1 min rest is a different workout
+               from the same reps with 4 min. Add "surface" where it matters (track, grass, hill).
+  gym          sets x reps and a load: %1RM or RPE, per the loading ceiling. Give "rest" and
+               "tempo".
+  technical    the drill, the number of reps, the cue, and "good_rep" — one line on what a
+               correct repetition looks and feels like. Do NOT put a load or a %1RM on a
+               technical drill; quality is the prescription. Leave "intensity" as "—".
+  conditioning distance or time, plus a target in "target_pace" (a pace, a %MAS, or a heart-rate
+               zone) and a "work_rest" ratio where it is interval work.
+  mobility     duration or reps, the position, and what the athlete should feel. No load.
+  recovery     what to do and for how long. No intensity target.
+
+For THROWS blocks of any type, put the implement mass in "implement_kg" (a number, e.g. 5 or
+7.26) — an age-group athlete's implement is not the senior one and a mark means nothing without it.
 
 PRESCRIPTION REQUIREMENTS (this is the whole point — be specific, never vague):
 - EVERY working exercise must specify, in its fields: how much work, how hard, and how much
@@ -372,26 +417,33 @@ an "exercises" array; each exercise is fully prescribed:
   "sessions_per_week": <int>,
   "sessions": [
     {
-      "label": "Day 1 — Acceleration + Max Strength",
+      "label": "Monday — Acceleration + Max Strength",
       "focus": "acceleration",
       "blocks": [
-        {"name":"Warm-up","exercises":[
-          {"name":"Jog + dynamic drills","prescription":"8–10 min","intensity":"easy","rest":"—","tempo":"—","cue":"raise core temp, open hips"}
+        {"name":"Warm-up","type":"mobility","exercises":[
+          {"name":"Jog + dynamic drills","prescription":"8–10 min","intensity":"easy","cue":"raise core temp, open hips"}
         ]},
-        {"name":"Acceleration","exercises":[
-          {"name":"Sled push","prescription":"5 × 20 m","intensity":"~75% BW load","rest":"3 min between reps","tempo":"max intent","cue":"low shin angle, push the ground back"}
+        {"name":"Acceleration","type":"track","exercises":[
+          {"name":"Sled push","prescription":"3 × 4 × 20 m","intensity":"95% effort","rest":"3 min","rest_between_sets":"6 min","surface":"track","cue":"low shin angle, push the ground back"}
         ]},
-        {"name":"Max strength","exercises":[
+        {"name":"Start technique","type":"technical","exercises":[
+          {"name":"Block starts to 10m","prescription":"6 reps","intensity":"—","cue":"patient first two steps","good_rep":"front foot leaves cleanly, no popping up before 5m, same shin angle every rep"}
+        ]},
+        {"name":"Max strength","type":"gym","exercises":[
           {"name":"Back squat","prescription":"4 × 4","intensity":"82% 1RM","rest":"3–4 min","tempo":"2-0-X","cue":"brace, drive through mid-foot"}
         ]},
-        {"name":"Cool-down","exercises":[
-          {"name":"Easy jog + mobility","prescription":"6–8 min","intensity":"easy","rest":"—","tempo":"—","cue":"nasal breathing, relax"}
+        {"name":"Cool-down","type":"recovery","exercises":[
+          {"name":"Easy jog + mobility","prescription":"6–8 min","cue":"nasal breathing, relax"}
         ]}
       ],
+      "type": "track",
       "notes": "session-level notes"
     }
   ],
-  "progression": "concrete week-to-week progression, incl. a deload (e.g. 'Wk1→3 add ~2.5–5% load / 1 rep or 1 sprint rep; Wk4 deload to ~60% volume')",
+  "week_guidance": [
+    {"week": 1, "adjustment": "one line: exactly what changes this week vs last, for THIS event"}
+  ],
+  "progression": "one sentence summarising the arc of the block",
   "maturity_note": "how this plan reflects their development stage (or that they're treated as fully matured)",
   "safety_note": "the key safety reminders"
 }
@@ -422,9 +474,12 @@ async def generate_program(req: ProgramRequest) -> dict[str, Any]:
     intake.setdefault("event", (req.context or {}).get("discipline"))
     age = (req.context or {}).get("age")
     maturity = (req.context or {}).get("maturity")
+    dna = (req.context or {}).get("dna")
 
-    # Deterministic coaching skeleton (periodization + maturity ceilings + injury mods).
-    skeleton = build_skeleton(intake, maturity, age)
+    # Deterministic coaching skeleton (periodization + maturity ceilings +
+    # injury mods +, where the athlete asked for it, a focus taken from their
+    # own limiters rather than the event default).
+    skeleton = build_skeleton(intake, maturity, age, dna)
     goal = str(intake.get("goal") or "").strip()
 
     data_blob = json.dumps(req.context, default=str)[:18000]
@@ -460,14 +515,115 @@ async def generate_program(req: ProgramRequest) -> dict[str, Any]:
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Program generation failed: {e}")
 
+    # ── Bind each session to a weekday ─────────────────────────────────
+    # Done here, deterministically, rather than trusting the model to have
+    # copied week_layout correctly. The schedule places sessions by this
+    # field, so a hallucinated or missing day is a session on the wrong day of
+    # the athlete's week — and the model has no way to be more right about it
+    # than the skeleton it was given.
+    #
+    # `training_days` is stored on the program itself because the program IS
+    # the record of when the athlete trains: it survives without a migration,
+    # a coach can edit it in place, and a later program can start from it.
+    layout = skeleton.get("week_layout") or []
+    sessions = program.get("sessions")
+    if isinstance(sessions, list):
+        for i, sess in enumerate(sessions):
+            if not isinstance(sess, dict):
+                continue
+            if i < len(layout):
+                sess["day_of_week"] = layout[i]["day_of_week"]
+            else:
+                # More sessions than the skeleton planned: wrap rather than
+                # leave a session with no day, which the app would read as a
+                # partially-assigned program and treat as unassigned entirely.
+                sess["day_of_week"] = ((i % 7) + 1)
+    program["training_days"] = skeleton.get("training_days")
+    program["training_days_source"] = skeleton.get("training_days_source")
+
+    # Every session and block carries a valid archetype before anything else
+    # looks at it — the app switches layout on these.
+    normalise_types(program, skeleton)
+
+    # ── Check it before anyone trains on it ────────────────────────────
+    # The loading ceiling is stated in the prompt and, until now, verified
+    # nowhere. A safety rule that is only asked for is a hope.
+    violations, warnings = validate_program(program, skeleton)
+
+    if violations:
+        # One repair attempt, naming the specific failures. Models are good at
+        # fixing a violation they are shown; they are not reliable at avoiding
+        # it unprompted, which is the whole reason this check exists.
+        repair = (
+            "The program you produced breaks the athlete's loading ceiling. "
+            "Fix ONLY these problems and return the COMPLETE program JSON again, "
+            "in the same shape, with everything else unchanged:\n"
+            + "\n".join(f"- {v}" for v in violations)
+            + "\n\nReplace the offending prescriptions with age-appropriate ones: "
+            "prescribe by RPE, bodyweight or technical load, keep reps submaximal, "
+            "and never reference 1RM or maximal attempts."
+        )
+        try:
+            resp2 = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages + [
+                    {"role": "assistant", "content": raw},
+                    {"role": "user", "content": repair},
+                ],
+                temperature=0.2,
+                max_tokens=4000,
+                response_format={"type": "json_object"},
+            )
+            repaired = json.loads(resp2.choices[0].message.content or "{}")
+            if isinstance(repaired.get("sessions"), list):
+                # Re-apply the deterministic fields the repair pass may have dropped.
+                r_sessions = repaired["sessions"]
+                for i, sess in enumerate(r_sessions):
+                    if isinstance(sess, dict):
+                        sess["day_of_week"] = (
+                            layout[i]["day_of_week"] if i < len(layout) else ((i % 7) + 1)
+                        )
+                repaired["training_days"] = skeleton.get("training_days")
+                repaired["training_days_source"] = skeleton.get("training_days_source")
+                normalise_types(repaired, skeleton)
+                violations, warnings = validate_program(repaired, skeleton)
+                if not violations:
+                    program = repaired
+        except Exception:  # noqa: BLE001
+            # A failed repair is not a reason to ship the unsafe original.
+            pass
+
+    if violations:
+        # Refuse. An athlete seeing "could not build a safe program, try again"
+        # is a far better outcome than a young athlete being handed a
+        # near-maximal lifting prescription.
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Could not build a program that respects this athlete's loading limits. "
+                "Please try again. (" + violations[0] + ")"
+            ),
+        )
+
+    # The week plan is the skeleton's; the model only supplies each week's
+    # sentence, and any week it skipped falls back to the deterministic intent.
+    program["week_plan"] = align_week_guidance(program, skeleton)
+    program.pop("week_guidance", None)
+
     # Echo back the resolved plan parameters so the UI can show what was assumed.
     resolved = {
         "season_phase": skeleton.get("season_phase", {}).get("label"),
         "primary_quality": skeleton.get("primary_quality"),
         "secondary_quality": skeleton.get("secondary_quality"),
+        "focus_source": skeleton.get("focus_source"),
+        "week_plan": skeleton.get("week_plan"),
         "days_per_week": skeleton.get("days_per_week"),
+        "training_days": skeleton.get("training_days"),
+        "training_days_source": skeleton.get("training_days_source"),
         "weeks": weeks,
         "equipment": intake.get("equipment"),
         "injuries": skeleton.get("injury_flags"),
     }
+    if warnings:
+        resolved["warnings"] = warnings
     return {"program": program, "resolved": resolved}
