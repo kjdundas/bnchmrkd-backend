@@ -4,7 +4,7 @@
 // Strava/Whoop-inspired: large numbers, clean sections, no emojis
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   View,
   Text,
@@ -21,6 +21,9 @@ import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
 import { isLowerBetter, performancePercentile, formatMark } from '../lib/disciplineScience'
+import {
+  fetchResults, subjectOf, pbOf, seasonBestsOf, trendOf,
+} from '../lib/athleteResults'
 import FullAnalysis from '../components/FullAnalysis'
 
 // Helpers now live in lib/disciplineScience — see formatMark there.
@@ -48,53 +51,45 @@ export default function AthleteDetailScreen() {
   const genderCode = athlete.gender === 'Female' ? 'F' : 'M'
   const lower = isLowerBetter(athlete.discipline)
 
-  // Compute PB
-  const pb = useMemo(() => {
-    if (athlete.pb_value) return athlete.pb_value
-    if (!athlete.races?.length) return null
-    const values = athlete.races.map((r: any) => parseFloat(r.value)).filter(Number.isFinite)
-    if (!values.length) return null
-    return lower ? Math.min(...values) : Math.max(...values)
-  }, [athlete])
+  // Results now come from `performances` for BOTH kinds of athlete — one with
+  // an account and one the coach keeps on their roster. This screen used to
+  // read a JSON blob on the roster row that carried no status and no wind, so
+  // a coach's view of a mark could not apply the rules the athlete's own view
+  // applied: the same +2.9 sprint was a personal best to one of them and not
+  // to the other. Everything below goes through countsForAnalysis now.
+  const [results, setResults] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let alive = true
+    const subject = subjectOf(athlete)
+    if (!subject) { setResults([]); setLoading(false); return }
+    setLoading(true)
+    fetchResults(subject)
+      .then((rows) => { if (alive) setResults(rows) })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [athlete?.id, athlete?.linked_user_id])
+
+  const pb = useMemo(
+    () => pbOf(results, athlete.discipline), [results, athlete.discipline])
 
   const tier = pb ? getTier(athlete.discipline, genderCode, ageGroup, pb) : null
   const percentile = pb ? performancePercentile(pb, athlete.discipline, genderCode) : null
 
-  // Sort races by date (newest first)
-  const races = useMemo(() => {
-    if (!athlete.races?.length) return []
-    return [...athlete.races]
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [athlete])
+  // Newest first. The date is a plain YYYY-MM-DD, so it sorts as a string —
+  // going through Date would read it as UTC midnight.
+  const races = useMemo(
+    () => [...results]
+      .filter((r) => r.competition_date)
+      .sort((a, b) => String(b.competition_date).localeCompare(String(a.competition_date)))
+      .map((r) => ({ ...r, value: r.mark, date: r.competition_date, competition: r.competition_name })),
+    [results])
 
-  // Season bests
-  const seasonBests = useMemo(() => {
-    if (!races.length) return []
-    const grouped: Record<string, number[]> = {}
-    for (const r of races) {
-      const year = r.date ? new Date(r.date).getFullYear().toString() : 'Unknown'
-      if (!grouped[year]) grouped[year] = []
-      const v = parseFloat(r.value)
-      if (Number.isFinite(v)) grouped[year].push(v)
-    }
-    return Object.entries(grouped)
-      .map(([year, vals]) => ({
-        year,
-        best: lower ? Math.min(...vals) : Math.max(...vals),
-        count: vals.length,
-      }))
-      .sort((a, b) => b.year.localeCompare(a.year))
-  }, [races])
+  const seasonBests = useMemo(
+    () => seasonBestsOf(results, athlete.discipline), [results, athlete.discipline])
 
-  // Trend (last 2 results)
-  const trend = useMemo(() => {
-    if (races.length < 2) return null
-    const curr = parseFloat(races[0].value)
-    const prev = parseFloat(races[1].value)
-    if (!Number.isFinite(curr) || !Number.isFinite(prev)) return null
-    return lower ? (curr < prev ? 'up' : curr > prev ? 'down' : null)
-                 : (curr > prev ? 'up' : curr < prev ? 'down' : null)
-  }, [races])
+  const trend = useMemo(
+    () => trendOf(results, athlete.discipline), [results, athlete.discipline])
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
