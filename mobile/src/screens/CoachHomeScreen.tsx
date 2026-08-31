@@ -16,9 +16,17 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { callRpc, insertInto, deleteFrom } from '../lib/supabase'
 import { checkinStatus, READINESS_COLORS, isToday } from '../lib/readiness'
+import { Tappable } from '../components/ui'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import SquadSwitcher, { type SquadFilter } from '../components/SquadSwitcher'
+import SquadSheet, { type SquadSheetMode } from '../components/SquadSheet'
+import {
+  fetchSquads, fetchSquadAthletes, createSquad, renameSquad, deleteSquad,
+  setSquadFor, inSquad, squadCounts, keyOf, type Squad, type SquadAthlete,
+} from '../lib/squads'
+import { ageFromDob } from '../lib/age'
 
 const EMOJIS = ['👏', '🔥', '💪']
 const QUIET_DAYS = 14
@@ -86,6 +94,22 @@ export default function CoachHomeScreen() {
   // stays smooth.
   const scrollY = useRef(new Animated.Value(0)).current
   const [busy, setBusy] = useState<string | null>(null)
+  // The squad layer. `athletes` holds BOTH kinds — accounts this coach is
+  // linked to and roster entries they keyed in — in one shape, so nothing
+  // below has to care which is which.
+  const [squads, setSquads] = useState<Squad[]>([])
+  const [athletes, setAthletes] = useState<SquadAthlete[]>([])
+  const [filter, setFilter] = useState<SquadFilter>(null)
+  const [sheet, setSheet] = useState<SquadSheetMode | null>(null)
+
+  const loadSquads = useCallback(async () => {
+    const [sq, ath] = await Promise.all([
+      fetchSquads(user?.id || ''),
+      fetchSquadAthletes(),
+    ])
+    setSquads(sq)
+    setAthletes(ath)
+  }, [user])
 
   const load = useCallback(async () => {
     if (!user?.id) { setLoading(false); return }   // wait for auth/token before fetching
@@ -103,13 +127,25 @@ export default function CoachHomeScreen() {
     } finally { setLoading(false) }
   }, [user?.id])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load(); loadSquads() }, [load, loadSquads])
   useEffect(() => {
-    const unsub = navigation.addListener('focus', () => load())
+    const unsub = navigation.addListener('focus', () => { load(); loadSquads() })
     return unsub
-  }, [navigation, load])
+  }, [navigation, load, loadSquads])
 
-  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false) }
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await Promise.all([load(), loadSquads()])
+    setRefreshing(false)
+  }
+
+  // ── The squad the switcher is showing ──
+  const counts = useMemo(() => squadCounts(athletes), [athletes])
+  const shown = useMemo(() => (
+    filter === 'unassigned'
+      ? [...athletes].filter((a) => !a.squad_id).sort((x, y) => x.name.localeCompare(y.name))
+      : inSquad(athletes, filter as string | null)
+  ), [athletes, filter])
 
   // ── Needs-attention items ──
   const items = useMemo(() => {
@@ -184,6 +220,63 @@ export default function CoachHomeScreen() {
         <View style={styles.header}>
           <Text style={styles.greeting}>{greeting()}, {firstName}</Text>
           <Text style={styles.title}>Today</Text>
+        </View>
+
+        {/* ── The squad, first ────────────────────────────────────────
+            Who you coach comes before what happened, because the answer to
+            "what am I doing today" is usually a person. */}
+        <SquadSwitcher
+          squads={squads}
+          counts={counts.counts}
+          unassigned={counts.unassigned}
+          total={counts.total}
+          value={filter}
+          onChange={setFilter}
+          onAdd={() => setSheet({ kind: 'new' })}
+          onEdit={(sq) => setSheet({ kind: 'edit', squad: sq })}
+        />
+
+        <View style={sq.grid}>
+          {shown.map((a) => {
+            const age = ageFromDob(a.dob)
+            return (
+              <Tappable
+                key={keyOf(a)}
+                onPress={() => navigation.navigate('AthleteDetail', {
+                  athlete: {
+                    id: a.roster_athlete_id,
+                    linked_user_id: a.athlete_user_id,
+                    name: a.name, dob: a.dob, gender: a.gender,
+                    discipline: a.discipline,
+                  },
+                })}
+                // Long-press files them, the same idiom the metric rings use.
+                onLongPress={() => setSheet({ kind: 'assign', athlete: a })}
+                accessibilityLabel={`${a.name}, ${a.discipline || 'no event'}`}
+                style={sq.card}
+              >
+                <View style={sq.avatar}>
+                  <Text style={sq.avatarText}>
+                    {a.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={sq.name} numberOfLines={1}>{a.name}</Text>
+                <Text style={sq.meta} numberOfLines={1}>
+                  {[a.discipline || null, age ? `${age}` : null].filter(Boolean).join(' · ') || '—'}
+                </Text>
+                {!a.athlete_user_id && (
+                  <Text style={sq.noAccount}>No account — you enter their data</Text>
+                )}
+              </Tappable>
+            )
+          })}
+          {shown.length === 0 && (
+            <Text style={sq.empty}>
+              {athletes.length === 0
+                ? 'No athletes yet. Add one from the Squad tab, or invite an athlete who already has an account.'
+                : 'Nobody filed into this squad yet — long-press an athlete to file them.'}
+            </Text>
+          )}
         </View>
 
         {/* Squad health */}
@@ -290,10 +383,52 @@ export default function CoachHomeScreen() {
           </View>
         )}
       </Animated.ScrollView>
+
+      <SquadSheet
+        mode={sheet}
+        visible={!!sheet}
+        squads={squads}
+        onClose={() => setSheet(null)}
+        onCreate={async (n) => { await createSquad(user?.id || '', n, squads.length); await loadSquads() }}
+        onRename={async (id, n) => { await renameSquad(id, n); await loadSquads() }}
+        onDelete={async (id) => {
+          await deleteSquad(id)
+          // The filter may be pointing at the squad that just went.
+          setFilter((f) => (f === id ? null : f))
+          await loadSquads()
+        }}
+        onAssign={async (a, squadId) => { await setSquadFor(a, squadId); await loadSquads() }}
+      />
       </SafeAreaView>
     </View>
   )
 }
+
+const sq = StyleSheet.create({
+  grid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 10,
+    paddingHorizontal: spacing.lg, paddingTop: 14, paddingBottom: 6,
+  },
+  card: {
+    width: '47.6%', minHeight: 118, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    padding: 13, justifyContent: 'flex-start',
+  },
+  avatar: {
+    width: 34, height: 34, borderRadius: 17, marginBottom: 9,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.30)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '700', letterSpacing: 0.4 },
+  name: { color: '#FFFFFF', fontSize: 14.5, fontWeight: '700', letterSpacing: -0.2 },
+  meta: { color: 'rgba(255,255,255,0.68)', fontSize: 12, marginTop: 2 },
+  noAccount: { color: 'rgba(255,255,255,0.50)', fontSize: 10.5, marginTop: 6, lineHeight: 14 },
+  empty: {
+    color: 'rgba(255,255,255,0.62)', fontSize: 13.5, lineHeight: 20,
+    paddingVertical: 18, paddingRight: 20,
+  },
+})
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg.primary },

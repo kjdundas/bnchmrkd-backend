@@ -182,7 +182,8 @@ export function Stagger({
 // "cheap" tell on a native app. Opacity + a 2% scale, restored on release.
 // `accessibilityLabel` is required for icon-only controls (VoiceOver).
 export function Tappable({
-  children, onPress, onLongPress, style, disabled, accessibilityLabel, hitSlop = 8,
+  children, onPress, onLongPress, style, disabled, accessibilityLabel,
+  accessibilityState, hitSlop = 8,
 }: {
   children: React.ReactNode
   onPress?: () => void
@@ -190,6 +191,9 @@ export function Tappable({
   style?: ViewStyle | ViewStyle[]
   disabled?: boolean
   accessibilityLabel?: string
+  /** Needed by anything that is one of a set — a filter chip, a toggle.
+      Without it VoiceOver reads every chip in a row identically. */
+  accessibilityState?: { selected?: boolean; disabled?: boolean; expanded?: boolean }
   hitSlop?: number
 }) {
   return (
@@ -200,7 +204,7 @@ export function Tappable({
       hitSlop={hitSlop}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled: !!disabled }}
+      accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
       style={({ pressed }) => [
         style as ViewStyle,
         pressed && !disabled && { opacity: 0.86, transform: [{ scale: 0.98 }] },
