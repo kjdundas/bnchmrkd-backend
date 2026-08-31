@@ -16,6 +16,9 @@ import {
   Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import AppHeader from '../components/AppHeader'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useTheme } from '../contexts/ThemeContext'
@@ -159,7 +162,10 @@ export default function CoachAnalyseScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop image="gym" />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <AppHeader onImage />
       {/* Header */}
       <View style={styles.header}>
         {(selectedDiscipline || result) && (
@@ -258,7 +264,8 @@ export default function CoachAnalyseScreen() {
           />
         </ScrollView>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   )
 }
 
@@ -298,6 +305,8 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingTop: spacing.md,
+    // The tab bar floats over the content rather than bounding it.
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
   // Chips

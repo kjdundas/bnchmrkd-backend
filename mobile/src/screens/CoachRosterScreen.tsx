@@ -32,6 +32,9 @@ import { getCachedToken } from '../lib/supabase'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
 import { formatMark, isLowerBetter } from '../lib/disciplineScience'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import AppHeader from '../components/AppHeader'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { ageFromDob } from '../lib/age'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -558,7 +561,10 @@ export default function CoachRosterScreen() {
   const firstName = profile?.full_name?.split(' ')[0] || 'Coach'
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop image="gym" />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <AppHeader onImage />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -692,7 +698,7 @@ export default function CoachRosterScreen() {
               onPress={() => navigation.navigate('AthleteDetail', { athlete })}
             />
           ))}
-          <View style={{ height: 40 }} />
+          <View style={{ height: TAB_BAR_CLEARANCE }} />
         </ScrollView>
       )}
 
@@ -702,7 +708,8 @@ export default function CoachRosterScreen() {
         onSaved={() => fetchRoster()}
         coachId={user?.id || ''}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   )
 }
 

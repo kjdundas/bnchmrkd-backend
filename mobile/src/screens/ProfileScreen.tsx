@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
 import DnaStrip from '../components/DnaCard'
 import ResultsTable from '../components/ResultsTable'
@@ -511,7 +512,10 @@ function Field({ label, value, onChange, keyboard }: {
 // ── Styles ──
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg.primary },
-  content: { padding: spacing.lg },
+  // Profile is a TAB on the coach side (where the floating bar hovers over
+  // it) and a pushed screen on the athlete side (where it doesn't). The
+  // clearance is harmless on the pushed one and necessary on the tab.
+  content: { padding: spacing.lg, paddingBottom: TAB_BAR_CLEARANCE },
 
   // Avatar hero
   avatarSection: { alignItems: 'center' },

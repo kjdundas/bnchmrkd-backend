@@ -6,8 +6,8 @@
 // Pulls from get_linked_athletes + get_coach_feed + activity_reactions.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { View, Text, Animated, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
@@ -16,6 +16,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { callRpc, insertInto, deleteFrom } from '../lib/supabase'
 import { checkinStatus, READINESS_COLORS, isToday } from '../lib/readiness'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import AppHeader from '../components/AppHeader'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 
 const EMOJIS = ['👏', '🔥', '💪']
 const QUIET_DAYS = 14
@@ -79,6 +82,9 @@ export default function CoachHomeScreen() {
   const [reacts, setReacts] = useState<Record<string, Set<string>>>({})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  // Drives the backdrop's parallax and blur. Native-driven, so scrolling
+  // stays smooth.
+  const scrollY = useRef(new Animated.Value(0)).current
   const [busy, setBusy] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -156,8 +162,22 @@ export default function CoachHomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}
+    // Same construction as the athlete's Home: the photograph sits BEHIND the
+    // scroll view, so content slides over it rather than dragging it along,
+    // and the floating bar hovers over the whole thing.
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <AppHeader onImage />
+      <Animated.ScrollView
+        style={{ backgroundColor: 'transparent' }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.orange[500]} />}>
 
         {/* Header */}
@@ -269,8 +289,9 @@ export default function CoachHomeScreen() {
             </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.ScrollView>
+      </SafeAreaView>
+    </View>
   )
 }
 

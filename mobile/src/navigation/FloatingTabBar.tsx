@@ -44,19 +44,32 @@ const ICONS: Record<string, [string, string]> = {
   Home: ['home', 'home-outline'],
   Programs: ['barbell', 'barbell-outline'],
   Trajectory: ['trending-up', 'trending-up-outline'],
+  // Coach side
+  Squad: ['people', 'people-outline'],
+  Analyse: ['flash', 'flash-outline'],
+  Leaderboards: ['podium', 'podium-outline'],
+  CoachProfile: ['person', 'person-outline'],
 }
 
-export default function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function FloatingTabBar({
+  state, descriptors, navigation, actionRoute = 'Log', actionIcon = 'add',
+}: BottomTabBarProps & { actionRoute?: string; actionIcon?: string }) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
-  // The Log route is pulled OUT of the row and rendered as the action button.
-  // Indices are kept from the original list so focus and navigation still
-  // refer to the real routes.
+  // One route is pulled OUT of the row and rendered as the action button —
+  // Log for an athlete, Assign for a coach. It is named rather than assumed,
+  // because the two stacks have different routes and neither should have to
+  // know about the other's. Indices are kept from the original list so focus
+  // and navigation still refer to the real routes.
+  //
+  // If the named route isn't in this stack there simply is no button, and the
+  // pill takes the full width. That is the correct state before the coach's
+  // Assign screen exists, rather than a button that goes nowhere.
   const items = state.routes
     .map((route, index) => ({ route, index }))
-    .filter(({ route }) => route.name !== 'Log')
-  const log = state.routes.findIndex((r) => r.name === 'Log')
+    .filter(({ route }) => route.name !== actionRoute)
+  const log = state.routes.findIndex((r) => r.name === actionRoute)
   const logFocused = state.index === log
 
   const go = (index: number, isFocused: boolean) => {
@@ -93,7 +106,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
             backgroundColor: colors.accent[500] + (logFocused ? 'FF' : 'F0'),
           }]} />
           <View pointerEvents="none" style={styles.fabEdge} />
-          <Ionicons name="add" size={28} color="#FFFFFF" />
+          <Ionicons name={actionIcon as any} size={28} color="#FFFFFF" />
         </Pressable>
       )}
 

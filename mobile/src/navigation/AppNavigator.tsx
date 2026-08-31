@@ -7,11 +7,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, { useMemo } from 'react'
-import { Platform, View, Text, Pressable } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { spacing } from '../lib/theme'
@@ -60,51 +59,23 @@ function AthleteTabs() {
 }
 
 // ── Coach Tab Navigator ─────────────────────────────────────────────────────
+// The same bar as the athlete side. It was a stock Tab.Navigator with a
+// bordered strip across the bottom, which is why a coach signing in got the
+// app as it looked before the rebuild while the athlete got the current one.
+//
+// No action button yet: FloatingTabBar names the route it lifts out, and
+// Assign does not exist. Until it does the pill takes the full width, which
+// is the honest state rather than a (+) that goes nowhere.
 function CoachTabs() {
-  const { colors } = useTheme()
-  const tabBarOptions = useMemo(() => ({
-    headerShown: false,
-    tabBarStyle: {
-      backgroundColor: colors.tabBar.bg,
-      borderTopColor: colors.tabBar.border,
-      borderTopWidth: 1,
-      height: Platform.OS === 'ios' ? 85 : 70,
-      paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-      paddingTop: 8,
-      elevation: 0,
-    },
-    tabBarActiveTintColor: colors.tabBar.active,
-    tabBarInactiveTintColor: colors.tabBar.inactive,
-    tabBarLabelStyle: {
-      fontSize: 10,
-      letterSpacing: 0.5,
-      fontWeight: '600' as const,
-      marginTop: 2,
-    },
-  }), [colors])
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        ...tabBarOptions,
-        tabBarIcon: ({ color, size, focused }) => {
-          let iconName: string = 'home-outline'
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline'
-          else if (route.name === 'Squad') iconName = focused ? 'people' : 'people-outline'
-          else if (route.name === 'Analyse') iconName = focused ? 'flash' : 'flash-outline'
-          else if (route.name === 'CoachProfile') iconName = focused ? 'person' : 'person-outline'
-          return <Ionicons name={iconName as any} size={size} color={color} />
-        },
-      })}
+      tabBar={(props) => <FloatingTabBar {...props} actionRoute="Assign" actionIcon="send" />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen name="Home" component={CoachHomeScreen} />
-      <Tab.Screen name="Squad" component={CoachRosterScreen} />
-      <Tab.Screen name="Analyse" component={CoachAnalyseScreen} />
-      <Tab.Screen
-        name="CoachProfile"
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
-      />
+      <Tab.Screen name="Home" component={CoachHomeScreen} options={{ tabBarLabel: 'HOME' }} />
+      <Tab.Screen name="Squad" component={CoachRosterScreen} options={{ tabBarLabel: 'SQUAD' }} />
+      <Tab.Screen name="Analyse" component={CoachAnalyseScreen} options={{ tabBarLabel: 'ANALYSE' }} />
+      <Tab.Screen name="CoachProfile" component={ProfileScreen} options={{ tabBarLabel: 'PROFILE' }} />
     </Tab.Navigator>
   )
 }
