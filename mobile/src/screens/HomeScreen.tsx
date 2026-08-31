@@ -53,6 +53,8 @@ import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
 import { fetchEvents } from '../lib/events'
 import IndicatorPicker from '../components/IndicatorPicker'
 import { loadIndicators, saveIndicators } from '../lib/indicators'
+import ApprovalInbox, { ApprovalBanner } from '../components/ApprovalInbox'
+import { pendingCountFor } from '../lib/approvals'
 import { getTier } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
@@ -163,7 +165,16 @@ export default function HomeScreen() {
   const [todayPrograms, setTodayPrograms] = useState<any[]>([])
   const [todayEvents, setTodayEvents] = useState<any[]>([])
   const [todayLogs, setTodayLogs] = useState<any[]>([])
+  // Anything a coach has sent that hasn't been answered, plus anything this
+  // athlete logged that their coach hasn't approved yet. Zero for an athlete
+  // with no coach, so the banner never appears for them.
+  const [pendingCount, setPendingCount] = useState(0)
+  const [inboxOpen, setInboxOpen] = useState(false)
   const [fadeAnim] = useState(new Animated.Value(0))
+
+  const refreshPending = useCallback(async () => {
+    setPendingCount(user?.id ? await pendingCountFor(user.id) : 0)
+  }, [user])
   // Drives the hero's blur/parallax. Native-driven, so scrolling stays smooth.
   const scrollY = useRef(new Animated.Value(0)).current
 
@@ -196,6 +207,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadData()
+    refreshPending()
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
@@ -214,7 +226,7 @@ export default function HomeScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await loadData()
+    await Promise.all([loadData(), refreshPending()])
     setRefreshing(false)
   }
 
@@ -509,6 +521,9 @@ export default function HomeScreen() {
           { useNativeDriver: true },
         )}
       >
+        {/* Anything awaiting an answer comes before anything to read. */}
+        <ApprovalBanner count={pendingCount} onPress={() => setInboxOpen(true)} />
+
         {/* ── Greeting line (identity moved to AppHeader) ── */}
         <View style={styles.greetingSection}>
           <View style={styles.greetingTopRow}>
@@ -611,6 +626,16 @@ export default function HomeScreen() {
             above it rather than behind it. */}
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </Animated.ScrollView>
+
+      <ApprovalInbox
+        visible={inboxOpen}
+        userId={user?.id}
+        onClose={() => setInboxOpen(false)}
+        // An answer changes what counts: an approved result becomes eligible
+        // for a PB, an accepted program starts generating sessions. Both are
+        // read by loadData, so the screen behind has to refetch.
+        onChanged={() => { refreshPending(); loadData() }}
+      />
 
       <IndicatorPicker
         visible={pickerOpen}

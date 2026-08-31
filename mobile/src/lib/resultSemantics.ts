@@ -150,7 +150,38 @@ export function countsForAnalysis(row: any, discipline?: string | null): boolean
   // `num`, not Number: a null mark coerces to 0, and in a time event 0.00s
   // would be an unbeatable personal best that no real run could ever displace.
   if (num(row.mark) == null) return false
+  // A result awaiting a coach's approval is not yet a fact about the athlete.
+  // This one line is what makes PBs, career stats, trajectory, projections
+  // and the squad leaderboards all approval-aware — they every one of them
+  // pass through here, which is the entire reason it was consolidated.
+  //
+  // Absent means accepted, deliberately: rows that predate the approval
+  // columns, and the denormalised race blobs the coach roster still reads,
+  // carry no `approval` field and must not silently vanish from the maths.
+  if (!isApproved(row)) return false
   return !isWindAssisted(row, discipline ?? row.discipline)
+}
+
+/**
+ * Approval states, shared by programs, calendar events and results.
+ * One vocabulary in both directions — an athlete accepting a coach's program
+ * and a coach approving an athlete's result are the same act, so they get the
+ * same words, the same colours and the same component.
+ */
+export type Approval = 'pending' | 'accepted' | 'declined'
+
+/** Absent counts as accepted. See countsForAnalysis for why. */
+export function isApproved(row: any): boolean {
+  const a = row?.approval
+  return a == null || a === 'accepted'
+}
+
+export function isPending(row: any): boolean {
+  return row?.approval === 'pending'
+}
+
+export function isDeclined(row: any): boolean {
+  return row?.approval === 'declined'
 }
 
 /** Why a result was left out, for a table that has to explain itself. */
@@ -158,6 +189,8 @@ export function exclusionReason(row: any, discipline?: string | null): string | 
   if (!row) return null
   if (!isCompleted(row.status)) return STATUS_LABEL[row.status as ResultStatus] || 'Not a result'
   if (num(row.mark) == null) return 'No mark'
+  if (isPending(row)) return 'Awaiting approval'
+  if (isDeclined(row)) return 'Not approved'
   if (isWindAssisted(row, discipline ?? row.discipline)) return 'Wind-assisted'
   return null
 }
