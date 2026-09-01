@@ -7,7 +7,15 @@
     <title>bnchmrkd.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+    <!-- Non-render-blocking font load: paints immediately with the fallback
+         stack, swaps to the web font once it arrives. A render-blocking
+         <link rel="stylesheet"> here would hold up first paint of the
+         entire page -- including the boot shell below -- on any latency
+         to fonts.googleapis.com, regardless of how fast the rest of the
+         connection is. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" /></noscript>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "8f3569169b1945d9a2a2c1dd6b26933c"}'></script>
     <!-- End Cloudflare Web Analytics -->

@@ -182,3 +182,32 @@ bar to collapse — so this specific bug was invisible to that method and
 only shows up on a genuine mobile browser.
 
 See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
+(This turned out not to be the actual cause — see the next follow-up.)
+
+---
+
+# Follow-up — 2026-09-01: real culprit — render-blocking font stylesheet
+
+**Reported by:** Aishwar, on-device — zero logo flash *and* zero trace of
+the background gradient, truly flat white, then everything appearing at
+once. That specific detail (not even the background showing) is what broke
+the case: a mispositioned element still leaves some part of the page
+visible; this pointed at something blocking paint of the whole document.
+
+## Root cause
+
+`frontend/index.html` loaded Google Fonts via a plain
+`<link rel="stylesheet" href="https://fonts.googleapis.com/...">` in
+`<head>`. Stylesheet `<link>` tags are render-blocking by default — the
+browser won't paint *anything*, including inline styles and markup that
+have nothing to do with that resource, until every such link has been
+fetched. Any extra latency reaching that specific third-party domain
+(independent of general connection speed — different DNS path, filtering,
+regional routing) holds up first paint of the entire page. This explains
+every symptom across all three follow-ups: nothing renders until the font
+CSS resolves, then everything appears in one burst — by which point React
+may already be mounted, so the boot shell's real visible window can be
+effectively zero even though it's correctly present in the HTML the whole
+time.
+
+See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.

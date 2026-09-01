@@ -302,4 +302,77 @@ and isn't subject to the address-bar-collapse inconsistency.
 
 ## Status
 
-Pushed to `main`. Awaiting confirmation on an actual mobile device.
+Pushed to `main`. On-device check came back negative — see the next
+follow-up below, this was not the (or not the only) cause.
+
+---
+
+# Follow-up — 2026-09-01: still no logo flash — real culprit found
+
+**Reported by:** Aishwar, on-device (mobile Chrome, WiFi, confirmed no
+other site feels slow on the same connection): zero logo flash, and
+critically, **no trace of the background gradient either** — genuinely flat
+white for several seconds, then the real app appears all at once.
+
+## Root cause
+
+That specific detail — not even the background showing — ruled out
+positioning as the cause (a mispositioned element would still leave *some*
+part of the gradient visible somewhere) and pointed at something blocking
+first paint of the *entire document*, boot shell included.
+
+`frontend/index.html` had:
+```html
+<link href="https://fonts.googleapis.com/css2?...&display=swap" rel="stylesheet" />
+```
+A `<link rel="stylesheet">` in `<head>` is render-blocking by default —
+browsers won't paint anything until every such stylesheet has been fetched,
+even ones from a third-party domain, even when the actual page content
+(including inline `<style>` and the boot-shell markup sitting right there
+in the same document) has nothing to do with that resource. If there's any
+extra latency reaching `fonts.googleapis.com` specifically — a different DNS
+path, filtering, regional routing — independent of how fast the connection
+is to everything else, the whole page sits un-painted until that one
+external request resolves. `preconnect` hints were already in place (they
+reduce DNS/TLS setup time) but don't remove the fundamentally blocking
+nature of the fetch itself.
+
+This explains every observation across all three follow-ups: nothing paints
+(not logo, not gradient, not real content) until the font CSS arrives, then
+everything appears in one burst once it does — by which point React may
+already be mounted and ready, so the boot shell's actual visible window can
+be ~0ms even though it's correctly in the HTML the whole time.
+
+## Fix
+
+Converted the font `<link>` to the standard non-blocking load pattern:
+```html
+<link rel="preload" as="style" href="...fonts.googleapis.com/css2?...">
+<link href="...fonts.googleapis.com/css2?..." rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="...fonts.googleapis.com/css2?..." rel="stylesheet"></noscript>
+```
+`media="print"` makes the browser fetch the stylesheet without treating it
+as render-blocking for screen media; `onload` swaps it to `media="all"`
+once it's actually loaded, applying the real fonts at that point. The page
+now paints immediately using fallback fonts (a brief, standard FOUT), and
+swaps to the web fonts once they arrive — independent of how long that
+takes. The `<noscript>` fallback preserves normal behavior with JS disabled.
+
+## Verification
+
+- Confirmed the non-blocking `<link>` pattern survives the production
+  build unchanged.
+- Confirmed via `document.fonts.check('16px "Instrument Sans"')` that the
+  font still loads and applies correctly, and confirmed the `media`
+  attribute correctly flips from `print` to `all` once loaded.
+- Re-ran the full mount/unmount/login flow locally with the real `serve`
+  package — no regression.
+- **Same caveat as the previous two rounds: this environment has no way to
+  reproduce a genuinely slow/blocked path to a third-party domain, so this
+  is reasoned from first principles (a textbook render-blocking-resource
+  bug) and matches every symptom reported, but is not something I watched
+  fail-then-pass myself. Needs the same on-device recheck.**
+
+## Status
+
+Pushed to `main`. Awaiting on-device confirmation.
