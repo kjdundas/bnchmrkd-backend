@@ -80,3 +80,44 @@ Byte weight of the four eagerly-loaded chunks (gzip / decoded):
 | CSS | 13.7 KB | 88.3 KB | yes |
 
 See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
+
+---
+
+# Follow-up — 2026-09-01: mobile feels slower than desktop
+
+**Reported by:** Aishwar, after the recharts fix above shipped — desktop felt
+noticeably faster, but mobile still felt slow.
+
+## Investigation
+
+- Confirmed mobile and desktop are served byte-identical JS/CSS — there is no
+  separate mobile build or device-specific code path anywhere in the app.
+  Whatever feels different is coming from something both devices load
+  equally, that a phone simply handles worse.
+- Checked the two large landing-page background photos directly:
+  ```
+  frontend/public/hero-stadium.jpg    1920×1081px, 195 KB
+  frontend/public/value-stadium.jpg   1920×1081px, 180 KB
+  ```
+- Found both are applied as plain CSS `background-image` (in
+  `frontend/src/bnchmarkd-app.jsx` and
+  `frontend/src/components/landing/ValueFlywheel.jsx`'s `.vf-photo` class),
+  not `<img>` tags — meaning neither native lazy-loading nor responsive
+  `srcset`/`sizes` is available to them; whatever file the CSS names is what
+  every device downloads, full stop.
+
+## Root cause
+
+Same full-resolution (1920×1081) images ship to every device regardless of
+screen size. This isn't a regression from the recharts fix — it's a
+pre-existing gap that was simply masked by the JS payload being the bigger
+problem until that was fixed. Two compounding effects specific to mobile:
+
+1. **Download cost** — 375 KB combined is now the single largest thing on the
+   page (larger than the JS bundle after the recharts fix), and mobile
+   connections are typically slower than the desktop connection used for
+   testing.
+2. **Decode cost** — decoding and downscaling a 1920px JPEG is real CPU/GPU
+   work; phone hardware does this meaningfully slower than a desktop.
+
+See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.

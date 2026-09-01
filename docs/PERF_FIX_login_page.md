@@ -56,5 +56,67 @@ slow connection than on localhost.
 
 ## Status
 
-Committed to the working tree. Not yet pushed — a push to `main` auto-deploys
-to `bnchmrkd.org` via Railway, per `CLAUDE.md`.
+Pushed to `main` and confirmed live on `bnchmrkd.org` (2026-08-31): fetched the
+deployed `index.html` directly and confirmed `recharts` is absent from the
+`modulepreload` list, and confirmed via live network trace that it never loads
+across the full landing → click "Log In" → auth form flow.
+
+---
+
+# Follow-up — 2026-09-01: responsive hero images for mobile
+
+**Related diagnosis:** see the matching dated section in
+[PERF_DIAGNOSIS_login_page.md](./PERF_DIAGNOSIS_login_page.md).
+
+## Changes made
+
+1. Generated mobile-sized, compressed copies of both hero background images
+   (via `sharp`, resized to 900px wide, JPEG quality 74):
+   - `frontend/public/hero-stadium-mobile.jpg` — 38 KB (was 195 KB at full size)
+   - `frontend/public/value-stadium-mobile.jpg` — 31 KB (was 180 KB at full size)
+
+2. **`frontend/src/bnchmarkd-app.jsx`** — moved the hero background from an
+   inline `style` prop to a CSS class (`.hero-bg`), added a
+   `@media (max-width: 768px)` override pointing at the mobile image. Inline
+   styles can't contain media queries, so this required promoting it to a
+   real CSS rule in the existing per-view `<style>` block already used for
+   keyframes/fonts.
+
+3. **`frontend/src/components/landing/ValueFlywheel.jsx`** — same pattern
+   applied to its existing `.vf-photo` CSS class.
+
+No JavaScript-based device detection was used — this is a plain CSS media
+query, so there's no extra runtime logic that can fail; the browser picks the
+right file itself based on viewport width, before any image request is made.
+
+## Verification
+
+- Built and served a local production build (`npm run build` + `npm run preview`).
+- Resized the browser window to a phone-width viewport (390×844, ~500px CSS
+  viewport width) and confirmed via Resource Timing that `hero-stadium-mobile.jpg`
+  and `value-stadium-mobile.jpg` were the files actually requested.
+- Resized back to a desktop viewport (1440×900) and confirmed the original
+  full-size `hero-stadium.jpg` / `value-stadium.jpg` load instead.
+- Visual check via screenshot at mobile width: no perceptible quality loss —
+  both images sit behind a heavy gradient overlay as decorative background,
+  so the resolution drop isn't visible.
+
+## Before / after (mobile only — desktop is unaffected)
+
+| Element optimised | Before | After (mobile, ≤768px viewport) | Improvement |
+|---|---|---|---|
+| `hero-stadium.jpg` | 195 KB, 1920×1081 — same file for every device | 38 KB, 900×507 | **80% ↓** |
+| `value-stadium.jpg` | 180 KB, 1920×1081 — same file for every device | 31 KB, 900×507 | **83% ↓** |
+| Combined hero image weight on mobile | 375 KB | 69 KB | **82% ↓** |
+
+**Why this mattered more on mobile than desktop:** both images were served as
+CSS `background-image`, which — unlike an `<img>` tag — has no browser-native
+way to lazy-load or serve a smaller variant per screen size. Every visitor,
+regardless of device, downloaded and decoded the same 1920px-wide files. A
+phone pays for this twice: a slower connection making the download take
+longer, and a weaker CPU/GPU taking longer to decode and downscale a
+desktop-resolution image it was always going to shrink down anyway.
+
+## Status
+
+Built and verified locally. Not yet committed/pushed at time of writing.

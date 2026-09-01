@@ -103,6 +103,9 @@ export default function ValueFlywheel() {
 const CSS = `
 .vf-section{position:relative;overflow:hidden}
 .vf-photo{position:absolute;inset:0;z-index:0;background-image:linear-gradient(180deg,rgba(10,10,15,0.86) 0%,rgba(10,10,15,0.72) 45%,rgba(246,247,251,0.92) 100%),url('/value-stadium.jpg');background-size:cover;background-position:center 30%}
+@media (max-width: 768px) {
+.vf-photo{background-image:linear-gradient(180deg,rgba(10,10,15,0.86) 0%,rgba(10,10,15,0.72) 45%,rgba(246,247,251,0.92) 100%),url('/value-stadium-mobile.jpg')}
+}
 .vf-wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:8px 20px 12px;text-align:center;font-family:'Inter','Helvetica Neue',sans-serif}
 .vf-eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:#8B83FF;font-weight:600}
 .vf-title{margin:0;font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.5px;color:#f8fafc;line-height:1.05}

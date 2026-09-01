@@ -3875,6 +3875,16 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
               opacity: 1;
               transform: translateY(0);
             }
+            .hero-bg {
+              background-image: linear-gradient(100deg, rgba(246,247,251,0.97) 0%, rgba(246,247,251,0.90) 42%, rgba(246,247,251,0.55) 100%), url('/hero-stadium.jpg');
+              background-size: cover;
+              background-position: center right;
+            }
+            @media (max-width: 768px) {
+              .hero-bg {
+                background-image: linear-gradient(100deg, rgba(246,247,251,0.97) 0%, rgba(246,247,251,0.90) 42%, rgba(246,247,251,0.55) 100%), url('/hero-stadium-mobile.jpg');
+              }
+            }
           `}</style>
 
           {/* ── ATMOSPHERIC BACKGROUND LAYERS ── */}
@@ -3940,13 +3950,8 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
           <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-8 sm:pt-16 pb-12">
             {/* Stadium backdrop — full-bleed behind hero, scrimmed left→right for legibility */}
             <div
-              className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen z-0 pointer-events-none"
+              className="hero-bg absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen z-0 pointer-events-none"
               aria-hidden="true"
-              style={{
-                backgroundImage: "linear-gradient(100deg, rgba(246,247,251,0.97) 0%, rgba(246,247,251,0.90) 42%, rgba(246,247,251,0.55) 100%), url('/hero-stadium.jpg')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center right',
-              }}
             ></div>
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
