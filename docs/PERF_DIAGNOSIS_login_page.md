@@ -83,6 +83,25 @@ See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
 
 ---
 
+# Follow-up — 2026-09-01: blank white screen while the app loads
+
+**Reported by:** Aishwar, after the mobile image fix shipped — page now loads
+faster, but shows a plain white screen for several seconds before anything
+appears.
+
+## Root cause
+
+`frontend/index.html`'s `<div id="root"></div>` starts completely empty, with
+no styled background on `<body>` either. Nothing is visible until the JS
+bundle finishes downloading, parsing, and React mounts — a gap inherent to
+how single-page apps work, not something introduced by the earlier fixes.
+This is a *perception* problem, distinct from the *load-time* problems
+diagnosed above — it exists even once load time is reasonable.
+
+See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
+
+---
+
 # Follow-up — 2026-09-01: mobile feels slower than desktop
 
 **Reported by:** Aishwar, after the recharts fix above shipped — desktop felt

@@ -119,4 +119,67 @@ desktop-resolution image it was always going to shrink down anyway.
 
 ## Status
 
+Pushed to `main` and confirmed live on `bnchmrkd.org` (2026-09-01): verified via
+Resource Timing on both a mobile-width and desktop-width viewport that each
+gets the correct image file.
+
+---
+
+# Follow-up — 2026-09-01: blank white screen while the app loads
+
+**Reported by:** Aishwar, after the mobile image fix above — mobile felt
+faster, but showed several seconds of a plain white screen before the page
+appeared at all.
+
+## Diagnosis
+
+This isn't a "why does it take longer than necessary" issue like the previous
+two — it's "why does it look broken while it loads," independent of how fast
+that load actually is. `frontend/index.html` had:
+```html
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+```
+`#root` is completely empty until React finishes downloading, parsing, and
+mounting the app — there is no fallback content of any kind, and the `<body>`
+had no background color set, so the browser shows its own default white in
+the meantime. Every single-page app (React, Vue, etc.) has this same gap by
+default; it's not specific to anything fixed earlier.
+
+## Fix
+
+Added a static, JS-free boot shell directly in `frontend/index.html`:
+- `body` background set to the same light gradient the app already uses,
+  so there's no color flash when React takes over
+- The `bnchmrkd.` wordmark, centered, fading in via a plain CSS
+  `@keyframes` animation (no JavaScript involved — it can't itself be
+  delayed by the thing it's covering for)
+- A small animated progress-bar-style pulse underneath, signaling "loading"
+  rather than "frozen"
+- Respects `prefers-reduced-motion` (shows the logo statically, no
+  animation, for users who've asked for reduced motion)
+
+The markup lives *inside* `<div id="root">`, not replacing it — React's
+`ReactDOM.createRoot(...).render(...)` in `main.jsx` replaces `#root`'s
+children entirely on mount, so the boot shell is guaranteed to be cleanly
+removed the instant the real app is ready. No coordination code needed.
+
+Design was mocked up and approved as a side-by-side before/after comparison
+before implementation (per team convention for visual changes).
+
+## Verification
+
+- Confirmed the boot-shell markup renders correctly in the raw built
+  `index.html` — works with zero JavaScript, by construction.
+- Built and served locally; confirmed via DOM inspection that `#boot-shell`
+  is completely gone after mount and `#root` contains exactly one child
+  (React's own render), with no leftover nodes or lingering styles.
+- Screenshot comparison: landing page after mount is visually identical to
+  before this change — no regression.
+- Walked the full login flow on the local build — works normally.
+- Checked console for errors post-change — only generic browser-extension
+  noise unrelated to the app, no new errors introduced.
+
+## Status
+
 Built and verified locally. Not yet committed/pushed at time of writing.

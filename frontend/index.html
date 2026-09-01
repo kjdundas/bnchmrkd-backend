@@ -11,9 +11,53 @@
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "8f3569169b1945d9a2a2c1dd6b26933c"}'></script>
     <!-- End Cloudflare Web Analytics -->
+    <style>
+      /* Instant, JS-free boot shell — shown until React mounts and replaces #root's contents */
+      body {
+        margin: 0;
+        background: linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%);
+      }
+      #boot-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+      #boot-shell img {
+        width: 160px;
+        opacity: 0;
+        animation: bootFade 0.7s ease 0.2s forwards;
+      }
+      #boot-pulse {
+        width: 40px;
+        height: 3px;
+        border-radius: 2px;
+        background: #EDEBFE;
+        overflow: hidden;
+        opacity: 0;
+        animation: bootPulseFade 0.5s ease 0.55s forwards;
+      }
+      #boot-pulse span {
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: #4F3CF0;
+        border-radius: 2px;
+        animation: bootPulseTrack 1.1s ease-in-out infinite;
+      }
+      @keyframes bootFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes bootPulseFade { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes bootPulseTrack { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-shell img { animation: none; opacity: 1; }
+        #boot-pulse { display: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="boot-shell"><img src="/bnchmrkd-wordmark.svg" alt="bnchmrkd." /><div id="boot-pulse"><span></span></div></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
