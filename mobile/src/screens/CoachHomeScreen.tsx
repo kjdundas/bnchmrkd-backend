@@ -11,7 +11,7 @@ import { View, Text, Animated, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, onImage } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { callRpc, insertInto, deleteFrom } from '../lib/supabase'
@@ -281,17 +281,25 @@ export default function CoachHomeScreen() {
           )}
         </View>
 
-        {/* Squad health */}
-        {linked.length > 0 && (
+        {/* Squad health.
+            "Athletes" is the whole squad; "checked in" can only ever count
+            the ones with an account, because an athlete with no phone has
+            nothing to check in on. Showing 0/1 beside a squad of five read
+            as a bug, so the denominator says what it is. */}
+        {athletes.length > 0 && (
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>{linked.length}</Text>
+              <Text style={styles.statNum}>{athletes.length}</Text>
               <Text style={styles.statLabel}>Athletes</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>{checkedToday}<Text style={styles.statSub}>/{linked.length}</Text></Text>
-              <Text style={styles.statLabel}>Checked in</Text>
+              <Text style={styles.statNum}>
+                {checkedToday}<Text style={styles.statSub}>/{linked.length}</Text>
+              </Text>
+              <Text style={styles.statLabel}>
+                {linked.length === athletes.length ? 'Checked in' : 'Of those with an app'}
+              </Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -322,7 +330,7 @@ export default function CoachHomeScreen() {
                     <Text style={styles.rowTitle} numberOfLines={1}>{it.headline}</Text>
                     <Text style={styles.rowDetail} numberOfLines={1}>{it.detail}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={14} color={colors.text.dimmed} />
+                  <Ionicons name="chevron-forward" size={14} color={onImage.dim} />
                 </TouchableOpacity>
               ))
             )}
@@ -347,8 +355,8 @@ export default function CoachHomeScreen() {
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={styles.feedName} numberOfLines={1}>
-                      <Text style={{ fontWeight: '700', color: colors.text.primary }}>{ev.athlete_name}</Text>
-                      <Text style={{ color: colors.text.muted }}> {meta.verb}</Text>
+                      <Text style={{ fontWeight: '700', color: onImage.ink }}>{ev.athlete_name}</Text>
+                      <Text style={{ color: onImage.muted }}> {meta.verb}</Text>
                     </Text>
                     <View style={styles.feedMetaRow}>
                       <Ionicons name={meta.icon as any} size={11} color={meta.color} />
@@ -376,7 +384,7 @@ export default function CoachHomeScreen() {
         {/* Empty (no linked athletes yet) */}
         {!loading && linked.length === 0 && feed.length === 0 && (
           <View style={styles.emptyWrap}>
-            <View style={styles.emptyIcon}><Ionicons name="people-outline" size={30} color={colors.text.dimmed} /></View>
+            <View style={styles.emptyIcon}><Ionicons name="people-outline" size={30} color={onImage.dim} /></View>
             <Text style={styles.emptyTitle}>No linked athletes yet</Text>
             <Text style={styles.emptySub}>Invite athletes from your Squad to see their check-ins, programs and activity here.</Text>
             <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CoachRoster')}>
@@ -436,10 +444,10 @@ const sq = StyleSheet.create({
 })
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
-  greeting: { fontSize: 13, color: colors.text.muted, fontWeight: '500' },
-  title: { fontSize: 28, fontWeight: '700', color: colors.text.primary, marginTop: 2, letterSpacing: -0.5 },
+  greeting: { fontSize: 13, color: onImage.muted, fontWeight: '500' },
+  title: { fontSize: 28, fontWeight: '700', color: onImage.ink, marginTop: 2, letterSpacing: -0.5 },
 
   statsRow: {
     flexDirection: 'row', marginHorizontal: spacing.lg, marginTop: spacing.sm,
@@ -447,18 +455,18 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 20, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5 },
-  statSub: { fontSize: 13, color: colors.text.dimmed, fontWeight: '600' },
-  statLabel: { fontSize: 10, letterSpacing: 1, color: colors.text.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
+  statNum: { fontSize: 20, fontWeight: '700', color: onImage.ink, letterSpacing: -0.5 },
+  statSub: { fontSize: 13, color: onImage.dim, fontWeight: '600' },
+  statLabel: { fontSize: 10, letterSpacing: 1, color: onImage.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
   statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
 
   section: { marginTop: spacing.xl, paddingHorizontal: spacing.lg },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.sm },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.text.primary },
-  sectionHint: { marginLeft: 'auto', fontSize: 10, color: colors.text.dimmed },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: onImage.ink },
+  sectionHint: { marginLeft: 'auto', fontSize: 10, color: onImage.dim },
 
   allClear: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: spacing.md },
-  allClearText: { fontSize: 13, color: colors.text.secondary },
+  allClearText: { fontSize: 13, color: onImage.muted },
 
   row: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingRight: 4,
@@ -466,8 +474,8 @@ const styles = StyleSheet.create({
     paddingLeft: 0, marginBottom: 8, overflow: 'hidden',
   },
   rowBar: { width: 4, alignSelf: 'stretch', borderTopLeftRadius: radius.md, borderBottomLeftRadius: radius.md, marginRight: spacing.md },
-  rowTitle: { fontSize: 13, fontWeight: '600', color: colors.text.primary },
-  rowDetail: { fontSize: 11, color: colors.text.muted, marginTop: 1 },
+  rowTitle: { fontSize: 13, fontWeight: '600', color: onImage.ink },
+  rowDetail: { fontSize: 11, color: onImage.muted, marginTop: 1 },
 
   feedRow: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: spacing.sm,
@@ -477,8 +485,8 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 12, fontWeight: '700' },
   feedName: { fontSize: 12.5 },
   feedMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
-  feedDetail: { fontSize: 11, color: colors.text.muted, flexShrink: 1 },
-  feedTime: { fontSize: 10, color: colors.text.dimmed },
+  feedDetail: { fontSize: 11, color: onImage.muted, flexShrink: 1 },
+  feedTime: { fontSize: 10, color: onImage.dim },
   reactRow: { flexDirection: 'row', gap: 4 },
   reactBtn: {
     width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center',
@@ -492,8 +500,8 @@ const styles = StyleSheet.create({
     width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.lg,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.text.primary, marginBottom: 6 },
-  emptySub: { fontSize: 13, color: colors.text.muted, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: onImage.ink, marginBottom: 6 },
+  emptySub: { fontSize: 13, color: onImage.muted, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
   emptyBtn: { backgroundColor: colors.orange[500], borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 24 },
   emptyBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 })

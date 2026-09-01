@@ -13,7 +13,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { countsForAnalysis } from './resultSemantics'
-import { isLowerBetter } from './disciplineScience'
+import { isLowerBetter, sameDiscipline } from './disciplineScience'
 import type { SquadAthlete } from './squads'
 
 export type RankMode = 'pb' | 'season'
@@ -36,6 +36,10 @@ export function currentSeason(today = new Date()): string {
 
 function bestOf(results: any[], discipline: string, mode: RankMode, season: string) {
   const legal = (results || []).filter((r) => {
+    // The row has to BE this event. countsForAnalysis takes a discipline
+    // only to decide whether the wind rule applies, not to check the row
+    // against it — without this a sprinter's 60m ranks on the 100m board.
+    if (!sameDiscipline(r.discipline, discipline)) return false
     if (!countsForAnalysis(r, discipline)) return false
     if (mode === 'season') {
       // The date is a plain YYYY-MM-DD; slice the year off the string rather

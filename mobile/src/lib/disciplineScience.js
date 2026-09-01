@@ -50,6 +50,19 @@ export function isCombinedEvent(discipline) {
   return COMBINED.some((c) => d.includes(c))
 }
 
+/**
+ * Is this row's event the event we are asking about?
+ *
+ * Trivial-looking, and its absence let a 60m time be ranked as a 100m
+ * personal best — 7.43 shown as a 100m PB, which the tier maths then scored
+ * as World Class at the 99th percentile. Compared case-insensitively and
+ * trimmed, because the same event has been stored as '100m', '100M' and
+ * '100m ' at various points.
+ */
+export function sameDiscipline(a, b) {
+  return (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase()
+}
+
 export function isLowerBetter(discipline) {
   if (isCombinedEvent(discipline)) return false
   const family = disciplineFamily(discipline)

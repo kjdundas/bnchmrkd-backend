@@ -4,8 +4,9 @@
 // No emojis — professional Ionicons, Strava-style data layout
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import {
+  Animated,
   View,
   Text,
   ScrollView,
@@ -20,7 +21,7 @@ import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, onImage } from '../lib/theme'
 import { useTheme } from '../contexts/ThemeContext'
 import { isLowerBetter } from '../lib/disciplineScience'
 import FullAnalysis from '../components/FullAnalysis'
@@ -105,7 +106,7 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
         <View key={group} style={styles.disciplineGroup}>
           {filterGroup === 'all' && (
             <View style={styles.groupHeader}>
-              <View style={[styles.groupDot, { backgroundColor: GROUP_COLORS[group] || colors.text.dimmed }]} />
+              <View style={[styles.groupDot, { backgroundColor: GROUP_COLORS[group] || onImage.dim }]} />
               <Text style={styles.groupLabel}>{group}</Text>
             </View>
           )}
@@ -113,16 +114,16 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
             <TouchableOpacity key={d.name} style={styles.disciplineRow}
               onPress={() => onSelect(d.name)} activeOpacity={0.6}>
               <View style={[styles.disciplineIcon, {
-                backgroundColor: (GROUP_COLORS[d.group] || colors.text.dimmed) + '10',
+                backgroundColor: (GROUP_COLORS[d.group] || onImage.dim) + '10',
               }]}>
                 <Ionicons
                   name={d.icon as any}
                   size={16}
-                  color={GROUP_COLORS[d.group] || colors.text.muted}
+                  color={GROUP_COLORS[d.group] || onImage.muted}
                 />
               </View>
               <Text style={styles.disciplineName}>{d.name}</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.text.dimmed} />
+              <Ionicons name="chevron-forward" size={14} color={onImage.dim} />
             </TouchableOpacity>
           ))}
         </View>
@@ -136,6 +137,10 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachAnalyseScreen() {
+  // Drives the backdrop's parallax and blur. Without a scroll driver the
+  // photograph never dissolves — it sits at full strength behind the whole
+  // list, which is what made these two screens unreadable.
+  const scrollY = useRef(new Animated.Value(0)).current
   const { colors: c } = useTheme()
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null)
   const [markInput, setMarkInput] = useState('')
@@ -163,14 +168,14 @@ export default function CoachAnalyseScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
-      <ScreenBackdrop image="gym" />
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <AppHeader onImage />
       {/* Header */}
       <View style={styles.header}>
         {(selectedDiscipline || result) && (
           <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
+            <Ionicons name="chevron-back" size={22} color={onImage.ink} />
           </TouchableOpacity>
         )}
         <View style={{ flex: 1 }}>
@@ -192,7 +197,9 @@ export default function CoachAnalyseScreen() {
       {selectedDiscipline && !result && (
         <KeyboardAvoidingView style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Animated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
             <View style={styles.inputCard}>
               <Text style={styles.inputCardTitle}>{selectedDiscipline}</Text>
               <Text style={styles.inputCardDesc}>
@@ -207,7 +214,7 @@ export default function CoachAnalyseScreen() {
                   <TextInput
                     style={styles.markInput}
                     placeholder={isLowerBetter(selectedDiscipline) ? 'e.g. 10.85 or 1:52.30' : 'e.g. 65.20'}
-                    placeholderTextColor={colors.text.dimmed}
+                    placeholderTextColor={onImage.dim}
                     value={markInput}
                     onChangeText={setMarkInput}
                     keyboardType="numbers-and-punctuation"
@@ -219,7 +226,7 @@ export default function CoachAnalyseScreen() {
                   <TextInput
                     style={styles.markInput}
                     placeholder="e.g. 17"
-                    placeholderTextColor={colors.text.dimmed}
+                    placeholderTextColor={onImage.dim}
                     value={ageInput}
                     onChangeText={setAgeInput}
                     keyboardType="number-pad"
@@ -249,20 +256,22 @@ export default function CoachAnalyseScreen() {
                 <Text style={styles.analyseBtnText}>Run Analysis</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </KeyboardAvoidingView>
       )}
 
       {/* Step 3: Full 5-Act Analysis */}
       {result && (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
           <FullAnalysis
             discipline={result.discipline}
             mark={result.mark}
             age={result.age}
             sex={result.sex}
           />
-        </ScrollView>
+        </Animated.ScrollView>
       )}
       </SafeAreaView>
     </View>
@@ -271,7 +280,7 @@ export default function CoachAnalyseScreen() {
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -294,12 +303,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: onImage.ink,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 13,
-    color: colors.text.muted,
+    color: onImage.muted,
     marginTop: 2,
   },
   content: {
@@ -324,7 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.orange[500] + '12',
     borderColor: colors.orange[500] + '30',
   },
-  chipText: { fontSize: 12, fontWeight: '600', color: colors.text.muted },
+  chipText: { fontSize: 12, fontWeight: '600', color: onImage.muted },
   chipTextActive: { color: colors.orange[500] },
 
   // Discipline list
@@ -340,7 +349,7 @@ const styles = StyleSheet.create({
   groupLabel: {
     fontSize: 10,
     letterSpacing: 1.5,
-    color: colors.text.muted,
+    color: onImage.muted,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
@@ -364,7 +373,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: colors.text.primary,
+    color: onImage.ink,
   },
 
   // Input card
@@ -378,12 +387,12 @@ const styles = StyleSheet.create({
   inputCardTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: onImage.ink,
     marginBottom: 4,
   },
   inputCardDesc: {
     fontSize: 13,
-    color: colors.text.muted,
+    color: onImage.muted,
     marginBottom: spacing.xl,
   },
   inputRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
@@ -391,7 +400,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 10,
     letterSpacing: 2,
-    color: colors.text.muted,
+    color: onImage.muted,
     fontWeight: '600',
     marginBottom: 6,
   },
@@ -404,7 +413,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: onImage.ink,
   },
   segmentRow: {
     flexDirection: 'row',
@@ -422,7 +431,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   segmentBtnActive: { backgroundColor: colors.orange[500] + '15' },
-  segmentText: { fontSize: 14, fontWeight: '600', color: colors.text.muted },
+  segmentText: { fontSize: 14, fontWeight: '600', color: onImage.muted },
   segmentTextActive: { color: colors.orange[500] },
   analyseBtn: {
     backgroundColor: colors.orange[500],

@@ -4,7 +4,7 @@
 // Inspired by Strava/Whoop: clean typography, no emojis, data-dense cards
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, onImage } from '../lib/theme'
 import { WA_IMPORT_ENABLED } from '../lib/featureFlags'
 import CoachInvitePanel from '../components/CoachInvitePanel'
 import { useAuth } from '../contexts/AuthContext'
@@ -249,7 +249,7 @@ function AddAthleteModal({
             </Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={modalStyles.closeBtn}>
-              <Ionicons name="close" size={18} color={colors.text.muted} />
+              <Ionicons name="close" size={18} color={onImage.muted} />
             </TouchableOpacity>
           </View>
 
@@ -263,7 +263,7 @@ function AddAthleteModal({
                   <Text style={modalStyles.methodTitle}>Invite Athlete</Text>
                   <Text style={modalStyles.methodDesc}>They approve before you see their data</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
+                <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
               </TouchableOpacity>
 
               <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('manual')} activeOpacity={0.7}>
@@ -274,7 +274,7 @@ function AddAthleteModal({
                   <Text style={modalStyles.methodTitle}>Manual Entry</Text>
                   <Text style={modalStyles.methodDesc}>Private record — name, discipline, DOB</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
+                <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
               </TouchableOpacity>
 
               {WA_IMPORT_ENABLED && (
@@ -286,7 +286,7 @@ function AddAthleteModal({
                   <Text style={modalStyles.methodTitle}>World Athletics</Text>
                   <Text style={modalStyles.methodDesc}>Import from athlete profile URL</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
+                <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
               </TouchableOpacity>
               )}
             </View>
@@ -296,8 +296,8 @@ function AddAthleteModal({
             <View style={{ flex: 1, paddingBottom: spacing.lg }}>
               <TouchableOpacity onPress={() => setMethod(null)}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
-                <Ionicons name="chevron-back" size={16} color={colors.text.muted} />
-                <Text style={{ color: colors.text.muted, fontSize: 13 }}>Back</Text>
+                <Ionicons name="chevron-back" size={16} color={onImage.muted} />
+                <Text style={{ color: onImage.muted, fontSize: 13 }}>Back</Text>
               </TouchableOpacity>
               <CoachInvitePanel />
             </View>
@@ -308,13 +308,13 @@ function AddAthleteModal({
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>NAME</Text>
                 <TextInput style={modalStyles.input} placeholder="Athlete name"
-                  placeholderTextColor={colors.text.dimmed} value={name}
+                  placeholderTextColor={onImage.dim} value={name}
                   onChangeText={setName} autoCapitalize="words" />
               </View>
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>DISCIPLINE</Text>
                 <TextInput style={modalStyles.input} placeholder="e.g. 100m, Discus Throw"
-                  placeholderTextColor={colors.text.dimmed} value={discipline}
+                  placeholderTextColor={onImage.dim} value={discipline}
                   onChangeText={setDiscipline} />
               </View>
               <View style={modalStyles.inputWrap}>
@@ -332,7 +332,7 @@ function AddAthleteModal({
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>DATE OF BIRTH</Text>
                 <TextInput style={modalStyles.input} placeholder="YYYY-MM-DD (optional)"
-                  placeholderTextColor={colors.text.dimmed} value={dob}
+                  placeholderTextColor={onImage.dim} value={dob}
                   onChangeText={setDob} keyboardType="numbers-and-punctuation" />
               </View>
               {error ? <Text style={modalStyles.error}>{error}</Text> : null}
@@ -341,7 +341,7 @@ function AddAthleteModal({
                 <Text style={modalStyles.primaryBtnText}>{loading ? 'Adding...' : 'Add to Squad'}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setMethod(null)} style={modalStyles.backLink}>
-                <Ionicons name="chevron-back" size={14} color={colors.text.muted} />
+                <Ionicons name="chevron-back" size={14} color={onImage.muted} />
                 <Text style={modalStyles.backLinkText}>Back</Text>
               </TouchableOpacity>
               <View style={{ height: 40 }} />
@@ -354,7 +354,7 @@ function AddAthleteModal({
                 <Text style={modalStyles.label}>ATHLETE URL</Text>
                 <TextInput style={[modalStyles.input, { fontSize: 14 }]}
                   placeholder="https://worldathletics.org/athletes/..."
-                  placeholderTextColor={colors.text.dimmed} value={urlInput}
+                  placeholderTextColor={onImage.dim} value={urlInput}
                   onChangeText={setUrlInput} autoCapitalize="none" keyboardType="url" multiline />
               </View>
               {urlProgress ? (
@@ -369,7 +369,7 @@ function AddAthleteModal({
                 <Text style={modalStyles.primaryBtnText}>{loading ? 'Importing...' : 'Import Athlete'}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setMethod(null)} style={modalStyles.backLink}>
-                <Ionicons name="chevron-back" size={14} color={colors.text.muted} />
+                <Ionicons name="chevron-back" size={14} color={onImage.muted} />
                 <Text style={modalStyles.backLinkText}>Back</Text>
               </TouchableOpacity>
             </View>
@@ -412,9 +412,9 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
     <TouchableOpacity onPress={onPress} activeOpacity={0.6} style={cardStyles.cardOuter}>
       <View style={cardStyles.card}>
         {/* Avatar with tier-colored ring */}
-        <View style={[cardStyles.avatarRing, { borderColor: (tier?.color || colors.text.dimmed) + '30' }]}>
-          <View style={[cardStyles.avatar, { backgroundColor: (tier?.color || colors.text.dimmed) + '12' }]}>
-            <Text style={[cardStyles.avatarText, { color: tier?.color || colors.text.muted }]}>
+        <View style={[cardStyles.avatarRing, { borderColor: (tier?.color || onImage.dim) + '30' }]}>
+          <View style={[cardStyles.avatar, { backgroundColor: (tier?.color || onImage.dim) + '12' }]}>
+            <Text style={[cardStyles.avatarText, { color: tier?.color || onImage.muted }]}>
               {athlete.name?.charAt(0)?.toUpperCase() || '?'}
             </Text>
           </View>
@@ -461,7 +461,7 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
           ) : null}
         </View>
 
-        <Ionicons name="chevron-forward" size={14} color={colors.text.dimmed} style={{ marginLeft: 2 }} />
+        <Ionicons name="chevron-forward" size={14} color={onImage.dim} style={{ marginLeft: 2 }} />
       </View>
     </TouchableOpacity>
   )
@@ -469,6 +469,10 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachRosterScreen() {
+  // Drives the backdrop's parallax and blur. Without a scroll driver the
+  // photograph never dissolves — it sits at full strength behind the whole
+  // list, which is what made these two screens unreadable.
+  const scrollY = useRef(new Animated.Value(0)).current
   const { user, profile } = useAuth()
   const { colors: c } = useTheme()
   const navigation = useNavigation<any>()
@@ -554,7 +558,7 @@ export default function CoachRosterScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
-      <ScreenBackdrop image="gym" />
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <AppHeader onImage />
       {/* Header */}
@@ -629,17 +633,17 @@ export default function CoachRosterScreen() {
       {/* Search */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Ionicons name="search-outline" size={16} color={colors.text.dimmed} />
+          <Ionicons name="search-outline" size={16} color={onImage.dim} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name or discipline"
-            placeholderTextColor={colors.text.dimmed}
+            placeholderTextColor={onImage.dim}
             value={search}
             onChangeText={setSearch}
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={16} color={colors.text.dimmed} />
+              <Ionicons name="close-circle" size={16} color={onImage.dim} />
             </TouchableOpacity>
           )}
         </View>
@@ -661,13 +665,15 @@ export default function CoachRosterScreen() {
 
       {/* Roster list */}
       {loading ? (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
           {[1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
-        </ScrollView>
+        </Animated.ScrollView>
       ) : filtered.length === 0 ? (
         <View style={styles.emptyWrap}>
           <View style={styles.emptyIconWrap}>
-            <Ionicons name="people-outline" size={32} color={colors.text.dimmed} />
+            <Ionicons name="people-outline" size={32} color={onImage.dim} />
           </View>
           <Text style={styles.emptyTitle}>
             {roster.length === 0 ? 'No athletes yet' : 'No matches'}
@@ -679,8 +685,10 @@ export default function CoachRosterScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={styles.content}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.orange[500]} />}
           showsVerticalScrollIndicator={false}
         >
@@ -698,7 +706,7 @@ export default function CoachRosterScreen() {
             />
           ))}
           <View style={{ height: 40 }} />
-        </ScrollView>
+        </Animated.ScrollView>
       )}
 
       <AddAthleteModal
@@ -714,7 +722,7 @@ export default function CoachRosterScreen() {
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
 
   header: {
     paddingHorizontal: spacing.lg,
@@ -730,13 +738,13 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 13,
-    color: colors.text.muted,
+    color: onImage.muted,
     fontWeight: '500',
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: onImage.ink,
     marginTop: 2,
     letterSpacing: -0.5,
   },
@@ -775,8 +783,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.05)',
   },
   quickStatItem: { flex: 1, alignItems: 'center' },
-  quickStatNum: { fontSize: 20, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5 },
-  quickStatLabel: { fontSize: 10, letterSpacing: 1, color: colors.text.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
+  quickStatNum: { fontSize: 20, fontWeight: '700', color: onImage.ink, letterSpacing: -0.5 },
+  quickStatLabel: { fontSize: 10, letterSpacing: 1, color: onImage.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
   quickStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
 
   tierBar: {
@@ -807,7 +815,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: colors.text.primary,
+    color: onImage.ink,
     paddingVertical: 0,
   },
 
@@ -828,7 +836,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.orange[500] + '12',
     borderColor: colors.orange[500] + '30',
   },
-  chipText: { fontSize: 12, fontWeight: '600', color: colors.text.muted },
+  chipText: { fontSize: 12, fontWeight: '600', color: onImage.muted },
   chipTextActive: { color: colors.orange[500] },
 
   content: {
@@ -838,7 +846,7 @@ const styles = StyleSheet.create({
   listCount: {
     fontSize: 11,
     letterSpacing: 1,
-    color: colors.text.dimmed,
+    color: onImage.dim,
     fontWeight: '500',
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
@@ -865,12 +873,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: colors.text.primary,
+    color: onImage.ink,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: colors.text.muted,
+    color: onImage.muted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -906,7 +914,7 @@ const cardStyles = StyleSheet.create({
   avatarText: { fontSize: 14, fontWeight: '700' },
   nameBlock: { flex: 1, marginLeft: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 15, fontWeight: '600', color: colors.text.primary },
+  name: { fontSize: 15, fontWeight: '600', color: onImage.ink },
   trendDot: {
     width: 14,
     height: 14,
@@ -914,11 +922,11 @@ const cardStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  meta: { fontSize: 12, color: colors.text.muted, marginTop: 1 },
+  meta: { fontSize: 12, color: onImage.muted, marginTop: 1 },
 
   rightSection: { alignItems: 'flex-end', marginLeft: spacing.md },
-  pbValue: { fontSize: 15, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.3 },
-  noPb: { fontSize: 14, color: colors.text.dimmed },
+  pbValue: { fontSize: 15, fontWeight: '700', color: onImage.ink, letterSpacing: -0.3 },
+  noPb: { fontSize: 14, color: onImage.dim },
   tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -931,7 +939,7 @@ const cardStyles = StyleSheet.create({
   },
   tierDot: { width: 5, height: 5, borderRadius: 2.5 },
   tierText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
-  raceCount: { fontSize: 10, color: colors.text.dimmed, marginTop: 3 },
+  raceCount: { fontSize: 10, color: onImage.dim, marginTop: 3 },
 })
 
 // ── Modal Styles ────────────────────────────────────────────────────────────
@@ -942,7 +950,7 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.bg.secondary,
+    backgroundColor: onImage.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: spacing.sm,
@@ -964,7 +972,7 @@ const modalStyles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.text.primary },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: onImage.ink },
   closeBtn: {
     width: 28,
     height: 28,
@@ -991,15 +999,15 @@ const modalStyles = StyleSheet.create({
     alignItems: 'center',
   },
   methodInfo: { flex: 1 },
-  methodTitle: { fontSize: 15, fontWeight: '600', color: colors.text.primary },
-  methodDesc: { fontSize: 12, color: colors.text.muted, marginTop: 1 },
+  methodTitle: { fontSize: 15, fontWeight: '600', color: onImage.ink },
+  methodDesc: { fontSize: 12, color: onImage.muted, marginTop: 1 },
 
   form: { gap: 0 },
   inputWrap: { marginBottom: spacing.lg },
   label: {
     fontSize: 10,
     letterSpacing: 2,
-    color: colors.text.muted,
+    color: onImage.muted,
     fontWeight: '600',
     marginBottom: 6,
   },
@@ -1011,7 +1019,7 @@ const modalStyles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
     fontSize: 16,
-    color: colors.text.primary,
+    color: onImage.ink,
   },
   segmentRow: {
     flexDirection: 'row',
@@ -1030,7 +1038,7 @@ const modalStyles = StyleSheet.create({
   segmentBtnActive: {
     backgroundColor: colors.orange[500] + '15',
   },
-  segmentText: { fontSize: 14, fontWeight: '600', color: colors.text.muted },
+  segmentText: { fontSize: 14, fontWeight: '600', color: onImage.muted },
   segmentTextActive: { color: colors.orange[500] },
 
   error: {
@@ -1068,5 +1076,5 @@ const modalStyles = StyleSheet.create({
     gap: 4,
     marginTop: spacing.lg,
   },
-  backLinkText: { color: colors.text.muted, fontSize: 14, fontWeight: '500' },
+  backLinkText: { color: onImage.muted, fontSize: 14, fontWeight: '500' },
 })

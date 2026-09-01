@@ -4,15 +4,16 @@
 // Strava/Whoop-inspired: large numbers, clean sections, no emojis
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import {
   View,
   Text,
-  ScrollView,
+  Animated,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
@@ -37,9 +38,9 @@ export default function AthleteDetailScreen() {
 
   if (!athlete) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: BACKDROP_GROUND }]}>
         <View style={styles.emptyWrap}>
-          <Ionicons name="person-outline" size={32} color={colors.text.dimmed} />
+          <Ionicons name="person-outline" size={32} color={onImage.dim} />
           <Text style={styles.emptyText}>No athlete data</Text>
         </View>
       </SafeAreaView>
@@ -57,6 +58,8 @@ export default function AthleteDetailScreen() {
   // a coach's view of a mark could not apply the rules the athlete's own view
   // applied: the same +2.9 sprint was a personal best to one of them and not
   // to the other. Everything below goes through countsForAnalysis now.
+  // Drives the backdrop's parallax and blur, as on every other screen.
+  const scrollY = useRef(new Animated.Value(0)).current
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
@@ -92,11 +95,16 @@ export default function AthleteDetailScreen() {
     () => trendOf(results, athlete.discipline), [results, athlete.discipline])
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      {/* The same photographic ground as everywhere else. This screen was the
+          one place still rendering on the light theme — near-black type on a
+          near-white paper, in the middle of a dark app. */}
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
+      <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
+          <Ionicons name="chevron-back" size={22} color={onImage.ink} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerName} numberOfLines={1}>{athlete.name}</Text>
@@ -118,7 +126,15 @@ export default function AthleteDetailScreen() {
         )}
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+      >
         {/* Hero PB Card */}
         {pb ? (
           <View style={styles.heroCard}>
@@ -173,7 +189,7 @@ export default function AthleteDetailScreen() {
           </View>
         ) : (
           <View style={styles.noPbCard}>
-            <Ionicons name="timer-outline" size={24} color={colors.text.dimmed} />
+            <Ionicons name="timer-outline" size={24} color={onImage.dim} />
             <Text style={styles.noPbText}>No performances logged yet</Text>
             <Text style={styles.noPbSub}>Race results will appear here once added via the scanner.</Text>
           </View>
@@ -262,14 +278,15 @@ export default function AthleteDetailScreen() {
         )}
 
         <View style={{ height: 40 }} />
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.ScrollView>
+      </SafeAreaView>
+    </View>
   )
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1 },
 
   header: {
     paddingHorizontal: spacing.lg,
@@ -292,11 +309,11 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: onImage.ink,
   },
   headerMeta: {
     fontSize: 12,
-    color: colors.text.muted,
+    color: onImage.muted,
     marginTop: 1,
   },
   trendChip: {
@@ -349,7 +366,7 @@ const styles = StyleSheet.create({
   heroPb: {
     fontSize: 44,
     fontWeight: '800',
-    color: colors.text.primary,
+    color: onImage.ink,
     letterSpacing: -2,
     marginBottom: spacing.md,
   },
@@ -373,8 +390,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heroStat: { alignItems: 'center', minWidth: 60 },
-  heroStatVal: { fontSize: 17, fontWeight: '700', color: colors.text.primary },
-  heroStatLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.muted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+  heroStatVal: { fontSize: 17, fontWeight: '700', color: onImage.ink },
+  heroStatLabel: { fontSize: 9, letterSpacing: 1, color: onImage.muted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
   heroStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
   tierBar: { flexDirection: 'row', gap: 3, width: '100%' },
   tierSegment: { flex: 1, height: 3, borderRadius: 1.5 },
@@ -390,8 +407,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
-  noPbText: { fontSize: 15, fontWeight: '600', color: colors.text.secondary },
-  noPbSub: { fontSize: 13, color: colors.text.muted, textAlign: 'center', lineHeight: 18 },
+  noPbText: { fontSize: 15, fontWeight: '600', color: onImage.muted },
+  noPbSub: { fontSize: 13, color: onImage.muted, textAlign: 'center', lineHeight: 18 },
 
   // Sections
   section: {
@@ -411,10 +428,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.04)',
   },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: colors.text.primary, flex: 1 },
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: onImage.ink, flex: 1 },
   sectionCount: {
     fontSize: 11,
-    color: colors.text.dimmed,
+    color: onImage.dim,
     fontWeight: '600',
     backgroundColor: 'rgba(255,255,255,0.04)',
     paddingHorizontal: 7,
@@ -431,7 +448,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)',
     gap: spacing.md,
   },
-  seasonYear: { fontSize: 13, fontWeight: '700', color: colors.text.muted, width: 38 },
+  seasonYear: { fontSize: 13, fontWeight: '700', color: onImage.muted, width: 38 },
   seasonBarWrap: {
     flex: 1,
     height: 6,
@@ -444,8 +461,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   seasonRight: { alignItems: 'flex-end', minWidth: 70 },
-  seasonBest: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
-  seasonCount: { fontSize: 10, color: colors.text.dimmed, marginTop: 1 },
+  seasonBest: { fontSize: 14, fontWeight: '700', color: onImage.ink },
+  seasonCount: { fontSize: 10, color: onImage.dim, marginTop: 1 },
 
   // Race log
   raceRow: {
@@ -457,9 +474,9 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)',
   },
   raceMarkRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  raceMark: { fontSize: 15, fontWeight: '700', color: colors.text.primary },
-  raceComp: { fontSize: 11, color: colors.text.muted, marginTop: 1 },
-  raceDate: { fontSize: 12, color: colors.text.muted },
+  raceMark: { fontSize: 15, fontWeight: '700', color: onImage.ink },
+  raceComp: { fontSize: 11, color: onImage.muted, marginTop: 1 },
+  raceDate: { fontSize: 12, color: onImage.muted },
   pbChip: {
     backgroundColor: colors.orange[500] + '18',
     paddingHorizontal: 6,
@@ -469,9 +486,9 @@ const styles = StyleSheet.create({
     borderColor: colors.orange[500] + '30',
   },
   pbChipText: { fontSize: 9, fontWeight: '700', color: colors.orange[500], letterSpacing: 0.5 },
-  moreText: { fontSize: 11, color: colors.text.dimmed, textAlign: 'center', marginTop: spacing.sm },
+  moreText: { fontSize: 11, color: onImage.dim, textAlign: 'center', marginTop: spacing.sm },
 
   // Empty
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
-  emptyText: { fontSize: 15, color: colors.text.muted },
+  emptyText: { fontSize: 15, color: onImage.muted },
 })

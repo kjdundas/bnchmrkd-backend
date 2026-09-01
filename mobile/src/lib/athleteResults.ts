@@ -18,7 +18,7 @@
 
 import { selectFrom } from './supabase'
 import { countsForAnalysis } from './resultSemantics'
-import { isLowerBetter } from './disciplineScience'
+import { isLowerBetter, sameDiscipline } from './disciplineScience'
 
 export type Subject =
   | { userId: string; rosterId?: never }
@@ -84,10 +84,22 @@ export async function fetchResultsForMany(
   return out
 }
 
+/**
+ * Every result for this athlete IN THIS EVENT.
+ *
+ * countsForAnalysis takes a discipline, but only to decide whether the wind
+ * rule applies to it — it does not check that the row IS that event. Leaving
+ * that out meant a 60m time of 7.43 was ranked as a 100m personal best, and
+ * the tier maths duly called it World Class at the 99th percentile.
+ */
+export function inEvent(results: any[], discipline: string): any[] {
+  return (results || []).filter(
+    (r) => sameDiscipline(r.discipline, discipline) && countsForAnalysis(r, discipline))
+}
+
 /** The best legal mark, or null. Same rules the athlete's own screen uses. */
 export function pbOf(results: any[], discipline: string): number | null {
-  const marks = (results || [])
-    .filter((r) => countsForAnalysis(r, discipline))
+  const marks = inEvent(results, discipline)
     .map((r) => Number(r.mark))
     .filter(Number.isFinite)
   if (!marks.length) return null
@@ -100,8 +112,7 @@ export function seasonBestsOf(
 ): { year: string; best: number; count: number }[] {
   const lower = isLowerBetter(discipline)
   const byYear = new Map<string, number[]>()
-  for (const r of results || []) {
-    if (!countsForAnalysis(r, discipline)) continue
+  for (const r of inEvent(results, discipline)) {
     // The date is a plain YYYY-MM-DD; take the year off the string rather
     // than through Date, which would read it as UTC midnight and hand back
     // the previous year for anything on 1 January east of Greenwich.
@@ -122,8 +133,8 @@ export function seasonBestsOf(
 
 /** Improving, going backwards, or neither — from the last two legal marks. */
 export function trendOf(results: any[], discipline: string): 'up' | 'down' | null {
-  const legal = (results || [])
-    .filter((r) => countsForAnalysis(r, discipline) && r.competition_date)
+  const legal = inEvent(results, discipline)
+    .filter((r) => r.competition_date)
     .sort((a, b) => String(b.competition_date).localeCompare(String(a.competition_date)))
   if (legal.length < 2) return null
   const curr = Number(legal[0].mark)
