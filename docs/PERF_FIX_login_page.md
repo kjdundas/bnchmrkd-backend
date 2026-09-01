@@ -182,4 +182,75 @@ before implementation (per team convention for visual changes).
 
 ## Status
 
+Pushed to `main` and confirmed live on `bnchmrkd.org` (2026-09-01): confirmed
+`#boot-shell` is served in the raw HTML and cleanly removed after React
+mounts, and confirmed no CDN/proxy is caching stale responses (checked
+response headers directly — `Server: railway-hikari`, no Cloudflare in the
+`www.bnchmrkd.org` path; a fresh cache-busted request always returns current
+content).
+
+---
+
+# Follow-up — 2026-09-01: boot shell not visibly showing up for the user
+
+**Reported by:** Aishwar — after the boot-shell fix shipped, mobile Chrome
+(including a fresh Incognito tab, ruling out local browser cache) still
+appeared to show the same blank period as before.
+
+## Investigation
+
+Methodically ruled out server-side causes first, since those were the most
+testable:
+- Response headers on `www.bnchmrkd.org` show `Server: railway-hikari` with
+  no CDN in front — confirmed no caching layer between origin and browser.
+- The bare domain `bnchmrkd.org` does sit behind Cloudflare, but only for a
+  301 redirect to `https://www.bnchmrkd.org/` — the redirect target then
+  serves fresh, uncached content identically (same ETag as the `www` path).
+- A cache-busted fresh request confirmed `#boot-shell` is present in the
+  live HTML at all times.
+
+With the server ruled out, the likely cause became a self-inflicted side
+effect of the earlier speed work: the boot logo was written to fade in with
+a `0.2s` delay + `0.7s` transition (~0.9s before fully visible), designed
+so it wouldn't feel like an abrupt flash on a slow connection. But the
+recharts/image fixes made the page load fast enough on a good connection
+that React can mount and replace `#boot-shell` *before* that fade completes
+— so the user sees, at most, a near-white gradient background with no
+logo yet, which looks indistinguishable from the old blank-white behavior.
+
+## Fix
+
+`frontend/index.html` — removed the fade-in delay entirely. The wordmark
+and pulse bar are now `opacity: 1` from the very first paint, no animation
+gating their visibility, so they're guaranteed to show regardless of how
+fast the real load turns out to be. The pulse bar's looping track animation
+is untouched (that's a continuous indicator, not a delayed reveal).
+
+## Additional fix — cache headers for future deploys
+
+Separately, added `frontend/public/serve.json` (read by the `serve` package,
+which Railway's Nixpacks appears to run for the frontend service):
+```json
+{
+  "headers": [
+    { "source": "index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "assets/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+  ]
+}
+```
+`index.html` is the one file that must always be revalidated — it's what
+points to the current hashed JS bundle. The hashed files under `assets/`
+are safe to cache for a full year, since any content change produces a new
+filename. Files copied from `public/` with stable names (images, favicon,
+wordmark SVGs) are intentionally left alone — they don't have content
+hashes, so aggressive caching there would risk exactly this kind of
+stale-content problem if one is ever updated in place.
+
+Verified locally with the actual `serve` package (not Vite's own preview
+server, which doesn't read `serve.json`): `index.html` correctly returns
+`Cache-Control: no-cache`, hashed assets correctly return
+`public, max-age=31536000, immutable`.
+
+## Status
+
 Built and verified locally. Not yet committed/pushed at time of writing.

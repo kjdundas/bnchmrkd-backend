@@ -140,3 +140,24 @@ problem until that was fixed. Two compounding effects specific to mobile:
    work; phone hardware does this meaningfully slower than a desktop.
 
 See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
+
+---
+
+# Follow-up — 2026-09-01: boot shell not visibly showing up for the user
+
+**Reported by:** Aishwar — the boot-shell fix (above) shipped, but mobile
+Chrome, including a fresh Incognito tab, still looked the same as before.
+
+## Root cause
+
+Ruled out server/CDN caching entirely first (checked response headers
+directly — no caching layer between origin and browser on either
+`www.bnchmrkd.org` or the `bnchmrkd.org` redirect path). The real cause
+turned out to be a side effect of the earlier speed fixes: the boot logo's
+fade-in was written with a ~0.9s delay-plus-transition before becoming
+fully visible, on the assumption the load itself would take at least that
+long. Once the page got fast enough (thanks to the recharts/image fixes),
+React could mount and remove the boot shell *before* the fade completed —
+so on a good connection, nothing distinctly branded had time to appear.
+
+See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
