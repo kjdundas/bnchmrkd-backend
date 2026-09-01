@@ -47,6 +47,43 @@ export function subjectOf(athlete: any): Subject | null {
   return null
 }
 
+/**
+ * Results for a whole squad in two queries rather than one per athlete.
+ *
+ * A coach with thirty athletes would otherwise make thirty round trips to
+ * draw one leaderboard. PostgREST takes an `in.(...)` list, and the subjects
+ * split cleanly in two because an account and a roster entry live in
+ * different columns.
+ *
+ * Returns a map keyed by the id each athlete is addressed by, so the caller
+ * never has to know which kind they were.
+ */
+export async function fetchResultsForMany(
+  subjects: Subject[],
+): Promise<Map<string, any[]>> {
+  const userIds = subjects.map((s) => s.userId).filter(Boolean) as string[]
+  const rosterIds = subjects.map((s) => s.rosterId).filter(Boolean) as string[]
+  const out = new Map<string, any[]>()
+  for (const id of [...userIds, ...rosterIds]) out.set(id, [])
+
+  const pull = async (col: string, ids: string[]) => {
+    if (!ids.length) return
+    try {
+      const rows = (await selectFrom('performances', {
+        filter: `${col}=in.(${ids.join(',')})`,
+        order: 'competition_date.desc',
+        limit: '2000',
+      })) as any[]
+      for (const r of rows || []) {
+        const key = r[col]
+        if (key) out.get(key)?.push(r)
+      }
+    } catch { /* an empty leaderboard beats a crashed one */ }
+  }
+  await Promise.all([pull('user_id', userIds), pull('roster_athlete_id', rosterIds)])
+  return out
+}
+
 /** The best legal mark, or null. Same rules the athlete's own screen uses. */
 export function pbOf(results: any[], discipline: string): number | null {
   const marks = (results || [])

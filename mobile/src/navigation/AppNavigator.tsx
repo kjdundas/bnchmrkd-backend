@@ -32,6 +32,7 @@ import CoachRosterScreen from '../screens/CoachRosterScreen'
 import CoachResultsScreen from '../screens/CoachResultsScreen'
 import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
 import CoachAssignScreen from '../screens/CoachAssignScreen'
+import CoachLeaderboardScreen from '../screens/CoachLeaderboardScreen'
 import AthleteDetailScreen from '../screens/AthleteDetailScreen'
 
 const Tab = createBottomTabNavigator()
@@ -77,6 +78,7 @@ function CoachTabs() {
       <Tab.Screen name="Home" component={CoachHomeScreen} options={{ tabBarLabel: 'HOME' }} />
       <Tab.Screen name="Squad" component={CoachRosterScreen} options={{ tabBarLabel: 'SQUAD' }} />
       <Tab.Screen name="Assign" component={CoachAssignScreen} options={{ tabBarLabel: 'ASSIGN' }} />
+      <Tab.Screen name="Leaderboards" component={CoachLeaderboardScreen} options={{ tabBarLabel: 'BOARDS' }} />
       <Tab.Screen name="Analyse" component={CoachAnalyseScreen} options={{ tabBarLabel: 'ANALYSE' }} />
       <Tab.Screen name="CoachProfile" component={ProfileScreen} options={{ tabBarLabel: 'PROFILE' }} />
     </Tab.Navigator>
