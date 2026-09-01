@@ -161,3 +161,24 @@ React could mount and remove the boot shell *before* the fade completed —
 so on a good connection, nothing distinctly branded had time to appear.
 
 See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
+
+---
+
+# Follow-up — 2026-09-01: still blank/pale on real mobile Chrome
+
+**Reported by:** Aishwar — the instant-visibility fix (above) shipped, but a
+real mobile Chrome Incognito tab still showed a blank-ish, slow screen.
+
+## Root cause
+
+`#boot-shell` used `min-height: 100vh` to fill the screen. Mobile Safari and
+mobile Chrome both resize their address bar dynamically as the page
+scrolls, and `100vh` is calculated inconsistently against that — it can
+report a taller height than what's actually on screen. The logo, centered
+inside that box, could end up positioned below the real visible area,
+leaving just the pale gradient background in view. Every round of testing
+up to this point used a resized desktop Chrome window, which has no address
+bar to collapse — so this specific bug was invisible to that method and
+only shows up on a genuine mobile browser.
+
+See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.

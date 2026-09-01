@@ -253,4 +253,53 @@ server, which doesn't read `serve.json`): `index.html` correctly returns
 
 ## Status
 
-Built and verified locally. Not yet committed/pushed at time of writing.
+Pushed to `main` and confirmed live: cache headers correct, boot logo shows
+with `opacity: 1` and no delay in the served HTML, `#boot-shell` cleanly
+removed after mount, no regression.
+
+---
+
+# Follow-up — 2026-09-01: still a blank/pale screen on real mobile Chrome
+
+**Reported by:** Aishwar — after the instant-visibility fix, a fresh
+Incognito tab on mobile Chrome still showed a blank-ish screen with a
+noticeable delay.
+
+## Root cause
+
+`#boot-shell` was sized with `min-height: 100vh`. `100vh` on mobile Safari
+and mobile Chrome is a known trap: both browsers dynamically show/hide their
+address bar as the page scrolls, and `100vh` is calculated inconsistently
+against that — it often reports a taller height than what's actually
+visible on screen at a given moment. Since the logo was centered *within*
+that (possibly oversized) box, it could end up positioned below the
+actually-visible viewport, leaving only the pale gradient background
+on screen — which reads as "still blank" even though the fix was
+technically present and correct in the served HTML.
+
+This is a real gap in how this was tested: verification up to this point
+used a resized desktop Chrome window (via browser automation), which has no
+address bar to dynamically collapse — so this class of bug was invisible to
+that testing method. It only shows up on an actual mobile browser.
+
+## Fix
+
+`frontend/index.html` — changed `#boot-shell` from `min-height: 100vh` to
+`position: fixed; inset: 0;`. This positions the element directly against
+the browser's actual visible viewport rather than a computed height value,
+which is the standard, robust technique for full-screen overlays on mobile
+and isn't subject to the address-bar-collapse inconsistency.
+
+## Verification
+
+- Rebuilt and re-tested the full mount/unmount/login flow locally with the
+  real `serve` package — no regression.
+- Could not directly reproduce the original mobile-only symptom in this
+  environment (no real mobile device/browser available here) — the fix is
+  based on a well-documented, standard root cause for exactly this symptom
+  rather than a reproduced-then-fixed loop. **Needs a real on-device check
+  to fully close this out.**
+
+## Status
+
+Pushed to `main`. Awaiting confirmation on an actual mobile device.
