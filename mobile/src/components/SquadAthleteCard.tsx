@@ -43,8 +43,17 @@ export default function SquadAthleteCard({
 }) {
   const { colors } = useTheme()
   const events = useMemo(() => eventsOf(athlete), [athlete])
-  const [event, setEvent] = useState(events[0] || '')
-  const chosen = events.includes(event) ? event : (events[0] || '')
+
+  // Open on an event they have actually RACED, not simply the first one
+  // listed. Emmanuel declares a 200m and has eighty-two 400m results; a card
+  // that greets you with "no approved result yet" for a man with eighty-two
+  // results is telling you about the list, not the athlete.
+  const withResults = useMemo(
+    () => events.find((d) => inEvent(results, d).length > 0) || events[0] || '',
+    [events, results])
+
+  const [event, setEvent] = useState<string | null>(null)
+  const chosen = event && events.includes(event) ? event : withResults
 
   const pb = useMemo(() => pbOf(results, chosen), [results, chosen])
   const trend = useMemo(() => trendOf(results, chosen), [results, chosen])

@@ -333,9 +333,12 @@ const styles = StyleSheet.create({
   heroCard: {
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: 'rgba(249,115,22,0.06)',
+    // A real surface, not a 6% tint. This card sits over the photograph at
+    // the top of the screen, and a near-transparent card hands everything
+    // inside it whatever the picture happens to be doing.
+    backgroundColor: 'rgba(23,25,53,0.92)',
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.15)',
+    borderColor: 'rgba(249,115,22,0.28)',
     borderRadius: radius.lg,
     marginBottom: spacing.lg,
   },

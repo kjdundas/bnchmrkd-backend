@@ -152,7 +152,20 @@ export const lightColors = {
 // ── Default export — light, matching the web app.
 // Components that import `colors` directly (rather than useTheme()) are
 // pinned to this palette, so this is what flips them light.
-export const colors = lightColors
+// ── The resolved palette ──────────────────────────────────────────────
+// darkColors, not lightColors.
+//
+// The app renders dark everywhere — #0B0C18 grounds, photographic backdrops,
+// glass cards — but the resolved palette was the LIGHT one, so
+// colors.text.primary was #16181D, near-black. Every screen written against
+// these tokens was painting near-black type on a near-black ground; the ones
+// that looked right were the ones that reached for onImage.* or a literal
+// white instead, which is why the problem hid for so long and then appeared
+// all at once on the coach screens.
+//
+// lightColors is kept because the web app is light and these files are the
+// shared vocabulary; nothing in the mobile app selects it today.
+export const colors = darkColors
 
 export const spacing = {
   xs: 4,

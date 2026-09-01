@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { lightColors, onImageColors, type ThemeColors } from '../lib/theme'
+import { darkColors, onImageColors, type ThemeColors } from '../lib/theme'
 
 // v2: deliberately a NEW key, so a 'dark' or 'system' value written by the
 // pre-rebrand build is discarded rather than overriding the light theme.
@@ -28,9 +28,9 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  colors: lightColors,
-  isDark: false,
-  mode: 'light',
+  colors: darkColors,
+  isDark: true,
+  mode: 'dark',
   setMode: () => {},
   cycleTheme: () => {},
 })
@@ -59,16 +59,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMode(mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark')
   }, [mode, setMode])
 
-  // Always light — including under 'system', so the phone being in iOS dark
-  // mode cannot flip the app to a half-applied dark theme.
-  const isDark = false
+  // Always DARK — including under 'system', so the phone being in iOS light
+  // mode cannot flip the app to a half-applied light theme.
+  //
+  // This said `false` and resolved lightColors, which is what the app looked
+  // like on paper and not at all what it looks like on a phone: every ground
+  // is #0B0C18 and every backdrop is a photograph. Screens written against
+  // these tokens were painting #16181D type onto it.
+  const isDark = true
 
-  // lightColors is `as const`, so its literal types differ from the
-  // ThemeColors shape (typeof darkColors); widen for the resolved palette.
-  const colors = useMemo<ThemeColors>(
-    () => lightColors as unknown as ThemeColors,
-    [],
-  )
+  const colors = useMemo<ThemeColors>(() => darkColors as unknown as ThemeColors, [])
 
   const value = useMemo<ThemeContextValue>(
     () => ({ colors, isDark, mode, setMode, cycleTheme }),
