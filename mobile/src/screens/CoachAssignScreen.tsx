@@ -20,7 +20,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { spacing, radius, onImage } from '../lib/theme'
@@ -35,15 +35,32 @@ import {
 } from '../lib/squads'
 import { EVENT_KINDS, type EventKind, createEventForMany, type EventSubject } from '../lib/events'
 import { todayDay, addDays, dayLabel } from '../lib/schedule'
+import { recordResultForMany } from '../lib/athleteResults'
+import { RESULT_STATUSES } from '../lib/resultSemantics'
+import { eventsOf, subjectFor } from '../lib/squads'
 import { tapFeedback } from '../lib/haptics'
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/
+
+/** What you are creating. The "who" underneath is the same for all of them. */
+type What = 'event' | 'result' | 'program'
+const WHATS: { v: What; l: string; icon: string }[] = [
+  { v: 'event', l: 'Calendar', icon: 'calendar-outline' },
+  { v: 'result', l: 'Result', icon: 'stopwatch-outline' },
+  { v: 'program', l: 'Program', icon: 'barbell-outline' },
+]
 
 export default function CoachAssignScreen() {
   const { user } = useAuth()
   const { colors } = useTheme()
   const navigation = useNavigation<any>()
+  const route = useRoute<any>()
   const scrollY = useRef(new Animated.Value(0)).current
+  // The assistant's call-to-actions land here with the job already chosen.
+  const [what, setWhat] = useState<What>(route.params?.what || 'event')
+  useEffect(() => {
+    if (route.params?.what) setWhat(route.params.what)
+  }, [route.params?.what])
 
   const [squads, setSquads] = useState<Squad[]>([])
   const [athletes, setAthletes] = useState<SquadAthlete[]>([])
@@ -54,6 +71,11 @@ export default function CoachAssignScreen() {
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(todayDay())
   const [notes, setNotes] = useState('')
+  // Result fields
+  const [event, setEvent] = useState('')
+  const [mark, setMark] = useState('')
+  const [wind, setWind] = useState('')
+  const [status, setStatus] = useState('OK')
 
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -102,10 +124,43 @@ export default function CoachAssignScreen() {
     () => athletes.filter((a) => picked.has(keyOf(a))), [athletes, picked])
 
   const send = async () => {
-    const t = title.trim()
-    if (!t) { setError('Give it a name — “County Champs”, “6×30m testing”.'); return }
     if (!ISO.test(date)) { setError('Date needs to be YYYY-MM-DD.'); return }
     if (!chosen.length) { setError('Choose at least one athlete.'); return }
+
+    if (what === 'result') {
+      const ev = event.trim()
+      if (!ev) { setError('Which event was it?'); return }
+      const m = mark.trim() === '' ? null : Number(mark.trim())
+      // A DNF or DQ legitimately has no mark; anything else needs one.
+      if (status === 'OK' && (m == null || !Number.isFinite(m))) {
+        setError('Give the mark, or set the status to DNF / DQ.'); return
+      }
+      const w = wind.trim() === '' ? null : Number(wind.trim())
+      if (wind.trim() !== '' && !Number.isFinite(w as number)) {
+        setError('Wind should be a number like 1.4 or -0.6, or left empty.'); return
+      }
+      setError(''); setSending(true); setDone(null)
+      try {
+        const res = await recordResultForMany(chosen.map(subjectFor), {
+          discipline: ev,
+          mark: status === 'OK' ? (m as number) : null,
+          competitionDate: date,
+          competitionName: title.trim() || null,
+          wind: w,
+          status,
+          sex: chosen[0]?.gender === 'F' ? 'F' : 'M',
+        })
+        setDone({ ok: res.ok, failed: res.failed.length })
+        if (res.failed.length) setError(`${res.failed.length} didn't save — ${res.failed[0].message}`)
+        else { setMark(''); setWind(''); setTitle(''); setPicked(new Set()) }
+      } catch (e: any) {
+        setError(e?.message?.replace(/^Supabase \d+:\s*/, '') || 'Could not save that.')
+      } finally { setSending(false) }
+      return
+    }
+
+    const t = title.trim()
+    if (!t) { setError('Give it a name — “County Champs”, “6×30m testing”.'); return }
     setError(''); setSending(true); setDone(null)
     try {
       const subjects: EventSubject[] = chosen.map((a) =>
@@ -157,6 +212,108 @@ export default function CoachAssignScreen() {
           </View>
 
           {/* ── 1. What ───────────────────────────────────────────── */}
+          <View style={{ paddingHorizontal: spacing.lg }}>
+            <View style={s.whats}>
+              {WHATS.map((w) => {
+                const on = what === w.v
+                return (
+                  <Tappable key={w.v}
+                    onPress={() => { tapFeedback(); setWhat(w.v); setDone(null); setError('') }}
+                    accessibilityLabel={w.l} accessibilityState={{ selected: on }}
+                    style={[s.what, {
+                      borderColor: on ? colors.accent[500] + '8C' : onImage.cardBorder,
+                      backgroundColor: on ? colors.accent[500] + '2E' : onImage.card,
+                    }]}>
+                    <Ionicons name={w.icon as any} size={15}
+                      color={on ? colors.accent[500] : onImage.muted} />
+                    <Text style={[s.whatText, { color: on ? '#FFFFFF' : onImage.muted }]}>{w.l}</Text>
+                  </Tappable>
+                )
+              })}
+            </View>
+          </View>
+
+          {what === 'program' ? (
+            <View style={{ paddingHorizontal: spacing.lg }}>
+              <View style={s.notYet}>
+                <Ionicons name="construct-outline" size={16} color={colors.amber} />
+                <Text style={s.notYetText}>
+                  Programs aren't assignable from here yet. A block is built
+                  against one athlete's age, maturity and limiters and then
+                  checked by the safety validator, so fanning one out to a
+                  squad would hand several athletes a plan written for someone
+                  else. Per-athlete assignment is the next piece.
+                </Text>
+              </View>
+            </View>
+          ) : what === 'result' ? (
+            <View style={{ paddingHorizontal: spacing.lg }}>
+              <Text style={s.label}>Which event?</Text>
+              <View style={s.chips}>
+                {[...new Set(chosen.flatMap(eventsOf))].slice(0, 8).map((d) => {
+                  const on = event === d
+                  return (
+                    <Tappable key={d} onPress={() => { tapFeedback(); setEvent(d) }}
+                      accessibilityLabel={d} accessibilityState={{ selected: on }}
+                      style={[s.chip, {
+                        borderColor: on ? colors.accent[500] + '8C' : onImage.cardBorder,
+                        backgroundColor: on ? colors.accent[500] + '2E' : onImage.card,
+                      }]}>
+                      <Text style={[s.chipText, { color: on ? '#FFFFFF' : onImage.muted }]}>{d}</Text>
+                    </Tappable>
+                  )
+                })}
+              </View>
+              <TextInput style={[input, { marginTop: 8 }] as any} value={event}
+                onChangeText={setEvent} placeholder="e.g. 100m"
+                placeholderTextColor="rgba(255,255,255,0.38)" keyboardAppearance="dark" maxLength={40} />
+
+              <Text style={s.label}>What did they do?</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TextInput style={[input, { flex: 1 }] as any} value={mark} onChangeText={setMark}
+                  placeholder={status === 'OK' ? 'Mark, e.g. 11.42' : 'No mark'}
+                  editable={status === 'OK'}
+                  placeholderTextColor="rgba(255,255,255,0.38)"
+                  keyboardType="decimal-pad" keyboardAppearance="dark" />
+                <TextInput style={[input, { width: 104 }] as any} value={wind} onChangeText={setWind}
+                  placeholder="Wind" placeholderTextColor="rgba(255,255,255,0.38)"
+                  keyboardType="numbers-and-punctuation" keyboardAppearance="dark" />
+              </View>
+
+              <Text style={s.label}>Status</Text>
+              <View style={s.chips}>
+                {RESULT_STATUSES.map((st) => {
+                  const on = status === st.v
+                  return (
+                    <Tappable key={st.v} onPress={() => { tapFeedback(); setStatus(st.v) }}
+                      accessibilityLabel={st.l} accessibilityState={{ selected: on }}
+                      style={[s.chip, {
+                        borderColor: on ? colors.accent[500] + '8C' : onImage.cardBorder,
+                        backgroundColor: on ? colors.accent[500] + '2E' : onImage.card,
+                      }]}>
+                      <Text style={[s.chipText, { color: on ? '#FFFFFF' : onImage.muted }]}>{st.l}</Text>
+                    </Tappable>
+                  )
+                })}
+              </View>
+
+              <Text style={s.label}>Date · {ISO.test(date) ? dayLabel(date) : 'YYYY-MM-DD'}</Text>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <TextInput style={[input, { flex: 1 }] as any} value={date} onChangeText={setDate}
+                  placeholder="YYYY-MM-DD" placeholderTextColor="rgba(255,255,255,0.38)"
+                  keyboardType="numbers-and-punctuation" keyboardAppearance="dark" />
+                <Tappable onPress={() => { tapFeedback(); setDate(todayDay()) }}
+                  accessibilityLabel="Today" style={s.mini}>
+                  <Text style={s.miniText}>Today</Text>
+                </Tappable>
+              </View>
+
+              <Text style={s.label}>Competition (optional)</Text>
+              <TextInput style={input as any} value={title} onChangeText={setTitle}
+                placeholder="e.g. County Championships"
+                placeholderTextColor="rgba(255,255,255,0.38)" keyboardAppearance="dark" maxLength={120} />
+            </View>
+          ) : (
           <View style={{ paddingHorizontal: spacing.lg }}>
             <Text style={s.label}>What is it?</Text>
             <View style={s.chips}>
@@ -213,6 +370,7 @@ export default function CoachAssignScreen() {
               keyboardAppearance="dark"
             />
           </View>
+          )}
 
           {/* ── 2. Who ────────────────────────────────────────────── */}
           <View style={{ paddingHorizontal: spacing.lg, marginTop: 26, marginBottom: 10 }}>
@@ -284,15 +442,19 @@ export default function CoachAssignScreen() {
               </View>
             )}
 
-            <Tappable onPress={send} accessibilityLabel="Send to the chosen athletes"
+            <Tappable onPress={what === 'program' ? () => {} : send}
+              accessibilityLabel="Send to the chosen athletes"
               style={[s.send, {
-                backgroundColor: chosen.length ? colors.accent[500] : 'rgba(255,255,255,0.12)',
+                backgroundColor: chosen.length && what !== 'program'
+                  ? colors.accent[500] : 'rgba(255,255,255,0.12)',
               }]}>
               {sending ? <ActivityIndicator color="#FFFFFF" /> : (
                 <Text style={s.sendText}>
-                  {chosen.length
-                    ? `Send to ${chosen.length} ${chosen.length === 1 ? 'athlete' : 'athletes'}`
-                    : 'Choose who gets it'}
+                  {what === 'program'
+                    ? 'Not yet — see above'
+                    : chosen.length
+                      ? `${what === 'result' ? 'Record for' : 'Send to'} ${chosen.length} ${chosen.length === 1 ? 'athlete' : 'athletes'}`
+                      : 'Choose who gets it'}
                 </Text>
               )}
             </Tappable>
@@ -306,6 +468,18 @@ export default function CoachAssignScreen() {
 const s = StyleSheet.create({
   h1: { fontSize: 34, fontWeight: '700', letterSpacing: -0.9, color: onImage.ink },
   label: { fontSize: 12.5, color: onImage.muted, marginTop: 16, marginBottom: 8 },
+  whats: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  what: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    minHeight: 44, borderRadius: radius.md, borderWidth: 1,
+  },
+  whatText: { fontSize: 13, fontWeight: '700' },
+  notYet: {
+    flexDirection: 'row', gap: 10, marginTop: 18, padding: 14,
+    borderRadius: radius.lg, borderWidth: 1, borderColor: 'rgba(240,167,66,0.35)',
+    backgroundColor: 'rgba(240,167,66,0.10)',
+  },
+  notYetText: { flex: 1, color: onImage.muted, fontSize: 12.5, lineHeight: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

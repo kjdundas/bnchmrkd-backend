@@ -17,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { callRpc, insertInto, deleteFrom } from '../lib/supabase'
 import { checkinStatus, READINESS_COLORS, isToday } from '../lib/readiness'
 import { Tappable } from '../components/ui'
+import { tapFeedback } from '../lib/haptics'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
@@ -27,6 +28,10 @@ import {
   setSquadFor, inSquad, squadCounts, keyOf, type Squad, type SquadAthlete,
 } from '../lib/squads'
 import { ageFromDob } from '../lib/age'
+import SquadAthleteCard from '../components/SquadAthleteCard'
+import AssistantCoachBox from '../components/AssistantCoachBox'
+import { fetchResultsForMany } from '../lib/athleteResults'
+import { subjectFor, eventsOf } from '../lib/squads'
 
 const EMOJIS = ['👏', '🔥', '💪']
 const QUIET_DAYS = 14
@@ -101,6 +106,11 @@ export default function CoachHomeScreen() {
   const [athletes, setAthletes] = useState<SquadAthlete[]>([])
   const [filter, setFilter] = useState<SquadFilter>(null)
   const [sheet, setSheet] = useState<SquadSheetMode | null>(null)
+  // Results for the whole squad, in two queries. The cards need them for the
+  // mark and the trend arrow, which is the thing a coach actually scans for.
+  const [results, setResults] = useState<Map<string, any[]>>(new Map())
+  // The activity feed is long and it is history — it opens when asked for.
+  const [feedOpen, setFeedOpen] = useState(false)
 
   const loadSquads = useCallback(async () => {
     const [sq, ath] = await Promise.all([
@@ -109,6 +119,7 @@ export default function CoachHomeScreen() {
     ])
     setSquads(sq)
     setAthletes(ath)
+    setResults(await fetchResultsForMany(ath.map(subjectFor)))
   }, [user])
 
   const load = useCallback(async () => {
@@ -240,42 +251,30 @@ export default function CoachHomeScreen() {
 
         <View style={sq.grid}>
           {shown.map((a) => {
-            const age = ageFromDob(a.dob)
             return (
-              <Tappable
+              <SquadAthleteCard
                 key={keyOf(a)}
-                onPress={() => navigation.navigate('AthleteDetail', {
+                athlete={a}
+                results={results.get(keyOf(a)) || []}
+                onOpen={(discipline) => navigation.navigate('AthleteDetail', {
                   athlete: {
                     id: a.roster_athlete_id,
                     linked_user_id: a.athlete_user_id,
                     name: a.name, dob: a.dob, gender: a.gender,
-                    discipline: a.discipline,
+                    // Whichever event the card is showing, so opening a
+                    // profile continues the thought rather than resetting it.
+                    discipline,
                   },
                 })}
                 // Long-press files them, the same idiom the metric rings use.
                 onLongPress={() => setSheet({ kind: 'assign', athlete: a })}
-                accessibilityLabel={`${a.name}, ${a.discipline || 'no event'}`}
-                style={sq.card}
-              >
-                <View style={sq.avatar}>
-                  <Text style={sq.avatarText}>
-                    {a.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
-                  </Text>
-                </View>
-                <Text style={sq.name} numberOfLines={1}>{a.name}</Text>
-                <Text style={sq.meta} numberOfLines={1}>
-                  {[a.discipline || null, age ? `${age}` : null].filter(Boolean).join(' · ') || '—'}
-                </Text>
-                {!a.athlete_user_id && (
-                  <Text style={sq.noAccount}>No account — you enter their data</Text>
-                )}
-              </Tappable>
+              />
             )
           })}
           {shown.length === 0 && (
             <Text style={sq.empty}>
               {athletes.length === 0
-                ? 'No athletes yet. Add one from the Squad tab, or invite an athlete who already has an account.'
+                ? 'No athletes yet — use the + above to add one, or invite an athlete who already has an account.'
                 : 'Nobody filed into this squad yet — long-press an athlete to file them.'}
             </Text>
           )}
@@ -337,15 +336,26 @@ export default function CoachHomeScreen() {
           </View>
         )}
 
-        {/* Squad activity feed */}
+        {/* Squad activity — history, so it opens rather than filling the
+            screen. What a coach needs first is the squad and the assistant. */}
         {feed.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionHead}>
+            <Tappable
+              onPress={() => { tapFeedback(); setFeedOpen((v) => !v) }}
+              accessibilityLabel={feedOpen ? 'Hide squad activity' : 'Show squad activity'}
+              accessibilityState={{ expanded: feedOpen }}
+              style={styles.sectionHead}
+            >
               <Ionicons name="pulse-outline" size={15} color={colors.orange[500]} />
               <Text style={styles.sectionTitle}>Squad activity</Text>
-              <Text style={styles.sectionHint}>React to give a nudge</Text>
-            </View>
-            {feed.slice(0, 15).map((ev) => {
+              <Text style={styles.sectionHint}>
+                {feedOpen ? 'React to give a nudge' : `${feed.length} recent`}
+              </Text>
+              <Ionicons
+                name={feedOpen ? 'chevron-up' : 'chevron-down'}
+                size={16} color={onImage.muted} />
+            </Tappable>
+            {feedOpen && feed.slice(0, 15).map((ev) => {
               const meta = feedMeta[ev.kind] || feedMeta.result
               const mine = reacts[ev.event_key] || new Set<string>()
               return (
@@ -392,6 +402,33 @@ export default function CoachHomeScreen() {
             </TouchableOpacity>
           </View>
         )}
+        {/* ── Assistant coach ────────────────────────────────────────
+            Below the squad, because the squad is what you came for and this
+            is what you do about it. The context is the athletes ON SCREEN,
+            so an answer is about who you can actually see. */}
+        <AssistantCoachBox
+          context={{
+            squad: filter === null ? 'All athletes'
+                 : filter === 'unassigned' ? 'Unassigned'
+                 : (squads.find((q) => q.id === filter)?.name || 'Squad'),
+            athletes: shown.map((a) => ({
+              name: a.name,
+              events: eventsOf(a),
+              age: ageFromDob(a.dob),
+              has_account: !!a.athlete_user_id,
+              results: (results.get(keyOf(a)) || []).slice(0, 12).map((r: any) => ({
+                event: r.discipline, mark: r.mark, date: r.competition_date,
+                status: r.status, wind: r.wind_mps, approval: r.approval,
+              })),
+            })),
+          }}
+          onRoute={(to) => navigation.navigate('Assign', {
+            what: to === 'assign-program' ? 'program'
+                : to === 'assign-result' ? 'result' : 'event',
+          })}
+        />
+
+        <View style={{ height: 8 }} />
       </Animated.ScrollView>
 
       <SquadSheet

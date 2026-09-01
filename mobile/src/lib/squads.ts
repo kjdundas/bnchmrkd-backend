@@ -22,7 +22,14 @@ export type SquadAthlete = {
   name: string
   dob: string | null
   gender: string | null
+  /** The primary event — first in `disciplines`. */
   discipline: string
+  /**
+   * Every event this athlete has, declared or competed in, primary first.
+   * Since a PB and a board are computed one event at a time, an athlete with
+   * a single stored discipline could only ever be seen as one athlete.
+   */
+  disciplines: string[] | null
   squad_id: string | null
   squad_name: string | null
 }
@@ -106,6 +113,14 @@ export async function setSquadFor(a: SquadAthlete, squadId: string | null) {
 export function inSquad(all: SquadAthlete[], squadId: string | null): SquadAthlete[] {
   const list = squadId === null ? all : all.filter((a) => a.squad_id === squadId)
   return [...list].sort((x, y) => x.name.localeCompare(y.name))
+}
+
+/** The events to offer for this athlete, never empty when they have one. */
+export function eventsOf(a: SquadAthlete): string[] {
+  const list = (a.disciplines || []).map((d) => (d || '').trim()).filter(Boolean)
+  if (list.length) return list
+  const one = (a.discipline || '').trim()
+  return one ? [one] : []
 }
 
 /** How many are in each squad, plus how many are in none. */

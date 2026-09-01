@@ -16,7 +16,7 @@
 // exactly as the athlete's own screens do.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { selectFrom } from './supabase'
+import { selectFrom, insertInto } from './supabase'
 import { countsForAnalysis } from './resultSemantics'
 import { isLowerBetter, sameDiscipline } from './disciplineScience'
 
@@ -143,4 +143,56 @@ export function trendOf(results: any[], discipline: string): 'up' | 'down' | nul
   const better = isLowerBetter(discipline) ? curr < prev : curr > prev
   const worse = isLowerBetter(discipline) ? curr > prev : curr < prev
   return better ? 'up' : worse ? 'down' : null
+}
+
+/**
+ * Record a competition result for one athlete, of either kind.
+ *
+ * created_by is forced to the caller by a trigger, and the approval rule
+ * follows from it: a coach entering a result on an athlete WITH an account
+ * lands as pending for that athlete to accept, and on a roster athlete lands
+ * accepted, because there is nobody to ask. Neither is decided here.
+ */
+export async function recordResult(subject: Subject, input: {
+  discipline: string
+  mark: number | null
+  competitionDate: string
+  competitionName?: string | null
+  wind?: number | null
+  status?: string
+  sex?: string
+}) {
+  const who = subject.userId
+    ? { user_id: subject.userId, roster_athlete_id: null }
+    : { user_id: null, roster_athlete_id: subject.rosterId }
+  return insertInto('performances', {
+    ...who,
+    discipline: input.discipline.trim(),
+    // A DNF has no mark, and null must stay null — Number(null) is 0, and a
+    // 0.00 in a time event is an unbeatable best no real run can displace.
+    mark: input.mark == null || !Number.isFinite(input.mark) ? null : input.mark,
+    competition_date: input.competitionDate,
+    competition_name: input.competitionName?.trim() || null,
+    wind_mps: input.wind == null || !Number.isFinite(input.wind) ? null : input.wind,
+    status: input.status || 'OK',
+    sex: input.sex === 'F' ? 'F' : 'M',
+  })
+}
+
+/** The same, for a whole selection — failures collected, never thrown away. */
+export async function recordResultForMany(
+  subjects: Subject[],
+  input: Parameters<typeof recordResult>[1],
+): Promise<{ ok: number; failed: { subject: Subject; message: string }[] }> {
+  const out = await Promise.allSettled(subjects.map((s) => recordResult(s, input)))
+  const failed: { subject: Subject; message: string }[] = []
+  let ok = 0
+  out.forEach((r, i) => {
+    if (r.status === 'fulfilled') ok++
+    else failed.push({
+      subject: subjects[i],
+      message: String((r.reason as any)?.message || r.reason).replace(/^Supabase \d+:\s*/, ''),
+    })
+  })
+  return { ok, failed }
 }
