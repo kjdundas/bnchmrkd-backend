@@ -31,6 +31,7 @@ import CoachHomeScreen from '../screens/CoachHomeScreen'
 import CoachRosterScreen from '../screens/CoachRosterScreen'
 import CoachResultsScreen from '../screens/CoachResultsScreen'
 import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
+import CoachAssignScreen from '../screens/CoachAssignScreen'
 import AthleteDetailScreen from '../screens/AthleteDetailScreen'
 
 const Tab = createBottomTabNavigator()
@@ -63,9 +64,10 @@ function AthleteTabs() {
 // bordered strip across the bottom, which is why a coach signing in got the
 // app as it looked before the rebuild while the athlete got the current one.
 //
-// No action button yet: FloatingTabBar names the route it lifts out, and
-// Assign does not exist. Until it does the pill takes the full width, which
-// is the honest state rather than a (+) that goes nowhere.
+// Assign is lifted out of the pill and rendered as the action button, the
+// same slot Log occupies on the athlete side. It is not a place you go, it
+// is a thing you start — which is exactly why it is not a peer of the other
+// three.
 function CoachTabs() {
   return (
     <Tab.Navigator
@@ -74,6 +76,7 @@ function CoachTabs() {
     >
       <Tab.Screen name="Home" component={CoachHomeScreen} options={{ tabBarLabel: 'HOME' }} />
       <Tab.Screen name="Squad" component={CoachRosterScreen} options={{ tabBarLabel: 'SQUAD' }} />
+      <Tab.Screen name="Assign" component={CoachAssignScreen} options={{ tabBarLabel: 'ASSIGN' }} />
       <Tab.Screen name="Analyse" component={CoachAnalyseScreen} options={{ tabBarLabel: 'ANALYSE' }} />
       <Tab.Screen name="CoachProfile" component={ProfileScreen} options={{ tabBarLabel: 'PROFILE' }} />
     </Tab.Navigator>

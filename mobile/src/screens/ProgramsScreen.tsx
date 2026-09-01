@@ -1107,7 +1107,7 @@ function ProgramsBody() {
   const addEvent = useCallback(async (e: any) => {
     if (!user) return
     await createEvent({
-      athleteId: user.id, createdBy: user.id, date: e.date, endDate: e.endDate,
+      subject: { athleteId: user.id }, createdBy: user.id, date: e.date, endDate: e.endDate,
       kind: e.kind, title: e.title, notes: e.notes,
     })
     const fresh = await fetchEvents(user.id, addDays(todayDay(), -400), addDays(todayDay(), 400))
