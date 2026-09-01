@@ -34,7 +34,6 @@ import {
   type Squad, type SquadAthlete,
 } from '../lib/squads'
 import { EVENT_KINDS, type EventKind, createEventForMany, type EventSubject } from '../lib/events'
-import type { SquadAthlete } from '../lib/squads'
 import { todayDay, addDays, dayLabel } from '../lib/schedule'
 import { recordResultForMany } from '../lib/athleteResults'
 import { RESULT_STATUSES } from '../lib/resultSemantics'
