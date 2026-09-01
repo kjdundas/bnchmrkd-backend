@@ -30,12 +30,12 @@ import { tapFeedback } from '../lib/haptics'
 import { askAssistant } from '../lib/api'
 
 export type CoachAction =
-  | { kind: 'route'; label: string; icon: string; to: 'assign-program' | 'assign-event' | 'assign-result' }
+  | { kind: 'route'; label: string; icon: string; to: 'assign-session' | 'assign-event' | 'assign-result' }
   | { kind: 'ask'; label: string; icon: string; prompt: string }
 
 /** What a coach actually opens this for, in rough order of frequency. */
 export const COACH_ACTIONS: CoachAction[] = [
-  { kind: 'route', label: 'Set a program', icon: 'barbell-outline', to: 'assign-program' },
+  { kind: 'route', label: 'Set a session', icon: 'barbell-outline', to: 'assign-session' },
   { kind: 'route', label: 'Add an event', icon: 'calendar-outline', to: 'assign-event' },
   { kind: 'route', label: 'Record a result', icon: 'stopwatch-outline', to: 'assign-result' },
   {
@@ -57,7 +57,7 @@ export default function AssistantCoachBox({
 }: {
   /** The squad as it is on screen, so an answer is about who you can see. */
   context: any
-  onRoute: (to: 'assign-program' | 'assign-event' | 'assign-result') => void
+  onRoute: (to: 'assign-session' | 'assign-event' | 'assign-result') => void
 }) {
   const { colors } = useTheme()
   const [text, setText] = useState('')

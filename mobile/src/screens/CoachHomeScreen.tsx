@@ -423,7 +423,7 @@ export default function CoachHomeScreen() {
             })),
           }}
           onRoute={(to) => navigation.navigate('Assign', {
-            what: to === 'assign-program' ? 'program'
+            what: to === 'assign-session' ? 'session'
                 : to === 'assign-result' ? 'result' : 'event',
           })}
         />

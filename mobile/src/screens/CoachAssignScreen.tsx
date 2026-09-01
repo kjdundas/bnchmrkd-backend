@@ -34,20 +34,23 @@ import {
   type Squad, type SquadAthlete,
 } from '../lib/squads'
 import { EVENT_KINDS, type EventKind, createEventForMany, type EventSubject } from '../lib/events'
+import type { SquadAthlete } from '../lib/squads'
 import { todayDay, addDays, dayLabel } from '../lib/schedule'
 import { recordResultForMany } from '../lib/athleteResults'
 import { RESULT_STATUSES } from '../lib/resultSemantics'
 import { eventsOf, subjectFor } from '../lib/squads'
+import { sessionConcerns, concernSummary } from '../lib/sessionSafety'
 import { tapFeedback } from '../lib/haptics'
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/
 
 /** What you are creating. The "who" underneath is the same for all of them. */
-type What = 'event' | 'result' | 'program'
+type What = 'session' | 'event' | 'result' | 'program'
 const WHATS: { v: What; l: string; icon: string }[] = [
+  { v: 'session', l: 'Session', icon: 'barbell-outline' },
   { v: 'event', l: 'Calendar', icon: 'calendar-outline' },
   { v: 'result', l: 'Result', icon: 'stopwatch-outline' },
-  { v: 'program', l: 'Program', icon: 'barbell-outline' },
+  { v: 'program', l: 'Block', icon: 'layers-outline' },
 ]
 
 export default function CoachAssignScreen() {
@@ -72,6 +75,8 @@ export default function CoachAssignScreen() {
   const [date, setDate] = useState(todayDay())
   const [notes, setNotes] = useState('')
   // Result fields
+  // Session: the lines a coach writes, one per row.
+  const [lines, setLines] = useState('')
   const [event, setEvent] = useState('')
   const [mark, setMark] = useState('')
   const [wind, setWind] = useState('')
@@ -123,9 +128,43 @@ export default function CoachAssignScreen() {
   const chosen = useMemo(
     () => athletes.filter((a) => picked.has(keyOf(a))), [athletes, picked])
 
+  // The same session is not equally right for every body in front of it. This
+  // does not block — a coach may have a reason — it names who to check.
+  const concerns = useMemo(
+    () => (what === 'session' ? sessionConcerns(`${title}\n${lines}`, chosen) : []),
+    [what, title, lines, chosen])
+
+  /** Events take their own subject shape; results take the squads one. */
+  const subjectFor2 = (a: SquadAthlete): EventSubject =>
+    a.athlete_user_id ? { athleteId: a.athlete_user_id } : { rosterId: a.roster_athlete_id as string }
+
   const send = async () => {
     if (!ISO.test(date)) { setError('Date needs to be YYYY-MM-DD.'); return }
     if (!chosen.length) { setError('Choose at least one athlete.'); return }
+
+    if (what === 'session') {
+      const t = title.trim()
+      if (!t) { setError('Give the session a name — “Speed + gym”, “Tempo 6×200”.'); return }
+      if (!lines.trim()) { setError('What is in it? One line per piece of work.'); return }
+      setError(''); setSending(true); setDone(null)
+      try {
+        const res = await createEventForMany(chosen.map(subjectFor2), {
+          createdBy: user?.id || '', date, endDate: null, kind: 'session', title: t,
+          notes: notes.trim() || null,
+          structure: {
+            // Stored as written, one line per piece of work. A coach's own
+            // shorthand is the most accurate record of what they meant.
+            lines: lines.split('\n').map((l) => l.trim()).filter(Boolean),
+          },
+        })
+        setDone({ ok: res.ok, failed: res.failed.length })
+        if (res.failed.length) setError(`${res.failed.length} didn't send — ${res.failed[0].message}`)
+        else { setTitle(''); setLines(''); setNotes(''); setPicked(new Set()) }
+      } catch (e: any) {
+        setError(e?.message?.replace(/^Supabase \d+:\s*/, '') || 'Could not send that.')
+      } finally { setSending(false) }
+      return
+    }
 
     if (what === 'result') {
       const ev = event.trim()
@@ -233,16 +272,60 @@ export default function CoachAssignScreen() {
             </View>
           </View>
 
-          {what === 'program' ? (
+          {what === 'session' ? (
+            <View style={{ paddingHorizontal: spacing.lg }}>
+              <Text style={s.label}>Call it something</Text>
+              <TextInput style={input as any} value={title} onChangeText={setTitle}
+                placeholder="e.g. Speed + gym, Tempo 6×200"
+                placeholderTextColor="rgba(255,255,255,0.38)" keyboardAppearance="dark" maxLength={120} />
+
+              <Text style={s.label}>What's in it? One line per piece of work.</Text>
+              <TextInput
+                style={[input, { minHeight: 150, paddingTop: 12, textAlignVertical: 'top' }] as any}
+                value={lines} onChangeText={setLines} multiline maxLength={2000}
+                placeholder={'Warm-up 15 min\n6×200m off 3 min @ 85%\nBack squat 4×4 @ 82%\nCool-down'}
+                placeholderTextColor="rgba(255,255,255,0.38)" keyboardAppearance="dark" />
+
+              <Text style={s.label}>Date · {ISO.test(date) ? dayLabel(date) : 'YYYY-MM-DD'}</Text>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <TextInput style={[input, { flex: 1 }] as any} value={date} onChangeText={setDate}
+                  placeholder="YYYY-MM-DD" placeholderTextColor="rgba(255,255,255,0.38)"
+                  keyboardType="numbers-and-punctuation" keyboardAppearance="dark" />
+                <Tappable onPress={() => { tapFeedback(); setDate(todayDay()) }}
+                  accessibilityLabel="Today" style={s.mini}>
+                  <Text style={s.miniText}>Today</Text>
+                </Tappable>
+                <Tappable onPress={() => { tapFeedback(); setDate(addDays(date, 1)) }}
+                  accessibilityLabel="Tomorrow" style={s.mini}>
+                  <Text style={s.miniText}>+1d</Text>
+                </Tappable>
+              </View>
+
+              <Text style={s.label}>Notes (optional)</Text>
+              <TextInput
+                style={[input, { minHeight: 60, paddingTop: 12, textAlignVertical: 'top' }] as any}
+                value={notes} onChangeText={setNotes} multiline maxLength={280}
+                placeholder="Anything they need to know"
+                placeholderTextColor="rgba(255,255,255,0.38)" keyboardAppearance="dark" />
+
+              {/* Not a block. The squad session is checked against the bodies
+                  actually receiving it, at the moment it is sent. */}
+              {concerns.length > 0 && (
+                <View style={s.concern}>
+                  <Ionicons name="warning-outline" size={16} color={colors.amber} />
+                  <Text style={s.concernText}>{concernSummary(concerns)}</Text>
+                </View>
+              )}
+            </View>
+          ) : what === 'program' ? (
             <View style={{ paddingHorizontal: spacing.lg }}>
               <View style={s.notYet}>
                 <Ionicons name="construct-outline" size={16} color={colors.amber} />
                 <Text style={s.notYetText}>
-                  Programs aren't assignable from here yet. A block is built
-                  against one athlete's age, maturity and limiters and then
-                  checked by the safety validator, so fanning one out to a
-                  squad would hand several athletes a plan written for someone
-                  else. Per-athlete assignment is the next piece.
+                  A block is a periodised plan over weeks, built against one
+                  athlete's age, maturity and limiters — so it stays
+                  per-athlete, and assigning one is the next piece. For a
+                  workout the whole group does today, use Session.
                 </Text>
               </View>
             </View>
@@ -480,6 +563,12 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(240,167,66,0.10)',
   },
   notYetText: { flex: 1, color: onImage.muted, fontSize: 12.5, lineHeight: 18 },
+  concern: {
+    flexDirection: 'row', gap: 10, marginTop: 16, padding: 13,
+    borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(240,167,66,0.35)',
+    backgroundColor: 'rgba(240,167,66,0.10)',
+  },
+  concernText: { flex: 1, color: onImage.ink, fontSize: 12.5, lineHeight: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

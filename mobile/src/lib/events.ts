@@ -13,11 +13,17 @@
 import { selectFrom, insertInto, deleteFrom, updateIn } from './supabase'
 import { addDays, dayOf } from './schedule'
 
-export type EventKind = 'race' | 'competition' | 'test' | 'camp' | 'rest' | 'other'
+export type EventKind =
+  'race' | 'competition' | 'test' | 'camp' | 'rest' | 'session' | 'other'
 
 export const EVENT_KINDS: {
   v: EventKind; l: string; icon: string; tone: 'accent' | 'red' | 'blue' | 'green' | 'amber' | 'muted'
 }[] = [
+  // A session is a calendar item, not a table of its own: it already has a
+  // date, an owner of either kind, an approval state and a place in the week.
+  // A PROGRAM is the thing that stays per-athlete — a periodised block built
+  // against one person's maturity. One workout on one day is not that.
+  { v: 'session', l: 'Session', icon: 'barbell-outline', tone: 'accent' },
   { v: 'race', l: 'Race', icon: 'flag-outline', tone: 'accent' },
   { v: 'competition', l: 'Competition', icon: 'trophy-outline', tone: 'amber' },
   { v: 'test', l: 'Test day', icon: 'speedometer-outline', tone: 'blue' },
@@ -110,6 +116,8 @@ export async function createEvent(input: {
   kind: EventKind
   title: string
   notes?: string | null
+  /** What is actually in a session — the lines a coach wrote. */
+  structure?: any | null
 }) {
   const subject = 'athleteId' in input.subject
     ? { athlete_id: input.subject.athleteId, roster_athlete_id: null }
@@ -122,6 +130,7 @@ export async function createEvent(input: {
     kind: input.kind,
     title: input.title.trim().slice(0, 120),
     notes: input.notes?.trim() || null,
+    structure: input.structure ?? null,
   })
 }
 
