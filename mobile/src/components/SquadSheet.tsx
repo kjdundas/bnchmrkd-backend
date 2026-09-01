@@ -19,21 +19,30 @@ import { tapFeedback } from '../lib/haptics'
 import type { Squad, SquadAthlete } from '../lib/squads'
 
 export type SquadSheetMode =
+  /** The (+) — make a squad, or go and add an athlete. */
+  | { kind: 'choose' }
   | { kind: 'new' }
+  /** Long-press a squad chip: rename it, and pick who is in it. */
   | { kind: 'edit'; squad: Squad }
+  /** Long-press an athlete: file that one person. */
   | { kind: 'assign'; athlete: SquadAthlete }
 
 export default function SquadSheet({
-  mode, visible, squads, onClose, onCreate, onRename, onDelete, onAssign,
+  mode, visible, squads, athletes = [], onClose, onCreate, onRename, onDelete,
+  onAssign, onAddAthlete, onNewSquad,
 }: {
   mode: SquadSheetMode | null
   visible: boolean
   squads: Squad[]
+  /** Everyone the coach has, so a squad's membership can be edited here. */
+  athletes?: SquadAthlete[]
   onClose: () => void
   onCreate: (name: string) => Promise<void>
   onRename: (id: string, name: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onAssign: (athlete: SquadAthlete, squadId: string | null) => Promise<void>
+  onAddAthlete?: () => void
+  onNewSquad?: () => void
 }) {
   const { colors } = useTheme()
   const [name, setName] = useState('')
@@ -62,8 +71,9 @@ export default function SquadSheet({
   }
 
   const title =
-    mode?.kind === 'edit' ? 'Edit squad'
+    mode?.kind === 'edit' ? mode.squad.name
     : mode?.kind === 'assign' ? mode.athlete.name
+    : mode?.kind === 'choose' ? 'Add'
     : 'New squad'
 
   const input = {
@@ -101,7 +111,34 @@ export default function SquadSheet({
             </View>
           )}
 
-          {mode?.kind === 'assign' ? (
+          {mode?.kind === 'choose' ? (
+            <>
+              <Tappable
+                onPress={() => { tapFeedback(); onNewSquad?.() }}
+                accessibilityLabel="New squad"
+                style={[s.pick, { borderColor: colors.glass.border, marginTop: 16 }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.pickText, { color: colors.text.primary }]}>New squad</Text>
+                  <Text style={s.pickSub}>A group to assign to and rank together.</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={17} color={colors.text.muted} />
+              </Tappable>
+              <Tappable
+                onPress={() => { tapFeedback(); onAddAthlete?.() }}
+                accessibilityLabel="Add an athlete"
+                style={[s.pick, { borderColor: colors.glass.border }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.pickText, { color: colors.text.primary }]}>Add an athlete</Text>
+                  <Text style={s.pickSub}>
+                    Invite someone with an account, or key in an athlete who has no phone.
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={17} color={colors.text.muted} />
+              </Tappable>
+            </>
+          ) : mode?.kind === 'assign' ? (
             <>
               <Text style={[s.label, { color: colors.text.muted }]}>
                 Filing an athlete only groups them. It changes nothing about their training.
@@ -186,6 +223,51 @@ export default function SquadSheet({
                   Deleting a squad ungroups the athletes in it. Nobody is removed from your roster.
                 </Text>
               )}
+
+              {mode?.kind === 'edit' && (
+                <>
+                  <Text style={[s.label, { color: colors.text.muted, marginTop: 24 }]}>
+                    Who is in it
+                  </Text>
+                  {athletes.length === 0 && (
+                    <Text style={s.pickSub}>No athletes yet.</Text>
+                  )}
+                  {athletes.map((a) => {
+                    const on = a.squad_id === mode.squad.id
+                    const key = (a.athlete_user_id || a.roster_athlete_id) as string
+                    return (
+                      <Tappable
+                        key={key}
+                        onPress={() => {
+                          tapFeedback()
+                          // Not run(): this list stays open so several people
+                          // can be filed in one visit.
+                          setError('')
+                          onAssign(a, on ? null : mode.squad.id).catch((e: any) =>
+                            setError(e?.message?.replace(/^Supabase \d+:\s*/, '') || 'Could not save that.'))
+                        }}
+                        accessibilityLabel={a.name}
+                        accessibilityState={{ selected: on }}
+                        style={[s.pick, {
+                          borderColor: on ? colors.accent[500] + '8C' : colors.glass.border,
+                          backgroundColor: on ? colors.accent[500] + '1F' : 'transparent',
+                        }]}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={[s.pickText, { color: colors.text.primary }]}>{a.name}</Text>
+                          <Text style={s.pickSub}>
+                            {a.discipline || 'No event'}
+                            {a.squad_id && !on ? ` · in ${a.squad_name || 'another squad'}` : ''}
+                          </Text>
+                        </View>
+                        <Ionicons
+                          name={on ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={20} color={on ? colors.accent[500] : colors.text.muted} />
+                      </Tappable>
+                    )
+                  })}
+                </>
+              )}
             </>
           )}
         </ScrollView>
@@ -213,9 +295,10 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   pick: {
-    minHeight: 50, borderRadius: radius.md, borderWidth: 1,
-    paddingHorizontal: 14, marginTop: 8,
+    minHeight: 56, borderRadius: radius.md, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 10, marginTop: 8, gap: 10,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   pickText: { fontSize: 15, fontWeight: '600' },
+  pickSub: { fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.54)', marginTop: 2 },
 })

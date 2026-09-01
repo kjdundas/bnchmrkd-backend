@@ -202,7 +202,9 @@ export default function CoachHomeScreen() {
     // scroll view, so content slides over it rather than dragging it along,
     // and the floating bar hovers over the whole thing.
     <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
-      <ScreenBackdrop image="gym" scrollY={scrollY} />
+      {/* The track, as on the athlete side. Home is the same screen for
+          both roles; only who it is about changes. */}
+      <ScreenBackdrop scrollY={scrollY} />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <AppHeader onImage />
       <Animated.ScrollView
@@ -232,7 +234,7 @@ export default function CoachHomeScreen() {
           total={counts.total}
           value={filter}
           onChange={setFilter}
-          onAdd={() => setSheet({ kind: 'new' })}
+          onAdd={() => setSheet({ kind: 'choose' })}
           onEdit={(sq) => setSheet({ kind: 'edit', squad: sq })}
         />
 
@@ -377,7 +379,7 @@ export default function CoachHomeScreen() {
             <View style={styles.emptyIcon}><Ionicons name="people-outline" size={30} color={colors.text.dimmed} /></View>
             <Text style={styles.emptyTitle}>No linked athletes yet</Text>
             <Text style={styles.emptySub}>Invite athletes from your Squad to see their check-ins, programs and activity here.</Text>
-            <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('Squad')}>
+            <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CoachRoster')}>
               <Text style={styles.emptyBtnText}>Go to Squad</Text>
             </TouchableOpacity>
           </View>
@@ -388,7 +390,10 @@ export default function CoachHomeScreen() {
         mode={sheet}
         visible={!!sheet}
         squads={squads}
+        athletes={athletes}
         onClose={() => setSheet(null)}
+        onNewSquad={() => setSheet({ kind: 'new' })}
+        onAddAthlete={() => { setSheet(null); navigation.navigate('CoachRoster') }}
         onCreate={async (n) => { await createSquad(user?.id || '', n, squads.length); await loadSquads() }}
         onRename={async (id, n) => { await renameSquad(id, n); await loadSquads() }}
         onDelete={async (id) => {

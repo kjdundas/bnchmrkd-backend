@@ -33,8 +33,8 @@ import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performance
 import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
 import { formatMark, isLowerBetter } from '../lib/disciplineScience'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import { Tappable } from '../components/ui'
 import AppHeader from '../components/AppHeader'
-import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { ageFromDob } from '../lib/age'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -44,13 +44,6 @@ const { width: SCREEN_W } = Dimensions.get('window')
 // SHORTEST jump and printed in seconds.
 
 
-
-function getGreeting(): string {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
 
 // ── Skeleton Loader ─────────────────────────────────────────────────────────
 function SkeletonCard() {
@@ -558,7 +551,6 @@ export default function CoachRosterScreen() {
   }, [roster])
 
   const ageGroups = ['all', 'U13', 'U15', 'U17', 'U20', 'Senior']
-  const firstName = profile?.full_name?.split(' ')[0] || 'Coach'
 
   return (
     <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
@@ -568,8 +560,15 @@ export default function CoachRosterScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
+          <Tappable
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Back"
+            style={{ width: 36, height: 36, borderRadius: 18, marginRight: 4,
+                     alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+          </Tappable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>{getGreeting()}, {firstName}</Text>
             <Text style={styles.title}>Your Squad</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
@@ -698,7 +697,7 @@ export default function CoachRosterScreen() {
               onPress={() => navigation.navigate('AthleteDetail', { athlete })}
             />
           ))}
-          <View style={{ height: TAB_BAR_CLEARANCE }} />
+          <View style={{ height: 40 }} />
         </ScrollView>
       )}
 

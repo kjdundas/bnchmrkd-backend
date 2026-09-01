@@ -67,8 +67,14 @@ function AthleteTabs() {
 //
 // Assign is lifted out of the pill and rendered as the action button, the
 // same slot Log occupies on the athlete side. It is not a place you go, it
-// is a thing you start — which is exactly why it is not a peer of the other
-// three.
+// is a thing you start — which is exactly why it is not a peer of the rest.
+//
+// Squad and Profile are NOT tabs. The squad lives on Home behind the
+// switcher, which is where a coach actually starts; and Profile sits behind
+// the initials in the header, exactly as it does for an athlete. Roster
+// management — adding an athlete, importing one from World Athletics — is a
+// push screen reached from the switcher's (+), because it is a thing you do
+// occasionally, not a place you live.
 function CoachTabs() {
   return (
     <Tab.Navigator
@@ -76,11 +82,9 @@ function CoachTabs() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Home" component={CoachHomeScreen} options={{ tabBarLabel: 'HOME' }} />
-      <Tab.Screen name="Squad" component={CoachRosterScreen} options={{ tabBarLabel: 'SQUAD' }} />
       <Tab.Screen name="Assign" component={CoachAssignScreen} options={{ tabBarLabel: 'ASSIGN' }} />
       <Tab.Screen name="Leaderboards" component={CoachLeaderboardScreen} options={{ tabBarLabel: 'BOARDS' }} />
       <Tab.Screen name="Analyse" component={CoachAnalyseScreen} options={{ tabBarLabel: 'ANALYSE' }} />
-      <Tab.Screen name="CoachProfile" component={ProfileScreen} options={{ tabBarLabel: 'PROFILE' }} />
     </Tab.Navigator>
   )
 }
@@ -124,6 +128,7 @@ export default function AppNavigator() {
           />
           {/* Shared push screens */}
           <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="CoachRoster" component={CoachRosterScreen} />
           <Stack.Screen name="AthleteDetail" component={AthleteDetailScreen} />
           <Stack.Screen name="CoachResults" component={CoachResultsScreen} />
         </Stack.Navigator>

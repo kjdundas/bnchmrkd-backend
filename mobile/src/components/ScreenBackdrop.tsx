@@ -60,7 +60,13 @@ export const BACKDROPS = {
     source: require('../../assets/stadium-hero.jpg'),
     position: 'top center' as const,
     topScrim: 0.24,
-    leftScrim: 0,
+    // 0.62, not 0. I set this to zero on the assumption that the stadium's
+    // left side was dark and nothing laid a hero title on it. Both were
+    // wrong: measured off the actual crop, the band where the greeting and
+    // title sit is a warm sunlit rgb(234,207,160), which puts white type at
+    // 1.70:1 and the 62%-white greeting kicker at 1.40:1 — worse than the
+    // gym photo ever was. 0.62 takes them to 7.7:1 and 4.1:1.
+    leftScrim: 0.62,
   },
   gym: {
     source: require('../../assets/gym-hero.jpg'),
