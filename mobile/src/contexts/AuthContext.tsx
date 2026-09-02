@@ -213,6 +213,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }, 3000)
 
+    // Prime the token from storage straight away. getSession() may resolve
+    // late rather than never, and until it does every REST call would run as
+    // anon. Whatever getSession() or the auth listener returns overwrites this
+    // a moment later.
+    tokenFromStorage().then((t) => { if (t && !getCachedToken()) setCachedToken(t) })
+
     // Get initial session
     supabase.auth
       .getSession()
@@ -228,13 +234,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
       })
 
-    // Listen for auth changes — also cache the token for REST helpers
+    // Listen for auth changes — also cache the token for REST helpers.
+    //
+    // This callback MUST stay synchronous. supabase-js runs it while holding
+    // the auth lock, and awaiting inside it deadlocks that lock — the same
+    // Web Locks failure that makes getSession() hang. It was `async` and
+    // awaited fetchProfile, so after a sign-out/sign-in the lock never
+    // cleared, later events stopped arriving, and the cached token silently
+    // went stale. Every REST call then fell through to the anon key: reads
+    // came back 200-with-nothing, writes came back 401, and the check-in
+    // button did nothing at all.
+    //
+    // So: cache the token first, on the same tick, and push the profile fetch
+    // out to a later one where it is free to await whatever it likes.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, s) => {
+      (_event, s) => {
         setSession(s)
         setCachedToken(s?.access_token ?? null)
-        if (s?.user) await fetchProfile(s.user.id, s)
-        else setProfile(null)
+        if (s?.user) {
+          const uid = s.user.id
+          setTimeout(() => { fetchProfile(uid, s) }, 0)
+        } else {
+          setProfile(null)
+        }
       },
     )
     return () => {
