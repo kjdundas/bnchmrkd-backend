@@ -10,7 +10,6 @@ import {
   Text,
   ScrollView,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   FlatList,
   Animated,
@@ -582,7 +581,7 @@ function LogBody() {
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.inputScreenContent} keyboardShouldPersistTaps="handled">
           {/* Back */}
-          <TouchableOpacity
+          <Tappable
             style={styles.backBtn}
             onPress={() => {
               setSelectedMetric(null)
@@ -597,7 +596,7 @@ function LogBody() {
           >
             <Ionicons name="arrow-back" size={20} color={colors.text.secondary} />
             <Text style={styles.backText}>{cat.category}</Text>
-          </TouchableOpacity>
+          </Tappable>
 
           {/* Metric header */}
           <View style={styles.inputHeader}>
@@ -638,10 +637,10 @@ function LogBody() {
           </Animated.View>
 
           {/* More details toggle (date + notes) */}
-          <TouchableOpacity
+          <Tappable
             style={styles.moreToggle}
             onPress={() => setShowMore(!showMore)}
-            activeOpacity={0.7}
+            accessibilityState={{ expanded: showMore }}
           >
             <Ionicons
               name={showMore ? 'chevron-up' : 'chevron-down'}
@@ -651,7 +650,7 @@ function LogBody() {
             <Text style={styles.moreToggleText}>
               {showMore ? 'Hide details' : `${isToday ? 'Today' : date} · add notes`}
             </Text>
-          </TouchableOpacity>
+          </Tappable>
 
           {showMore && (
             <View style={styles.moreSection}>
@@ -683,10 +682,10 @@ function LogBody() {
 
           {/* Protocol — collapsible accordion */}
           {selectedMetric.protocol && (
-            <TouchableOpacity
+            <Tappable
               style={styles.protocolToggle}
               onPress={() => setProtocolOpen(!protocolOpen)}
-              activeOpacity={0.7}
+              accessibilityState={{ expanded: protocolOpen }}
             >
               <Ionicons
                 name={protocolOpen ? 'chevron-up' : 'chevron-down'}
@@ -694,7 +693,7 @@ function LogBody() {
                 color={colors.text.muted}
               />
               <Text style={styles.protocolToggleText}>Protocol</Text>
-            </TouchableOpacity>
+            </Tappable>
           )}
           {protocolOpen && selectedMetric.protocol && (
             <View style={styles.protocolBody}>
@@ -738,15 +737,14 @@ function LogBody() {
           )}
 
           {/* Save button */}
-          <TouchableOpacity
+          <Tappable
             style={[styles.saveBtn, (!value || saving) && styles.saveBtnDisabled]}
             onPress={handleSave}
             disabled={!value || saving}
-            activeOpacity={0.8}
           >
             <Ionicons name="checkmark-circle" size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save Metric'}</Text>
-          </TouchableOpacity>
+          </Tappable>
 
           {/* History */}
           {history.length > 0 && (
@@ -805,10 +803,10 @@ function LogBody() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => setSelectedCategory(null)}>
+          <Tappable style={styles.backBtn} onPress={() => setSelectedCategory(null)}>
             <Ionicons name="arrow-back" size={20} color={colors.text.secondary} />
             <Text style={styles.backText}>Categories</Text>
-          </TouchableOpacity>
+          </Tappable>
           <View style={styles.catTitleRow}>
                 <View>
               <MonoKicker color={selectedCategory.color}>{selectedCategory.category}</MonoKicker>
@@ -821,10 +819,9 @@ function LogBody() {
           keyExtractor={(m) => m.key}
           contentContainerStyle={styles.metricList}
           renderItem={({ item }) => (
-            <TouchableOpacity
+            <Tappable
               style={styles.metricCard}
-              onPress={() => setSelectedMetric(item)}
-              activeOpacity={0.7}
+              hitSlop={0} onPress={() => setSelectedMetric(item)}
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.metricLabel}>{item.label}</Text>
@@ -838,7 +835,7 @@ function LogBody() {
                 <Text style={[styles.metricUnit, { color: selectedCategory.color }]}>{item.unit}</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.text.dimmed} />
               </View>
-            </TouchableOpacity>
+            </Tappable>
           )}
         />
       </SafeAreaView>
@@ -876,20 +873,20 @@ function LogBody() {
 
       {/* Mode toggle */}
       <View style={styles.modeToggle}>
-        <TouchableOpacity
+        <Tappable
           style={[styles.modeBtn, logMode === 'physical' && styles.modeBtnActive]}
           onPress={() => setLogMode('physical')}
         >
           <Ionicons name="barbell-outline" size={16} color={logMode === 'physical' ? colors.orange[500] : colors.text.muted} />
           <Text style={[styles.modeBtnText, logMode === 'physical' && styles.modeBtnTextActive]}>Physical</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Tappable>
+        <Tappable
           style={[styles.modeBtn, logMode === 'competition' && styles.modeBtnActive]}
           onPress={() => setLogMode('competition')}
         >
           <Ionicons name="trophy-outline" size={16} color={logMode === 'competition' ? colors.orange[500] : colors.text.muted} />
           <Text style={[styles.modeBtnText, logMode === 'competition' && styles.modeBtnTextActive]}>Competition</Text>
-        </TouchableOpacity>
+        </Tappable>
       </View>
 
       <ScrollView contentContainerStyle={styles.catList} showsVerticalScrollIndicator={false}>
@@ -908,16 +905,15 @@ function LogBody() {
                 const m = METRIC_INDEX[key]
                 if (!m) return null
                 return (
-                  <TouchableOpacity
+                  <Tappable
                     key={key}
                     style={[styles.quickLogPill, { borderColor: m.color + '33', backgroundColor: m.color + '0d' }]}
                     onPress={() => handleQuickLog(key)}
-                    activeOpacity={0.7}
                   >
                     <Ionicons name="add" size={14} color={m.color} />
                     <Text style={styles.quickLogPillText}>{m.label}</Text>
                     <Text style={styles.quickLogPillUnit}>{m.unit}</Text>
-                  </TouchableOpacity>
+                  </Tappable>
                 )
               })}
             </ScrollView>

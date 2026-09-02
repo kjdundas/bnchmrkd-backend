@@ -9,7 +9,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
   RefreshControl,
   Dimensions,
@@ -47,6 +46,7 @@ import {
   TrendArrow,
   EmptyState,
   Divider,
+  Tappable,
 } from '../components/ui'
 // The projection card now lives in its own component, because the coach
 // side shows the same chart and two copies of a young athlete's projected
@@ -219,10 +219,9 @@ function DisciplinePicker({
       showsVerticalScrollIndicator={false}
     >
       {disciplineStats.map((stat) => (
-        <TouchableOpacity
+        <Tappable
           key={stat.discipline}
           onPress={() => onSelectDiscipline(stat.discipline)}
-          activeOpacity={0.7}
         >
           <AlmanacCard glass
             kicker={stat.ageGroup}
@@ -253,7 +252,7 @@ function DisciplinePicker({
               <Ionicons name="chevron-forward" size={18} color={colors.text.dimmed} />
             </View>
           </AlmanacCard>
-        </TouchableOpacity>
+        </Tappable>
       ))}
 
       <View style={{ height: TAB_BAR_CLEARANCE }} />
@@ -974,9 +973,9 @@ function TrajectoryBody() {
       {/* Header */}
       <View style={styles.header}>
         {selectedDiscipline && (
-          <TouchableOpacity onPress={() => setSelectedDiscipline(null)} style={styles.backBtn}>
+          <Tappable onPress={() => setSelectedDiscipline(null)} style={styles.backBtn} accessibilityLabel="Back">
             <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
-          </TouchableOpacity>
+          </Tappable>
         )}
         <View style={{ flex: 1 }}>
           <MonoKicker>

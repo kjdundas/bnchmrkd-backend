@@ -4,10 +4,18 @@
 // Backed by invite_athlete / revoke_link / get_my_links RPCs.
 // ═══════════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet } from 'react-native'
+import {
+  View,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+} from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { callRpc } from '../lib/supabase'
+import { Tappable } from './ui'
 
 interface Link {
   link_id: string
@@ -68,9 +76,9 @@ export default function CoachInvitePanel() {
           placeholder="athlete@email.com" placeholderTextColor={colors.text.dimmed}
           autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
         />
-        <TouchableOpacity style={styles.sendBtn} onPress={send} disabled={sending} activeOpacity={0.85}>
+        <Tappable style={styles.sendBtn} onPress={send} disabled={sending}>
           {sending ? <ActivityIndicator size="small" color="#000" /> : <Text style={styles.sendText}>Send</Text>}
-        </TouchableOpacity>
+        </Tappable>
       </View>
 
       {error !== '' && <Text style={styles.error}>{error}</Text>}
@@ -93,7 +101,7 @@ export default function CoachInvitePanel() {
             <View key={l.link_id} style={styles.item}>
               <Ionicons name="time-outline" size={15} color={colors.amber} />
               <Text style={styles.itemName} numberOfLines={1}>{l.counterparty_name || l.invite_email}</Text>
-              <TouchableOpacity onPress={() => revoke(l.link_id)}><Text style={styles.action}>Cancel</Text></TouchableOpacity>
+              <Tappable onPress={() => revoke(l.link_id)}><Text style={styles.action}>Cancel</Text></Tappable>
             </View>
           ))}
         </View>
@@ -106,7 +114,7 @@ export default function CoachInvitePanel() {
             <View key={l.link_id} style={styles.item}>
               <Ionicons name="checkmark-circle-outline" size={15} color={colors.green} />
               <Text style={styles.itemName} numberOfLines={1}>{l.counterparty_name || l.invite_email}</Text>
-              <TouchableOpacity onPress={() => revoke(l.link_id)}><Text style={styles.action}>Unlink</Text></TouchableOpacity>
+              <Tappable onPress={() => revoke(l.link_id)}><Text style={styles.action}>Unlink</Text></Tappable>
             </View>
           ))}
         </View>

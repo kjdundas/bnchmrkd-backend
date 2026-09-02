@@ -9,7 +9,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   StyleSheet,
   ActivityIndicator,
@@ -27,6 +26,7 @@ import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } fro
 import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
 import { isTimeDiscipline } from '../lib/performanceLevels'
+import { Tappable } from '../components/ui'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -103,11 +103,10 @@ function ScanInputStage({
         numberOfLines={12}
       />
 
-      <TouchableOpacity
+      <Tappable
         style={[styles.primaryBtn, (!text.trim() || loading) && { opacity: 0.4 }]}
         onPress={() => { tapFeedback(); onSubmit(text.trim()) }}
         disabled={!text.trim() || loading}
-        activeOpacity={0.7}
       >
         {loading ? (
           <View style={styles.btnRow}>
@@ -120,7 +119,7 @@ function ScanInputStage({
             <Text style={styles.primaryBtnText}>Scan Results</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </Tappable>
 
       {/* Info card */}
       <View style={styles.infoCard}>
@@ -211,12 +210,11 @@ function ScanReviewStage({
             const key = `${cidx}:${ridx}`
             const selected = selections[key] ?? candidate.matched
             return (
-              <TouchableOpacity
+              <Tappable
                 key={ridx}
                 style={[styles.resultRow, selected && styles.resultRowSelected]}
-                onPress={() => { tapFeedback(); candidate.matched && onToggle(key) }}
+                hitSlop={0} onPress={() => { tapFeedback(); candidate.matched && onToggle(key) }}
                 disabled={!candidate.matched}
-                activeOpacity={0.6}
               >
                 {candidate.matched && (
                   <Ionicons
@@ -238,7 +236,7 @@ function ScanReviewStage({
                   </Text>
                   {result.date && <Text style={styles.resultDate}>{result.date}</Text>}
                 </View>
-              </TouchableOpacity>
+              </Tappable>
             )
           })}
         </View>
@@ -246,10 +244,10 @@ function ScanReviewStage({
 
       {/* Action buttons */}
       <View style={styles.reviewActions}>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={() => { tapFeedback(); onBack() }}>
+        <Tappable style={styles.secondaryBtn} onPress={() => { tapFeedback(); onBack() }}>
           <Text style={styles.secondaryBtnText}>Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Tappable>
+        <Tappable
           style={[styles.primaryBtn, { flex: 2 }, (saving || selectedCount === 0) && { opacity: 0.4 }]}
           onPress={() => { tapFeedback(); onSave() }}
           disabled={saving || selectedCount === 0}
@@ -261,7 +259,7 @@ function ScanReviewStage({
               Save {selectedCount} result{selectedCount !== 1 ? 's' : ''}
             </Text>
           )}
-        </TouchableOpacity>
+        </Tappable>
       </View>
 
       <View style={{ height: 40 }} />
@@ -280,12 +278,12 @@ function ScanDoneStage({ savedCount, onReset }: { savedCount: number; onReset: (
       <Text style={styles.doneSubtitle}>
         Athlete records have been updated on your roster.
       </Text>
-      <TouchableOpacity style={styles.primaryBtn} onPress={() => { tapFeedback(); onReset() }} activeOpacity={0.7}>
+      <Tappable style={styles.primaryBtn} onPress={() => { tapFeedback(); onReset() }}>
         <View style={styles.btnRow}>
           <Ionicons name="scan-outline" size={16} color="#fff" />
           <Text style={styles.primaryBtnText}>Scan More Results</Text>
         </View>
-      </TouchableOpacity>
+      </Tappable>
     </View>
   )
 }
@@ -404,16 +402,16 @@ export default function CoachResultsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Tappable onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn} hitSlop={10} accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
-        </TouchableOpacity>
+        </Tappable>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Scan results</Text>
         </View>
         {stage === 'review' && (
-          <TouchableOpacity onPress={() => { tapFeedback(); handleReset() }} style={styles.resetBtn}>
+          <Tappable onPress={() => { tapFeedback(); handleReset() }} style={styles.resetBtn} accessibilityLabel="Start over">
             <Ionicons name="refresh-outline" size={18} color={colors.text.secondary} />
-          </TouchableOpacity>
+          </Tappable>
         )}
       </View>
 

@@ -17,6 +17,7 @@ import {
   Animated,
   Pressable,
   ViewStyle,
+  StyleProp,
   Dimensions,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -188,7 +189,11 @@ export function Tappable({
   children: React.ReactNode
   onPress?: () => void
   onLongPress?: () => void
-  style?: ViewStyle | ViewStyle[]
+  /** A real RN style prop. Conditional entries — `cond && styles.x` — are
+      how every call site writes state styling, so `false` and `null` have
+      to be assignable or the primitive is harder to adopt than the raw
+      Touchable it replaces. That was why 65 call sites never adopted it. */
+  style?: StyleProp<ViewStyle>
   disabled?: boolean
   accessibilityLabel?: string
   /** Needed by anything that is one of a set — a filter chip, a toggle.
@@ -215,7 +220,7 @@ export function Tappable({
       accessibilityHint={accessibilityHint}
       accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
       style={({ pressed }) => [
-        style as ViewStyle,
+        style,
         pressed && !disabled && { opacity: 0.86, transform: [{ scale: 0.98 }] },
         disabled && { opacity: 0.45 },
       ]}

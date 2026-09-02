@@ -13,7 +13,6 @@ import {
   Text,
   StyleSheet,
   Animated,
-  TouchableOpacity,
   Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -35,7 +34,11 @@ import {
   disciplineFamily,
   isLowerBetter,
 } from '../lib/disciplineScience'
-import { AlmanacCard, MonoKicker } from './ui'
+import {
+  AlmanacCard,
+  MonoKicker,
+  Tappable,
+} from './ui'
 
 // ═══════════════════════════════════════════════════════════════════════
 // 1. DNA SHIFT CARD — Shows axis changes after logging a metric
@@ -279,7 +282,7 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
 
   return (
     <AlmanacCard kicker="WHAT IF" title="Scenario Explorer" accent={colors.purple}>
-      <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
+      <Tappable onPress={() => setExpanded(!expanded)}>
         <View style={styles.whatIfHeader}>
           <View style={styles.whatIfLimitIcon}>
             <Ionicons name="flask" size={16} color={colors.purple} />
@@ -294,7 +297,7 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
           </View>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.text.muted} />
         </View>
-      </TouchableOpacity>
+      </Tappable>
 
       {expanded && (
         <View style={styles.whatIfBody}>
@@ -318,19 +321,18 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
             {steps.map((val, i) => {
               const isActive = Math.abs(val - current) < stepSize * 0.3
               return (
-                <TouchableOpacity
+                <Tappable
                   key={i}
                   style={[
                     styles.whatIfStep,
                     isActive && { backgroundColor: colors.purple + '20', borderColor: colors.purple + '50' },
                   ]}
                   onPress={() => setSliderValue(val)}
-                  activeOpacity={0.7}
                 >
                   <Text style={[styles.whatIfStepText, isActive && { color: colors.purple }]}>
                     {i === 0 ? 'Now' : `+${i}`}
                   </Text>
-                </TouchableOpacity>
+                </Tappable>
               )
             })}
           </View>

@@ -11,11 +11,17 @@
 // now comes from `role`.
 // ═══════════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { callRpc } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { Tappable } from './ui'
 
 interface Link {
   link_id: string
@@ -112,16 +118,16 @@ export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly
               </Text>
               <Text style={styles.sub}>wants to connect and view your performance data. You can revoke anytime.</Text>
               <View style={styles.btnRow}>
-                <TouchableOpacity style={[styles.btn, styles.approve]} disabled={busy === l.link_id}
-                  onPress={() => respond(l.link_id, true)} activeOpacity={0.85}>
+                <Tappable style={[styles.btn, styles.approve]} disabled={busy === l.link_id}
+                  onPress={() => respond(l.link_id, true)}>
                   {busy === l.link_id
                     ? <ActivityIndicator size="small" color="#000" />
                     : <Text style={styles.approveText}>Approve</Text>}
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, styles.decline]} disabled={busy === l.link_id}
-                  onPress={() => respond(l.link_id, false)} activeOpacity={0.85}>
+                </Tappable>
+                <Tappable style={[styles.btn, styles.decline]} disabled={busy === l.link_id}
+                  onPress={() => respond(l.link_id, false)}>
                   <Text style={styles.declineText}>Decline</Text>
-                </TouchableOpacity>
+                </Tappable>
               </View>
             </View>
           ))}
@@ -145,9 +151,9 @@ export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly
                     <Text style={styles.name}>{l.counterparty_name || W.fallbackName}</Text>
                     {l.counterparty_org ? <Text style={styles.orgSmall}>{l.counterparty_org}</Text> : null}
                   </View>
-                  <TouchableOpacity disabled={busy === l.link_id} onPress={() => revoke(l.link_id)}>
+                  <Tappable disabled={busy === l.link_id} onPress={() => revoke(l.link_id)}>
                     <Text style={styles.revoke}>{busy === l.link_id ? '…' : W.action}</Text>
-                  </TouchableOpacity>
+                  </Tappable>
                 </View>
               ))}
             </View>

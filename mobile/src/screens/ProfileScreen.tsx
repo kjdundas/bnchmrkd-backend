@@ -10,7 +10,6 @@ import {
   Text,
   ScrollView,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Alert,
   Pressable,
@@ -387,10 +386,10 @@ export default function ProfileScreen() {
         <AlmanacCard kicker={isCoach ? 'COACH PROFILE' : 'ATHLETE PROFILE'}
           title="Details" accent={colors.blue}>
           {!editing && (
-            <TouchableOpacity onPress={() => setEditing(true)} style={styles.editBtn}>
+            <Tappable onPress={() => setEditing(true)} style={styles.editBtn}>
               <Ionicons name="pencil" size={13} color={colors.orange[400]} />
               <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
+            </Tappable>
           )}
 
           {editing ? (
@@ -409,7 +408,7 @@ export default function ProfileScreen() {
                 }}>I compete in</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {([['M', "Men's"], ['F', "Women's"]] as const).map(([v, l]) => (
-                    <TouchableOpacity
+                    <Tappable
                       key={v}
                       onPress={() => setSex(v)}
                       accessibilityLabel={`${l} category${sex === v ? ', selected' : ''}`}
@@ -425,7 +424,7 @@ export default function ProfileScreen() {
                         fontSize: 13, fontWeight: '700',
                         color: sex === v ? '#FFFFFF' : colors.text.secondary,
                       }}>{l}</Text>
-                    </TouchableOpacity>
+                    </Tappable>
                   ))}
                 </View>
               </View>
@@ -436,12 +435,12 @@ export default function ProfileScreen() {
               <Field label="Weight (kg)" value={form.weight_kg} onChange={(v) => setForm({ ...form, weight_kg: v })} keyboard="decimal-pad" />
 
               <View style={styles.btnRow}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditing(false)}>
+                <Tappable style={styles.cancelBtn} onPress={() => setEditing(false)}>
                   <Text style={styles.cancelBtnText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
+                </Tappable>
+                <Tappable style={styles.saveBtn} onPress={handleSave} disabled={saving}>
                   <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save'}</Text>
-                </TouchableOpacity>
+                </Tappable>
               </View>
             </>
           ) : (
@@ -494,11 +493,11 @@ export default function ProfileScreen() {
             component for why an empty relationship should not get a screen. */}
         <SharingSettings userId={user?.id} />
 
-        <TouchableOpacity style={[styles.signOutBtn, { borderColor: c.red + '20', backgroundColor: c.red + '04' }]}
-          onPress={handleSignOut} activeOpacity={0.7}>
+        <Tappable style={[styles.signOutBtn, { borderColor: c.red + '20', backgroundColor: c.red + '04' }]}
+          onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={c.red} />
           <Text style={[styles.signOutText, { color: c.red }]}>Sign Out</Text>
-        </TouchableOpacity>
+        </Tappable>
 
         {/* Version */}
         <Text style={[styles.version, { color: c.text.dimmed }]}>bnchmrkd. v0.1.0</Text>

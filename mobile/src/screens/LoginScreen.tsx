@@ -8,7 +8,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -22,6 +21,7 @@ import { darkColors as colors, spacing, radius, fonts } from '../lib/theme'
 import Wordmark from '../components/Wordmark'
 import { useAuth } from '../contexts/AuthContext'
 import DobField from '../components/DobField'
+import { Tappable } from '../components/ui'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 
@@ -149,7 +149,7 @@ export default function LoginScreen() {
                   <Text style={styles.inputLabel}>I AM A</Text>
                   <View style={styles.roleRow}>
                     {(['athlete', 'coach'] as const).map((r) => (
-                      <TouchableOpacity
+                      <Tappable
                         key={r}
                         style={[styles.roleBtn, role === r && styles.roleBtnActive]}
                         onPress={() => setRole(r)}
@@ -157,7 +157,7 @@ export default function LoginScreen() {
                         <Text style={[styles.roleText, role === r && styles.roleTextActive]}>
                           {r === 'athlete' ? '🏃 Athlete' : '📋 Coach'}
                         </Text>
-                      </TouchableOpacity>
+                      </Tappable>
                     ))}
                   </View>
                 </View>
@@ -173,13 +173,13 @@ export default function LoginScreen() {
                       <Text style={styles.inputLabel}>I COMPETE IN</Text>
                       <View style={styles.roleRow}>
                         {([['M', "Men's"], ['F', "Women's"]] as const).map(([v, l]) => (
-                          <TouchableOpacity
+                          <Tappable
                             key={v}
                             style={[styles.roleBtn, sex === v && styles.roleBtnActive]}
                             onPress={() => setSex(v)}
                           >
                             <Text style={[styles.roleText, sex === v && styles.roleTextActive]}>{l}</Text>
-                          </TouchableOpacity>
+                          </Tappable>
                         ))}
                       </View>
                     </View>
@@ -221,11 +221,10 @@ export default function LoginScreen() {
               </View>
             ) : null}
 
-            <TouchableOpacity
+            <Tappable
               style={styles.button}
               onPress={handleSubmit}
               disabled={loading}
-              activeOpacity={0.8}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -234,9 +233,9 @@ export default function LoginScreen() {
                   {mode === 'login' ? 'Sign In' : 'Create Account'}
                 </Text>
               )}
-            </TouchableOpacity>
+            </Tappable>
 
-            <TouchableOpacity
+            <Tappable
               onPress={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
               style={styles.toggle}
             >
@@ -248,7 +247,7 @@ export default function LoginScreen() {
                   {mode === 'login' ? 'Sign Up' : 'Sign In'}
                 </Text>
               </Text>
-            </TouchableOpacity>
+            </Tappable>
           </Animated.View>
         </View>
       </KeyboardAvoidingView>

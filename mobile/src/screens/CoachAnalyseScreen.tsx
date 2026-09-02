@@ -10,7 +10,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   StyleSheet,
   KeyboardAvoidingView,
@@ -28,6 +27,7 @@ import { isLowerBetter } from '../lib/disciplineScience'
 import FullAnalysis from '../components/FullAnalysis'
 // One catalogue, shared with the athlete's own event picker.
 import { DISCIPLINES } from '../lib/disciplines'
+import { Tappable } from '../components/ui'
 
 
 // Group icon colors
@@ -93,13 +93,13 @@ function DisciplinePicker({
         style={styles.chipScroll}
       >
         {groups.map(g => (
-          <TouchableOpacity key={g}
+          <Tappable key={g}
             style={[styles.chip, filterGroup === g && styles.chipActive]}
             onPress={() => { tapFeedback(); setFilterGroup(g) }}>
             <Text style={[styles.chipText, filterGroup === g && styles.chipTextActive]}>
               {g === 'all' ? 'All' : g}
             </Text>
-          </TouchableOpacity>
+          </Tappable>
         ))}
       </ScrollView>
 
@@ -118,9 +118,9 @@ function DisciplinePicker({
               it — the rows had nothing holding them together. */}
           <View style={styles.groupCard}>
           {disciplines.map((d, i) => (
-            <TouchableOpacity key={d.name}
+            <Tappable key={d.name}
               style={[styles.disciplineRow, i === disciplines.length - 1 && { borderBottomWidth: 0 }]}
-              onPress={() => { tapFeedback(); onSelect(d.name) }} activeOpacity={0.6}>
+              hitSlop={0} onPress={() => { tapFeedback(); onSelect(d.name) }}>
               {/* '10' is 6% alpha — a tint that vanished over the photo and
                   left the icon floating. A visible plate and a border, at
                   the strength the rest of the app uses. */}
@@ -136,7 +136,7 @@ function DisciplinePicker({
               </View>
               <Text style={styles.disciplineName}>{d.name}</Text>
               <Ionicons name="chevron-forward" size={15} color={onImage.muted} />
-            </TouchableOpacity>
+            </Tappable>
           ))}
           </View>
         </View>
@@ -187,9 +187,9 @@ export default function CoachAnalyseScreen() {
       {/* Header */}
       <View style={styles.header}>
         {(selectedDiscipline || result) && (
-          <TouchableOpacity onPress={() => { tapFeedback(); handleBack() }} style={styles.backBtn}>
+          <Tappable onPress={() => { tapFeedback(); handleBack() }} style={styles.backBtn} accessibilityLabel="Back">
             <Ionicons name="chevron-back" size={22} color={onImage.ink} />
-          </TouchableOpacity>
+          </Tappable>
         )}
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>
@@ -250,24 +250,23 @@ export default function CoachAnalyseScreen() {
               {/* Gender toggle */}
               <View style={styles.segmentRow}>
                 {(['M', 'F'] as const).map(g => (
-                  <TouchableOpacity key={g}
+                  <Tappable key={g}
                     style={[styles.segmentBtn, sex === g && styles.segmentBtnActive]}
                     onPress={() => { tapFeedback(); setSex(g) }}>
                     <Text style={[styles.segmentText, sex === g && styles.segmentTextActive]}>
                       {g === 'M' ? 'Male' : 'Female'}
                     </Text>
-                  </TouchableOpacity>
+                  </Tappable>
                 ))}
               </View>
 
-              <TouchableOpacity
+              <Tappable
                 style={[styles.analyseBtn, (!markInput.trim() || !ageInput.trim()) && { opacity: 0.4 }]}
                 onPress={() => { tapFeedback(); handleAnalyse() }}
                 disabled={!markInput.trim() || !ageInput.trim()}
-                activeOpacity={0.7}
               >
                 <Text style={styles.analyseBtnText}>Run Analysis</Text>
-              </TouchableOpacity>
+              </Tappable>
             </View>
           </Animated.ScrollView>
         </KeyboardAvoidingView>

@@ -8,7 +8,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
   Animated,
@@ -28,7 +27,11 @@ import {
   countPersonalBests, optionalNumber, WIND_LIMIT, type ResultStatus,
 } from '../lib/resultSemantics'
 import { isLowerBetter, performancePercentile, performanceZoneLabel } from '../lib/disciplineScience'
-import { GlassCard, SectionHeader } from './ui'
+import {
+  GlassCard,
+  SectionHeader,
+  Tappable,
+} from './ui'
 import { loadProgress, saveProgress } from '../lib/progress'
 import {
   calculateLogXP, calculateStreak, getLevelFromXP,
@@ -65,9 +68,8 @@ function Pill({
 }: { label: string; active: boolean; danger?: boolean; onPress: () => void }) {
   const on = active ? (danger ? colors.red : colors.accent[500]) : null
   return (
-    <TouchableOpacity
+    <Tappable
       onPress={onPress}
-      activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={label}
@@ -77,7 +79,7 @@ function Pill({
       ]}
     >
       <Text style={[styles.pillText, on ? { color: on } : null]}>{label}</Text>
-    </TouchableOpacity>
+    </Tappable>
   )
 }
 
@@ -342,9 +344,9 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
           </GlassCard>
         )}
 
-        <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
+        <Tappable style={styles.doneBtn} onPress={onClose}>
           <Text style={styles.doneBtnText}>Done</Text>
-        </TouchableOpacity>
+        </Tappable>
       </ScrollView>
     )
   }
@@ -354,12 +356,12 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
     return (
       <ScrollView contentContainerStyle={styles.pickerContent}>
         <View style={styles.pickerHeader}>
-          <TouchableOpacity
+          <Tappable
             onPress={onClose} hitSlop={12} style={styles.headerBtn}
             accessibilityRole="button" accessibilityLabel="Close"
           >
             <Ionicons name="close" size={22} color={colors.text.secondary} />
-          </TouchableOpacity>
+          </Tappable>
           <Text style={styles.pickerTitle}>Log Competition</Text>
           <View style={{ width: 44 }} />
         </View>
@@ -370,14 +372,13 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
             <Text style={styles.groupLabel}>{group.group}</Text>
             <View style={styles.disciplineGrid}>
               {group.items.map((d) => (
-                <TouchableOpacity
+                <Tappable
                   key={d}
                   style={styles.disciplineChip}
                   onPress={() => setDiscipline(d)}
-                  activeOpacity={0.7}
                 >
                   <Text style={styles.disciplineText}>{d}</Text>
-                </TouchableOpacity>
+                </Tappable>
               ))}
             </View>
           </View>
@@ -397,12 +398,12 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
   return (
     <ScrollView contentContainerStyle={styles.inputContent} keyboardShouldPersistTaps="handled">
       <View style={styles.pickerHeader}>
-        <TouchableOpacity
+        <Tappable
           onPress={() => setDiscipline(null)} hitSlop={12} style={styles.headerBtn}
           accessibilityRole="button" accessibilityLabel="Back to events"
         >
           <Ionicons name="arrow-back" size={22} color={colors.text.secondary} />
-        </TouchableOpacity>
+        </Tappable>
         <Text style={styles.pickerTitle}>{discipline}</Text>
         <View style={{ width: 44 }} />
       </View>
@@ -544,14 +545,13 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
         </View>
       )}
 
-      <TouchableOpacity
+      <Tappable
         style={[styles.logBtn, (!mark || saving) && { opacity: 0.4 }]}
         onPress={handleSave}
         disabled={!mark || saving}
-        activeOpacity={0.8}
       >
         <Text style={styles.logBtnText}>{saving ? 'Saving…' : 'Log Result'}</Text>
-      </TouchableOpacity>
+      </Tappable>
     </ScrollView>
   )
 }

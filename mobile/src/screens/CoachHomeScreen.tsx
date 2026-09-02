@@ -7,7 +7,13 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { View, Text, Animated, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native'
+import {
+  View,
+  Text,
+  Animated,
+  StyleSheet,
+  RefreshControl,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
@@ -390,7 +396,7 @@ export default function CoachHomeScreen() {
               </View>
             ) : (
               items.map((it) => (
-                <TouchableOpacity key={it.key} style={styles.row} activeOpacity={0.6} onPress={() => { tapFeedback(); openParam(it.athlete) }}>
+                <Tappable key={it.key} style={styles.row} hitSlop={0} onPress={() => { tapFeedback(); openParam(it.athlete) }}>
                   <View style={[styles.rowBar, { backgroundColor: it.color }]} />
                   <Ionicons name={it.icon as any} size={16} color={it.color} style={{ marginRight: spacing.sm }} />
                   <View style={{ flex: 1 }}>
@@ -398,7 +404,7 @@ export default function CoachHomeScreen() {
                     <Text style={styles.rowDetail} numberOfLines={1}>{it.detail}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={14} color={onImage.dim} />
-                </TouchableOpacity>
+                </Tappable>
               ))
             )}
           </View>
@@ -446,10 +452,10 @@ export default function CoachHomeScreen() {
                     {EMOJIS.map((e) => {
                       const on = mine.has(e)
                       return (
-                        <TouchableOpacity key={e} onPress={() => { tapFeedback(); toggleReact(ev, e) }} disabled={busy === `${ev.event_key}${e}`}
+                        <Tappable key={e} onPress={() => { tapFeedback(); toggleReact(ev, e) }} disabled={busy === `${ev.event_key}${e}`}
                           style={[styles.reactBtn, on && styles.reactBtnOn]}>
                           <Text style={[styles.reactEmoji, !on && { opacity: 0.55 }]}>{e}</Text>
-                        </TouchableOpacity>
+                        </Tappable>
                       )
                     })}
                   </View>
@@ -465,9 +471,9 @@ export default function CoachHomeScreen() {
             <View style={styles.emptyIcon}><Ionicons name="people-outline" size={30} color={onImage.dim} /></View>
             <Text style={styles.emptyTitle}>No linked athletes yet</Text>
             <Text style={styles.emptySub}>Invite athletes from your Squad to see their check-ins, programs and activity here.</Text>
-            <TouchableOpacity style={styles.emptyBtn} onPress={() => { tapFeedback(); navigation.navigate('CoachRoster') }}>
+            <Tappable style={styles.emptyBtn} onPress={() => { tapFeedback(); navigation.navigate('CoachRoster') }}>
               <Text style={styles.emptyBtnText}>Go to Squad</Text>
-            </TouchableOpacity>
+            </Tappable>
           </View>
         )}
         {/* ── Assistant coach ────────────────────────────────────────

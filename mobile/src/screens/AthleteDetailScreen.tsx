@@ -9,7 +9,6 @@ import {
   View,
   Text,
   Animated,
-  TouchableOpacity,
   StyleSheet,
   RefreshControl,
 } from 'react-native'
@@ -40,6 +39,7 @@ import { newTrouble } from '../lib/loadState'
 import { growthOf } from '../lib/squads'
 import { maturityOffsetMirwald, decimalAge } from '../lib/maturation'
 import { fetchMetricsForMany } from '../lib/athleteResults'
+import { Tappable } from '../components/ui'
 
 // Helpers now live in lib/disciplineScience — see formatMark there.
 
@@ -194,9 +194,9 @@ export default function AthleteDetailScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn}>
+        <Tappable onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn} accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={22} color={onImage.ink} />
-        </TouchableOpacity>
+        </Tappable>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerName} numberOfLines={1}>{athlete.name}</Text>
           <Text style={styles.headerMeta}>
