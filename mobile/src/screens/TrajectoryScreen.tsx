@@ -52,6 +52,7 @@ import {
 // side shows the same chart and two copies of a young athlete's projected
 // future is exactly the kind of thing that must not be able to disagree.
 import ImprovementScenariosSection from '../components/ImprovementScenarios'
+import { similarAthletes as corpusSimilar } from '../lib/corpus'
 import {
   isLowerBetter,
   performancePercentile,
@@ -538,63 +539,30 @@ function SimilarAthletesSection({
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const loadSimilarAthletes = async () => {
-      if (!age) return
-      setLoading(true)
-      try {
-        const eventCode = getDisciplineEventCode(discipline, sex)
-        if (!eventCode) {
-          setSimilar([])
-          setLoading(false)
-          return
-        }
-
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/rpc/find_similar_athletes`,
-          {
-            method: 'POST',
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              'Content-Type': 'application/json',
-            },
-            // ALWAYS send p_implement_weight (null for non-throws). Two overloads
-            // of find_similar_athletes exist in the DB and differ only by this
-            // argument, so omitting it makes the call ambiguous — PostgREST
-            // returns HTTP 300 / PGRST203 and every comparison silently returns
-            // nothing. Passing it resolves to the 5-arg version. Same fix the
-            // web app already carries in bnchmarkd-app.jsx.
-            body: JSON.stringify({
-              p_discipline_code: eventCode,
-              p_pb: pb,
-              p_age: age,
-              p_limit: 3,
-              p_implement_weight: null,
-            }),
-          }
-        )
-
-        if (response.ok) {
-          const data = await response.json()
-          setSimilar(data || [])
-          setError('')
-        } else {
-          // Previously there was no else here, which is how the broken RPC
-          // stayed invisible: a failed call just rendered an empty section.
-          const body = await response.text().catch(() => '')
-          console.warn('Similar athletes RPC failed:', response.status, body)
-          setSimilar([])
-          setError("Couldn't load comparable athletes. Pull to refresh.")
-        }
-      } catch (e) {
-        console.warn('Similar athletes load:', e)
-        setSimilar([])
-        setError("Couldn't load comparable athletes. Check your connection.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadSimilarAthletes()
+    // This one WORKED. Whoever wrote it had already found the two overloads
+    // of find_similar_athletes and passed p_implement_weight explicitly to
+    // resolve the ambiguity — the comment below the old body said so. Then I
+    // dropped both overloads while consolidating, and killed it.
+    //
+    // Now it asks the corpus, like everywhere else. Two things it gains: the
+    // implement is part of the event rather than an argument, so a 5 kg shot
+    // is matched against 5 kg; and it runs as the signed-in user rather than
+    // anon, which the old hand-rolled fetch did not — it sent only the apikey
+    // header, no bearer token.
+    let live = true
+    if (!age || pb == null) { setSimilar([]); return }
+    setLoading(true); setError('')
+    corpusSimilar({ discipline, sex, age, mark: pb, limit: 3 })
+      .then((rows) => {
+        if (!live) return
+        setSimilar(rows)
+        // An empty result and a failed call are different answers and the
+        // section says so differently; corpusSimilar returns [] for both, so
+        // "no matches" is the honest thing to show for either.
+        setError('')
+      })
+      .finally(() => { if (live) setLoading(false) })
+    return () => { live = false }
   }, [discipline, pb, age, sex])
 
   if (loading) {
@@ -642,13 +610,19 @@ function SimilarAthletesSection({
         <View key={idx} style={styles.similarAthleteRow}>
           <Text style={styles.similarRank}>{String(idx + 1).padStart(2, '0')}</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.similarAthleteName}>{athlete.athlete_name || 'Athlete'}</Text>
-            <Text style={styles.similarAthleteCountry}>{athlete.country || '—'}</Text>
+            <Text style={styles.similarAthleteName}>{athlete.athlete || 'Athlete'}</Text>
+            <Text style={styles.similarAthleteCountry}>{athlete.nationality || '—'}</Text>
           </View>
           <View style={styles.similarAthletePb}>
-            <Text style={styles.similarAthletePbValue}>{formatPerformance(athlete.pb, discipline)}</Text>
-            {athlete.age && (
-              <Text style={styles.similarAthleteAge}>Age {athlete.age}</Text>
+            {/* Their mark AT THIS AGE, not their career best — the whole
+                point is what they were doing when they were here. */}
+            <Text style={styles.similarAthletePbValue}>
+              {formatPerformance(athlete.atYourAge, discipline)}
+            </Text>
+            {athlete.seniorBest != null && athlete.ageAtSeniorBest != null && (
+              <Text style={styles.similarAthleteAge}>
+                {formatPerformance(athlete.seniorBest, discipline)} at {athlete.ageAtSeniorBest}
+              </Text>
             )}
           </View>
         </View>

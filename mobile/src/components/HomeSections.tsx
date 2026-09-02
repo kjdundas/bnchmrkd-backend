@@ -331,9 +331,14 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
             {fmtMark(rival.atYourAge, higher, discipline)}
           </Text>.
         </Text>
-        <Text style={[s.rivalDiff, { color: ahead ? c.green : c.amber }]}>
-          You are {diff.toFixed(2)}{unit}{' '}
-          {ahead ? (higher ? 'beyond' : 'ahead of') : (higher ? 'short of' : 'off')} that
+        {/* "You are 0.00s off that" is not a sentence anyone learns anything
+            from. With 7,787 careers the nearest match is often exact, and the
+            interesting fact then is that you are level, not that the gap
+            rounds to zero. */}
+        <Text style={[s.rivalDiff, { color: diff < 0.01 ? c.accent[500] : ahead ? c.green : c.amber }]}>
+          {diff < 0.01
+            ? 'Level with them at that age'
+            : `You are ${diff.toFixed(2)}${unit} ${ahead ? (higher ? 'beyond' : 'ahead of') : (higher ? 'short of' : 'off')} that`}
         </Text>
       </View>
 
