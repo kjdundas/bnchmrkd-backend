@@ -70,6 +70,21 @@ Live site: https://www.bnchmrkd.org (Railway, deploys automatically from `main`)
   ramp clears AA on a photograph — `TIER_INK[4]` reaches 3.10:1 and even T7 stops at 4.88.
   The tier is carried by the word itself and by whatever the drawing fills.
 
+## Spacing: the HOST places the block, never the block itself
+
+- The screens do not agree on how to space top-level blocks. **Home and Trajectory**
+  put horizontal padding on the scroll container and space with `marginBottom`;
+  **Boards** gives each card its own `marginHorizontal: spacing.lg` and spaces with
+  `marginTop`. Both are fine; mixing them is not.
+- So a shared component **must not hardcode its own margins**. It takes
+  `style?: StyleProp<ViewStyle>` and the screen passes placement. A component that
+  decides where it sits is only correct on the screen it was written for — reused
+  elsewhere it lands flush against its neighbour (no gap at all) or full-bleed while
+  everything around it is inset. Both of those shipped.
+- Exception: a component that returns a **fragment** of sibling blocks (PhysicalProfile)
+  has no root to style. Leave it alone rather than bolting a prop onto whichever
+  element happens to be first.
+
 ## Performance tiers — calibrated, not asserted
 
 - Senior tiers T4-T7 (Qualifier, Finalist, Medalist, World Class) in

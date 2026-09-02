@@ -18,7 +18,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import React, { useEffect, useState } from 'react'
-import { View, Text } from 'react-native'
+import { View, Text , StyleProp, ViewStyle} from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { GlassPanel, MonoKicker } from './ui'
 import { onImage, onDark, radius, spacing, rhythm, typeScale, weight, numerals } from '../lib/theme'
@@ -31,9 +31,17 @@ const ORDER: { scope: Scope; label: string }[] = [
 
 export default function HomeStanding({
   discipline, onOpen,
+ style,
 }: {
   discipline: string | null
   onOpen: () => void
+  /** Placement belongs to the HOST. Screens in this app do not agree on how
+      to space top-level blocks — Home and Trajectory put horizontal padding
+      on the scroll container, Boards puts it on each card — so a component
+      that hardcodes its own margins is only correct on the screen it was
+      written for. Reused elsewhere it lands flush against its neighbour, or
+      full-bleed while everything around it is inset. Both happened. */
+  style?: StyleProp<ViewStyle>
 }) {
   const [pos, setPos] = useState<Position | null>(null)
   const [where, setWhere] = useState<string>('')
@@ -77,7 +85,7 @@ export default function HomeStanding({
       radius={radius.card}
       onPress={onOpen}
       accessibilityLabel={`You are ${ordinal(rank)} of ${field} in ${where}${discipline ? ', ' + discipline : ''}. Open the boards.`}
-      style={{ padding: 16, marginBottom: rhythm.section }}
+      style={[{ padding: 16, marginBottom: rhythm.section }, style]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <MonoKicker color={onImage.dim}>Where you stand</MonoKicker>

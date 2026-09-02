@@ -441,6 +441,7 @@ export default function LeaderboardScreen() {
             {!!distMark && (
               <Stagger index={4}>
                 <CorpusStanding
+                  style={{ marginHorizontal: spacing.lg, marginTop: 16 }}
                   discipline={key}
                   sex={myGender}
                   mark={distMark}

@@ -7,10 +7,10 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import React, { useEffect, useState } from 'react'
-import { View, Text, LayoutChangeEvent } from 'react-native'
+import { View, Text, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import { MonoKicker } from './ui'
 import DistributionCurve from './DistributionCurve'
-import { onImage, radius, rhythm, typeScale, weight } from '../lib/theme'
+import { onImage, radius, typeScale, weight } from '../lib/theme'
 import { markDistribution, type MarkDistribution } from '../lib/corpus'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -18,13 +18,21 @@ import { useTheme } from '../contexts/ThemeContext'
 const FLOOR = 120
 
 export default function CorpusStanding({
-  discipline, sex, mark, colour, valueFmt,
+  discipline, sex, mark, colour, valueFmt, style,
 }: {
   discipline: string
   sex: string | null
   mark: number
   colour: string
   valueFmt: (v: number) => string
+  /** The HOST decides placement. This component hardcoded its own margins
+      — marginBottom, and no horizontal inset at all — which is fine on Home,
+      where blocks space themselves with marginBottom, and wrong on Boards,
+      where they space themselves with marginTop and sit inside spacing.lg.
+      The result was a card flush against the one above it and wider than
+      every other card on the screen. A component that decides where it sits
+      can only be right on the screen it was written for. */
+  style?: StyleProp<ViewStyle>
 }) {
   const { colors } = useTheme()
   const [dist, setDist] = useState<MarkDistribution>(null)
@@ -49,11 +57,11 @@ export default function CorpusStanding({
   return (
     <View
       onLayout={onLayout}
-      style={{
+      style={[{
         borderRadius: radius.card, borderWidth: 1,
         borderColor: colors.glass.border, backgroundColor: colors.glass.bg,
-        padding: 18, marginBottom: rhythm.section,
-      }}
+        padding: 18,
+      }, style]}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <MonoKicker color={colors.text.muted}>The field</MonoKicker>

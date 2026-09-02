@@ -43,7 +43,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import React, { useEffect, useState } from 'react'
-import { View, Text } from 'react-native'
+import { View, Text , StyleProp, ViewStyle} from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Tappable } from './ui'
 import { onImage, onDark, radius, rhythm, typeScale, weight, numerals } from '../lib/theme'
@@ -55,6 +55,7 @@ const FLOOR = 4
 
 export default function CorpusLine({
   discipline, sex, age, mark, target, lowerBetter, valueFmt, onOpen,
+ style,
 }: {
   discipline: string | null
   sex: string | null | undefined
@@ -65,6 +66,13 @@ export default function CorpusLine({
   lowerBetter: boolean
   valueFmt: (v: number) => string
   onOpen: () => void
+  /** Placement belongs to the HOST. Screens in this app do not agree on how
+      to space top-level blocks — Home and Trajectory put horizontal padding
+      on the scroll container, Boards puts it on each card — so a component
+      that hardcodes its own margins is only correct on the screen it was
+      written for. Reused elsewhere it lands flush against its neighbour, or
+      full-bleed while everything around it is inset. Both happened. */
+  style?: StyleProp<ViewStyle>
 }) {
   const [rows, setRows] = useState<SimilarAthlete[] | null>(null)
 
@@ -117,14 +125,14 @@ export default function CorpusLine({
             : '')
         + 'Open Trajectory for the full picture.'
       }
-      style={{
+      style={[{
         flexDirection: 'row', alignItems: 'center', gap: 10,
         paddingHorizontal: 14, paddingVertical: 12,
         borderRadius: radius.card, borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.10)',
         backgroundColor: 'rgba(11,12,24,0.45)',
         marginBottom: rhythm.section,
-      }}
+      }, style]}
     >
       <Ionicons name="people-outline" size={16} color={onDark.accent} />
       <Text style={{ flex: 1, fontSize: typeScale.caption, color: onImage.muted, lineHeight: 19 }}>
