@@ -18,6 +18,7 @@ import {
   Pressable,
   ViewStyle,
   StyleProp,
+  LayoutChangeEvent,
   Dimensions,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -248,13 +249,19 @@ export function Tappable({
 // the smoked panel for blocks below the fold, where the ground is already
 // dark and the panel needs to sit ON it rather than dissolve into it.
 export function GlassPanel({
-  children, style, onPress, accessibilityLabel,
-  intensity = 26, tone = 'light', radius: r = 22,
+  children, style, onPress, accessibilityLabel, onLayout,
+  intensity = 26, tone = 'light', radius: r = radius.card,
 }: {
   children: React.ReactNode
-  style?: ViewStyle | ViewStyle[]
+  /** Same widening as Tappable: conditional entries are how every call site
+      writes state styling, and a primitive that rejects them is a primitive
+      people route around. */
+  style?: StyleProp<ViewStyle>
   onPress?: () => void
   accessibilityLabel?: string
+  /** Anything drawn in pixels inside the panel — a Skia canvas — has to be
+      told how wide the panel is. */
+  onLayout?: (e: LayoutChangeEvent) => void
   intensity?: number
   tone?: 'light' | 'deep'
   radius?: number
@@ -284,12 +291,17 @@ export function GlassPanel({
 
   if (onPress) {
     return (
-      <Tappable onPress={onPress} accessibilityLabel={accessibilityLabel} style={[shell, style as any]}>
+      <Tappable
+        onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
+        style={[shell, style as any]}
+      >
+        <View onLayout={onLayout} style={StyleSheet.absoluteFill} pointerEvents="none" />
         {body}
       </Tappable>
     )
   }
-  return <View style={[shell, style]}>{body}</View>
+  return <View style={[shell, style]} onLayout={onLayout}>{body}</View>
 }
 
 // ── Almanac Card (the standard dashboard card) ──────────────────────

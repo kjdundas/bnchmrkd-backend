@@ -362,24 +362,36 @@ export default function CheckInCard({
     return (
       <>
         <Shell {...shellProps}>
+          {/* Done work must not outrank work to do. Filled, this disc was the
+              largest and brightest object on the card — for the one thing on
+              it already finished. Once checked in it becomes a ring: still
+              legible at arm's length, no longer the first thing you see. */}
           <View style={{
-            width: 34, height: 34, borderRadius: radius.full,
+            width: done ? 26 : 34, height: done ? 26 : 34, borderRadius: radius.full,
             alignItems: 'center', justifyContent: 'center',
-            backgroundColor: done ? color + '2E' : 'rgba(255,255,255,0.14)',
-            borderWidth: 1, borderColor: done ? color + '66' : 'rgba(255,255,255,0.20)',
+            backgroundColor: done ? 'transparent' : 'rgba(255,255,255,0.14)',
+            borderWidth: done ? 1.5 : 1,
+            borderColor: done ? color + '99' : 'rgba(255,255,255,0.20)',
           }}>
             <Ionicons
               name={done ? 'checkmark' : 'pulse'}
-              size={16}
+              size={done ? 13 : 16}
               color={done ? color : onImage.ink}
             />
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink }}>
+            <Text style={{
+              fontSize: done ? typeScale.caption : typeScale.body,
+              fontWeight: done ? weight.regular : weight.medium,
+              color: done ? onImage.muted : onImage.ink,
+            }}>
               {done ? `Checked in · ${status.label}` : 'Daily check-in'}
             </Text>
-            <Text numberOfLines={1} style={{ fontSize: typeScale.caption, color: onImage.muted, marginTop: 2 }}>
+            <Text numberOfLines={1} style={{
+              fontSize: done ? typeScale.label : typeScale.caption,
+              color: done ? onImage.dim : onImage.muted, marginTop: 2,
+            }}>
               {done
                 ? (status.reasons.length ? status.reasons.join(' · ') : 'All green — have a great session.')
                 : 'Sleep, soreness, energy · 30 seconds'}
