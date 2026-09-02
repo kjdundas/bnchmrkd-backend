@@ -39,6 +39,11 @@ rebuilds the database from the repo.
     reference_season_bests_and_rpcs_v2         season_bests, the two RPCs
     reference_senior_progression_v2            senior_id, similar_athletes
     reference_trajectory_follows_implement     trajectory across implements
+    reference_backfill_from_legacy             merged the pre-existing tables
+    corpus_peak_age_and_retire_legacy          peak age; legacy tables renamed
+    public_corpus_wrappers                     the three RPCs the app calls
+    reference_one_transliteration_rule         one name-folding rule
+    (fuzzy dedupe passes, run as ad-hoc SQL)   see "Identity" below
 
 ## The two things a reader should know
 
@@ -54,9 +59,46 @@ oversized track. `season_bests` excludes both. Wind is trickier: it is
 recorded on about 60% of sprint rows, so known-illegal is excluded and
 unknown is kept. The honest phrasing is "wind-legal where known".
 
+## Identity — how one athlete stays one athlete
+
+Four passes, each catching what the one before could not see.
+
+1. **Identical result sets.** 120 groups held byte-identical results. 50
+   merged where one name's words are a subset of the other's; the rest are
+   flagged, because identical results also happen when the scraper hands one
+   career to two real people (Amy and Natasha Hastings both carry the same
+   464 rows).
+
+2. **One transliteration rule.** The ingest folded names in Python, which
+   DROPS a character it cannot decompose; the backfill folded them in
+   Postgres, which MAPS it. So Anita Włodarczyk was `anita wodarczyk` to one
+   and `anita wlodarczyk` to the other — two identity keys, one person. 25
+   duplicates and 77,182 duplicate results came out of fixing that.
+
+3. **Fuzzy, anchored on date of birth.** Same birthday, same sex, agreeing
+   nationality, and either 0.72 trigram similarity or one name's words
+   inside the other's. Catches married names, transliterations, reversed
+   order, a middle name appearing. A shared birthday alone means nothing in
+   7,705 people — Ala and Osama Zoghlami are twins who both run the
+   steeplechase for Italy — and a similar name alone catches fathers and
+   sons, so it takes both.
+
+   Nationality initially blocked six real merges by comparing "Mauritius"
+   against "MUS". Values in different formats cannot disagree, so they no
+   longer block; only two values in the same format count.
+
+4. **No date of birth at all.** 424 athletes have none, mostly from the
+   legacy tables, and null never equals null — so the passes above skipped
+   them in silence. With no birthday to anchor on the corroboration comes
+   from the results: three or more IDENTICAL performances, same event, same
+   day, same mark. Two different men do not run 10.00 in the same race.
+
+96 pairs merged in total, 7,787 athletes down to 7,705.
+
 ## Not done
 
-72 athlete pairs in `reference.athlete_review` hold identical result sets
-under unrelated names — 61 look like scrape collisions (two real athletes,
-one career between them) and 11 differ by sex. None were merged. They need
-a human before anything is built on them.
+123 pairs sit in `reference.athlete_review` and were NOT merged: scrape
+collisions where two real athletes share one career, pairs differing by sex,
+and similar names with nothing to corroborate them. Each needs a human. 38
+close pairs also remain above the 0.72 threshold — everything left is a
+judgement call rather than a rule.
