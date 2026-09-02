@@ -19,6 +19,27 @@
 //
 // It is silent below four comparable careers. A claim about "athletes like
 // you" resting on two of them is not a small claim, it is a wrong one.
+//
+// ── AND IT HAS TO KNOW HOW OLD YOU ARE ───────────────────────────────
+// The first version of this said "3 went under 10.15 by 25" to a
+// THIRTY-ONE-year-old, because it took the median age-at-best across every
+// matched career without checking that age was still ahead of the athlete.
+// Told to a 31-year-old, "by 25" is not a projection, it is a fact about the
+// past dressed as one about the future — and it is the kind of number that
+// looks plausible enough to go unread.
+//
+// So there are two modes, and the athlete's age picks them:
+//
+//   FORWARD  enough matched careers whose best came AFTER the age you are
+//            now. "N were here at 17; M went under 10.15 by 22." A real
+//            statement about what came next.
+//   PEER     everyone comparable has already had their best, which is the
+//            normal case for a masters athlete. There is no "next" to
+//            describe, so it does not invent one: it says who else was
+//            here, and how many were still racing afterwards.
+//
+// A 31-year-old is not a failed 17-year-old, and the corpus should not
+// address them as one.
 // ═══════════════════════════════════════════════════════════════════════
 
 import React, { useEffect, useState } from 'react'
@@ -56,29 +77,44 @@ export default function CorpusLine({
     return () => { cancelled = true }
   }, [discipline, sex, age, mark])
 
-  if (!rows || rows.length < FLOOR) return null
+  if (!rows || rows.length < FLOOR || age == null) return null
+
+  const median = (xs: number[]) =>
+    Math.round([...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)])
 
   // Careers that carry a senior best are the ones that can answer "and then
   // what". A junior mark with nothing after it is a career we cannot see the
   // end of, not a career that ended.
-  const withAfter = rows.filter((r) => r.seniorBest != null && r.ageAtSeniorBest != null)
-  if (withAfter.length < FLOOR) return null
+  const scored = rows.filter((r) => r.seniorBest != null && r.ageAtSeniorBest != null)
 
+  // The only careers that can describe YOUR future are the ones whose best
+  // was still ahead of them at the age you are now.
+  const ahead = scored.filter((r) => r.ageAtSeniorBest! > age + 0.5)
   const beat = target != null
-    ? withAfter.filter((r) => (lowerBetter ? r.seniorBest! < target : r.seniorBest! > target))
+    ? ahead.filter((r) => (lowerBetter ? r.seniorBest! < target : r.seniorBest! > target))
     : []
 
-  const ages = withAfter.map((r) => r.ageAtSeniorBest!).sort((a, b) => a - b)
-  const medianAge = Math.round(ages[Math.floor(ages.length / 2)])
+  const forward = ahead.length >= FLOOR && beat.length > 0 && target != null
+  if (!forward && rows.length < FLOOR) return null
+
+  const byAge = forward ? median(beat.map((r) => r.ageAtSeniorBest!)) : null
+
+  // Peer mode: no "next" to describe, so describe the company instead.
+  const stillRacing = rows.filter((r) => (r.yearsStillCompeting ?? 0) >= 2)
+  const stillYears = stillRacing.length
+    ? median(stillRacing.map((r) => r.yearsStillCompeting!))
+    : null
 
   return (
     <Tappable
       onPress={() => { tapFeedback(); onOpen() }}
       accessibilityLabel={
-        `${withAfter.length} athletes in the database were at your mark at your age. `
-        + (target != null
-          ? `${beat.length} of them later went ${lowerBetter ? 'under' : 'over'} ${valueFmt(target)}. `
-          : '')
+        `${forward ? ahead.length : rows.length} athletes in the database were at your mark at your age. `
+        + (forward
+          ? `${beat.length} of them later went ${lowerBetter ? 'under' : 'over'} ${valueFmt(target as number)}. `
+          : stillYears != null
+            ? `${stillRacing.length} were still racing ${stillYears} years later. `
+            : '')
         + 'Open Trajectory for the full picture.'
       }
       style={{
@@ -93,21 +129,27 @@ export default function CorpusLine({
       <Ionicons name="people-outline" size={16} color={onDark.accent} />
       <Text style={{ flex: 1, fontSize: typeScale.caption, color: onImage.muted, lineHeight: 19 }}>
         <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>
-          {withAfter.length}
+          {forward ? ahead.length : rows.length}
         </Text>
         {' athletes were at your mark at '}
-        <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>{Math.floor(age!)}</Text>
-        {target != null && beat.length > 0 ? (
+        <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>{Math.floor(age)}</Text>
+        {forward ? (
           <>
             {'. '}
             <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>{beat.length}</Text>
             {` went ${lowerBetter ? 'under' : 'over'} `}
-            <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>{valueFmt(target)}</Text>
-            {` by ${medianAge}.`}
+            <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>
+              {valueFmt(target as number)}
+            </Text>
+            {` by ${byAge}.`}
           </>
-        ) : (
-          <>{`. Their best came at ${medianAge}, on average.`}</>
-        )}
+        ) : stillYears != null ? (
+          <>
+            {'. '}
+            <Text style={{ color: onImage.ink, fontWeight: weight.bold, ...numerals }}>{stillRacing.length}</Text>
+            {` were still racing ${stillYears} years later.`}
+          </>
+        ) : <>{'.'}</>}
       </Text>
       <Ionicons name="chevron-forward" size={15} color={onImage.dim} />
     </Tappable>
