@@ -163,6 +163,36 @@ export function countsForAnalysis(row: any, discipline?: string | null): boolean
 }
 
 /**
+ * Split a discipline's rows into what the maths may use and what is still
+ * waiting on a coach.
+ *
+ * This exists because the two were being counted separately. Trajectory read
+ * `marks.length` for "1 race" and `Math.min(...counted)` for the PB — and with
+ * the only race pending, `Math.min()` of nothing is `Infinity`, which is what
+ * the athlete was shown. Home did the same thing one level up: no countable
+ * race meant a null PB, which fell through to a physical-metric fallback and
+ * printed a 47cm jump as a 47.00-second 200m.
+ *
+ * A screen that takes both halves from here cannot make either mistake, and
+ * it gets the thing it actually needs to say — that the result is not lost,
+ * it is awaiting approval.
+ */
+export function partitionResults(
+  rows: any[],
+  discipline?: string | null,
+): { counted: any[]; awaiting: any[] } {
+  const counted: any[] = []
+  const awaiting: any[] = []
+  for (const r of rows || []) {
+    if (countsForAnalysis(r, discipline)) counted.push(r)
+    // Only a real, finished mark can be "awaiting" — a pending DNF is still
+    // a DNF, and promising the athlete a PB once it clears would be a lie.
+    else if (isPending(r) && isCompleted(r?.status) && num(r?.mark) != null) awaiting.push(r)
+  }
+  return { counted, awaiting }
+}
+
+/**
  * Approval states, shared by programs, calendar events and results.
  * One vocabulary in both directions — an athlete accepting a coach's program
  * and a coach approving an athlete's result are the same act, so they get the

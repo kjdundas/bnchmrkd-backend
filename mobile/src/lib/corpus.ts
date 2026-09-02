@@ -6,7 +6,7 @@
 // celebrity, several events had no women's pool at all and silently fell
 // back to the men's, and five events returned nothing.
 //
-// What it replaces it with: 6,892 real careers with a date of birth and a
+// What it replaces it with: CORPUS_CAREERS real careers with a date of birth and a
 // decimal age on every mark, so the question becomes "who was actually
 // where you are, at your age, in your event" — and, because these are
 // whole careers rather than snapshots, "and what happened to them next".
@@ -28,7 +28,28 @@
 // person reading it. Boccia tracked 5,981 jumpers: of those in the world
 // top 50 at sixteen, 8% of men and 16% of women ever made the senior top
 // 50. `disclaimer` below exists so no screen has to remember that.
+
+
 // ═══════════════════════════════════════════════════════════════════════
+
+// ── The size of the thing, in one place ────────────────────────────────
+// Every screen that cites the corpus was citing a different number, and all
+// of them were stale: "10,423 Olympic-pipeline careers" on the coach's
+// Projected Career Paths (shown to users), "6,892 careers" in three source
+// comments, "1,084,255 results" in a fourth. The corpus has been re-ingested
+// since; on 2 Sep 2026 it held 7,215 careers carrying a date of birth, out of
+// 7,705 athletes and 1,207,608 results.
+//
+// A figure quoted to a user is a claim, so it gets one definition and a date.
+// Re-measure with:
+//   select count(distinct r.athlete_id) from reference.results r
+//     join reference.athletes a on a.id = r.athlete_id where a.dob is not null;
+export const CORPUS_CAREERS = 7215
+export const CORPUS_RESULTS = 1207608
+export const CORPUS_MEASURED = '2 Sep 2026'
+
+/** "7,215" — the corpus size, ready to drop into a sentence. */
+export const corpusCareers = () => CORPUS_CAREERS.toLocaleString('en-GB')
 
 import { callRpc } from './supabase'
 

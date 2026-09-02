@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT HAPPENED TO THE OTHERS — the corpus, on Home, for the first time.
 //
-// 1,084,255 results. 6,892 careers with a date of birth on every mark, so
+// 1.2 million results. See CORPUS_CAREERS in lib/corpus.ts for the count of
 // every performance has a decimal age attached. Until now the home screen —
 // the one every athlete opens every day — used none of it.
 //

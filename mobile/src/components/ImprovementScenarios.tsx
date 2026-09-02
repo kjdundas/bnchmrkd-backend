@@ -56,7 +56,7 @@ export default function ImprovementScenariosSection({
   // with a decay factor once the table runs out. That was the best available
   // when the only data was 38 hard-coded curves.
   //
-  // The corpus can answer the question directly instead: of 6,892 real
+  // The corpus can answer the question directly instead: of every real
   // careers, find the athletes who were within 4% of this mark at this age,
   // and report what they ACTUALLY ran at every later age. No compounding, no
   // extrapolation, no decay constant — and a sample size at every point,

@@ -59,13 +59,13 @@ import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { PerformanceHero, type HomeView, type TierBand } from '../components/OuraSections'
 import { LOWER_IS_BETTER, formatMark } from '../lib/metricSemantics'
 import { isLowerBetter } from '../lib/disciplineScience'
-import { countsForAnalysis } from '../lib/resultSemantics'
+import { partitionResults } from '../lib/resultSemantics'
 import TodayCard from '../components/TodayCard'
 import HomeStanding from '../components/HomeStanding'
 import CorpusLine from '../components/CorpusLine'
 import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
 import { fetchEvents } from '../lib/events'
-import ApprovalInbox, { ApprovalBanner } from '../components/ApprovalInbox'
+import ApprovalInbox, { ApprovalBanner, AwaitingApproval } from '../components/ApprovalInbox'
 import GetStartedCard from '../components/GetStartedCard'
 import EventPickerSheet from '../components/EventPickerSheet'
 import { athleteSteps } from '../lib/firstRun'
@@ -90,23 +90,34 @@ import {
 
 
 // ── Bridge: physical metric keys → competition disciplines ───────────
-// Maps metric_key from athlete_metrics to a discipline string that
-// disciplineScience.js / historicalRivals.js understand.
+// ONLY where the metric IS the event, measured the same way.
+//
+// This map used to bridge nine keys. It sent `cmj_height` and `sj_height` to
+// High Jump, `broad_jump` to Long Jump, `flying_20m` to 200m, `split_300m` to
+// 400m, and every sprint split from 10m upwards to the 100m. None of those
+// are the same measurement as the event they claimed:
+//
+//   · a countermovement jump is a rig reading in CENTIMETRES; a high jump is
+//     a bar height in metres. Keenan's cmj_height of 47 was picked up here,
+//     handed to a hero anchored on a 200m tier band, and rendered as
+//     "47.00s · New personal best".
+//   · a standing broad jump is not a long jump.
+//   · a 20m flying time is not a 200m; a 300m split is not a 400m; a 10m
+//     acceleration time is not a 100m. Each would be read against tier cuts
+//     built from race results, so the athlete is told a gym number is a race.
+//
+// What survives is the pair where the metric and the event are literally the
+// same performance, timed the same way. Everything else belongs on the
+// physical profile, which is where it already lives.
 const METRIC_TO_DISCIPLINE: Record<string, string> = {
-  sprint_10m: '100m',   sprint_20m: '100m',   sprint_30m: '100m',
-  sprint_40m: '100m',   sprint_60m: '100m',   sprint_100m: '100m',
-  flying_10m: '100m',   flying_20m: '200m',   split_300m: '400m',
-  broad_jump: 'Long Jump',
-  cmj_height: 'High Jump', sj_height: 'High Jump',
+  sprint_60m: '60m',
+  sprint_100m: '100m',
 }
 
 // Priority order: which metric key is most representative for a discipline
 const DISCIPLINE_METRIC_PRIORITY: Record<string, string[]> = {
-  '100m': ['sprint_100m', 'sprint_60m', 'sprint_40m', 'sprint_30m', 'sprint_20m', 'sprint_10m'],
-  '200m': ['flying_20m'],
-  '400m': ['split_300m'],
-  'Long Jump': ['broad_jump'],
-  'High Jump': ['cmj_height'],
+  '60m': ['sprint_60m'],
+  '100m': ['sprint_100m'],
 }
 
 /**
@@ -408,21 +419,32 @@ export default function HomeScreen() {
   // CRITICAL: filter to the active discipline. Without this a 60m result and a
   // 100m result land on the same trend line and gauge, which makes a 60m PB
   // look like a 3-second improvement on a 100m.
-  const perfRaces = useMemo(() => {
+  // A DNF, a DQ'd time, a wind-assisted mark and a result still waiting on the
+  // coach all reach this screen, and none of them may set the PB the gauge is
+  // anchored on or bend the trend line. Number.isFinite catches none of them.
+  //
+  // The pending ones come back separately rather than being dropped, because
+  // "we are not counting this yet" is something the athlete needs told. When
+  // they were merely dropped, Home had a discipline with no countable race,
+  // fell through to the physical-metric fallback below, and printed a 47cm
+  // countermovement jump as a 47.00-second 200m.
+  const { counted: perfCounted, awaiting: perfAwaiting } = useMemo(() => {
     const want = (perfDiscipline || '').trim().toLowerCase()
-    return performances
-      .filter((p: any) => !want || (p.discipline || '').trim().toLowerCase() === want)
-      // A DNF, a DQ'd time and a wind-assisted mark all reach this screen and
-      // none of them may set the PB the gauge is anchored on or bend the
-      // trend line. Number.isFinite alone does not catch the last two.
-      .filter((p: any) => countsForAnalysis(p, p.discipline))
+    const forDiscipline = performances.filter(
+      (p: any) => !want || (p.discipline || '').trim().toLowerCase() === want,
+    )
+    return partitionResults(forDiscipline, perfDiscipline)
+  }, [performances, perfDiscipline])
+
+  const perfRaces = useMemo(() =>
+    perfCounted
       .map((p: any) => ({
         value: parseFloat(p.mark),
         date: p.competition_date || p.created_at,
         competition: p.competition_name || null,
       }))
-      .filter((r) => Number.isFinite(r.value))
-  }, [performances, perfDiscipline])
+      .filter((r) => Number.isFinite(r.value)),
+  [perfCounted])
 
   const sex = profile?.sex || 'M'
   const age = ageFromDob(profile?.dob)
@@ -443,10 +465,19 @@ export default function HomeScreen() {
     [metrics]
   )
 
-  // Use competition data if available, otherwise use metric-derived data
-  const discipline = perfDiscipline || metricDerived.discipline
-  const competitionPb = perfPb ?? metricDerived.pb
-  const races = perfRaces.length > 0 ? perfRaces : metricDerived.races
+  // Use competition data if available, otherwise use metric-derived data.
+  //
+  // ALL OR NOTHING. These three were resolved independently, so an athlete
+  // with a 200m result that had not been approved yet got the discipline from
+  // the performances table and the PB from a physical metric — `cmj_height`
+  // 47, a jump height in centimetres, bridged to High Jump — and the hero read
+  // "47.00s · New personal best" against a 200m tier band. The fallback is a
+  // substitute for having no competition history at all, not a source of
+  // numbers to mix into one that exists.
+  const useMetricBridge = perfDiscipline == null
+  const discipline = perfDiscipline || (useMetricBridge ? metricDerived.discipline : null)
+  const competitionPb = useMetricBridge ? metricDerived.pb : perfPb
+  const races = useMetricBridge ? metricDerived.races : perfRaces
 
   // Shape the race data the way the Oura sections expect. `chartData` is
   // chronological (oldest → newest) for the trend line; `sortedDesc` is
@@ -617,13 +648,30 @@ export default function HomeScreen() {
               style={styles.heroEmpty}
             >
               <Text style={styles.heroEmptyMark}>—</Text>
-              <Text style={styles.heroEmptyTitle}>No result yet</Text>
+              <Text style={styles.heroEmptyTitle}>
+                {perfAwaiting.length > 0 ? 'Waiting on your coach' : 'No result yet'}
+              </Text>
               <Text style={styles.heroEmptyBody}>
-                Log a race or a test and this becomes your mark.
+                {perfAwaiting.length > 0
+                  ? 'Your result is logged. It becomes your mark once your coach approves it.'
+                  : 'Log a race or a test and this becomes your mark.'}
               </Text>
             </Tappable>
           )}
         </Stagger>
+
+        {/* Whether or not there is a mark above. An athlete with an approved
+            history AND a newer pending result sees a hero that is correct and
+            a line explaining why it has not moved. */}
+        <AwaitingApproval
+          count={perfAwaiting.length}
+          mark={
+            perfAwaiting.length === 1
+              ? formatMark(parseFloat(perfAwaiting[0].mark), perfDiscipline)
+              : null
+          }
+          onImage
+        />
 
         {/* The corpus, on Home for the first time. A tier arc is something
             any app can draw; what happened to the other people who were

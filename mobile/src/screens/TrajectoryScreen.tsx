@@ -63,7 +63,7 @@ import {
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, buildMatrix, AGE_GROUPS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob, ageExact } from '../lib/age'
-import { countsForAnalysis } from '../lib/resultSemantics'
+import { countsForAnalysis, partitionResults } from '../lib/resultSemantics'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -181,21 +181,26 @@ function DisciplinePicker({
     }
 
     return Object.entries(grouped).map(([discipline, marks]) => {
-      const values = marks
-        .filter((m: any) => countsForAnalysis(m, discipline))
+      // Both halves from one split. The card used to count `marks.length` but
+      // take its PB from the countable subset, so an athlete whose only race
+      // was awaiting approval was shown "1 race" and a PB of `Infinity` —
+      // `Math.min()` of an empty list — sitting under "BELOW EMERGING".
+      const { counted, awaiting } = partitionResults(marks, discipline)
+      const values = counted
         .map((m: any) => parseFloat(m.mark))
         .filter(Number.isFinite)
       const lower = isLowerBetter(discipline)
-      const pb = lower ? Math.min(...values) : Math.max(...values)
+      const pb = values.length ? (lower ? Math.min(...values) : Math.max(...values)) : null
       const age = ageFromDob(profile?.dob)
       const ageGroup = age ? getAgeGroup(age) : 'Senior'
       const sex = (profile?.sex || 'M') as string
-      const tier = getTier(discipline, sex, ageGroup, pb)
+      const tier = pb == null ? null : getTier(discipline, sex, ageGroup, pb)
 
       return {
         discipline,
         pb,
-        count: marks.length,
+        count: values.length,
+        awaiting: awaiting.length,
         tier,
         age,
         ageGroup,
@@ -243,14 +248,20 @@ function DisciplinePicker({
           <AlmanacCard glass
             kicker={stat.ageGroup}
             title={stat.discipline}
-            number={`${stat.count} race${stat.count !== 1 ? 's' : ''}`}
+            number={
+              stat.count > 0
+                ? `${stat.count} race${stat.count !== 1 ? 's' : ''}`
+                : `${stat.awaiting} pending`
+            }
             accent={stat.tier?.color || colors.orange[500]}
           >
             <View style={styles.disciplineCardContent}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.pbLabel}>Personal best</Text>
+                <Text style={styles.pbLabel}>
+                  {stat.pb == null ? 'No approved result yet' : 'Personal best'}
+                </Text>
                 <Text style={styles.pbValue}>
-                  {formatPerformance(stat.pb, stat.discipline)}
+                  {stat.pb == null ? '—' : formatPerformance(stat.pb, stat.discipline)}
                 </Text>
                 {/* Tier as a coloured word under a hairline, not a pill.
                     The pill also computed `undefined + '20'` for an unrated
@@ -263,7 +274,8 @@ function DisciplinePicker({
                   styles.tierLabel,
                   { color: stat.tier?.color || colors.text.muted },
                 ]}>
-                  {stat.tier?.tierName || 'Unrated'}
+                  {stat.tier?.tierName
+                    || (stat.awaiting > 0 ? 'Awaiting coach approval' : 'Unrated')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.text.dimmed} />

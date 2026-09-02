@@ -11,14 +11,20 @@ export const TIER_COUNT_JUNIOR = 6;
 export const TIER_COUNT_SENIOR = 7;
 
 /** @type {Record<number, string>} */
+// Senior percentiles are of public.season_bests, ages 20-32 — World Athletics
+// listed seniors, not the general population. T2 is the 70th percentile OF
+// THAT, which is a good club athlete, and the name should be read that way.
+// T1 alone is off this distribution: it is a development standard from
+// Keenan's spreadsheet, kept because season_bests holds no club athletes to
+// place an entry rung against.
 export const TIER_NAMES = {
-  1: 'Emerging',      // Entry — age-group ~25th percentile
-  2: 'Developing',    // Solid age-group competitor — ~60th percentile
-  3: 'National',      // Top of domestic pool — country top-50 median
-  4: 'Qualifier',     // Olympic / World qualifier median (made the start line)
-  5: 'Finalist',      // Olympic finalist median (positions 4–8)
-  6: 'Medalist',      // Olympic medalist median (top 3)
-  7: 'World Class',   // Senior only — world-record-adjacent
+  1: 'Emerging',      // Entry — award standard, and the join with the U20 ladder
+  2: 'Developing',    // p70 of senior season bests
+  3: 'National',      // p40 — top of the domestic pool
+  4: 'Qualifier',     // p10 — Olympic / World qualifier median (made the start line)
+  5: 'Finalist',      // p5  — Olympic finalist median (positions 4–8)
+  6: 'Medalist',      // p1  — Olympic medalist median (top 3)
+  7: 'World Class',   // p0.2, Senior only — world-record-adjacent
 };
 
 /** @type {Record<number, string>} */

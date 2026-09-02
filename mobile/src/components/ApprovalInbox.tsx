@@ -64,6 +64,63 @@ export function ApprovalBanner({
   )
 }
 
+// ── The other direction: waiting on THEM ───────────────────────────────
+// ApprovalBanner above is "something needs your answer". This is its mirror:
+// you have logged something and it is sitting with your coach.
+//
+// It exists because the silence was worse than the wait. A pending result is
+// correctly excluded from every PB, tier and projection on the athlete side —
+// that is `countsForAnalysis` doing its job — but nothing said so, so the
+// screens simply behaved as though the race had not happened. Trajectory
+// showed a personal best of `Infinity`; Home fell through to a physical
+// metric and called a 47cm jump a 47.00-second 200m. The athlete's own
+// reading was that the app had lost their race.
+//
+// So: say it. Quietly, and without a button, because there is nothing for
+// them to do but wait.
+export function AwaitingApproval({
+  count, mark, onImage: over,
+}: {
+  count: number
+  /** The mark itself, already formatted. Shown when there is exactly one. */
+  mark?: string | null
+  onImage?: boolean
+}) {
+  const { colors } = useTheme()
+  if (count < 1) return null
+  const ink = over ? onImage.ink : colors.text.primary
+  const muted = over ? onImage.muted : colors.text.secondary
+  return (
+    <View
+      accessibilityRole="text"
+      accessibilityLabel={
+        count === 1
+          ? `Your result${mark ? ` of ${mark}` : ''} is awaiting approval from your coach`
+          : `${count} results are awaiting approval from your coach`
+      }
+      style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        paddingHorizontal: 14, paddingVertical: 11, marginTop: spacing.md,
+        borderRadius: radius.card, borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.10)',
+        backgroundColor: 'rgba(255,255,255,0.06)',
+      }}
+    >
+      <Ionicons name="time-outline" size={16} color={muted} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: ink, fontSize: typeScale.caption, fontWeight: weight.medium }}>
+          {count === 1
+            ? `${mark ? mark + ' is' : 'Your result is'} awaiting approval from your coach`
+            : `${count} results are awaiting approval from your coach`}
+        </Text>
+        <Text style={{ color: muted, fontSize: typeScale.label, marginTop: 2 }}>
+          {count === 1 ? 'It counts towards your' : 'They count towards your'} best and your tier once approved.
+        </Text>
+      </View>
+    </View>
+  )
+}
+
 // ── The sheet ──────────────────────────────────────────────────────────
 export default function ApprovalInbox({
   visible, userId, onClose, onChanged,

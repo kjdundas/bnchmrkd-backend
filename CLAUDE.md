@@ -94,15 +94,54 @@ Live site: https://www.bnchmrkd.org (Railway, deploys automatically from `main`)
   `disciplines.lower_better`. That mapping was fitted against four independent ground
   truths in the 100m — Olympic final medians from `public.olympic_results` and the
   published Paris-2024 entry standards — and lands inside five hundredths on all four.
-- **T1-T3 (Emerging, Developing, National) are NOT from the corpus and must not be.**
-  The corpus is elite-only: its slowest 1% of senior men's 100m is 11.45, faster than
-  the app's Emerging cut. There are no club athletes in it. Those three rungs are
-  development standards from Keenan's spreadsheet.
+- **T2 and T3 are on the same ladder** — `T3 = p40`, `T2 = p70` of the same
+  distribution. They were NOT, and the gap that left was the bug Keenan reported as
+  "issues with the 200m thresholds". Recalibrating only T4-T7 left every Senior row
+  with a canyon at the same rung: measured against career bests, the men's 200m ran
+  T1 99.3% → T2 97.7% → T3 95.9% → **T4 17.5%** — three tiers across the top 4% of
+  the field and one rung across 78% of it. A 20.75 sat 1.83s clear of the tier below
+  and 0.50 short of the one above.
+- **T1 (Emerging) is NOT from the corpus and must not be.** `season_bests` is
+  elite-only: its slowest 1% of senior men's 100m is 11.31, faster than the app's
+  Emerging cut. There are no club athletes in it. T1 is a development standard from
+  Keenan's spreadsheet and the join with the top of the U20 ladder. **The T1→T2 step
+  is therefore still large and is a product question, not a bug** — in the marathon
+  it runs 3:30:00 → 2:16:34.
+- 3000m M/F are the only rows off this basis: `season_bests` holds no plain 3000m,
+  only the steeplechase, so those two are derived the same way from
+  `reference.results` career bests.
 - Junior rows (U13-U20) are untouched for the same reason — the corpus holds 22 U13
-  athletes and 377 U15s, all of them internationals.
+  athletes and 377 U15s, all of them internationals. **This means a U20 T6 and a
+  Senior T6 do not mean the same thing** (22.18 vs 19.77 in the 200m). The matrix
+  shows both; whether that reads as age-graded or as inconsistent is unresolved.
+- **Corpus figures quoted to a user come from `CORPUS_CAREERS` in `lib/corpus.ts`.**
+  Four files each stated a different, stale number; the coach's Projected Career Paths
+  said "10,423 Olympic-pipeline careers" when the corpus held 7,215 — 44% high.
 - `node mobile/scripts/checks/ttiers.js` fails on a repeated cut, a row that does not
-  rise in difficulty, or a tier named after an Olympic standard drifting more than a
-  tenth from the measured one. Run it after any change to the levels table.
+  rise in difficulty, a tier named after an Olympic standard drifting more than a
+  tenth from the measured one, a Senior row that does not run one way, or a calibrated
+  rung that spans more than a third of the field. Run it after any change to the
+  levels table.
+
+
+## A result awaiting approval
+
+- `countsForAnalysis` in `lib/resultSemantics.ts` excludes pending results from every
+  PB, tier, trend and projection. That is correct and stays. What was missing was
+  anything that **said so**, so screens fell through to whatever their arithmetic
+  produced on an empty list: Trajectory showed `PB Infinity` (`Math.min()` of nothing,
+  which is below every tier cut, hence also "BELOW EMERGING"), and Home printed
+  "47.00s · New personal best" — a 47cm countermovement jump, picked up by a metric
+  bridge and rendered as a 200m time.
+- **Take the countable set and the pending set from `partitionResults`, together.**
+  Counting rows with one expression and taking the PB from another is what produced
+  both numbers. `AwaitingApproval` in `components/ApprovalInbox.tsx` is the thing that
+  says it out loud.
+- **`METRIC_TO_DISCIPLINE` only bridges a metric that IS the event, timed the same
+  way** — `sprint_60m` → 60m, `sprint_100m` → 100m, and nothing else. It used to send
+  `cmj_height` to High Jump, `broad_jump` to Long Jump, `flying_20m` to 200m and every
+  sprint split to the 100m, so a gym reading was read against race tier cuts.
+- `node mobile/scripts/checks/tapproval.js` covers all of the above.
 
 ## Chart rules (Keenan's standing preferences)
 

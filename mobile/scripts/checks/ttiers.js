@@ -150,6 +150,87 @@ for (const t of TRUTH) {
 
 
 // ── 6. Two ramps, and each one legible where it is used ──────────────
+// ── The ladder covers the field ──────────────────────────────────────
+// T4-T7 were recalibrated from public.season_bests (World Athletics season
+// bests, ages 20-32) — Qualifier = p10, Finalist = p5, Medalist = p1, World
+// Class = p0.2. T1-T3 were left as the old award-standard ladder. Nobody
+// checked whether the two halves met. They did not.
+//
+// Measured 2 Sep 2026 against reference.results — career bests, outdoor,
+// status OK, one row per athlete — the men's 200m ladder (n=1070) read:
+//
+//     T1 23.78 → 99.3% of careers at or better
+//     T2 22.98 → 97.7          three rungs across the top 4%
+//     T3 22.58 → 95.9
+//     T4 20.25 → 17.5          ← ONE rung across 78% of the field
+//     T5 20.07 →  9.5
+//     T6 19.77 →  2.5
+//     T7 19.48 →  0.5
+//
+// All forty Senior rows had that shape, at the same rung. An athlete inside
+// the step could not move: Keenan's 20.75 sat 1.83s clear of the tier below
+// and 0.50 short of the one above, and the app called it "National".
+//
+// The fix continues the EXISTING percentile ladder downward in the SAME
+// distribution rather than inventing a second one — T3 = p40 and T2 = p70 of
+// season_bests, ages 20-32, direction from lower_better. T1 is untouched: it
+// is an entry standard from Keenan's spreadsheet and the join with the U20
+// ladder, and season_bests has no club athletes to place it against (its
+// slowest 1% of senior men's 100m is 11.31, already faster than T1's 11.68).
+//
+// So the T1→T2 step is the one remaining discontinuity, and it is a product
+// question rather than a bug: in the marathon it runs 3:30:00 to 2:16:34.
+//
+// 3000m M/F are the two rows not on this basis. season_bests holds no plain
+// 3000m — only the steeplechase — so those two keep cuts derived the same way
+// from reference.results career bests.
+//
+// This check is a snapshot and says so. It cannot reach the database, so it
+// pins the two events that also have independent ground truth above. If the
+// data moves these, re-run the measurement and update the numbers — do not
+// widen the tolerance.
+{
+  const { PERFORMANCE_LEVELS } = load('performanceLevels')
+  const SENIOR_IDX = [0, 2, 4, 7, 9, 10, 11]
+  const cutsFor = (key) => SENIOR_IDX.map((i) => PERFORMANCE_LEVELS[key].Senior[i])
+
+  // [cut, percentile of season_bests 20-32 it was taken at]. T1 is not from
+  // this distribution, so it carries null.
+  const PINNED = {
+    '200m_M': [[23.78, null], [21.20, 70], [20.71, 40], [20.25, 10], [20.07, 5], [19.77, 1], [19.48, 0.2]],
+    '100m_M': [[11.68, null], [10.48, 70], [10.22, 40], [10.03, 10], [9.97, 5], [9.84, 1], [9.76, 0.2]],
+  }
+  for (const [key, expect] of Object.entries(PINNED)) {
+    const got = cutsFor(key)
+    const wrong = expect
+      .map(([v], i) => (Math.abs(got[i] - v) > 0.005 ? `       T${i + 1}: table ${got[i]}, measured ${v}` : null))
+      .filter(Boolean)
+    check(`${key} sits where season_bests was measured`, wrong.length === 0, wrong.join('\n'))
+
+    // The point of the whole exercise: no rung inside the calibrated range
+    // may swallow the field. T1 is excluded — it is off this distribution.
+    const p = expect.map(([, q]) => q).filter((q) => q != null)
+    const worst = Math.max(...p.slice(1).map((q, i) => p[i] - q))
+    check(`no calibrated ${key} rung spans more than a third of the field`, worst <= 33.4,
+      `       widest rung covers ${worst.toFixed(1)}% of season bests` +
+      `\n       (before this fix the men's 200m T3→T4 rung covered 78.4% of careers)`)
+  }
+
+  // Universal, and true of any ladder: it runs one way. The whole array, not
+  // just the rungs the tiers read — L2, L4, L6 and L7 are unused by
+  // deriveTiers, and precisely because nothing reads them they are where an
+  // edit leaves values pointing backwards.
+  const nonMono = []
+  for (const [key, groups] of Object.entries(PERFORMANCE_LEVELS)) {
+    const row = groups.Senior
+    if (!row || row.some((v) => v == null)) continue
+    const up = row.every((v, i) => i === 0 || v > row[i - 1])
+    const down = row.every((v, i) => i === 0 || v < row[i - 1])
+    if (!up && !down) nonMono.push(`       ${key}`)
+  }
+  check('every Senior ladder runs one way', nonMono.length === 0, nonMono.join('\n'))
+}
+
 // TIER_COLORS is a FILL ramp: intensity carries tier on a dark surface.
 // It was also being used as a TEXT colour, and over the stadium backdrop
 // "QUALIFIER" in TIER_COLORS[4] measured 1.00:1 — glyph and ground both at

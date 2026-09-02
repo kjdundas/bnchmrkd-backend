@@ -274,7 +274,7 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
   // whichever Olympian happened to be nearest. Several events had no
   // women's pool and fell back to the men's; five events returned nothing.
   //
-  // Now it asks the corpus: of 6,892 real careers, who was actually at your
+  // Now it asks the corpus: of every real career in it, who was actually at your
   // mark at your age, in your event and on your implement. And because
   // these are whole careers rather than a single famous moment, it can also
   // say what happened to them afterwards — which is the part a fifteen-

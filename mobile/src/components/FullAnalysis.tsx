@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { SUPABASE_URL, SUPABASE_ANON_KEY, getCachedToken } from '../lib/supabase'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, TIER_COUNT_SENIOR, buildMatrix, deriveTiers, AGE_GROUPS , TIER_INK} from '../lib/performanceTiers'
-import { getAgeGroup, isTimeDiscipline, PERFORMANCE_LEVELS } from '../lib/performanceLevels'
+import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
 import {
   isLowerBetter,
   performancePercentile,
@@ -32,6 +32,7 @@ import { projectAllTrajectories } from '../lib/improvementCurves'
 import {
   similarAthletes as fetchSimilarAthletes,
   peakAge as fetchPeakAge,
+  corpusCareers,
   type PeakAge, type SimilarAthlete,
 } from '../lib/corpus'
 
@@ -593,7 +594,7 @@ export default function FullAnalysis({
             <Text style={s.sectionTitle}>Projected Career Paths</Text>
           </View>
           <Text style={s.sectionDesc}>
-            Based on 10,423 Olympic-pipeline careers. Three trajectory types with median improvement rates.
+            Based on {corpusCareers()} Olympic-pipeline careers. Three trajectory types with median improvement rates.
           </Text>
 
           {['early', 'steady', 'late'].map(type => {
