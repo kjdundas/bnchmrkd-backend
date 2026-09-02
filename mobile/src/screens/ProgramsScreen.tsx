@@ -30,7 +30,7 @@ import { metricForExercise } from '../lib/exerciseMetrics'
 import { API_BASE } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm, onImage, typeScale, weight } from '../lib/theme'
+import { spacing, radius, rhythm, onImage, typeScale, weight, lift } from '../lib/theme'
 import { tapFeedback, errorFeedback } from '../lib/haptics'
 import { DURATION, EASE, useReducedMotion } from '../lib/motion'
 import { EmptyState, MonoKicker, Tappable, GlassPanel, SectionLabel } from '../components/ui'
@@ -47,7 +47,7 @@ import {
 } from '../lib/sessionTypes'
 import {
   buildWeek, buildMonth, shiftMonth, mondayOf, todayDay, addDays, weekdayOf,
-  resolveSessionDays, trainingDaysOf, WEEKDAY_SHORT,
+  resolveSessionDays, trainingDaysOf, WEEKDAY_SHORT, weekLabel,
 } from '../lib/schedule'
 import MonthView from '../components/MonthView'
 import AddEventSheet from '../components/AddEventSheet'
@@ -1240,19 +1240,29 @@ function ProgramsBody() {
         )}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.accent[500]} />}
       >
-        {/* The title block is laid straight on the photograph — no card. The
-            image is doing the work a header card used to do. */}
+        {/* The title sits straight on the photograph, so it has to carry its
+            own darkness — measured over the gym shot it scored 1.04:1, the
+            same colour as the wall behind it.
+
+            It was also two hard-wrapped lines starting at spacing.sm, which
+            put "Your" under a translucent header the moment the screen
+            scrolled a pixel. One line, and it clears the header. */}
         <View style={{
-          flexDirection: 'row', alignItems: 'flex-end',
+          flexDirection: 'row', alignItems: 'center',
           justifyContent: 'space-between', gap: 12,
-          marginTop: spacing.sm, marginBottom: rhythm.block,
+          marginTop: spacing.md, marginBottom: rhythm.section,
         }}>
           <View style={{ flex: 1 }}>
-            <Text style={{
+            <Text numberOfLines={1} style={{
               fontSize: typeScale.hero, fontWeight: weight.bold, letterSpacing: -0.9,
-              color: onImage.ink,
+              color: onImage.ink, ...lift,
             }}>
-              Your{'\n'}Schedule
+              Schedule
+            </Text>
+            <Text style={{
+              fontSize: typeScale.caption, color: onImage.muted, marginTop: 2, ...lift,
+            }}>
+              {weekLabel(weekStart)}
             </Text>
           </View>
           {!showForm && (
@@ -1317,13 +1327,17 @@ function ProgramsBody() {
             />
           )}
 
-          <View style={{
-            height: 1, backgroundColor: colors.glass.divider,
-            marginVertical: spacing.lg, marginHorizontal: -18,
-          }} />
+        </GlassPanel>
 
+        {/* ── TODAY ────────────────────────────────────────────────
+            Its own card, not the bottom half of the week's. The week is
+            reference; today is the thing you act on, and one panel holding
+            a toggle, a strip, a block banner, a counter and a session list
+            is not a card — it is the screen with a border drawn round it. */}
+        <GlassPanel tone="deep" intensity={24} radius={radius.card} style={{ padding: 18, marginBottom: rhythm.block }}>
           {day && (
             <DaySchedule
+              showProgram={programs.length > 1}
               day={day}
               onToggleSession={toggleSession}
               busyKey={busyKey}

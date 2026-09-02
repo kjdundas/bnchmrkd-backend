@@ -294,6 +294,22 @@ export const onDark = {
   glow: 'rgba(139,131,255,0.30)',
 } as const
 
+// ── Text over a photograph ─────────────────────────────────────────
+// Colour alone cannot carry text on a picture, because the picture changes.
+// Measured on the live hero the labels scored 1.08, 1.20 and 1.59 to 1; on
+// the Programs screen the title, the Generate button, the week toggle and
+// the session counter all came in under 2.2, several of them at 1.04 — the
+// same colour as the photograph behind them.
+//
+// A shadow makes every glyph carry its own local darkness, so it reads
+// wherever the image happens to be bright, and it costs no chrome. Spread
+// on any Text that sits on ScreenBackdrop rather than on a panel.
+export const lift = {
+  textShadowColor: 'rgba(6,7,18,0.92)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 6,
+} as const
+
 // ── On-image PALETTE ───────────────────────────────────────────────
 // A whole resolved palette, not a handful of tokens — for screens that sit on
 // a photographic backdrop end to end.

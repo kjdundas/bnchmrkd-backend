@@ -98,7 +98,11 @@ export default function WeekStrip({
         <BlockRow key={b.programId} b={b} />
       ))}
 
-      {/* ── Week total ───────────────────────────────────────────── */}
+      {/* ── Week total, and what the dots meant ──────────────────
+          The dots under each day had no legend at all: a green one meant a
+          check-in that came back green, a hollow one meant no check-in, and
+          nothing on the screen said so. Now the key sits under the strip
+          that uses it. */}
       <View style={s.summary}>
         <MonoKicker color={colors.text.muted}>
           {week.plannedCount === 0
@@ -108,6 +112,15 @@ export default function WeekStrip({
         {week.hasSuggestedDays && (
           <Text style={[s.suggested, { color: colors.text.muted }]}>Days suggested</Text>
         )}
+      </View>
+
+      <View style={s.legend}>
+        <View style={[s.legendDot, { backgroundColor: READINESS_COLORS.green }]} />
+        <Text style={[s.legendText, { color: colors.text.muted }]}>checked in</Text>
+        <View style={[s.legendDot, {
+          backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.glass.borderHover,
+        }]} />
+        <Text style={[s.legendText, { color: colors.text.muted }]}>not yet</Text>
       </View>
     </View>
   )
@@ -249,6 +262,9 @@ const s = StyleSheet.create({
   },
   date: { fontSize: typeScale.caption, ...numerals },
   dot: { width: 7, height: 7, borderRadius: radius.full, marginTop: 6 },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  legendDot: { width: 6, height: 6, borderRadius: radius.full },
+  legendText: { fontSize: typeScale.micro, letterSpacing: 0.4, marginRight: 6 },
   // 5pt rather than 4: a 4pt mark on a translucent panel over a photograph
   // is under the 3:1 a non-text indicator needs to be seen at all.
   pips: { flexDirection: 'row', gap: 3, height: 5, marginTop: 5, alignItems: 'center' },

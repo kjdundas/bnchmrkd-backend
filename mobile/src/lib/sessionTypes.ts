@@ -93,3 +93,33 @@ export function exerciseMeta(ex: any, type: SessionType): string[] {
   if (filled(ex?.implement_kg)) out.push(`${ex.implement_kg}kg implement`)
   return out
 }
+
+
+// ── Display rules shared by every surface that lists a day ───────────
+// TodayCard on Home and DaySchedule on Programs draw the same objects and
+// had drifted into drawing them differently. These live here so a fix
+// lands on both.
+
+/**
+ * Program labels are authored, and coaches write the weekday into them —
+ * "Wednesday — Max Strength". Inside anything already headed TODAY, or a
+ * card whose subtitle is the date, that is two words of noise and one
+ * chance to be wrong on a day the session gets moved.
+ */
+const DAYS = 'monday|tuesday|wednesday|thursday|friday|saturday|sunday'
+export function stripWeekday(label: string): string {
+  return String(label || '')
+    .replace(new RegExp(`^\\s*(?:${DAYS})\\s*[—–\\-:·]\\s*`, 'i'), '')
+    .trim() || String(label || '')
+}
+
+/**
+ * Calendar days that genuinely outrank training, for ordering and emphasis.
+ *
+ * `session` is a valid EVENT kind — a one-off workout somebody added — and
+ * treating every event as important put the accent border and a SESSION tag
+ * on an ad-hoc warm-up while the programmed session from a periodised block
+ * rendered grey and untagged beneath it. The emphasis was exactly inverted.
+ */
+export const OUTRANKING_EVENTS = new Set(['race', 'competition', 'test'])
+export const outranksTraining = (kind: string) => OUTRANKING_EVENTS.has(kind)

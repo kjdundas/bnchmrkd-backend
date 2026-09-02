@@ -26,22 +26,12 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import { View, Text } from 'react-native'
-import { onDark, numerals, spacing, typeScale, weight } from '../lib/theme'
+import { onDark, numerals, spacing, typeScale, weight, lift as LIFT } from '../lib/theme'
 import { DURATION, useReducedMotion } from '../lib/motion'
 import TrackLane, { LANE_W, LANE_H } from './TrackLane'
 
 const W = LANE_W, H = LANE_H
 
-// Over a photograph, colour alone cannot carry text. Measured on the live
-// hero the labels scored 1.08, 1.20 and 1.59 to 1 — the arc itself scored
-// 1.00, the same colour as the stand behind it. A shadow makes each glyph
-// carry its own local darkness, which works wherever the picture happens to
-// be bright, and costs no chrome.
-const LIFT = {
-  textShadowColor: 'rgba(6,7,18,0.92)',
-  textShadowOffset: { width: 0, height: 1 },
-  textShadowRadius: 6,
-} as const
 
 export default function TierGauge({
   pb, latest, currentCut, nextCut, lower, tierName, nextTierName,

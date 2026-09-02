@@ -42,7 +42,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Tappable, GlassPanel, MonoKicker } from './ui'
 import { spacing, radius, onImage, onDark, typeScale, weight, numerals } from '../lib/theme'
 import { READINESS_COLORS } from '../lib/readiness'
-import { sessionType, TYPE_STYLE } from '../lib/sessionTypes'
+import { sessionType, TYPE_STYLE, stripWeekday, outranksTraining } from '../lib/sessionTypes'
 import { EVENT_STYLE, eventKind } from '../lib/events'
 import BlockProgress from './BlockProgress'
 import type { DayCell, BlockWeek } from '../lib/schedule'
@@ -50,21 +50,6 @@ import type { DayCell, BlockWeek } from '../lib/schedule'
 const TONE: Record<string, string> = {
   accent: '#8B83FF', blue: '#5B9DF9', green: '#34d399',
   amber: '#F59E0B', red: '#FF6B6B', muted: 'rgba(255,255,255,0.62)',
-}
-
-/** The days that beat training. Everything else on the calendar is context. */
-const OUTRANKS = new Set(['race', 'competition', 'test'])
-
-/**
- * Program labels are authored, and coaches write the weekday into them —
- * "Wednesday — Max Strength". Inside a card headed TODAY that is two words
- * of noise and one chance to be wrong.
- */
-const DAYS = 'monday|tuesday|wednesday|thursday|friday|saturday|sunday'
-function stripWeekday(label: string): string {
-  return String(label || '')
-    .replace(new RegExp(`^\\s*(?:${DAYS})\\s*[—–\\-:·]\\s*`, 'i'), '')
-    .trim() || String(label || '')
 }
 
 export default function TodayCard({
@@ -82,8 +67,8 @@ export default function TodayCard({
 }) {
   const sessions = day?.sessions ?? []
   const events = day?.events ?? []
-  const priority = events.filter((e: any) => OUTRANKS.has(eventKind(e.kind)))
-  const context = events.filter((e: any) => !OUTRANKS.has(eventKind(e.kind)))
+  const priority = events.filter((e: any) => outranksTraining(eventKind(e.kind)))
+  const context = events.filter((e: any) => !outranksTraining(eventKind(e.kind)))
 
   const hasAnything = sessions.length > 0 || events.length > 0
   if (!hasAnything && !footer) return null
