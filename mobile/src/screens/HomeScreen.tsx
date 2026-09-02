@@ -57,11 +57,12 @@ import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import CheckInCard from '../components/CheckInCard'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { PerformanceHero, type HomeView, type TierBand } from '../components/OuraSections'
-import { LOWER_IS_BETTER } from '../lib/metricSemantics'
+import { LOWER_IS_BETTER, formatMark } from '../lib/metricSemantics'
 import { isLowerBetter } from '../lib/disciplineScience'
 import { countsForAnalysis } from '../lib/resultSemantics'
 import TodayCard from '../components/TodayCard'
 import HomeStanding from '../components/HomeStanding'
+import CorpusLine from '../components/CorpusLine'
 import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
 import { fetchEvents } from '../lib/events'
 import ApprovalInbox, { ApprovalBanner } from '../components/ApprovalInbox'
@@ -623,6 +624,23 @@ export default function HomeScreen() {
             </Tappable>
           )}
         </Stagger>
+
+        {/* The corpus, on Home for the first time. A tier arc is something
+            any app can draw; what happened to the other people who were
+            here is not. Past tense, other people, and silent below four
+            comparable careers. */}
+        {homeView.pb != null && (
+          <CorpusLine
+            discipline={discipline}
+            sex={sex}
+            age={age}
+            mark={homeView.pb}
+            target={tierBand?.nextCut ?? null}
+            lowerBetter={isLowerBetter(discipline)}
+            valueFmt={(v) => formatMark(v, discipline)}
+            onOpen={() => navigation.navigate('Trajectory' as never)}
+          />
+        )}
 
         {/* ══ 2 · TODAY ═════════════════════════════════════════════
             The session and the check-in, in one card. They were two, and

@@ -24,23 +24,24 @@
 // and "how today went" are both legible without being conflated.
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { useRef, useEffect } from 'react'
-import { View, Text, Animated } from 'react-native'
-import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop } from 'react-native-svg'
+import React, { useRef, useEffect, useState } from 'react'
+import { View, Text } from 'react-native'
 import { onDark, numerals, spacing, typeScale, weight } from '../lib/theme'
-import { DURATION, EASE, useReducedMotion } from '../lib/motion'
+import { DURATION, useReducedMotion } from '../lib/motion'
+import TrackLane, { LANE_W, LANE_H } from './TrackLane'
 
-const AnimatedPath = Animated.createAnimatedComponent(Path)
-const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+const W = LANE_W, H = LANE_H
 
-// Same geometry as the web gauge, so the two apps draw the same shape.
-const R = 88, CX = 108, CY = 106, W = 216, H = 124
-const LEN = Math.PI * R
-const SAMPLES = 24
-
-/** Point on the arc at 0..1 along the sweep. */
-const ptX = (f: number) => CX + R * Math.cos(Math.PI * (1 - f))
-const ptY = (f: number) => CY - R * Math.sin(Math.PI * (1 - f))
+// Over a photograph, colour alone cannot carry text. Measured on the live
+// hero the labels scored 1.08, 1.20 and 1.59 to 1 — the arc itself scored
+// 1.00, the same colour as the stand behind it. A shadow makes each glyph
+// carry its own local darkness, which works wherever the picture happens to
+// be bright, and costs no chrome.
+const LIFT = {
+  textShadowColor: 'rgba(6,7,18,0.92)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 6,
+} as const
 
 export default function TierGauge({
   pb, latest, currentCut, nextCut, lower, tierName, nextTierName,
@@ -60,7 +61,6 @@ export default function TierGauge({
   floorIsSynthetic?: boolean
 }) {
   const reduced = useReducedMotion()
-  const anim = useRef(new Animated.Value(0)).current
 
   const span = nextCut != null ? nextCut - currentCut : 0
   const posOf = (v: number) => {
@@ -83,60 +83,44 @@ export default function TierGauge({
   const latestBelowBand = rawLatest != null && rawLatest <= 0.02
   const latestAboveBand = rawLatest != null && rawLatest >= 0.98
 
+  // The marker rides the lane rather than appearing at the end, so the eye
+  // follows the travel. Driven here rather than by Animated because the lane
+  // is now drawn in Skia, which takes a number and not an interpolation —
+  // and Reanimated, the usual answer, has no babel config in this project.
+  const [t, setT] = useState(reduced ? 1 : 0)
   useEffect(() => {
-    if (reduced) { anim.setValue(1); return }
-    anim.setValue(0)
-    const a = Animated.timing(anim, {
-      toValue: 1, duration: DURATION.slow, easing: EASE.sweep, useNativeDriver: false,
-    })
-    a.start()
-    return () => a.stop()
+    if (reduced) { setT(1); return }
+    let raf = 0
+    const t0 = Date.now()
+    const step = () => {
+      const p = Math.min(1, (Date.now() - t0) / DURATION.slow)
+      setT(p < 1 ? 1 - Math.pow(1 - p, 3) : 1)     // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
   }, [reduced, frac])
 
-  const dashOffset = anim.interpolate({
-    inputRange: [0, 1], outputRange: [LEN, LEN * (1 - frac)],
-  })
-  // The marker rides the arc rather than appearing at its end, so the eye
-  // follows the travel. Sampled along the circle the path describes.
-  const ramp = Array.from({ length: SAMPLES + 1 }, (_, i) => i / SAMPLES)
-  const dotX = anim.interpolate({ inputRange: ramp, outputRange: ramp.map((t) => ptX(t * frac)) })
-  const dotY = anim.interpolate({ inputRange: ramp, outputRange: ramp.map((t) => ptY(t * frac)) })
-
-  const pct = Math.round(frac * 100)
+  // "10% of the way to Medalist" is not a sentence anyone says. A sprinter
+  // says "eighteen hundredths off". Percent-between-two-tier-cutoffs is a
+  // unit this app invented; the gap is in the athlete's own unit, and it is
+  // the number they will repeat out loud.
+  const gap = nextCut != null ? Math.abs(nextCut - pb) : null
+  const fmtGap = (g: number) => {
+    const sample = nextCut != null ? valueFmt(nextCut) : ''
+    const unit = (sample.match(/[^\d.:\s]+$/) || [''])[0]
+    const dp = ((sample.split('.')[1] || '').match(/^\d+/) || ['00'])[0].length
+    return `${g.toFixed(Math.min(3, Math.max(1, dp)))}${unit}`
+  }
 
   return (
     <View style={{ alignItems: 'center' }}>
       <View style={{ width: W, height: H - 8 }}>
-        <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-          <Defs>
-            <LinearGradient id="tierArc" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0" stopColor={color} stopOpacity="0.55" />
-              <Stop offset="1" stopColor={color} />
-            </LinearGradient>
-          </Defs>
-
-          <Path d={`M ${CX - R} ${CY} A ${R} ${R} 0 0 1 ${CX + R} ${CY}`}
-            fill="none" stroke={onDark.line} strokeWidth={5} strokeLinecap="round" />
-
-          <AnimatedPath d={`M ${CX - R} ${CY} A ${R} ${R} 0 0 1 ${CX + R} ${CY}`}
-            fill="none" stroke="url(#tierArc)" strokeWidth={5.5} strokeLinecap="round"
-            strokeDasharray={`${LEN}`} strokeDashoffset={dashOffset} />
-
-          {/* Today's race, if it sits somewhere other than the PB. A tick, so
-              it reads as a reading on the scale rather than a second needle. */}
-          {showLatest && (
-            <Line
-              x1={CX + (R - 9) * Math.cos(Math.PI * (1 - latestFrac))}
-              y1={CY - (R - 9) * Math.sin(Math.PI * (1 - latestFrac))}
-              x2={CX + (R + 9) * Math.cos(Math.PI * (1 - latestFrac))}
-              y2={CY - (R + 9) * Math.sin(Math.PI * (1 - latestFrac))}
-              stroke={onDark.muted} strokeWidth={2} strokeLinecap="round"
-            />
-          )}
-
-          <AnimatedCircle cx={dotX} cy={dotY} r={13} fill={color} fillOpacity={0.22} />
-          <AnimatedCircle cx={dotX} cy={dotY} r={6} fill="#FFFFFF" />
-        </Svg>
+        <TrackLane
+          frac={frac * t}
+          latestFrac={showLatest ? latestFrac : null}
+          colour={color}
+        />
       </View>
 
       {/* The two standards the arc runs between. */}
@@ -145,18 +129,18 @@ export default function TierGauge({
         alignSelf: 'stretch', paddingHorizontal: 2, marginTop: -14,
       }}>
         <View style={{ alignItems: 'flex-start', maxWidth: '42%' }}>
-          <Text style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color: onDark.dim, fontWeight: weight.bold }}>
+          <Text style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color: onDark.muted, fontWeight: weight.bold, ...LIFT }}>
             {floorIsSynthetic ? 'Starting out' : tierName}
           </Text>
-          <Text style={{ fontSize: typeScale.caption, color: onDark.muted, marginTop: 2, ...numerals }}>
+          <Text style={{ fontSize: typeScale.caption, color: onDark.ink, marginTop: 2, ...numerals, ...LIFT }}>
             {floorIsSynthetic ? '' : valueFmt(currentCut)}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end', maxWidth: '42%' }}>
-          <Text numberOfLines={1} style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color: color, fontWeight: weight.bold }}>
+          <Text numberOfLines={1} style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color, fontWeight: weight.bold, ...LIFT }}>
             {atTop ? 'Top tier' : nextTierName || 'Next'}
           </Text>
-          <Text style={{ fontSize: typeScale.caption, color: onDark.muted, marginTop: 2, ...numerals }}>
+          <Text style={{ fontSize: typeScale.caption, color: onDark.ink, marginTop: 2, ...numerals, ...LIFT }}>
             {atTop || nextCut == null ? '' : valueFmt(nextCut)}
           </Text>
         </View>
@@ -171,8 +155,10 @@ export default function TierGauge({
           : <>
               PB <Text style={{ color: onDark.ink, fontWeight: weight.bold }}>{valueFmt(pb)}</Text>
               {' — '}
-              <Text style={{ color: onDark.ink, fontWeight: weight.bold }}>{pct}%</Text>
-              {' of the way to '}{nextTierName}
+              <Text style={{ color: onDark.ink, fontWeight: weight.bold }}>
+                {gap != null ? fmtGap(gap) : ''}
+              </Text>
+              {' off '}{nextTierName}
             </>}
       </Text>
       {showLatest && (

@@ -24,16 +24,25 @@ export const TIER_SHORT = {
   1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7',
 };
 
-// Monochrome orange density. T1 dim ember → T7 blazing brand orange.
-// Intensity carries tier, hue stays constant — proprietary & brand-cohesive.
+// Monochrome INDIGO density. Constant hue, rising luminance — the same
+// "intensity carries tier" idea the orange ramp had, in the brand's actual
+// colour. The old ramp ran #3a1f0e → #fb923c and its own comment called
+// #fb923c the "brand orange apex", against a project guide that says: one
+// brand colour, Electric Indigo #4F3CF0, no orange, that was the old scheme.
+// It was rendering on the most prominent element of the home screen.
+//
+// Every surface that draws these is dark — Trajectory, Full Analysis, the
+// coach boards, athlete detail — so the ramp climbs toward light. The old
+// one climbed from near-black, which meant T1 and T2 were invisible on the
+// surfaces they were drawn on.
 export const TIER_COLORS = {
-  1: '#3a1f0e',   // deepest bronze, almost black
-  2: '#5a2d0f',
-  3: '#82400f',
-  4: '#a85416',
-  5: '#d16a1f',
-  6: '#f08028',
-  7: '#fb923c',   // brand orange apex
+  1: '#4A4770',   // indigo-grey — present, not shouting
+  2: '#585096',
+  3: '#665ABE',
+  4: '#7466E4',
+  5: '#8B83FF',   // --indigo-bright
+  6: '#A79FFF',
+  7: '#C9C4FF',   // apex
 };
 
 // Opacity stops for building layered orange washes (used by cell backgrounds).

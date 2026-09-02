@@ -165,7 +165,9 @@ export function StreakChip({ streak }: { streak: number }) {
       isFire && streakStyles.chipFire,
     ]}>
       <Ionicons
-        name={isFire ? 'flame' : isHot ? 'flash' : 'link'}
+        // 'link' rendered a chain-link on every streak under a week, which
+        // reads as a hyperlink, not a run of days.
+        name={isFire ? 'flame' : isHot ? 'flash' : 'ellipse'}
         size={13}
         color={isFire ? colors.accent[300] : isHot ? colors.accent[400] : colors.text.muted}
       />
