@@ -95,7 +95,7 @@ export default function WeekStrip({
           written as a paragraph nobody could act on. This is that paragraph,
           cut into the week you are actually in. */}
       {week.blocks.map((b) => (
-        <BlockRow key={b.programId} b={b} />
+        <BlockRow key={b.programId} b={b} multi={week.blocks.length > 1} />
       ))}
 
       {/* ── Week total, and what the dots meant ──────────────────
@@ -126,7 +126,7 @@ export default function WeekStrip({
   )
 }
 
-function BlockRow({ b }: { b: BlockWeek }) {
+function BlockRow({ b, multi }: { b: BlockWeek; multi?: boolean }) {
   const { colors } = useTheme()
   const deload = b.phase === 'deload'
   // A finished block is said plainly. Rolling on to "week 6 of 4" would be a
@@ -147,9 +147,18 @@ function BlockRow({ b }: { b: BlockWeek }) {
             </Text>
           </View>
         )}
-        <Text numberOfLines={1} style={[s.blockTitle, { color: colors.text.muted }]}>
-          {b.programTitle}
-        </Text>
+        {/* The programme name was here, truncated to "4-Week Off-Season
+            General Preparation Pro…" — and again on every session row, and
+            again on the card below. Three copies, none of them readable in
+            full. The card below is the one that has room for it, so this
+            row carries the thing only it knows: where in the block you are.
+            It comes back the moment there is more than one block running
+            and you need to know which this is. */}
+        {multi && (
+          <Text numberOfLines={1} style={[s.blockTitle, { color: colors.text.muted }]}>
+            {b.programTitle}
+          </Text>
+        )}
       </View>
       <Text style={[s.blockText, { color: colors.text.secondary }]}>
         {b.finished

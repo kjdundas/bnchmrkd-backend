@@ -23,7 +23,12 @@ export const EVENT_KINDS: {
   // date, an owner of either kind, an approval state and a place in the week.
   // A PROGRAM is the thing that stays per-athlete — a periodised block built
   // against one person's maturity. One workout on one day is not that.
-  { v: 'session', l: 'Session', icon: 'barbell-outline', tone: 'accent' },
+  // Labelled "One-off", not "Session". The stored value stays `session`, so
+  // nothing migrates — but on a screen listing programmed sessions, a badge
+  // reading SESSION on the one item that ISN'T one is the single most
+  // confusing string in the app. This is a workout somebody added to the
+  // calendar by hand, and that is what the word should say.
+  { v: 'session', l: 'One-off', icon: 'barbell-outline', tone: 'accent' },
   { v: 'race', l: 'Race', icon: 'flag-outline', tone: 'accent' },
   { v: 'competition', l: 'Competition', icon: 'trophy-outline', tone: 'amber' },
   { v: 'test', l: 'Test day', icon: 'speedometer-outline', tone: 'blue' },

@@ -39,6 +39,7 @@ import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import WeekStrip from '../components/WeekStrip'
 import DaySchedule from '../components/DaySchedule'
+import SlidingSegments from '../components/SlidingSegments'
 import WellnessHistorySheet from '../components/WellnessHistorySheet'
 import { useSessionLogs } from '../lib/useSessionLogs'
 import { buildProgramContext, hasTargetableData, describeDna } from '../lib/assistantContext'
@@ -1289,22 +1290,21 @@ function ProgramsBody() {
           {/* Week for working, month for the season. Both are built from the
               same day cells, so the toggle changes the lens and never the
               facts. */}
+          {/* The indicator travels between the two, so the eye follows the
+              change rather than just registering the new state — which
+              matters here because the same tap also replaces the whole
+              panel underneath. */}
           <View style={styles.viewToggle}>
-            {(['week', 'month'] as const).map((v) => (
-              <Tappable key={v} onPress={() => { tapFeedback(); setView(v) }}
-                accessibilityLabel={`${v} view`}
-                style={[styles.viewBtn, view === v && {
-                  backgroundColor: colors.accent[500] + '2E',
-                  borderColor: colors.accent[500] + '73',
-                }]}>
-                <Text style={{
-                  fontSize: typeScale.caption, fontWeight: weight.bold,
-                  color: view === v ? colors.accent[500] : colors.text.secondary,
-                }}>
-                  {v === 'week' ? 'Week' : 'Month'}
-                </Text>
-              </Tappable>
-            ))}
+            <SlidingSegments
+              options={[{ key: 'week', label: 'Week' }, { key: 'month', label: 'Month' }]}
+              value={view}
+              onChange={setView}
+              accent={colors.accent[500]}
+              ink={colors.text.primary}
+              muted={colors.text.secondary}
+              track="rgba(255,255,255,0.05)"
+              border="rgba(255,255,255,0.14)"
+            />
           </View>
 
           {view === 'week' ? (
@@ -1495,7 +1495,7 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3 },
   sheetHint: { fontSize: typeScale.caption, lineHeight: 17 },
   sheetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md },
-  viewToggle: { flexDirection: 'row', gap: 6, marginBottom: spacing.md },
+  viewToggle: { marginBottom: spacing.md },
   viewBtn: {
     flex: 1, minHeight: 36, alignItems: 'center', justifyContent: 'center',
     borderRadius: radius.control, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',

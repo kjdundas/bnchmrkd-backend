@@ -23,6 +23,7 @@ import {
   sessionType, TYPE_STYLE, exerciseMeta, filled, stripWeekday, outranksTraining,
 } from '../lib/sessionTypes'
 import { EVENT_STYLE, eventKind } from '../lib/events'
+import SessionTick from './SessionTick'
 import { metricForExercise } from '../lib/exerciseMetrics'
 import { fmtMetricValue, formatMark } from '../lib/metricSemantics'
 
@@ -94,18 +95,13 @@ export default function DaySchedule({
               accessibilityLabel={`${sess.label}. ${sess.done ? 'Done. Tap to undo' : 'Tap to mark done'}`}
               style={s.cardRow}
             >
-              <View style={[
-                s.tick,
-                sess.done
-                  ? { backgroundColor: colors.accent[500], borderColor: colors.accent[500] }
-                  : { borderColor: colors.glass.borderHover },
-              ]}>
-                {busy
-                  ? <ActivityIndicator size="small" color={sess.done ? '#fff' : colors.text.muted} />
-                  : sess.done
-                    ? <Ionicons name="checkmark" size={16} color="#fff" />
-                    : null}
-              </View>
+              <SessionTick
+                done={sess.done}
+                busy={busy}
+                accent={colors.accent[500]}
+                idle={colors.glass.borderHover}
+                muted={colors.text.muted}
+              />
 
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
