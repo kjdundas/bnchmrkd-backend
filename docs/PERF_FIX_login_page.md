@@ -467,3 +467,50 @@ code-splitting or deferring parts of `bnchmarkd-app.jsx`, which directly
 trades off against the "keep it simple" request that prompted this
 follow-up. Flagging this as a decision point rather than continuing to
 ship incremental fixes against a cost that isn't primarily networking.
+
+---
+
+# Follow-up — 2026-09-03: remove the hero photo on mobile entirely
+
+**Reported by:** Aishwar — asked directly whether the hero image could
+just be dropped on mobile instead of continuing to optimise its loading.
+
+## Why this is the right fix, not a workaround
+
+The "element render delay" cost identified above is specifically about
+this one image — the LCP element Lighthouse was measuring *was* the hero
+background photo. Removing it doesn't route around the problem, it deletes
+the element the problem was attached to. The photo sits behind a
+mostly-opaque light overlay in the design already (dominant colour stops
+around 90-97% white/light), so on a small mobile screen it was always a
+subtle background detail, not something the design depends on.
+
+## Changes made
+
+1. **`frontend/src/bnchmarkd-app.jsx`** — the `@media (max-width: 768px)`
+   override for `.hero-bg` no longer references `hero-stadium-mobile.jpg`
+   at all; it's just the same light gradient the rest of the app already
+   uses. Desktop is untouched — still shows the full photo.
+2. **`frontend/index.html`** — removed the now-unused mobile preload hint
+   for `hero-stadium-mobile.jpg` (kept the desktop one, since desktop still
+   uses the photo). Preloading an image nothing displays would just be
+   wasted bandwidth.
+
+`hero-stadium-mobile.jpg` itself is left in `public/` unused rather than
+deleted, in case this gets revisited later — harmless to leave.
+
+## Verification
+
+- Built and served locally; confirmed via computed styles that `.hero-bg`
+  on a mobile-width viewport now resolves to the plain gradient, no
+  `url(...)` at all.
+- Visual check via screenshot: text content and layout are unaffected —
+  the page initially appeared blank in one screenshot, traced to the
+  site's existing scroll-triggered text-reveal animation (pre-existing
+  GSAP behavior, confirmed unrelated to this change by scrolling and
+  watching it fire normally) rather than anything broken by this fix.
+- Desktop: confirmed the hero photo and its preload are both untouched.
+
+## Status
+
+Pushed to `main`, awaiting deploy + fresh PageSpeed re-measurement.

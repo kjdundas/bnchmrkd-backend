@@ -3882,7 +3882,7 @@ export default function BnchMrkdApp({ user, profile, onSignUp, onSignOut, onSetu
             }
             @media (max-width: 768px) {
               .hero-bg {
-                background-image: linear-gradient(100deg, rgba(246,247,251,0.97) 0%, rgba(246,247,251,0.90) 42%, rgba(246,247,251,0.55) 100%), url('/hero-stadium-mobile.jpg');
+                background-image: linear-gradient(165deg, #F6F7FB 0%, #FFFFFF 35%, #EDEBFE 62%, #F6F7FB 100%);
               }
             }
           `}</style>

@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>bnchmrkd.</title>
     <!-- Preload the hero background photo -- Lighthouse identifies this as
-         the page's Largest Contentful Paint element, and flagged that the
-         browser couldn't discover it until React mounted and injected the
-         CSS that references it. This starts the fetch immediately,
-         in parallel with the JS bundle, instead of at the back of the
-         queue. Matches the breakpoint used in the CSS in bnchmarkd-app.jsx. -->
-    <link rel="preload" as="image" href="/hero-stadium-mobile.jpg" media="(max-width: 768px)" fetchpriority="high" />
+         the page's Largest Contentful Paint element on desktop, and flagged
+         that the browser couldn't discover it until React mounted and
+         injected the CSS that references it. This starts the fetch
+         immediately, in parallel with the JS bundle. Desktop only -- mobile
+         drops the photo entirely (see bnchmarkd-app.jsx), so there's
+         nothing to preload there. -->
     <link rel="preload" as="image" href="/hero-stadium.jpg" media="(min-width: 769px)" fetchpriority="high" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
