@@ -20,10 +20,13 @@
 
 import { selectFrom, callRpc } from './supabase'
 
-export type ApprovalKind = 'program' | 'event' | 'performance'
+export type ApprovalKind = 'program' | 'event' | 'performance' | 'metric'
 
 export type PendingItem = {
   kind: ApprovalKind
+  /** Text, not a uuid: athlete_metrics is keyed by a bigint and the four
+   *  kinds share one column. It is opaque — it goes straight back to
+   *  respond(), which casts it per kind. */
   id: string
   athlete_id: string
   created_by: string
@@ -89,12 +92,14 @@ export const KIND_LABEL: Record<ApprovalKind, string> = {
   program: 'Training block',
   event: 'Calendar',
   performance: 'Result',
+  metric: 'Test',
 }
 
 export const KIND_ICON: Record<ApprovalKind, string> = {
   program: 'barbell-outline',
   event: 'calendar-outline',
   performance: 'stopwatch-outline',
+  metric: 'fitness-outline',
 }
 
 /**
@@ -106,9 +111,11 @@ export function consequenceOf(kind: ApprovalKind, owedByAthlete: boolean): strin
   if (owedByAthlete) {
     if (kind === 'program') return 'Accepting adds these sessions to your schedule.'
     if (kind === 'event') return 'Accepting puts this in your calendar.'
+    if (kind === 'metric') return 'Accepting adds this test to your numbers.'
     return 'Accepting adds this to your results.'
   }
   if (kind === 'performance') return 'Approving lets this count towards their bests and the leaderboards.'
+  if (kind === 'metric') return 'Approving lets this test count towards their trends and the physical boards.'
   if (kind === 'event') return 'Approving puts this in their calendar.'
   return 'Approving starts this block for them.'
 }
