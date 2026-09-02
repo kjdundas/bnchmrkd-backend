@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
@@ -104,7 +105,7 @@ function ScanInputStage({
 
       <TouchableOpacity
         style={[styles.primaryBtn, (!text.trim() || loading) && { opacity: 0.4 }]}
-        onPress={() => onSubmit(text.trim())}
+        onPress={() => { tapFeedback(); onSubmit(text.trim()) }}
         disabled={!text.trim() || loading}
         activeOpacity={0.7}
       >
@@ -213,7 +214,7 @@ function ScanReviewStage({
               <TouchableOpacity
                 key={ridx}
                 style={[styles.resultRow, selected && styles.resultRowSelected]}
-                onPress={() => candidate.matched && onToggle(key)}
+                onPress={() => { tapFeedback(); candidate.matched && onToggle(key) }}
                 disabled={!candidate.matched}
                 activeOpacity={0.6}
               >
@@ -245,12 +246,12 @@ function ScanReviewStage({
 
       {/* Action buttons */}
       <View style={styles.reviewActions}>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={onBack}>
+        <TouchableOpacity style={styles.secondaryBtn} onPress={() => { tapFeedback(); onBack() }}>
           <Text style={styles.secondaryBtnText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.primaryBtn, { flex: 2 }, (saving || selectedCount === 0) && { opacity: 0.4 }]}
-          onPress={onSave}
+          onPress={() => { tapFeedback(); onSave() }}
           disabled={saving || selectedCount === 0}
         >
           {saving ? (
@@ -279,7 +280,7 @@ function ScanDoneStage({ savedCount, onReset }: { savedCount: number; onReset: (
       <Text style={styles.doneSubtitle}>
         Athlete records have been updated on your roster.
       </Text>
-      <TouchableOpacity style={styles.primaryBtn} onPress={onReset} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.primaryBtn} onPress={() => { tapFeedback(); onReset() }} activeOpacity={0.7}>
         <View style={styles.btnRow}>
           <Ionicons name="scan-outline" size={16} color="#fff" />
           <Text style={styles.primaryBtnText}>Scan More Results</Text>
@@ -403,14 +404,14 @@ export default function CoachResultsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Scan results</Text>
         </View>
         {stage === 'review' && (
-          <TouchableOpacity onPress={handleReset} style={styles.resetBtn}>
+          <TouchableOpacity onPress={() => { tapFeedback(); handleReset() }} style={styles.resetBtn}>
             <Ionicons name="refresh-outline" size={18} color={colors.text.secondary} />
           </TouchableOpacity>
         )}

@@ -4,19 +4,21 @@
 // Strava/Whoop-inspired: large numbers, clean sections, no emojis
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
   Animated,
   TouchableOpacity,
   StyleSheet,
+  RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, onImage } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { useTheme } from '../contexts/ThemeContext'
 import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
@@ -26,6 +28,18 @@ import {
   fetchResults, subjectOf, pbOf, seasonBestsOf, trendOf,
 } from '../lib/athleteResults'
 import FullAnalysis from '../components/FullAnalysis'
+// The SAME projection card the athlete sees of themselves, not a coach's
+// version of it. Two differently-drawn futures for one young athlete is a
+// disagreement that would surface in a conversation about their career.
+import ImprovementScenariosSection from '../components/ImprovementScenarios'
+import { inEvent } from '../lib/athleteResults'
+import { ageExact } from '../lib/age'
+import GrowthPanel from '../components/GrowthPanel'
+import { SkeletonRows, LoadFailed } from '../components/LoadState'
+import { newTrouble } from '../lib/loadState'
+import { growthOf } from '../lib/squads'
+import { maturityOffsetMirwald, decimalAge } from '../lib/maturation'
+import { fetchMetricsForMany } from '../lib/athleteResults'
 
 // Helpers now live in lib/disciplineScience — see formatMark there.
 
@@ -62,16 +76,25 @@ export default function AthleteDetailScreen() {
   const scrollY = useRef(new Animated.Value(0)).current
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  useEffect(() => {
-    let alive = true
+  const [failed, setFailed] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const loadResults = useCallback(async () => {
     const subject = subjectOf(athlete)
     if (!subject) { setResults([]); setLoading(false); return }
-    setLoading(true)
-    fetchResults(subject)
-      .then((rows) => { if (alive) setResults(rows) })
-      .finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
+    const t = newTrouble()
+    const rows = await fetchResults(subject, t)
+    setResults(rows)
+    setFailed(t.failed)
+    setLoading(false)
   }, [athlete?.id, athlete?.linked_user_id])
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    loadResults().catch(() => { if (alive) { setFailed(true); setLoading(false) } })
+    return () => { alive = false }
+  }, [loadResults])
 
   const pb = useMemo(
     () => pbOf(results, athlete.discipline), [results, athlete.discipline])
@@ -81,18 +104,86 @@ export default function AthleteDetailScreen() {
 
   // Newest first. The date is a plain YYYY-MM-DD, so it sorts as a string —
   // going through Date would read it as UTC midnight.
+  // inEvent, not a bare date filter. Without it this log listed every
+  // discipline the athlete has ever recorded under whichever event's
+  // heading happened to be on screen — a 60m of 7.43 sat in a list titled
+  // 100m, and the "races" count above it said 6 while the season
+  // progression, which does gate by event, said 5. Same class of bug as
+  // the 60m that was once ranked as a 100m personal best: the gate existed
+  // and this path did not go through it.
   const races = useMemo(
-    () => [...results]
+    () => [...inEvent(results, athlete.discipline)]
       .filter((r) => r.competition_date)
       .sort((a, b) => String(b.competition_date).localeCompare(String(a.competition_date)))
       .map((r) => ({ ...r, value: r.mark, date: r.competition_date, competition: r.competition_name })),
-    [results])
+    [results, athlete.discipline])
 
   const seasonBests = useMemo(
     () => seasonBestsOf(results, athlete.discipline), [results, athlete.discipline])
 
   const trend = useMemo(
     () => trendOf(results, athlete.discipline), [results, athlete.discipline])
+
+  // Every legal mark in THIS event, carrying the athlete's age on the day
+  // they ran it — not their age now. Plotting a 15-year-old's race at their
+  // current 19 would slide their whole history to the right and make an
+  // ordinary progression look like a late surge.
+  // Fractional age, exactly as the athlete's own screen builds it — two
+  // races in one season must not collapse onto the same x.
+  const projHistory = useMemo(() => {
+    if (!athlete.dob) return []
+    return inEvent(results, athlete.discipline)
+      .map((r: any) => {
+        const t = new Date(r.competition_date).getTime()
+        const v = Number(r.mark)
+        if (Number.isNaN(t) || !Number.isFinite(v)) return null
+        const a = ageExact(athlete.dob, t)
+        return a != null && a > 5 && a < 60 ? { age: a, value: v, date: r.competition_date } : null
+      })
+      .filter(Boolean) as { age: number; value: number; date: string }[]
+  }, [results, athlete.discipline, athlete.dob])
+
+  const nowAge = useMemo(() => ageExact(athlete.dob), [athlete.dob])
+
+  // Anthropometrics, for the growth reading. Read through the same fan-out
+  // as everywhere else, so approval and the athlete's sharing choice have
+  // both already been applied by the time the rows arrive.
+  const [metricRows, setMetricRows] = useState<any[]>([])
+  useEffect(() => {
+    let alive = true
+    const subject = subjectOf(athlete)
+    if (!subject) { setMetricRows([]); return }
+    fetchMetricsForMany([subject])
+      .then((m) => {
+        if (!alive) return
+        const key = (subject as any).userId || (subject as any).rosterId
+        setMetricRows(m.get(key) || [])
+      })
+      .catch(() => { if (alive) setMetricRows([]) })
+    return () => { alive = false }
+  }, [athlete?.id, athlete?.linked_user_id])
+
+  const growth = useMemo(() => growthOf(metricRows), [metricRows])
+
+  // The cross-sectional estimate, purely so the panel can say when it
+  // disagrees with the measured series — never as the headline.
+  const maturityStatus = useMemo(() => {
+    const latest = (key: string) => metricRows
+      .filter((r: any) => r?.metric_key === key && r?.recorded_at)
+      .sort((a: any, b: any) => String(b.recorded_at).localeCompare(String(a.recorded_at)))[0]
+    const h = latest('standing_height'), sh = latest('sitting_height'), bm = latest('body_mass')
+    const a = decimalAge(athlete.dob)
+    if (!h || !sh || !bm || a == null) return null
+    return maturityOffsetMirwald({
+      sex: genderCode, ageYears: a,
+      heightCm: Number(h.value), sittingHeightCm: Number(sh.value), weightKg: Number(bm.value),
+    })?.status ?? null
+  }, [metricRows, athlete.dob, genderCode])
+  const heightSeries = useMemo(
+    () => metricRows
+      .filter((r: any) => r?.metric_key === 'standing_height' && r?.recorded_at)
+      .map((r: any) => ({ day: String(r.recorded_at).slice(0, 10), cm: Number(r.value) })),
+    [metricRows])
 
   return (
     <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
@@ -103,7 +194,7 @@ export default function AthleteDetailScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={onImage.ink} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -127,6 +218,15 @@ export default function AthleteDetailScreen() {
       </View>
 
       <Animated.ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing} tintColor={c.accent[500]}
+            onRefresh={async () => {
+              setRefreshing(true)
+              await loadResults().catch(() => setFailed(true))
+              setRefreshing(false)
+            }} />
+        }
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
@@ -136,11 +236,15 @@ export default function AthleteDetailScreen() {
         )}
       >
         {/* Hero PB Card */}
-        {pb ? (
-          <View style={styles.heroCard}>
-            <View pointerEvents="none" style={styles.heroGlow} />
-            <View pointerEvents="none" style={styles.heroGlow2} />
+        {/* A coach approves a result in their inbox, opens the athlete to see
+            it land, and the screen is stale. The pull is the first thing a
+            hand does; nothing happening reads as frozen. */}
+        {loading && <View style={{ marginTop: 10 }}><SkeletonRows rows={3} /></View>}
 
+        {!loading && failed && <LoadFailed />}
+
+        {!loading && !failed && pb ? (
+          <View style={styles.heroCard}>
             <View style={styles.heroInner}>
               <Text style={styles.heroPb}>{formatMark(pb, athlete.discipline)}</Text>
 
@@ -187,13 +291,13 @@ export default function AthleteDetailScreen() {
               </View>
             </View>
           </View>
-        ) : (
+        ) : (!loading && !failed && (
           <View style={styles.noPbCard}>
             <Ionicons name="timer-outline" size={24} color={onImage.dim} />
             <Text style={styles.noPbText}>No performances logged yet</Text>
             <Text style={styles.noPbSub}>Race results will appear here once added via the scanner.</Text>
           </View>
-        )}
+        ))}
 
         {/* Season Bests */}
         {seasonBests.length > 0 && (
@@ -266,6 +370,29 @@ export default function AthleteDetailScreen() {
           </View>
         )}
 
+        {/* Growth comes before the marks, because it changes how the marks
+            underneath should be read: a dip through a spurt is not a dip in
+            form. Hidden entirely for anyone 19 or over. */}
+        <GrowthPanel
+          reading={growth}
+          heights={heightSeries}
+          sex={genderCode}
+          age={age}
+          maturityStatus={maturityStatus}
+        />
+
+        {/* Where this could go. Above the five-act analysis because a coach
+            opening an athlete wants the shape of the career before the
+            breakdown of one mark. */}
+        <ImprovementScenariosSection
+          discipline={athlete.discipline}
+          pb={pb as number}
+          age={age}
+          sex={genderCode}
+          history={projHistory}
+          nowAge={nowAge ?? undefined}
+        />
+
         {/* Full 5-Act Analysis */}
         {pb && age && (
           <FullAnalysis
@@ -274,6 +401,7 @@ export default function AthleteDetailScreen() {
             age={age}
             sex={genderCode}
             athleteName={athlete.name}
+            showHero={false}
           />
         )}
 
@@ -341,26 +469,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(249,115,22,0.28)',
     borderRadius: radius.lg,
     marginBottom: spacing.lg,
-  },
-  heroGlow: {
-    position: 'absolute',
-    top: -60,
-    left: -60,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: colors.orange[500],
-    opacity: 0.08,
-  },
-  heroGlow2: {
-    position: 'absolute',
-    bottom: -50,
-    right: -50,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.blue,
-    opacity: 0.04,
   },
   heroInner: {
     padding: spacing.xl,

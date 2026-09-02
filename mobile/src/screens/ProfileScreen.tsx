@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import SharingSettings from '../components/SharingSettings'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
 import DnaStrip from '../components/DnaCard'
 import ResultsTable from '../components/ResultsTable'
@@ -47,6 +48,11 @@ import AthleteCoachLinks from '../components/AthleteCoachLinks'
 
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile } = useAuth()
+  // One screen, two accounts. A coach was being shown their competition
+  // record, their DNA strip, their height and weight and a count of their
+  // personal bests — none of which a coach has, all of which read as empty
+  // states nagging them to log something they will never log.
+  const isCoach = profile?.role === 'coach' || (profile as any)?.account_type === 'coach'
   const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
@@ -275,7 +281,9 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={[styles.displayName, { color: c.text.primary }]}>{profile?.full_name || 'Athlete'}</Text>
+            <Text style={[styles.displayName, { color: c.text.primary }]}>
+              {profile?.full_name || (isCoach ? 'Coach' : 'Athlete')}
+            </Text>
             {profile?.club && <Text style={[styles.clubText, { color: c.text.secondary }]}>{profile.club}</Text>}
 
             <View style={styles.badges}>
@@ -284,10 +292,10 @@ export default function ProfileScreen() {
                   {profile?.role === 'coach' ? 'COACH' : 'ATHLETE'}
                 </Text>
               </View>
-              {overallTier && (
+              {!isCoach && overallTier && (
                 <TierBadge label={`${overallTier.label} · ${overallScore}`} color={overallTier.color} />
               )}
-              <StreakChip count={streak} />
+              {!isCoach && <StreakChip count={streak} />}
             </View>
           </View>
         </HeroCard>
@@ -295,6 +303,7 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             STATS GRID
             ════════════════════════════════════════════════════════════ */}
+        {!isCoach && (
         <AlmanacCard kicker="CAREER STATS" accent={c.accent[500]}>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
@@ -320,6 +329,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         </AlmanacCard>
+        )}
 
         {/* ── Physical profile ─────────────────────────────────────────
             ONE DNA implementation. The strip opens the full ladder (and the
@@ -328,19 +338,23 @@ export default function ProfileScreen() {
         {/* ── Competition record ──────────────────────────────────────
             Every result, including the ones that do not count. See
             ResultsTable for why a DNF has to be visible here. ─────────── */}
-        <SectionLabel>Competition results</SectionLabel>
-        <ResultsTable performances={performances} />
+        {!isCoach && (
+          <>
+            <SectionLabel>Competition results</SectionLabel>
+            <ResultsTable performances={performances} />
 
-        <SectionLabel>Physical profile</SectionLabel>
+            <SectionLabel>Physical profile</SectionLabel>
 
-        <DnaStrip
-          metrics={metrics}
-          discipline={discipline}
-          dob={profile?.dob}
-          onLog={() => navigation.navigate('Log' as never)}
-        />
+            <DnaStrip
+              metrics={metrics}
+              discipline={discipline}
+              dob={profile?.dob}
+              onLog={() => navigation.navigate('Log' as never)}
+            />
+          </>
+        )}
 
-        {limitingFactor && (
+        {!isCoach && limitingFactor && (
           <AlmanacCard kicker="FOCUS AREA" title="Limiting factor" accent={c.amber}>
             <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
               <View style={{
@@ -370,7 +384,8 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             PROFILE DETAILS — Editable info
             ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard kicker="ATHLETE PROFILE" title="Details" accent={colors.blue}>
+        <AlmanacCard kicker={isCoach ? 'COACH PROFILE' : 'ATHLETE PROFILE'}
+          title="Details" accent={colors.blue}>
           {!editing && (
             <TouchableOpacity onPress={() => setEditing(true)} style={styles.editBtn}>
               <Ionicons name="pencil" size={13} color={colors.orange[400]} />
@@ -431,24 +446,35 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <InfoRow
-                icon="calendar-number-outline" label="Date of birth"
-                value={profile?.dob
-                  ? `${new Date(profile.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${ageFromDob(profile.dob)} yrs`
-                  : 'Not set — tap Edit'}
-              />
-              <InfoRow
-                icon="body-outline" label="Category"
-                value={profile?.sex === 'F' ? "Women's" : profile?.sex === 'M' ? "Men's" : 'Not set — tap Edit'}
-              />
+              {!isCoach && (
+                <>
+                  <InfoRow
+                    icon="calendar-number-outline" label="Date of birth"
+                    value={profile?.dob
+                      ? `${new Date(profile.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${ageFromDob(profile.dob)} yrs`
+                      : 'Not set — tap Edit'}
+                  />
+                  <InfoRow
+                    icon="body-outline" label="Category"
+                    value={profile?.sex === 'F' ? "Women's" : profile?.sex === 'M' ? "Men's" : 'Not set — tap Edit'}
+                  />
+                </>
+              )}
               <InfoRow icon="flag-outline" label="Country" value={profile?.country || '—'} />
-              <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
-              <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
-              <InfoRow icon="calendar-outline" label="Tracking since" value={
-                firstLog
-                  ? new Date(firstLog.recorded_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-                  : '—'
-              } />
+              {!isCoach && (
+                <>
+                  <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
+                  <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
+                  <InfoRow icon="calendar-outline" label="Tracking since" value={
+                    firstLog
+                      ? new Date(firstLog.recorded_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+                      : '—'
+                  } />
+                </>
+              )}
+              {isCoach && (
+                <InfoRow icon="people-outline" label="Club" value={(profile as any)?.club_school || '—'} />
+              )}
               <InfoRow icon="mail-outline" label="Email" value={user?.email || '—'} />
             </>
           )}
@@ -464,6 +490,10 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             SIGN OUT
             ════════════════════════════════════════════════════════════ */}
+        {/* Renders nothing at all when this athlete has no coach — see the
+            component for why an empty relationship should not get a screen. */}
+        <SharingSettings userId={user?.id} />
+
         <TouchableOpacity style={[styles.signOutBtn, { borderColor: c.red + '20', backgroundColor: c.red + '04' }]}
           onPress={handleSignOut} activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={18} color={c.red} />

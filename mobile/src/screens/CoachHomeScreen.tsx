@@ -31,7 +31,23 @@ import { ageFromDob } from '../lib/age'
 import SquadAthleteCard from '../components/SquadAthleteCard'
 import AssistantCoachBox from '../components/AssistantCoachBox'
 import { fetchResultsForMany } from '../lib/athleteResults'
-import { subjectFor, eventsOf } from '../lib/squads'
+import ApprovalInbox, { ApprovalBanner } from '../components/ApprovalInbox'
+import { useApprovals } from '../contexts/ApprovalsContext'
+import {
+  subjectFor, eventsOf, fetchSquadCheckins, growthForMany,
+  type SharedCheckin,
+} from '../lib/squads'
+import { fetchMetricsForMany } from '../lib/athleteResults'
+import { type GrowthReading } from '../lib/growth'
+import { buildAttention, checkedInToday } from '../lib/attention'
+import SquadWellness from '../components/SquadWellness'
+import { SkeletonCards, LoadFailed } from '../components/LoadState'
+import GetStartedCard from '../components/GetStartedCard'
+import InfoDot from '../components/InfoDot'
+import { coachSteps } from '../lib/firstRun'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { newTrouble } from '../lib/loadState'
+import { todayDay, addDays } from '../lib/schedule'
 
 const EMOJIS = ['👏', '🔥', '💪']
 const QUIET_DAYS = 14
@@ -58,33 +74,12 @@ function initials(name: string): string {
   return (name || '?').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
-// Most-recent activity (days ago) across the linked athlete's results.
-function lastActivityDays(a: any): number | null {
-  let latest: Date | null = null
-  const consider = (d: string | null) => { if (!d) return; const t = new Date(d); if (!isNaN(t.getTime()) && (!latest || t > latest)) latest = t }
-  for (const r of (Array.isArray(a.races) ? a.races : [])) consider(r.date)
-  for (const p of (Array.isArray(a.performances) ? a.performances : [])) consider(p.date)
-  if (!latest) return null
-  return Math.floor((Date.now() - (latest as Date).getTime()) / 86400000)
-}
-
-// Build the param the AthleteDetail screen expects from a linked-athlete row.
-function buildAthleteParam(a: any) {
-  const races = [
-    ...(Array.isArray(a.races) ? a.races : []),
-    ...(Array.isArray(a.performances) ? a.performances : []),
-  ].filter((r: any) => r && r.value != null && r.date)
-  return {
-    name: a.name,
-    dob: a.dob,
-    gender: String(a.gender || 'M').toUpperCase().startsWith('F') ? 'Female' : 'Male',
-    discipline: (a.discipline || '').trim(),
-    pb_value: a.pb_value ?? null,
-    races,
-    disciplines_data: a.disciplines_data || {},
-    _linked: true,
-  }
-}
+// lastActivityDays and buildAthleteParam were removed with the rewrite above.
+// Both read the denormalised `races` / `performances` blobs off a linked
+// athlete row — the shape that could only ever describe an account holder,
+// and the reason the attention list could not see a roster athlete. Leaving
+// them here as dead code would be leaving the next person a working helper
+// that reintroduces the bug.
 
 export default function CoachHomeScreen() {
   const { user, profile } = useAuth()
@@ -94,6 +89,10 @@ export default function CoachHomeScreen() {
   const [feed, setFeed] = useState<any[]>([])
   const [reacts, setReacts] = useState<Record<string, Set<string>>>({})
   const [loading, setLoading] = useState(true)
+  // Whether the last load actually reached the server. Without this a
+  // timeout renders as 'No athletes yet', which is a false statement
+  // about a coach's own roster.
+  const [failed, setFailed] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   // Drives the backdrop's parallax and blur. Native-driven, so scrolling
   // stays smooth.
@@ -109,17 +108,44 @@ export default function CoachHomeScreen() {
   // Results for the whole squad, in two queries. The cards need them for the
   // mark and the trend arrow, which is the thing a coach actually scans for.
   const [results, setResults] = useState<Map<string, any[]>>(new Map())
+  // Read from shared_checkins, so an athlete's sharing choice is already
+  // applied by the time it reaches this screen.
+  const [checkins, setCheckins] = useState<Map<string, SharedCheckin[]>>(new Map())
+  // Measured stature velocity per athlete — the growth-spurt flag.
+  const [growth, setGrowth] = useState<Map<string, GrowthReading>>(new Map())
   // The activity feed is long and it is history — it opens when asked for.
   const [feedOpen, setFeedOpen] = useState(false)
+  // Per-account, so signing in as somebody else does not inherit a dismissal.
+  const [setupHidden, setSetupHidden] = useState(false)
+  const setupKey = `@bnchmrkd_setup_hidden_${user?.id || 'anon'}`
+  useEffect(() => {
+    AsyncStorage.getItem(setupKey).then((v) => setSetupHidden(v === '1')).catch(() => {})
+  }, [setupKey])
+  // Answers this coach owes their athletes. The same inbox the athlete
+  // sees, pointed the other way — one component, because an athlete
+  // accepting a program and a coach approving a test are the same act.
+  const [inboxOpen, setInboxOpen] = useState(false)
+  // One count, shared with the tab bar. Home used to own this, which is why
+  // a waiting athlete was invisible from every other tab.
+  const { count: pendingCount, refresh: refreshPending } = useApprovals()
 
   const loadSquads = useCallback(async () => {
+    const t = newTrouble()
     const [sq, ath] = await Promise.all([
-      fetchSquads(user?.id || ''),
-      fetchSquadAthletes(),
+      fetchSquads(user?.id || '', t),
+      fetchSquadAthletes(t),
     ])
     setSquads(sq)
     setAthletes(ath)
-    setResults(await fetchResultsForMany(ath.map(subjectFor)))
+    const [r, ck, mx] = await Promise.all([
+      fetchResultsForMany(ath.map(subjectFor), t),
+      // A fortnight: long enough for the sparkline to show a direction,
+      // short enough not to pull a season of rows for a glance.
+      fetchSquadCheckins(ath, addDays(todayDay(), -14), todayDay(), t),
+      fetchMetricsForMany(ath.map(subjectFor), t),
+    ])
+    setResults(r); setCheckins(ck); setGrowth(growthForMany(ath, mx))
+    setFailed(t.failed)
   }, [user])
 
   const load = useCallback(async () => {
@@ -138,11 +164,11 @@ export default function CoachHomeScreen() {
     } finally { setLoading(false) }
   }, [user?.id])
 
-  useEffect(() => { load(); loadSquads() }, [load, loadSquads])
+  useEffect(() => { load(); loadSquads(); refreshPending() }, [load, loadSquads, refreshPending])
   useEffect(() => {
-    const unsub = navigation.addListener('focus', () => { load(); loadSquads() })
+    const unsub = navigation.addListener('focus', () => { load(); loadSquads(); refreshPending() })
     return unsub
-  }, [navigation, load, loadSquads])
+  }, [navigation, load, loadSquads, refreshPending])
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -158,35 +184,37 @@ export default function CoachHomeScreen() {
       : inSquad(athletes, filter as string | null)
   ), [athletes, filter])
 
-  // ── Needs-attention items ──
-  const items = useMemo(() => {
-    const out: any[] = []
-    const dow = (new Date().getDay() + 6) % 7
-    for (const a of linked) {
-      const fresh = isToday(a.latest_checkin)
-      const status = checkinStatus(fresh ? a.latest_checkin : null)
-      if (status.level === 'red' || status.level === 'amber') {
-        out.push({ a, key: `${a.athlete_user_id}-r`, kind: 'readiness', level: status.level, rank: status.level === 'red' ? 2 : 1,
-          headline: `${a.name} · ${status.label}`, detail: status.reasons.join(' · ') || 'Flagged on check-in', icon: 'heart-outline', color: READINESS_COLORS[status.level] })
-      }
-      const comp = a.program_compliance
-      if (comp && comp.sessions_per_week && dow >= 3 && (comp.done_this_week / comp.sessions_per_week) < 0.5) {
-        out.push({ a, key: `${a.athlete_user_id}-c`, kind: 'compliance', level: 'amber', rank: 1,
-          headline: `${a.name} · behind on program`, detail: `${comp.done_this_week}/${comp.sessions_per_week} sessions this week`, icon: 'barbell-outline', color: '#fbbf24' })
-      }
-      const days = lastActivityDays(a)
-      if (days != null && days >= QUIET_DAYS) {
-        out.push({ a, key: `${a.athlete_user_id}-q`, kind: 'quiet', level: 'info', rank: 0,
-          headline: `${a.name} · gone quiet`, detail: `No result in ${days} days`, icon: 'time-outline', color: '#64748b' })
-      }
-    }
-    return out.sort((x, y) => y.rank - x.rank)
+  // ── Needs-attention items ────────────────────────────────────────
+  // The logic lives in lib/attention.ts. It had two bugs at once while it
+  // was inline here — the wrong population and a second source of truth for
+  // readiness — and neither was visible in a screen file. Anything deciding
+  // which fourteen-year-old a coach sees first belongs where it can be
+  // exercised.
+  const complianceBy = useMemo(() => {
+    const m = new Map<string, any>()
+    for (const a of linked) if (a.athlete_user_id) m.set(a.athlete_user_id, a.program_compliance)
+    return m
   }, [linked])
 
-  const checkedToday = linked.filter((a) => isToday(a.latest_checkin)).length
+  const items = useMemo(
+    () => buildAttention({
+      athletes: shown, checkins, growth, results, compliance: complianceBy,
+    }),
+    [shown, checkins, growth, results, complianceBy])
+
+  // Same module, so the denominator on the stat row and the population the
+  // flags are built from can never drift apart.
+  const { checked: checkedToday, withAccounts: withAccountCount } =
+    useMemo(() => checkedInToday(shown, checkins), [shown, checkins])
   const firstName = profile?.full_name?.split(' ')[0] || 'Coach'
 
-  const openAthlete = (a: any) => navigation.navigate('AthleteDetail', { athlete: buildAthleteParam(a) })
+  // One shape for opening an athlete, whichever surface you tapped from.
+  const openParam = (a: any) => navigation.navigate('AthleteDetail', {
+    athlete: {
+      id: a.roster_athlete_id, linked_user_id: a.athlete_user_id,
+      name: a.name, dob: a.dob, gender: a.gender, discipline: a.discipline,
+    },
+  })
 
   const toggleReact = async (ev: any, emoji: string) => {
     const k = ev.event_key
@@ -235,6 +263,34 @@ export default function CoachHomeScreen() {
           <Text style={styles.title}>Today</Text>
         </View>
 
+        {/* The first thing a new coach sees, above everything else, because
+            every panel below it is empty until this is done. */}
+        {!loading && (
+          <GetStartedCard
+            steps={coachSteps({
+              athleteCount: athletes.length,
+              squadCount: squads.length,
+              hasAssigned: feed.length > 0,
+            })}
+            dismissed={setupHidden}
+            onDismiss={() => {
+              setSetupHidden(true)
+              AsyncStorage.setItem(setupKey, '1').catch(() => {})
+            }}
+            onAct={(step) => {
+              if (step.route === 'CoachRoster') navigation.navigate('CoachRoster')
+              else if (step.route === 'Assign') navigation.navigate('Assign')
+              else setSheet({ kind: 'new' })
+            }}
+          />
+        )}
+
+        {/* Anything awaiting your answer comes before anything to read —
+            an athlete is standing still until you answer it. */}
+        <View style={{ paddingHorizontal: spacing.lg }}>
+          <ApprovalBanner count={pendingCount} onPress={() => { tapFeedback(); setInboxOpen(true) }} />
+        </View>
+
         {/* ── The squad, first ────────────────────────────────────────
             Who you coach comes before what happened, because the answer to
             "what am I doing today" is usually a person. */}
@@ -250,12 +306,13 @@ export default function CoachHomeScreen() {
         />
 
         <View style={sq.grid}>
-          {shown.map((a) => {
+          {!loading && !failed && shown.map((a) => {
             return (
               <SquadAthleteCard
                 key={keyOf(a)}
                 athlete={a}
                 results={results.get(keyOf(a)) || []}
+                growth={growth.get(keyOf(a))}
                 onOpen={(discipline) => navigation.navigate('AthleteDetail', {
                   athlete: {
                     id: a.roster_athlete_id,
@@ -271,7 +328,15 @@ export default function CoachHomeScreen() {
               />
             )
           })}
-          {shown.length === 0 && (
+          {/* Skeleton, then failure, then — only once we actually have an
+              answer — the empty state. This screen used to say "No athletes
+              yet" to a coach with fourteen of them, on every cold open and on
+              every dropped connection. */}
+          {loading && <SkeletonCards cards={4} />}
+
+          {!loading && failed && <LoadFailed />}
+
+          {!loading && !failed && shown.length === 0 && (
             <Text style={sq.empty}>
               {athletes.length === 0
                 ? 'No athletes yet — use the + above to add one, or invite an athlete who already has an account.'
@@ -294,11 +359,14 @@ export default function CoachHomeScreen() {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statNum}>
-                {checkedToday}<Text style={styles.statSub}>/{linked.length}</Text>
+                {checkedToday}<Text style={styles.statSub}>/{withAccountCount}</Text>
               </Text>
-              <Text style={styles.statLabel}>
-                {linked.length === athletes.length ? 'Checked in' : 'Of those with an app'}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.statLabel}>
+                  {withAccountCount === shown.length ? 'Checked in' : 'Of those with an app'}
+                </Text>
+                {withAccountCount !== shown.length && <InfoDot term="rosterAthlete" size={12} />}
+              </View>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -309,7 +377,7 @@ export default function CoachHomeScreen() {
         )}
 
         {/* Needs attention */}
-        {linked.length > 0 && (
+        {shown.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHead}>
               <Ionicons name="alert-circle-outline" size={15} color={colors.orange[500]} />
@@ -322,7 +390,7 @@ export default function CoachHomeScreen() {
               </View>
             ) : (
               items.map((it) => (
-                <TouchableOpacity key={it.key} style={styles.row} activeOpacity={0.6} onPress={() => openAthlete(it.a)}>
+                <TouchableOpacity key={it.key} style={styles.row} activeOpacity={0.6} onPress={() => { tapFeedback(); openParam(it.athlete) }}>
                   <View style={[styles.rowBar, { backgroundColor: it.color }]} />
                   <Ionicons name={it.icon as any} size={16} color={it.color} style={{ marginRight: spacing.sm }} />
                   <View style={{ flex: 1 }}>
@@ -378,7 +446,7 @@ export default function CoachHomeScreen() {
                     {EMOJIS.map((e) => {
                       const on = mine.has(e)
                       return (
-                        <TouchableOpacity key={e} onPress={() => toggleReact(ev, e)} disabled={busy === `${ev.event_key}${e}`}
+                        <TouchableOpacity key={e} onPress={() => { tapFeedback(); toggleReact(ev, e) }} disabled={busy === `${ev.event_key}${e}`}
                           style={[styles.reactBtn, on && styles.reactBtnOn]}>
                           <Text style={[styles.reactEmoji, !on && { opacity: 0.55 }]}>{e}</Text>
                         </TouchableOpacity>
@@ -397,7 +465,7 @@ export default function CoachHomeScreen() {
             <View style={styles.emptyIcon}><Ionicons name="people-outline" size={30} color={onImage.dim} /></View>
             <Text style={styles.emptyTitle}>No linked athletes yet</Text>
             <Text style={styles.emptySub}>Invite athletes from your Squad to see their check-ins, programs and activity here.</Text>
-            <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CoachRoster')}>
+            <TouchableOpacity style={styles.emptyBtn} onPress={() => { tapFeedback(); navigation.navigate('CoachRoster') }}>
               <Text style={styles.emptyBtnText}>Go to Squad</Text>
             </TouchableOpacity>
           </View>
@@ -406,6 +474,9 @@ export default function CoachHomeScreen() {
             Below the squad, because the squad is what you came for and this
             is what you do about it. The context is the athletes ON SCREEN,
             so an answer is about who you can actually see. */}
+        {/* How everyone is, before what everyone did. */}
+        <SquadWellness athletes={shown} checkins={checkins} />
+
         <AssistantCoachBox
           context={{
             squad: filter === null ? 'All athletes'
@@ -430,6 +501,16 @@ export default function CoachHomeScreen() {
 
         <View style={{ height: 8 }} />
       </Animated.ScrollView>
+
+      <ApprovalInbox
+        visible={inboxOpen}
+        userId={user?.id}
+        onClose={() => setInboxOpen(false)}
+        // An answer changes what counts: an approved result becomes eligible
+        // for a PB and for the boards. Everything on this screen is drawn
+        // from that, so it all has to refetch.
+        onChanged={() => { refreshPending(); load(); loadSquads() }}
+      />
 
       <SquadSheet
         mode={sheet}

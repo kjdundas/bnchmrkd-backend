@@ -27,7 +27,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, onImage } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { selectFrom } from '../lib/supabase'
+import { selectFrom, callRpc } from '../lib/supabase'
 import { AlmanacCard, MonoKicker, EmptyState, Stagger, SectionLabel } from '../components/ui'
 import {
   RivalCard,
@@ -54,7 +54,12 @@ import { fetchEvents } from '../lib/events'
 import IndicatorPicker from '../components/IndicatorPicker'
 import { loadIndicators, saveIndicators } from '../lib/indicators'
 import ApprovalInbox, { ApprovalBanner } from '../components/ApprovalInbox'
-import { pendingCountFor } from '../lib/approvals'
+import GetStartedCard from '../components/GetStartedCard'
+import EventPickerSheet from '../components/EventPickerSheet'
+import { athleteSteps } from '../lib/firstRun'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { tapFeedback } from '../lib/haptics'
+import { useApprovals } from '../contexts/ApprovalsContext'
 import { getTier } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
@@ -154,6 +159,24 @@ export default function HomeScreen() {
   // Which discipline Home is currently showing (web calls this activeDiscipline).
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null)
   const [persistedXP, setPersistedXP] = useState<number | null>(null)
+  // First run. The event step is the one that matters: without it there is
+  // no best, no level and no projection, and until now no way to set one.
+  const [eventPickerOpen, setEventPickerOpen] = useState(false)
+  // Reported up by CheckInCard, which already runs this query.
+  const [hasCheckin, setHasCheckin] = useState(false)
+  const [hasCoach, setHasCoach] = useState(false)
+  const [setupHidden, setSetupHidden] = useState(false)
+  const setupKey = `@bnchmrkd_setup_hidden_${user?.id || 'anon'}`
+  useEffect(() => {
+    // Whether they have a coach at all — decides if the connect step is even
+    // relevant, and it is the same RPC the sharing controls use.
+    callRpc('my_coaches')
+      .then((r: any) => setHasCoach(Array.isArray(r) && r.length > 0))
+      .catch(() => {})
+  }, [user?.id])
+  useEffect(() => {
+    AsyncStorage.getItem(setupKey).then((v: string | null) => setSetupHidden(v === '1')).catch(() => {})
+  }, [setupKey])
   const [refreshing, setRefreshing] = useState(false)
   // Which rings the athlete has chosen for the rail, and the picker that
   // edits them. Empty means automatic — see src/lib/indicators.ts.
@@ -168,13 +191,11 @@ export default function HomeScreen() {
   // Anything a coach has sent that hasn't been answered, plus anything this
   // athlete logged that their coach hasn't approved yet. Zero for an athlete
   // with no coach, so the banner never appears for them.
-  const [pendingCount, setPendingCount] = useState(0)
+  // Shared with the tab bar and with the coach side, so there is one answer
+  // to "how many do I owe" rather than one per screen that mounts.
+  const { count: pendingCount, refresh: refreshPending } = useApprovals()
   const [inboxOpen, setInboxOpen] = useState(false)
   const [fadeAnim] = useState(new Animated.Value(0))
-
-  const refreshPending = useCallback(async () => {
-    setPendingCount(user?.id ? await pendingCountFor(user.id) : 0)
-  }, [user])
   // Drives the hero's blur/parallax. Native-driven, so scrolling stays smooth.
   const scrollY = useRef(new Animated.Value(0)).current
 
@@ -522,7 +543,28 @@ export default function HomeScreen() {
         )}
       >
         {/* Anything awaiting an answer comes before anything to read. */}
-        <ApprovalBanner count={pendingCount} onPress={() => setInboxOpen(true)} />
+        {/* Before anything else on a new account: every panel underneath is
+            empty until the event is set, and nothing else explained why. */}
+        <GetStartedCard
+          steps={athleteSteps({
+            hasEvent: !!storedDiscipline,
+            hasResult: performances.length > 0,
+            hasCheckin,
+            hasCoach,
+          })}
+          dismissed={setupHidden}
+          onDismiss={() => {
+            setSetupHidden(true)
+            AsyncStorage.setItem(setupKey, '1').catch(() => {})
+          }}
+          onAct={(step) => {
+            if (step.id === 'event') setEventPickerOpen(true)
+            else if (step.route === 'Log') navigation.navigate('Log' as never)
+            else if (step.route === 'Profile') navigation.navigate('Profile' as never)
+          }}
+        />
+
+        <ApprovalBanner count={pendingCount} onPress={() => { tapFeedback(); setInboxOpen(true) }} />
 
         {/* ── Greeting line (identity moved to AppHeader) ── */}
         <View style={styles.greetingSection}>
@@ -569,7 +611,7 @@ export default function HomeScreen() {
           />
         </Stagger>
 
-        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage /></Stagger>
+        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage onState={setHasCheckin} /></Stagger>
 
         <Stagger index={2}>
           <PerformanceHero
@@ -626,6 +668,14 @@ export default function HomeScreen() {
             above it rather than behind it. */}
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </Animated.ScrollView>
+
+      <EventPickerSheet
+        visible={eventPickerOpen}
+        userId={user?.id}
+        initial={storedDiscipline ? [storedDiscipline] : []}
+        onClose={() => setEventPickerOpen(false)}
+        onSaved={(events) => { setStoredDiscipline(events[0]); loadData() }}
+      />
 
       <ApprovalInbox
         visible={inboxOpen}

@@ -183,7 +183,7 @@ export function Stagger({
 // `accessibilityLabel` is required for icon-only controls (VoiceOver).
 export function Tappable({
   children, onPress, onLongPress, style, disabled, accessibilityLabel,
-  accessibilityState, hitSlop = 8,
+  accessibilityState, accessibilityRole = 'button', accessibilityHint, hitSlop = 8,
 }: {
   children: React.ReactNode
   onPress?: () => void
@@ -193,7 +193,15 @@ export function Tappable({
   accessibilityLabel?: string
   /** Needed by anything that is one of a set — a filter chip, a toggle.
       Without it VoiceOver reads every chip in a row identically. */
-  accessibilityState?: { selected?: boolean; disabled?: boolean; expanded?: boolean }
+  accessibilityState?: {
+    selected?: boolean; disabled?: boolean; expanded?: boolean
+    /** For a switch. VoiceOver reads this as "on"/"off" rather than
+        making the user infer state from the label. */
+    checked?: boolean
+  }
+  /** 'switch' for a toggle, so it is announced as one. */
+  accessibilityRole?: 'button' | 'switch' | 'link' | 'checkbox' | 'radio'
+  accessibilityHint?: string
   hitSlop?: number
 }) {
   return (
@@ -202,8 +210,9 @@ export function Tappable({
       onLongPress={onLongPress}
       disabled={disabled}
       hitSlop={hitSlop}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
       style={({ pressed }) => [
         style as ViewStyle,

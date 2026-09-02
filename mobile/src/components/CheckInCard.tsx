@@ -74,14 +74,19 @@ function Scale({ label, hint, children }: any) {
 }
 
 export default function CheckInCard({
-  athleteId, onImage: over,
+  athleteId, onImage: over, onState,
 }: {
   athleteId?: string | null
   /** True when the card sits over the stadium backdrop rather than on paper. */
   onImage?: boolean
+  /** Reports whether a check-in exists, so the getting-started card can tell
+   *  without running the same query a second time. Two queries for one fact
+   *  is how two parts of a screen start disagreeing. */
+  onState?: (hasCheckin: boolean) => void
 }) {
   const { colors } = useTheme()
   const [row, setRow] = useState<any>(null)
+  React.useEffect(() => { onState?.(!!row) }, [row])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)

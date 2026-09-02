@@ -71,7 +71,13 @@ export default function CoachAssignScreen() {
 
   const [kind, setKind] = useState<EventKind>('race')
   const [title, setTitle] = useState('')
-  const [date, setDate] = useState(todayDay())
+  // Arriving from an empty day in the week view, the date is already the
+  // answer to "when" — asking again would be the screen forgetting what the
+  // coach just tapped.
+  const [date, setDate] = useState(route.params?.day || todayDay())
+  useEffect(() => {
+    if (route.params?.day) setDate(route.params.day)
+  }, [route.params?.day])
   const [notes, setNotes] = useState('')
   // Result fields
   // Session: the lines a coach writes, one per row.
@@ -461,7 +467,6 @@ export default function CoachAssignScreen() {
           <SquadSwitcher
             squads={squads} counts={counts.counts} unassigned={counts.unassigned}
             total={counts.total} value={filter} onChange={setFilter}
-            onAdd={() => navigation.navigate('Home')}
           />
 
           {shown.length > 0 && (
@@ -515,16 +520,41 @@ export default function CoachAssignScreen() {
               </View>
             )}
             {done && done.failed === 0 && (
-              <View style={s.okRow}>
-                <Ionicons name="checkmark-circle" size={15} color={colors.green} style={{ marginTop: 1 }} />
-                <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.green }}>
-                  Sent to {done.ok} {done.ok === 1 ? 'athlete' : 'athletes'}. Anyone with an account
-                  sees it as pending until they accept.
-                </Text>
+              <View style={s.okBlock}>
+                <View style={s.okRow}>
+                  <Ionicons name="checkmark-circle" size={15} color={colors.green} style={{ marginTop: 1 }} />
+                  <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.green }}>
+                    Sent to {done.ok} {done.ok === 1 ? 'athlete' : 'athletes'}. Anyone with an account
+                    sees it as pending until they accept.
+                  </Text>
+                </View>
+
+                {/* The screen used to stop here, with the form still full and
+                    nowhere to go. The thing you just made now exists on a
+                    specific day, and Week can show it with its register — so
+                    offer that rather than leaving the coach to find it. */}
+                {(what === 'session' || what === 'event') && (
+                  <Tappable
+                    onPress={() => {
+                      tapFeedback()
+                      setDone(null)
+                      navigation.navigate('Schedule', { day: date })
+                    }}
+                    accessibilityLabel={`See it on ${dayLabel(date)}`}
+                    style={[s.seeIt, { borderColor: colors.green + '66',
+                      backgroundColor: colors.green + '1A' }]}
+                  >
+                    <Ionicons name="calendar-outline" size={14} color={colors.green} />
+                    <Text style={[s.seeItText, { color: colors.green }]}>
+                      See it on {dayLabel(date)}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={13} color={colors.green} />
+                  </Tappable>
+                )}
               </View>
             )}
 
-            <Tappable onPress={what === 'program' ? () => {} : send}
+            <Tappable onPress={what === 'program' ? () => {} : () => { tapFeedback(); send() }}
               accessibilityLabel="Send to the chosen athletes"
               style={[s.send, {
                 backgroundColor: chosen.length && what !== 'program'
@@ -591,6 +621,13 @@ const s = StyleSheet.create({
   rowMeta: { color: onImage.muted, fontSize: 12, marginTop: 1 },
   empty: { color: onImage.muted, fontSize: 13.5, paddingVertical: 14 },
   errRow: { flexDirection: 'row', gap: 7, marginBottom: 12 },
+  okBlock: { gap: 10 },
+  seeIt: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    minHeight: 42, paddingHorizontal: 14,
+    borderRadius: radius.full, borderWidth: 1, alignSelf: 'flex-start',
+  },
+  seeItText: { fontSize: 13, fontWeight: '700' },
   okRow: { flexDirection: 'row', gap: 7, marginBottom: 12 },
   send: {
     minHeight: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center',

@@ -1,14 +1,21 @@
 // ═══════════════════════════════════════════════════════════════════════
-// ATHLETE COACH LINKS (mobile) — Phase A · A6
-// Pending coach invites (approve / decline) + active coaches (revoke).
+// COACH ↔ ATHLETE LINKS (mobile)
+// Pending invites (approve / decline) + active links (revoke).
 // Backed by get_my_links / respond_to_invite / revoke_link RPCs.
 //   pendingOnly — render only pending invites (or null if none). Home prompt.
+//
+// ONE link, TWO sides. get_my_links returns the same row to both parties and
+// names the other one, so a coach opening their profile was reading their own
+// athletes under the heading "Your coaches" — the component knew the data and
+// not the reader. Every word that depends on which end you are standing at
+// now comes from `role`.
 // ═══════════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useCallback } from 'react'
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius } from '../lib/theme'
 import { callRpc } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Link {
   link_id: string
@@ -19,6 +26,26 @@ interface Link {
 }
 
 export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly?: boolean }) {
+  const { profile } = useAuth()
+  const isCoach = profile?.role === 'coach' || (profile as any)?.account_type === 'coach'
+
+  // The same row, said from whichever end the reader is standing at.
+  const W = isCoach ? {
+    heading: 'Your athletes',
+    icon: 'people-outline',
+    fallbackName: 'Athlete',
+    empty: 'No athletes connected yet. Invite one and they will appear here once they accept.',
+    action: 'Remove',
+    foot: 'Athletes you are linked to share their results with you. Removing one cuts your access to their data immediately.',
+  } : {
+    heading: 'Your coaches',
+    icon: 'people-outline',
+    fallbackName: 'Coach',
+    empty: "No coaches connected. When you approve a coach request, they'll appear here.",
+    action: 'Revoke',
+    foot: 'Coaches you approve can see your results and progress. Revoke anytime to cut access instantly.',
+  }
+
   const [links, setLinks] = useState<Link[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
@@ -105,27 +132,27 @@ export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly
       {!pendingOnly && (
         <View>
           <View style={styles.rowCenter}>
-            <Ionicons name="people-outline" size={14} color={colors.text.muted} />
-            <Text style={styles.sectionKicker}>Your coaches</Text>
+            <Ionicons name={W.icon as any} size={14} color={colors.text.muted} />
+            <Text style={styles.sectionKicker}>{W.heading}</Text>
           </View>
           {active.length === 0 ? (
-            <Text style={styles.empty}>No coaches connected. When you approve a coach request, they'll appear here.</Text>
+            <Text style={styles.empty}>{W.empty}</Text>
           ) : (
             <View style={{ gap: 6, marginTop: spacing.sm }}>
               {active.map((l) => (
                 <View key={l.link_id} style={styles.activeItem}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{l.counterparty_name || 'Coach'}</Text>
+                    <Text style={styles.name}>{l.counterparty_name || W.fallbackName}</Text>
                     {l.counterparty_org ? <Text style={styles.orgSmall}>{l.counterparty_org}</Text> : null}
                   </View>
                   <TouchableOpacity disabled={busy === l.link_id} onPress={() => revoke(l.link_id)}>
-                    <Text style={styles.revoke}>{busy === l.link_id ? '…' : 'Revoke'}</Text>
+                    <Text style={styles.revoke}>{busy === l.link_id ? '…' : W.action}</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           )}
-          <Text style={styles.footnote}>Coaches you approve can see your results and progress. Revoke anytime to cut access instantly.</Text>
+          <Text style={styles.footnote}>{W.foot}</Text>
         </View>
       )}
 

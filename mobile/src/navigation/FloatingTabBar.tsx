@@ -32,6 +32,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { useTheme } from '../contexts/ThemeContext'
 import { onImage } from '../lib/theme'
+import { useApprovals } from '../contexts/ApprovalsContext'
 import { tapFeedback } from '../lib/haptics'
 
 /** Bottom padding a scrolling screen needs so its last row clears the bar. */
@@ -47,6 +48,7 @@ const ICONS: Record<string, [string, string]> = {
   // Coach side
   Squad: ['people', 'people-outline'],
   Analyse: ['flash', 'flash-outline'],
+  Schedule: ['calendar', 'calendar-outline'],
   Leaderboards: ['podium', 'podium-outline'],
   CoachProfile: ['person', 'person-outline'],
 }
@@ -66,6 +68,10 @@ export default function FloatingTabBar({
   // If the named route isn't in this stack there simply is no button, and the
   // pill takes the full width. That is the correct state before the coach's
   // Assign screen exists, rather than a button that goes nowhere.
+  // Answers owed, so a coach on any tab can see that somebody is waiting.
+  // The badge sits on Home because Home is where the inbox opens.
+  const { count: owed } = useApprovals()
+
   const items = state.routes
     .map((route, index) => ({ route, index }))
     .filter(({ route }) => route.name !== actionRoute)
@@ -137,11 +143,19 @@ export default function FloatingTabBar({
               accessibilityLabel={label}
               style={({ pressed }) => [styles.item, pressed && { opacity: 0.7 }]}
             >
-              <Ionicons
-                name={(isFocused ? on : off) as any}
-                size={21}
-                color={isFocused ? '#FFFFFF' : onImage.navDim}
-              />
+              <View>
+                <Ionicons
+                  name={(isFocused ? on : off) as any}
+                  size={21}
+                  color={isFocused ? '#FFFFFF' : onImage.navDim}
+                />
+                {/* A dot, not a number. The count is on the banner one tap
+                    away; here the only question is "is there anything?", and
+                    a two-digit badge on a 21pt icon is unreadable anyway. */}
+                {route.name === 'Home' && owed > 0 && !isFocused && (
+                  <View style={styles.badge} />
+                )}
+              </View>
               <Text
                 numberOfLines={1}
                 style={[
@@ -202,6 +216,14 @@ const styles = StyleSheet.create({
   item: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     gap: 3, paddingVertical: 8, minHeight: 48,
+  },
+  // Positioned off the icon's top-right, with a ring in the pill's own
+  // colour so it reads as a dot ON the icon rather than a stray pixel.
+  badge: {
+    position: 'absolute', top: -2, right: -4,
+    width: 9, height: 9, borderRadius: 5,
+    backgroundColor: '#8B83FF',
+    borderWidth: 1.5, borderColor: 'rgba(28,30,48,0.98)',
   },
   label: { fontSize: 8.5, letterSpacing: 1, fontWeight: '600' },
 })

@@ -17,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { selectFrom, insertInto } from './supabase'
+import { type Trouble } from './loadState'
 import { countsForAnalysis } from './resultSemantics'
 import { isLowerBetter, sameDiscipline } from './disciplineScience'
 
@@ -25,7 +26,7 @@ export type Subject =
   | { rosterId: string; userId?: never }
 
 /** Results for either kind of athlete, newest first. */
-export async function fetchResults(subject: Subject): Promise<any[]> {
+export async function fetchResults(subject: Subject, trouble?: Trouble): Promise<any[]> {
   const filter = subject.userId
     ? `user_id=eq.${subject.userId}`
     : `roster_athlete_id=eq.${subject.rosterId}`
@@ -34,7 +35,10 @@ export async function fetchResults(subject: Subject): Promise<any[]> {
       filter,
       order: 'competition_date.desc',
     })) as any[]
-  } catch {
+  } catch (e) {
+    // Empty AND reported. Returning [] alone made a timeout look like an
+    // athlete with no results — a false statement about a real person.
+    trouble?.note('results', e)
     return []
   }
 }
@@ -59,7 +63,7 @@ export function subjectOf(athlete: any): Subject | null {
  * never has to know which kind they were.
  */
 export async function fetchResultsForMany(
-  subjects: Subject[],
+  subjects: Subject[], trouble?: Trouble,
 ): Promise<Map<string, any[]>> {
   const userIds = subjects.map((s) => s.userId).filter(Boolean) as string[]
   const rosterIds = subjects.map((s) => s.rosterId).filter(Boolean) as string[]
@@ -78,7 +82,10 @@ export async function fetchResultsForMany(
         const key = r[col]
         if (key) out.get(key)?.push(r)
       }
-    } catch { /* an empty leaderboard beats a crashed one */ }
+    } catch (e) {
+      // Still empty rather than crashed — but no longer silent.
+      trouble?.note(`results:${col}`, e)
+    }
   }
   await Promise.all([pull('user_id', userIds), pull('roster_athlete_id', rosterIds)])
   return out
@@ -195,4 +202,37 @@ export async function recordResultForMany(
     })
   })
   return { ok, failed }
+}
+
+/**
+ * Physical tests for a whole squad, in two queries.
+ *
+ * Same split as results: an account and a roster entry live in different
+ * columns, so the subjects divide cleanly and thirty athletes cost two round
+ * trips rather than thirty.
+ */
+export async function fetchMetricsForMany(
+  subjects: Subject[], trouble?: Trouble,
+): Promise<Map<string, any[]>> {
+  const userIds = subjects.map((s) => s.userId).filter(Boolean) as string[]
+  const rosterIds = subjects.map((s) => s.rosterId).filter(Boolean) as string[]
+  const out = new Map<string, any[]>()
+  for (const id of [...userIds, ...rosterIds]) out.set(id, [])
+
+  const pull = async (col: string, ids: string[]) => {
+    if (!ids.length) return
+    try {
+      const rows = (await selectFrom('athlete_metrics', {
+        filter: `${col}=in.(${ids.join(',')})`,
+        order: 'recorded_at.desc',
+        limit: '2000',
+      })) as any[]
+      for (const r of rows || []) {
+        const key = r[col]
+        if (key) out.get(key)?.push(r)
+      }
+    } catch (e) { trouble?.note(`metrics:${col}`, e) }
+  }
+  await Promise.all([pull('athlete_id', userIds), pull('roster_athlete_id', rosterIds)])
+  return out
 }

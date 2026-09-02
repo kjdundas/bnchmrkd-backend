@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, onImage } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { WA_IMPORT_ENABLED } from '../lib/featureFlags'
 import CoachInvitePanel from '../components/CoachInvitePanel'
 import { useAuth } from '../contexts/AuthContext'
@@ -247,7 +248,7 @@ function AddAthleteModal({
             <Text style={modalStyles.headerTitle}>
               {method === 'manual' ? 'Manual Entry' : method === 'url' ? 'World Athletics Import' : method === 'invite' ? 'Invite Athlete' : 'Add Athlete'}
             </Text>
-            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            <TouchableOpacity onPress={() => { tapFeedback(); handleClose() }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={modalStyles.closeBtn}>
               <Ionicons name="close" size={18} color={onImage.muted} />
             </TouchableOpacity>
@@ -255,7 +256,7 @@ function AddAthleteModal({
 
           {!method && (
             <View style={modalStyles.methodPicker}>
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('invite')} activeOpacity={0.7}>
+              <TouchableOpacity style={modalStyles.methodCard} onPress={() => { tapFeedback(); setMethod('invite') }} activeOpacity={0.7}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(249,115,22,0.08)' }]}>
                   <Ionicons name="mail-outline" size={22} color={colors.orange[500]} />
                 </View>
@@ -266,7 +267,7 @@ function AddAthleteModal({
                 <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
               </TouchableOpacity>
 
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('manual')} activeOpacity={0.7}>
+              <TouchableOpacity style={modalStyles.methodCard} onPress={() => { tapFeedback(); setMethod('manual') }} activeOpacity={0.7}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(167,139,250,0.08)' }]}>
                   <Ionicons name="person-add-outline" size={22} color="#a78bfa" />
                 </View>
@@ -278,7 +279,7 @@ function AddAthleteModal({
               </TouchableOpacity>
 
               {WA_IMPORT_ENABLED && (
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('url')} activeOpacity={0.7}>
+              <TouchableOpacity style={modalStyles.methodCard} onPress={() => { tapFeedback(); setMethod('url') }} activeOpacity={0.7}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(59,130,246,0.08)' }]}>
                   <Ionicons name="globe-outline" size={22} color={colors.blue} />
                 </View>
@@ -294,7 +295,7 @@ function AddAthleteModal({
 
           {method === 'invite' && (
             <View style={{ flex: 1, paddingBottom: spacing.lg }}>
-              <TouchableOpacity onPress={() => setMethod(null)}
+              <TouchableOpacity onPress={() => { tapFeedback(); setMethod(null) }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
                 <Ionicons name="chevron-back" size={16} color={onImage.muted} />
                 <Text style={{ color: onImage.muted, fontSize: 13 }}>Back</Text>
@@ -323,7 +324,7 @@ function AddAthleteModal({
                   {(['Male', 'Female'] as const).map((g) => (
                     <TouchableOpacity key={g}
                       style={[modalStyles.segmentBtn, gender === g && modalStyles.segmentBtnActive]}
-                      onPress={() => setGender(g)}>
+                      onPress={() => { tapFeedback(); setGender(g) }}>
                       <Text style={[modalStyles.segmentText, gender === g && modalStyles.segmentTextActive]}>{g}</Text>
                     </TouchableOpacity>
                   ))}
@@ -337,10 +338,10 @@ function AddAthleteModal({
               </View>
               {error ? <Text style={modalStyles.error}>{error}</Text> : null}
               <TouchableOpacity style={[modalStyles.primaryBtn, loading && { opacity: 0.6 }]}
-                onPress={handleManualSave} disabled={loading}>
+                onPress={() => { tapFeedback(); handleManualSave() }} disabled={loading}>
                 <Text style={modalStyles.primaryBtnText}>{loading ? 'Adding...' : 'Add to Squad'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setMethod(null)} style={modalStyles.backLink}>
+              <TouchableOpacity onPress={() => { tapFeedback(); setMethod(null) }} style={modalStyles.backLink}>
                 <Ionicons name="chevron-back" size={14} color={onImage.muted} />
                 <Text style={modalStyles.backLinkText}>Back</Text>
               </TouchableOpacity>
@@ -365,10 +366,10 @@ function AddAthleteModal({
               ) : null}
               {error ? <Text style={modalStyles.error}>{error}</Text> : null}
               <TouchableOpacity style={[modalStyles.primaryBtn, loading && { opacity: 0.6 }]}
-                onPress={handleUrlImport} disabled={loading}>
+                onPress={() => { tapFeedback(); handleUrlImport() }} disabled={loading}>
                 <Text style={modalStyles.primaryBtnText}>{loading ? 'Importing...' : 'Import Athlete'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setMethod(null)} style={modalStyles.backLink}>
+              <TouchableOpacity onPress={() => { tapFeedback(); setMethod(null) }} style={modalStyles.backLink}>
                 <Ionicons name="chevron-back" size={14} color={onImage.muted} />
                 <Text style={modalStyles.backLinkText}>Back</Text>
               </TouchableOpacity>
@@ -409,7 +410,7 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
   }, [athlete])
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.6} style={cardStyles.cardOuter}>
+    <TouchableOpacity onPress={() => { tapFeedback(); onPress() }} activeOpacity={0.6} style={cardStyles.cardOuter}>
       <View style={cardStyles.card}>
         {/* Avatar with tier-colored ring */}
         <View style={[cardStyles.avatarRing, { borderColor: (tier?.color || onImage.dim) + '30' }]}>
@@ -565,7 +566,7 @@ export default function CoachRosterScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Tappable
-            onPress={() => navigation.goBack()}
+            onPress={() => { tapFeedback(); navigation.goBack() }}
             accessibilityLabel="Back"
             style={{ width: 36, height: 36, borderRadius: 18, marginRight: 4,
                      alignItems: 'center', justifyContent: 'center' }}
@@ -578,14 +579,14 @@ export default function CoachRosterScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
             <TouchableOpacity
               style={styles.scanBtn}
-              onPress={() => navigation.navigate('CoachResults')}
+              onPress={() => { tapFeedback(); navigation.navigate('CoachResults') }}
               activeOpacity={0.7}
             >
               <Ionicons name="scan-outline" size={18} color={colors.orange[500]} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.addBtn}
-              onPress={() => setAddModalVisible(true)}
+              onPress={() => { tapFeedback(); setAddModalVisible(true) }}
               activeOpacity={0.7}
             >
               <Ionicons name="add" size={20} color="#fff" />
@@ -642,7 +643,7 @@ export default function CoachRosterScreen() {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity onPress={() => { tapFeedback(); setSearch('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close-circle" size={16} color={onImage.dim} />
             </TouchableOpacity>
           )}
@@ -655,7 +656,7 @@ export default function CoachRosterScreen() {
         {ageGroups.map(ag => (
           <TouchableOpacity key={ag}
             style={[styles.chip, filterAgeGroup === ag && styles.chipActive]}
-            onPress={() => setFilterAgeGroup(ag)}>
+            onPress={() => { tapFeedback(); setFilterAgeGroup(ag) }}>
             <Text style={[styles.chipText, filterAgeGroup === ag && styles.chipTextActive]}>
               {ag === 'all' ? 'All' : ag}
             </Text>
@@ -702,7 +703,7 @@ export default function CoachRosterScreen() {
             <AthleteCard
               key={athlete.id}
               athlete={athlete}
-              onPress={() => navigation.navigate('AthleteDetail', { athlete })}
+              onPress={() => { tapFeedback(); navigation.navigate('AthleteDetail', { athlete }) }}
             />
           ))}
           <View style={{ height: 40 }} />

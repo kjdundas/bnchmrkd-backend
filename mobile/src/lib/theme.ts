@@ -313,6 +313,27 @@ export const onImage = {
   dim: 'rgba(255,255,255,0.44)',
   divider: 'rgba(255,255,255,0.14)',
 
+  // ── Controls ────────────────────────────────────────────────────
+  // Chips, segmented toggles and day pills — anything small whose LABEL
+  // has to be read, sitting high on the screen where the backdrop is
+  // still at full strength because nothing has been scrolled yet.
+  //
+  // `card` above cannot do this job and the measurement is the reason.
+  // A 10% WHITE plate lifts the ground toward the ink, so over a sunlit
+  // wall it makes contrast worse, not better: the Analyse filter row was
+  // 1.74:1 on a white plate and 2.25:1 with no plate at all. The plate
+  // has to pull the ground DOWN.
+  //
+  // Measured on the brightest pixels a chip actually lands on in a real
+  // screenshot — rgb(170,167,149), the gym window:
+  //   white 10%   idle 1.74:1   active 2.35:1
+  //   ground 42%  idle 3.66:1   active 5.17:1
+  //   ground 78%  idle 7.12:1   active 10.36:1  ← this
+  // Over the flat dark ground it stays a chip rather than vanishing,
+  // because chipEdge carries the shape when the fill matches behind it.
+  chipPlate: 'rgba(11,12,24,0.78)',
+  chipEdge: 'rgba(255,255,255,0.22)',
+
   // ── Navigation chrome ───────────────────────────────────────────
   // The floating tab bar has to stay legible over two opposite grounds:
   // a blown-out photo on Home, and the flat #0B0C18 ground everywhere

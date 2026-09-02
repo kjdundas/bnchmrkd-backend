@@ -33,6 +33,8 @@ import CoachResultsScreen from '../screens/CoachResultsScreen'
 import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
 import CoachAssignScreen from '../screens/CoachAssignScreen'
 import CoachLeaderboardScreen from '../screens/CoachLeaderboardScreen'
+import CoachScheduleScreen from '../screens/CoachScheduleScreen'
+import { ApprovalsProvider } from '../contexts/ApprovalsContext'
 import AthleteDetailScreen from '../screens/AthleteDetailScreen'
 
 const Tab = createBottomTabNavigator()
@@ -82,6 +84,9 @@ function CoachTabs() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Home" component={CoachHomeScreen} options={{ tabBarLabel: 'HOME' }} />
+      {/* Second slot, where Programs sits for an athlete — the same place in
+          the bar for the same kind of question, asked from the other side. */}
+      <Tab.Screen name="Schedule" component={CoachScheduleScreen} options={{ tabBarLabel: 'WEEK' }} />
       <Tab.Screen name="Assign" component={CoachAssignScreen} options={{ tabBarLabel: 'ASSIGN' }} />
       <Tab.Screen name="Leaderboards" component={CoachLeaderboardScreen} options={{ tabBarLabel: 'BOARDS' }} />
       <Tab.Screen name="Analyse" component={CoachAnalyseScreen} options={{ tabBarLabel: 'ANALYSE' }} />
@@ -121,6 +126,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       {session ? (
+        <ApprovalsProvider>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen
             name="MainTabs"
@@ -132,6 +138,7 @@ export default function AppNavigator() {
           <Stack.Screen name="AthleteDetail" component={AthleteDetailScreen} />
           <Stack.Screen name="CoachResults" component={CoachResultsScreen} />
         </Stack.Navigator>
+        </ApprovalsProvider>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />

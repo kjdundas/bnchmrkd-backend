@@ -108,12 +108,18 @@ export function checkinStatus(c: CheckinRow): ReadinessStatus {
   return { level, label: READINESS_LABEL[level], reasons }
 }
 
-export function todayStr(): string {
-  const d = new Date()
+/**
+ * Local calendar date. `at` exists so callers — and the tests behind them —
+ * can ask about a specific moment instead of about whenever the suite
+ * happens to run. A check-in freshness test that passes in the morning and
+ * fails at 00:30 is a test nobody keeps.
+ */
+export function todayStr(at?: number | Date): string {
+  const d = at == null ? new Date() : new Date(at)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function isToday(checkin: CheckinRow): boolean {
+export function isToday(checkin: CheckinRow, at?: number | Date): boolean {
   if (!checkin || !checkin.checkin_date) return false
-  return String(checkin.checkin_date).slice(0, 10) === todayStr()
+  return String(checkin.checkin_date).slice(0, 10) === todayStr(at)
 }

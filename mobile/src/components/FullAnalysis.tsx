@@ -232,9 +232,20 @@ interface FullAnalysisProps {
   age: number
   sex: string  // 'M' or 'F'
   athleteName?: string
+  /**
+   * False where the screen already leads with its own hero card.
+   *
+   * On the coach's Analyse screen this component IS the whole page and the
+   * hero is its opening; on an athlete's detail screen the same mark, tier,
+   * percentile and age group are already at the top, and printing them
+   * again halfway down reads as a rendering fault rather than a summary.
+   */
+  showHero?: boolean
 }
 
-export default function FullAnalysis({ discipline, mark, age, sex, athleteName }: FullAnalysisProps) {
+export default function FullAnalysis({
+  discipline, mark, age, sex, athleteName, showHero = true,
+}: FullAnalysisProps) {
   const ageGroup = getAgeGroup(age)
   const lower = isLowerBetter(discipline)
   const tier = getTier(discipline, sex, ageGroup, mark)
@@ -338,8 +349,8 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
       <ActDivider number="I" title="Snapshot" />
 
       {/* Hero PB */}
+      {showHero && (
       <View style={s.heroCard}>
-        <View pointerEvents="none" style={s.heroGlow} />
         <View style={s.heroInner}>
           {athleteName && <Text style={s.heroName}>{athleteName}</Text>}
           <Text style={s.heroDiscipline}>{discipline} · {sex === 'F' ? 'Female' : 'Male'} · Age {age}</Text>
@@ -378,6 +389,7 @@ export default function FullAnalysis({ discipline, mark, age, sex, athleteName }
           </View>
         </View>
       </View>
+      )}
 
       {/* Editorial narrative */}
       <View style={s.section}>
@@ -817,10 +829,6 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(23,25,53,0.92)',
     borderWidth: 1, borderColor: 'rgba(249,115,22,0.28)',
     borderRadius: radius.lg, marginBottom: spacing.md,
-  },
-  heroGlow: {
-    position: 'absolute', top: -60, left: -60, width: 160, height: 160,
-    borderRadius: 80, backgroundColor: colors.orange[500], opacity: 0.08,
   },
   heroInner: { padding: spacing.xl, alignItems: 'center' },
   heroName: { fontSize: 20, fontWeight: '700', color: colors.text.primary, marginBottom: 2 },

@@ -25,6 +25,7 @@ import { formatMark } from '../lib/disciplineScience'
 import { pbOf, trendOf, inEvent } from '../lib/athleteResults'
 import { eventsOf, type SquadAthlete } from '../lib/squads'
 import { ageFromDob } from '../lib/age'
+import { GROWTH_TONE, type GrowthReading } from '../lib/growth'
 
 export function initialsOfName(name: string): string {
   const w = (name || '').trim().split(/\s+/).filter(Boolean)
@@ -33,10 +34,12 @@ export function initialsOfName(name: string): string {
 }
 
 export default function SquadAthleteCard({
-  athlete, results, onOpen, onLongPress,
+  athlete, results, growth, onOpen, onLongPress,
 }: {
   athlete: SquadAthlete
   results: any[]
+  /** Measured stature velocity, when there are enough heights to say. */
+  growth?: GrowthReading | null
   /** Opens the full profile, at whichever event is showing. */
   onOpen: (discipline: string) => void
   onLongPress?: () => void
@@ -59,6 +62,11 @@ export default function SquadAthleteCard({
   const trend = useMemo(() => trendOf(results, chosen), [results, chosen])
   const count = useMemo(() => inEvent(results, chosen).length, [results, chosen])
   const age = ageFromDob(athlete.dob)
+
+  // Only shown where it means something. A 24-year-old is not in a spurt,
+  // and a badge that appears on every card is a badge nobody reads.
+  const spurt = growth && (growth.level === 'rapid' || growth.level === 'watch')
+    && age != null && age < 19 ? growth : null
 
   const trendTone = trend === 'up' ? colors.green : trend === 'down' ? colors.red : onImage.dim
   const trendIcon = trend === 'up' ? 'trending-up' : trend === 'down' ? 'trending-down' : 'remove'
@@ -83,6 +91,21 @@ export default function SquadAthleteCard({
       </View>
 
       <Text style={s.name} numberOfLines={1}>{athlete.name}</Text>
+
+      {/* Above the event chips, below the name: a coach scanning a squad
+          should meet this before they meet the marks, because it changes
+          how the marks underneath it should be read. */}
+      {!!spurt && (
+        <View style={[s.growth, {
+          borderColor: GROWTH_TONE[spurt.level] + '66',
+          backgroundColor: GROWTH_TONE[spurt.level] + '1F',
+        }]}>
+          <Ionicons name="resize-outline" size={11} color={GROWTH_TONE[spurt.level]} />
+          <Text style={[s.growthText, { color: GROWTH_TONE[spurt.level] }]} numberOfLines={1}>
+            {spurt.velocity?.toFixed(1)} cm/yr
+          </Text>
+        </View>
+      )}
       <Text style={s.meta} numberOfLines={1}>
         {[age ? `${age}` : null, athlete.athlete_user_id ? null : 'no account']
           .filter(Boolean).join(' · ') || ' '}
@@ -148,6 +171,13 @@ const s = StyleSheet.create({
   },
   name: { color: onImage.ink, fontSize: 14.5, fontWeight: '700', letterSpacing: -0.2, marginTop: 9 },
   meta: { color: onImage.muted, fontSize: 11.5, marginTop: 1 },
+  growth: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    alignSelf: 'flex-start', marginTop: 5,
+    paddingHorizontal: 6, paddingVertical: 2.5,
+    borderRadius: 5, borderWidth: 1,
+  },
+  growthText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
   events: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 9 },
   event: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
   eventText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.2 },

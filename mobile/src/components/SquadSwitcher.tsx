@@ -31,7 +31,8 @@ export default function SquadSwitcher({
   total: number
   value: SquadFilter
   onChange: (v: SquadFilter) => void
-  onAdd: () => void
+  /** Omitted where squads cannot be created — the + is then not shown. */
+  onAdd?: () => void
   /** Long-press a squad to rename or remove it. */
   onEdit?: (s: Squad) => void
 }) {
@@ -84,13 +85,15 @@ export default function SquadSwitcher({
         chip('unassigned', 'Unassigned', unassigned, value === 'unassigned',
              () => onChange('unassigned'))}
 
-      <Tappable
-        onPress={() => { tapFeedback(); onAdd() }}
-        accessibilityLabel="Add a squad or an athlete"
-        style={[s.add, { borderColor: onImage.cardBorder, backgroundColor: onImage.card }]}
-      >
-        <Ionicons name="add" size={18} color={onImage.ink} />
-      </Tappable>
+      {!!onAdd && (
+        <Tappable
+          onPress={() => { tapFeedback(); onAdd() }}
+          accessibilityLabel="Add a squad or an athlete"
+          style={[s.add, { borderColor: onImage.cardBorder, backgroundColor: onImage.card }]}
+        >
+          <Ionicons name="add" size={18} color={onImage.ink} />
+        </Tappable>
+      )}
     </ScrollView>
   )
 }
