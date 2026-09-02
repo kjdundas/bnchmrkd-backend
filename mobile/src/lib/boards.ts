@@ -119,49 +119,21 @@ export async function fetchScopeCounts(opts: {
   }
 }
 
-// ── The ladder ────────────────────────────────────────────────────────
+// ── Drawing the field ────────────────────────────────────────────────
 //
-// Rows are POSITIONS, evenly spaced, and that is deliberate rather than a
-// simplification. A chart that spaces marks by value leaks: measure the
-// pixels, take your own labelled mark as the scale, and every other
-// athlete's number falls out of the picture. Ordinal rows carry no such
-// information, and nobody reads a numbered list as a distance.
+// There was a `ladderRows` here that expanded a rank and a field size into
+// a list of rows to draw — podium, you and your neighbours, last place,
+// with gap markers between. The screen rendered each of those as a
+// full-width bar, and since the device never receives anybody else's value
+// by design, seven of the eight bars were empty.
 //
-// A long board collapses rather than scrolls: the podium, you and your
-// neighbours, and last place. Those are the rows an athlete looks for.
-
-export type LadderRow =
-  | { kind: 'pos'; pos: number; me: boolean }
-  | { kind: 'gap' }
-
-/** At or under this, show every position — a collapse would hide nothing. */
-export const LADDER_FULL_UPTO = 8
-
-export function ladderRows(rank: number, field: number): LadderRow[] {
-  if (!Number.isFinite(rank) || !Number.isFinite(field) || field < 1) return []
-  const at = (p: number): LadderRow => ({ kind: 'pos', pos: p, me: p === rank })
-
-  if (field <= LADDER_FULL_UPTO) {
-    return Array.from({ length: field }, (_, i) => at(i + 1))
-  }
-
-  const keep = new Set<number>([1, 2, 3, rank - 1, rank, rank + 1, field])
-  const shown = [...keep].filter((p) => p >= 1 && p <= field).sort((a, b) => a - b)
-
-  const out: LadderRow[] = []
-  let prev = 0
-  for (const p of shown) {
-    const missing = p - prev - 1
-    // One skipped row is shown rather than elided — a gap marker standing in
-    // for a single position is noise, and it makes the list read as longer
-    // than it is.
-    if (missing === 1) out.push(at(p - 1))
-    else if (missing > 1) out.push({ kind: 'gap' })
-    out.push(at(p))
-    prev = p
-  }
-  return out
-}
+// That is worse than drawing nothing. A bar implies a quantity, so a column
+// of empty ones reads as data that failed to load — it made the privacy
+// guarantee look like a bug. `FieldStrip` now draws the two facts we
+// actually hold, the size of the field and which position is yours, and it
+// does it in one element rather than nine rows.
+//
+// The ordinal below survives because an athlete still says "sixth" out loud.
 
 /** "4th", "1st", "22nd" — the ordinal an athlete would say out loud. */
 export function ordinal(n: number): string {

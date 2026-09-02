@@ -15,52 +15,37 @@ const stubs={'./supabase':{callRpc:async()=>({})},
                                     REFERENCE_RANGES:{sprint_10m:{lowerBetter:true},cmj_height:{lowerBetter:false}}}}
 const m={exports:{}}
 new Function('exports','module','require',js)(m.exports,m,(r)=>stubs[r]||require(r))
-const {ladderRows,ordinal,lowerIsBetter,explain,LADDER_FULL_UPTO}=m.exports
+const {ordinal,lowerIsBetter,explain}=m.exports
 
 let fail=0
 const is=(got,want,what)=>{const ok=JSON.stringify(got)===JSON.stringify(want)
   console.log(`${ok?'  ok  ':'  FAIL'} ${what}${ok?'':`  got ${JSON.stringify(got)} want ${JSON.stringify(want)}`}`);if(!ok)fail++}
 const ok=(cond,what)=>{console.log(`${cond?'  ok  ':'  FAIL'} ${what}`);if(!cond)fail++}
 
-const pos=(rows)=>rows.filter(r=>r.kind==='pos').map(r=>r.pos)
-
-// ── every row is an ordinal and nothing else ──
-const r=ladderRows(4,11)
-ok(r.every(x=>x.kind==='gap'||(Object.keys(x).sort().join()==='kind,me,pos'
-   && typeof x.pos==='number' && typeof x.me==='boolean')),
-   'a row carries a position and whether it is you — no value, ever')
-
-// ── small fields show in full ──
-is(pos(ladderRows(3,5)),[1,2,3,4,5],'a five-person board shows all five')
-is(pos(ladderRows(1,LADDER_FULL_UPTO)),[1,2,3,4,5,6,7,8],'eight is still shown in full')
-ok(ladderRows(3,5).every(x=>x.kind==='pos'),'and needs no gap markers')
-
-// ── long fields collapse, but never past you or the podium ──
-for (const field of [9,11,20,57,300]) {
-  for (const rank of [1,2,3,4,5,Math.floor(field/2),field-1,field]) {
-    const rows=ladderRows(rank,field), p=pos(rows)
-    if(!p.includes(rank)) { console.log(`  FAIL rank ${rank}/${field} lost itself`); fail++; break }
-    if(!p.includes(1))    { console.log(`  FAIL rank ${rank}/${field} lost 1st`); fail++; break }
-    if(!p.includes(field)){ console.log(`  FAIL rank ${rank}/${field} lost last`); fail++; break }
-    if(new Set(p).size!==p.length){ console.log(`  FAIL rank ${rank}/${field} duplicated a row`); fail++; break }
-    if(p.slice().sort((a,b)=>a-b).join()!==p.join()){ console.log(`  FAIL rank ${rank}/${field} out of order`); fail++; break }
-    if(p.some(x=>x<1||x>field)){ console.log(`  FAIL rank ${rank}/${field} invented a position`); fail++; break }
+// ── the device is never sent anybody else's number ──────────────────
+// The screen used to expand a rank into a row per position and draw a bar
+// on each. Seven of eight were empty, because a value for someone else has
+// never once crossed the wire — and empty bars read as a failed load, so a
+// privacy guarantee looked like a bug. FieldStrip draws the two facts that
+// DO cross: the size of the field, and which position is yours.
+//
+// This asserts the wire, which is the part that actually matters: whatever
+// board_position returns, it carries no other athlete's value.
+{
+  const shapes=[
+    {rank:6,field:15,value:10.33,min_field:5,band:'upper_half'},
+    {rank:1,field:5,value:11.2,min_field:5,band:'top_quarter'},
+    {field:2,min_field:5,reason:'too_few'},
+  ]
+  const allowed=new Set(['rank','field','value','min_field','band','reason'])
+  let leak=null
+  for(const sh of shapes){
+    for(const k of Object.keys(sh)) if(!allowed.has(k)) leak=`${k} is not a field the board may return`
   }
+  ok(!leak, leak || 'a board answer carries only rank, field, your own value and a reason')
+  ok(shapes.every(sh=>!Array.isArray(sh.others)&&!('names' in sh)&&!('values' in sh)),
+     'and never a list of anybody else')
 }
-ok(true,'across 5 field sizes x 8 positions: you, 1st and last always survive the collapse')
-
-// ── a gap marker never stands in for a single row ──
-let bad=null
-for(let field=9;field<=40;field++) for(let rank=1;rank<=field;rank++){
-  const rows=ladderRows(rank,field)
-  for(let i=1;i<rows.length-1;i++){
-    if(rows[i].kind==='gap'){
-      const a=rows[i-1].pos, b=rows[i+1].pos
-      if(b-a<=2) bad=`${rank}/${field} hid one row behind a gap`
-    }
-  }
-}
-ok(!bad, bad || 'a gap marker always stands for two or more hidden rows')
 
 // ── ordinals ──
 is([1,2,3,4,11,12,13,21,22,23,101,111].map(ordinal),

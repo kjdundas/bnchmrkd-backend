@@ -25,8 +25,11 @@ import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 import ScreenBackdrop from '../components/ScreenBackdrop'
 import { Tappable, MonoKicker, Stagger } from '../components/ui'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { SkeletonCards, LoadFailed } from '../components/LoadState'
 import CorpusStanding from '../components/CorpusStanding'
+import FieldStrip from '../components/FieldStrip'
 import InfoDot from '../components/InfoDot'
 import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
@@ -37,7 +40,7 @@ import { getAgeGroup } from '../lib/performanceLevels'
 import { formatMark } from '../lib/disciplineScience'
 import { isRankable } from '../lib/leaderboard'
 import {
-  SCOPES, BAND_LABEL, fetchPosition, fetchScopeCounts, ladderRows, ordinal,
+  SCOPES, BAND_LABEL, fetchPosition, fetchScopeCounts, ordinal,
   explain, type Scope, type Kind, type Position, type ScopeCounts,
 } from '../lib/boards'
 
@@ -61,6 +64,8 @@ export default function LeaderboardScreen() {
   const [sameGender, setSameGender] = useState(true)
 
   const [pos, setPos] = useState<Position | null>(null)
+  const [stripW, setStripW] = useState(0)
+  const insets = useSafeAreaInsets()
 
   // Placed on the board, or not. Drives which explanation the screen owes
   // you — the suppression rule belongs under a board that HAS placed you,
@@ -151,7 +156,7 @@ export default function LeaderboardScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
       <ScreenBackdrop scrollY={scrollY} image="stadium" />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 130 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE + spacing.xl }}
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={() => { loadMine(); loadBoard() }}
             tintColor={colors.accent[500]} />
@@ -160,7 +165,11 @@ export default function LeaderboardScreen() {
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false })}
       >
-        <View style={{ paddingHorizontal: spacing.lg, paddingTop: 64 }}>
+        {/* paddingTop was a hardcoded 64 — a guess at the status bar that
+            is wrong on any device with a taller notch, which is why the
+            filter chips were rendering under the clock. Every other screen
+            uses the real inset; this one now does too. */}
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: insets.top + spacing.sm }}>
           <MonoKicker color={onImage.dim}>Where you stand</MonoKicker>
           <Text style={[s.h1, { color: onImage.ink }]}>Leaderboard</Text>
           <Text style={[s.lede, { color: onImage.muted }]}>
@@ -344,33 +353,38 @@ export default function LeaderboardScreen() {
                       </Text>
                     )}
 
-                    <View style={s.ladder}>
-                      {ladderRows(pos.rank, pos.field).map((row, i) =>
-                        row.kind === 'gap' ? (
-                          <Text key={`g${i}`} style={[s.gap, { color: colors.text.muted }]}>· · ·</Text>
-                        ) : (
-                          <View
-                            key={row.pos}
-                            style={[s.lrow, {
-                              backgroundColor: row.me ? colors.accent[500] + '2E' : colors.glass.bg,
-                              borderColor: row.me ? colors.accent[500] + '4D' : 'transparent',
-                            }]}
-                          >
-                            <Text style={[s.lpos, { color: row.me ? colors.accent[500] : colors.text.muted }]}>
-                              {ordinal(row.pos)}
-                            </Text>
-                            <View style={[s.lbar, {
-                              backgroundColor: row.me ? colors.accent[500] : colors.glass.border,
-                            }]} />
-                            {row.me && (
-                              <Text style={[s.lme, { color: colors.accent[500] }]}>
-                                You{pos.value != null
-                                  ? ` · ${kind === 'performance' ? formatMark(pos.value, key) : pos.value}`
-                                  : ''}
-                              </Text>
-                            )}
-                          </View>
-                        ))}
+                    {/* The ladder that was here drew a full-width bar for
+                        every position — eight grey bars with nothing in
+                        them, because the device never receives anybody
+                        else's value. A bar implies a quantity, so eight
+                        empty ones read as data that failed to load, which
+                        made a privacy guarantee look like a bug. This draws
+                        only what is known: the size of the field, and which
+                        one is you. */}
+                    <View onLayout={(e) => {
+                      const nw = Math.round(e.nativeEvent.layout.width)
+                      if (nw && nw !== stripW) setStripW(nw)
+                    }}>
+                      {stripW > 0 && (
+                        <FieldStrip
+                          rank={pos.rank}
+                          field={pos.field}
+                          width={stripW}
+                          accent={colors.accent[500]}
+                          dim={colors.glass.border}
+                          ink={colors.text.primary}
+                          muted={colors.text.muted}
+                        />
+                      )}
+                    </View>
+
+                    <View style={[s.mine, { borderTopColor: colors.glass.border }]}>
+                      <Text style={[s.mineL, { color: colors.text.secondary }]}>Your best</Text>
+                      <Text style={[s.mineV, { color: colors.text.primary }]}>
+                        {pos.value != null
+                          ? (kind === 'performance' ? formatMark(pos.value, key) : pos.value)
+                          : '—'}
+                      </Text>
                     </View>
                   </>
                 ) : (
