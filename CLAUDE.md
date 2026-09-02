@@ -62,6 +62,14 @@ Live site: https://www.bnchmrkd.org (Railway, deploys automatically from `main`)
 - `node mobile/scripts/checks/ttokens.js` fails the build on any of the above. Run it after
   touching styles; the other harnesses in that folder cover first-run, boards and corpus logic.
 
+- **`TIER_COLORS` is a FILL ramp. `TIER_INK` is the text ramp.** The fill ramp climbs
+  from #4A4770 so intensity carries tier on a dark surface; used as text it fails —
+  "QUALIFIER" in `TIER_COLORS[4]` over the photo backdrop measured **1.00:1**, glyph and
+  ground both L=0.129. Any tier name, code or number rendered as text uses `TIER_INK`.
+- **Over `ScreenBackdrop`, text is white or near-white, full stop.** No step of either
+  ramp clears AA on a photograph — `TIER_INK[4]` reaches 3.10:1 and even T7 stops at 4.88.
+  The tier is carried by the word itself and by whatever the drawing fills.
+
 ## Performance tiers — calibrated, not asserted
 
 - Senior tiers T4-T7 (Qualifier, Finalist, Medalist, World Class) in

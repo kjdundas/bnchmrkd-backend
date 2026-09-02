@@ -19,7 +19,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { SUPABASE_URL, SUPABASE_ANON_KEY, getCachedToken } from '../lib/supabase'
-import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, TIER_COUNT_SENIOR, buildMatrix, deriveTiers, AGE_GROUPS } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, TIER_COUNT_SENIOR, buildMatrix, deriveTiers, AGE_GROUPS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline, PERFORMANCE_LEVELS } from '../lib/performanceLevels'
 import {
   isLowerBetter,
@@ -370,7 +370,7 @@ export default function FullAnalysis({
           {tier && (
             <View style={[s.heroBadge, { backgroundColor: tier.color + '15', borderColor: tier.color + '25' }]}>
               <View style={[s.heroBadgeDot, { backgroundColor: tier.color }]} />
-              <Text style={[s.heroBadgeText, { color: tier.color }]}>{tier.tierName}</Text>
+              <Text style={[s.heroBadgeText, { color: TIER_INK[tier.tier] || tier.color }]}>{tier.tierName}</Text>
             </View>
           )}
           <View style={s.heroStats}>
@@ -441,7 +441,7 @@ export default function FullAnalysis({
               </Text>
               {isActive && (
                 <View style={[s.youChip, { borderColor: TIER_COLORS[td.tier] + '40' }]}>
-                  <Text style={[s.youChipText, { color: TIER_COLORS[td.tier] }]}>YOU</Text>
+                  <Text style={[s.youChipText, { color: TIER_INK[td.tier] }]}>YOU</Text>
                 </View>
               )}
             </View>

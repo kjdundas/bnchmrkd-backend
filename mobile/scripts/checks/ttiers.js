@@ -148,5 +148,45 @@ for (const t of TRUTH) {
   check('Qualifier → Finalist → Medalist → World Class always gets harder', bad.length === 0, bad.join('\n'))
 }
 
+
+// ── 6. Two ramps, and each one legible where it is used ──────────────
+// TIER_COLORS is a FILL ramp: intensity carries tier on a dark surface.
+// It was also being used as a TEXT colour, and over the stadium backdrop
+// "QUALIFIER" in TIER_COLORS[4] measured 1.00:1 — glyph and ground both at
+// L=0.129, the same colour to three decimals. TIER_INK exists so a tier can
+// be a word without becoming invisible.
+{
+  const { TIER_COLORS, TIER_INK } = load('performanceTiers')
+  const lum = (hex) => {
+    const v = (i) => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    }
+    return 0.2126 * v(1) + 0.7152 * v(3) + 0.0722 * v(5)
+  }
+  const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+  const PANEL = lum('#171935')          // colors.glass.bg, what text sits on
+
+  const inkKeys = Object.keys(TIER_INK)
+  check('there is a text ramp for every tier', inkKeys.length === Object.keys(TIER_COLORS).length,
+    `       ink has ${inkKeys.length}, fills have ${Object.keys(TIER_COLORS).length}`)
+
+  const weak = inkKeys
+    .map((k) => [k, ratio(lum(TIER_INK[k]), PANEL)])
+    .filter(([, r]) => r < 4.5)
+  check('every TIER_INK step clears 4.5:1 on a panel', weak.length === 0,
+    weak.map(([k, r]) => `       T${k}: ${r.toFixed(2)}:1`).join('\n'))
+
+  // And the reason the second ramp had to exist, asserted so nobody
+  // "simplifies" it back to one.
+  const fillsFailing = Object.keys(TIER_COLORS)
+    .filter((k) => ratio(lum(TIER_COLORS[k]), PANEL) < 4.5)
+  check('TIER_COLORS is still a fill ramp, i.e. NOT safe as text',
+    fillsFailing.length > 0,
+    '       every fill colour passes as text — if that is deliberate the two\n'
+    + '       ramps can merge, but check a photograph first: none of them\n'
+    + '       cleared AA over the backdrop.')
+}
+
 console.log(`\n${failures === 0 ? 'all passed' : failures + ' of ' + checks + ' checks failed'}`)
 process.exit(failures === 0 ? 0 : 1)

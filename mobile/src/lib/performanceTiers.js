@@ -10,6 +10,7 @@ import { PERFORMANCE_LEVELS, isTimeDiscipline } from './performanceLevels';
 export const TIER_COUNT_JUNIOR = 6;
 export const TIER_COUNT_SENIOR = 7;
 
+/** @type {Record<number, string>} */
 export const TIER_NAMES = {
   1: 'Emerging',      // Entry — age-group ~25th percentile
   2: 'Developing',    // Solid age-group competitor — ~60th percentile
@@ -20,6 +21,7 @@ export const TIER_NAMES = {
   7: 'World Class',   // Senior only — world-record-adjacent
 };
 
+/** @type {Record<number, string>} */
 export const TIER_SHORT = {
   1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7',
 };
@@ -35,6 +37,7 @@ export const TIER_SHORT = {
 // coach boards, athlete detail — so the ramp climbs toward light. The old
 // one climbed from near-black, which meant T1 and T2 were invisible on the
 // surfaces they were drawn on.
+/** @type {Record<number, string>} */
 export const TIER_COLORS = {
   1: '#4A4770',   // indigo-grey — present, not shouting
   2: '#585096',
@@ -45,7 +48,42 @@ export const TIER_COLORS = {
   7: '#C9C4FF',   // apex
 };
 
+// ── TIER_COLORS IS A FILL RAMP. IT IS NOT A TEXT RAMP. ──────────────
+//
+// The ramp above climbs from #4A4770 (L=0.071) to #C9C4FF (L=0.591) so that
+// intensity carries tier on a dark surface. That is right for a bar, a lane
+// or a chip background, and wrong for a word.
+//
+// Measured on the live hero: "QUALIFIER" drawn in TIER_COLORS[4] over the
+// stadium photograph scored 1.00:1 — the glyph and the ground either side
+// of it were both L=0.129, the same colour to three decimal places. The
+// text shadow was working; it had darkened the surround to exactly the
+// luminance of the letters. On a dark panel it is less severe but still
+// fails: T1 lands at 1.95:1.
+//
+// So there are two ramps. TIER_INK is the same hue walked up in lightness
+// until every step clears AA on a panel — 5.2:1 at T1 through 14.2:1 at T7.
+// Use it for any tier name, short code or number rendered as TEXT.
+/** @type {Record<number, string>} */
+export const TIER_INK = {
+  1: '#8B7EF5',
+  2: '#9C92F7',
+  3: '#ACA3F8',
+  4: '#BCB5F9',
+  5: '#CAC4FA',
+  6: '#DAD6FC',
+  7: '#EAE8FD',
+};
+
+// And a warning that no ramp solves: OVER A PHOTOGRAPH, none of these work
+// either. Against the measured backdrop ground, TIER_INK[4] reaches only
+// 3.10:1 and even T7 stops at 4.88. Text laid on ScreenBackdrop is white or
+// near-white, full stop — the tier is already carried by the word itself and
+// by whatever the drawing fills in the tier's colour, which sits on a ground
+// it controls rather than one the photographer chose.
+
 // Opacity stops for building layered orange washes (used by cell backgrounds).
+/** @type {Record<number, number>} */
 export const TIER_OPACITY = {
   1: 0.08,
   2: 0.16,

@@ -29,7 +29,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
-import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
 import { formatMark, isLowerBetter } from '../lib/disciplineScience'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
@@ -452,7 +452,7 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
           {tier ? (
             <View style={[cardStyles.tierBadge, { backgroundColor: tier.color + '14', borderColor: tier.color + '25' }]}>
               <View style={[cardStyles.tierDot, { backgroundColor: tier.color }]} />
-              <Text style={[cardStyles.tierText, { color: tier.color }]}>
+              <Text style={[cardStyles.tierText, { color: TIER_INK[tier.tier] || tier.color }]}>
                 {TIER_SHORT[tier.tier]}
               </Text>
             </View>

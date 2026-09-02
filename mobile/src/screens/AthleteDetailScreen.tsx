@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { useTheme } from '../contexts/ThemeContext'
-import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
 import { isLowerBetter, performancePercentile, formatMark } from '../lib/disciplineScience'
@@ -251,7 +251,7 @@ export default function AthleteDetailScreen() {
               {tier && (
                 <View style={[styles.heroBadge, { backgroundColor: tier.color + '15', borderColor: tier.color + '25' }]}>
                   <View style={[styles.heroBadgeDot, { backgroundColor: tier.color }]} />
-                  <Text style={[styles.heroBadgeText, { color: tier.color }]}>{tier.tierName}</Text>
+                  <Text style={[styles.heroBadgeText, { color: TIER_INK[tier.tier] || tier.color }]}>{tier.tierName}</Text>
                 </View>
               )}
 

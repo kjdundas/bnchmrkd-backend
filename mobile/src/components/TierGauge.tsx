@@ -127,7 +127,17 @@ export default function TierGauge({
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end', maxWidth: '42%' }}>
-          <Text numberOfLines={1} style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color, fontWeight: weight.bold, ...LIFT }}>
+          {/* WHITE, not the tier colour. Measured over the stadium shot this
+              label scored 1.00:1 in TIER_COLORS[4] — glyph and ground both
+              L=0.129, the same colour to three decimals. The shadow was
+              working; it had darkened the surround to exactly the luminance
+              of the letters. No step of any tier ramp clears AA on a
+              photograph, so the word goes white and the tier is carried by
+              the lane fill, which sits on a ground the drawing controls. */}
+          <Text numberOfLines={1} style={{
+            fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase',
+            color: onDark.ink, fontWeight: weight.bold, ...LIFT,
+          }}>
             {atTop ? 'Top tier' : nextTierName || 'Next'}
           </Text>
           <Text style={{ fontSize: typeScale.caption, color: onDark.ink, marginTop: 2, ...numerals, ...LIFT }}>

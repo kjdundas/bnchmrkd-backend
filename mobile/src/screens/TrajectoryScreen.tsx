@@ -60,7 +60,7 @@ import {
   qualifierZones,
   getCalibration,
 } from '../lib/disciplineScience'
-import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, buildMatrix, AGE_GROUPS } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, buildMatrix, AGE_GROUPS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob, ageExact } from '../lib/age'
 import { countsForAnalysis } from '../lib/resultSemantics'
@@ -448,9 +448,9 @@ function TierPositioningSection({
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           {shortLabel && (
-            <Text style={[styles.tierShortLarge, { color: tier.color }]}>{shortLabel}</Text>
+            <Text style={[styles.tierShortLarge, { color: TIER_INK[tier.tier] || tier.color }]}>{shortLabel}</Text>
           )}
-          <Text style={[styles.tierNameLarge, { color: tier.color }]}>{tier.tierName}</Text>
+          <Text style={[styles.tierNameLarge, { color: TIER_INK[tier.tier] || tier.color }]}>{tier.tierName}</Text>
         </View>
       </View>
 
@@ -850,7 +850,7 @@ function PerformanceMatrixSection({
               <View style={[styles.matrixCell, styles.matrixLabelCell]}>
                 {/* The dot was a 7pt circle repeated seven times down the
                     left edge. The tier colour belongs ON the label. */}
-                <Text style={[styles.matrixTierLabel, { color: TIER_COLORS[t] }]}>{TIER_SHORT[t]}</Text>
+                <Text style={[styles.matrixTierLabel, { color: TIER_INK[t] }]}>{TIER_SHORT[t]}</Text>
               </View>
               {matrix.rows.map((row: any) => {
                 const val = row.cuts[t - 1]
