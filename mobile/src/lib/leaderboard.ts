@@ -14,7 +14,10 @@
 
 import { countsForAnalysis } from './resultSemantics'
 import { isLowerBetter, sameDiscipline } from './disciplineScience'
-import type { SquadAthlete } from './squads'
+import { isLowerBetter as metricLowerIsBetter, countsAsMetric } from './metricSemantics'
+import { eventsOf, type SquadAthlete } from './squads'
+import { ageFromDob } from './age'
+import { getAgeGroup } from './performanceLevels'
 
 export type RankMode = 'pb' | 'season'
 
@@ -124,4 +127,149 @@ export function excludedCount(
   }
   return athletes.filter(
     (a) => !shown.has((a.athlete_user_id || a.roster_athlete_id) as string)).length
+}
+
+
+// ── Who is in the running ─────────────────────────────────────────────
+// Each filter is a SET, and an empty set means "all of them" rather than
+// "none of them". That is the difference between a filter row you can leave
+// alone and one you have to fully populate before anything appears.
+
+export type Filters = {
+  disciplines: Set<string>
+  ageGroups: Set<string>
+  genders: Set<string>
+}
+
+export const emptyFilters = (): Filters => ({
+  disciplines: new Set(), ageGroups: new Set(), genders: new Set(),
+})
+
+export function genderOf(a: SquadAthlete): 'M' | 'F' | null {
+  const g = (a.gender || '').trim().toUpperCase()
+  if (!g) return null
+  return g.startsWith('F') || g === 'WOMAN' ? 'F' : 'M'
+}
+
+export function ageGroupOf(a: SquadAthlete): string | null {
+  const age = ageFromDob(a.dob)
+  return age == null ? null : getAgeGroup(age)
+}
+
+/**
+ * An athlete passes a group if it is empty, or if they match it.
+ *
+ * Someone with no date of birth or no recorded sex is EXCLUDED once that
+ * filter is switched on, and included while it is off. Guessing either would
+ * put a person in an age group or a sex category they may not belong to, on
+ * a ranking their coach is going to show them.
+ */
+export function passes(a: SquadAthlete, f: Filters): boolean {
+  if (f.disciplines.size) {
+    const mine = eventsOf(a)
+    if (!mine.some((d) => [...f.disciplines].some((x) => sameDiscipline(d, x)))) return false
+  }
+  if (f.ageGroups.size) {
+    const g = ageGroupOf(a)
+    if (!g || !f.ageGroups.has(g)) return false
+  }
+  if (f.genders.size) {
+    const g = genderOf(a)
+    if (!g || !f.genders.has(g)) return false
+  }
+  return true
+}
+
+const AGE_ORDER = ['U13', 'U15', 'U17', 'U20', 'Senior']
+
+/** Only what this squad actually offers — never a chip that matches nobody. */
+export function filterOptions(athletes: SquadAthlete[]) {
+  const disciplines = new Set<string>()
+  const ageGroups = new Set<string>()
+  const genders = new Set<string>()
+  for (const a of athletes) {
+    for (const d of eventsOf(a)) disciplines.add(d)
+    const g = ageGroupOf(a); if (g) ageGroups.add(g)
+    const s = genderOf(a); if (s) genders.add(s)
+  }
+  return {
+    disciplines: [...disciplines].sort(),
+    ageGroups: [...ageGroups].sort((x, y) => AGE_ORDER.indexOf(x) - AGE_ORDER.indexOf(y)),
+    genders: [...genders].sort(),
+  }
+}
+
+// ── Physical tests ────────────────────────────────────────────────────
+
+export type MetricRow = {
+  athlete: SquadAthlete; value: number; when: string | null; rank: number; results: number
+}
+export type MetricBoard = { key: string; label: string; unit: string; rows: MetricRow[] }
+
+/**
+ * One board per test, best first — and "best" is per test, not per column.
+ * A 10 m split and a squat 1RM both live in this table and run in opposite
+ * directions, so the direction comes from the metric key every time.
+ */
+/**
+ * Tests that are measurements of a body rather than of a performance, and
+ * so are never ranked. Body mass, height, wingspan and every fat metric are
+ * facts about an athlete, not achievements — putting a squad of teenagers in
+ * descending order of body fat is a leaderboard nobody asked for and a good
+ * way to do harm. They still show on the athlete's own profile, where they
+ * belong; they just do not become a table the whole squad can be measured
+ * against.
+ */
+const NEVER_RANKED = new Set<string>([
+  'body_mass', 'standing_height', 'sitting_height', 'wingspan', 'lean_mass',
+  'body_fat', 'body_fat_pct', 'sum_7_skinfolds', 'fat_mass',
+])
+export const isRankable = (key: string) => !NEVER_RANKED.has(key)
+
+export function buildMetricBoards(
+  athletes: SquadAthlete[],
+  metricsBy: Map<string, any[]>,
+): MetricBoard[] {
+  const byKey = new Map<string, MetricBoard>()
+
+  for (const a of athletes) {
+    const key = (a.athlete_user_id || a.roster_athlete_id) as string
+    const rows = metricsBy.get(key) || []
+    const bestPer = new Map<string, any>()
+    for (const r of rows) {
+      const v = Number(r?.value)
+      if (!r?.metric_key || !isRankable(r.metric_key) || !Number.isFinite(v)) continue
+      // The same gate the athlete's own screens use — a test the coach has
+      // not answered cannot move the board they are answering it on.
+      if (!countsAsMetric(r)) continue
+      const lower = metricLowerIsBetter(r.metric_key)
+      const cur = bestPer.get(r.metric_key)
+      if (!cur || (lower ? v < Number(cur.value) : v > Number(cur.value))) bestPer.set(r.metric_key, r)
+    }
+    for (const [k, r] of bestPer) {
+      const board: MetricBoard = byKey.get(k)
+        || { key: k, label: r.metric_label || k, unit: r.unit || '', rows: [] }
+      board.rows.push({
+        athlete: a, value: Number(r.value), when: r.recorded_at || null, rank: 0,
+        results: rows.filter((x: any) => x.metric_key === k && countsAsMetric(x)).length,
+      })
+      byKey.set(k, board)
+    }
+  }
+
+  const boards = [...byKey.values()]
+  for (const b of boards) {
+    const lower = metricLowerIsBetter(b.key)
+    b.rows.sort((x, y) => (lower ? x.value - y.value : y.value - x.value)
+      || x.athlete.name.localeCompare(y.athlete.name))
+    let rank = 0
+    let prev: number | null = null
+    b.rows.forEach((r, i) => {
+      if (prev === null || r.value !== prev) rank = i + 1
+      r.rank = rank
+      prev = r.value
+    })
+  }
+  boards.sort((x, y) => y.rows.length - x.rows.length || x.label.localeCompare(y.label))
+  return boards
 }
