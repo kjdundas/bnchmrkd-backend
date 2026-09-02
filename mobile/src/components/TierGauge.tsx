@@ -27,7 +27,7 @@
 import React, { useRef, useEffect } from 'react'
 import { View, Text, Animated } from 'react-native'
 import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { onDark, numerals, spacing } from '../lib/theme'
+import { onDark, numerals, spacing, typeScale, weight } from '../lib/theme'
 import { DURATION, EASE, useReducedMotion } from '../lib/motion'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
@@ -145,18 +145,18 @@ export default function TierGauge({
         alignSelf: 'stretch', paddingHorizontal: 2, marginTop: -14,
       }}>
         <View style={{ alignItems: 'flex-start', maxWidth: '42%' }}>
-          <Text style={{ fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: onDark.dim, fontWeight: '700' }}>
+          <Text style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color: onDark.dim, fontWeight: weight.bold }}>
             {floorIsSynthetic ? 'Starting out' : tierName}
           </Text>
-          <Text style={{ fontSize: 12, color: onDark.muted, marginTop: 2, ...numerals }}>
+          <Text style={{ fontSize: typeScale.caption, color: onDark.muted, marginTop: 2, ...numerals }}>
             {floorIsSynthetic ? '' : valueFmt(currentCut)}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end', maxWidth: '42%' }}>
-          <Text numberOfLines={1} style={{ fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: color, fontWeight: '700' }}>
+          <Text numberOfLines={1} style={{ fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase', color: color, fontWeight: weight.bold }}>
             {atTop ? 'Top tier' : nextTierName || 'Next'}
           </Text>
-          <Text style={{ fontSize: 12, color: onDark.muted, marginTop: 2, ...numerals }}>
+          <Text style={{ fontSize: typeScale.caption, color: onDark.muted, marginTop: 2, ...numerals }}>
             {atTop || nextCut == null ? '' : valueFmt(nextCut)}
           </Text>
         </View>
@@ -164,29 +164,29 @@ export default function TierGauge({
 
       {/* What the arc says, in words. */}
       <Text style={{
-        fontSize: 12.5, color: onDark.muted, marginTop: spacing.md, textAlign: 'center',
+        fontSize: typeScale.caption, color: onDark.muted, marginTop: spacing.md, textAlign: 'center',
       }}>
         {atTop
           ? `Your PB of ${valueFmt(pb)} is at the top of this age group.`
           : <>
-              PB <Text style={{ color: onDark.ink, fontWeight: '700' }}>{valueFmt(pb)}</Text>
+              PB <Text style={{ color: onDark.ink, fontWeight: weight.bold }}>{valueFmt(pb)}</Text>
               {' — '}
-              <Text style={{ color: onDark.ink, fontWeight: '700' }}>{pct}%</Text>
+              <Text style={{ color: onDark.ink, fontWeight: weight.bold }}>{pct}%</Text>
               {' of the way to '}{nextTierName}
             </>}
       </Text>
       {showLatest && (
-        <Text style={{ fontSize: 11, color: onDark.dim, marginTop: 4 }}>
+        <Text style={{ fontSize: typeScale.label, color: onDark.dim, marginTop: 4 }}>
           Tick marks this race
         </Text>
       )}
       {!showLatest && latestBelowBand && (
-        <Text style={{ fontSize: 11, color: onDark.dim, marginTop: 4, textAlign: 'center' }}>
+        <Text style={{ fontSize: typeScale.label, color: onDark.dim, marginTop: 4, textAlign: 'center' }}>
           This race was outside your current band — the arc tracks your best.
         </Text>
       )}
       {!showLatest && latestAboveBand && !atTop && (
-        <Text style={{ fontSize: 11, color: onDark.accent, marginTop: 4, textAlign: 'center' }}>
+        <Text style={{ fontSize: typeScale.label, color: onDark.accent, marginTop: 4, textAlign: 'center' }}>
           This race clears {nextTierName} — log it and the band moves up.
         </Text>
       )}

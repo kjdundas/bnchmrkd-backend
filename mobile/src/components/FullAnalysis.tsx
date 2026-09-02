@@ -17,7 +17,7 @@ import {
   Dimensions,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { SUPABASE_URL, SUPABASE_ANON_KEY, getCachedToken } from '../lib/supabase'
 import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, TIER_COUNT_SENIOR, buildMatrix, deriveTiers, AGE_GROUPS } from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline, PERFORMANCE_LEVELS } from '../lib/performanceLevels'
@@ -425,7 +425,7 @@ export default function FullAnalysis({
           return (
             <View key={td.tier} style={s.distRow}>
               <View style={s.distLabel}>
-                <Text style={[s.distTierName, isActive && { color: colors.text.primary, fontWeight: '700' }]}>
+                <Text style={[s.distTierName, isActive && { color: colors.text.primary, fontWeight: weight.bold }]}>
                   T{td.tier}
                 </Text>
                 <Text style={[s.distName, isActive && { color: colors.text.primary }]}>{td.name}</Text>
@@ -436,7 +436,7 @@ export default function FullAnalysis({
                   backgroundColor: isActive ? TIER_COLORS[td.tier] : TIER_COLORS[td.tier] + '40',
                 }]} />
               </View>
-              <Text style={[s.distPct, isActive && { color: colors.text.primary, fontWeight: '700' }]}>
+              <Text style={[s.distPct, isActive && { color: colors.text.primary, fontWeight: weight.bold }]}>
                 {Math.round(td.pct * 100)}%
               </Text>
               {isActive && (
@@ -566,7 +566,7 @@ export default function FullAnalysis({
                         isYou && s.matrixYouCell,
                       ]}>
                         {val != null ? (
-                          <Text style={[s.matrixVal, isYou && { color: colors.orange[500], fontWeight: '700' }]}>
+                          <Text style={[s.matrixVal, isYou && { color: colors.orange[500], fontWeight: weight.bold }]}>
                             {formatPerf(val, discipline)}
                           </Text>
                         ) : (
@@ -686,7 +686,7 @@ export default function FullAnalysis({
                     ]}>
                       <Text style={[
                         s.scenTableVal,
-                        isBase && { color: colors.orange[500], fontWeight: '700' },
+                        isBase && { color: colors.orange[500], fontWeight: weight.bold },
                         meetsFinalist && { color: colors.green },
                       ]}>
                         {formatPerf(val, discipline)}
@@ -770,7 +770,7 @@ export default function FullAnalysis({
                             {isMet && <Ionicons name="checkmark" size={12} color="#fff" />}
                           </View>
                           <View>
-                            <Text style={[s.ladderLabel, isMet && { color: colors.text.primary, fontWeight: '600' }]}>
+                            <Text style={[s.ladderLabel, isMet && { color: colors.text.primary, fontWeight: weight.medium }]}>
                               {rung.label}
                             </Text>
                             {isNext && <Text style={s.ladderNextTag}>NEXT TARGET</Text>}
@@ -781,7 +781,7 @@ export default function FullAnalysis({
                             {formatPerf(rung.threshold, discipline)}
                           </Text>
                           {isMet ? (
-                            <Text style={{ color: colors.green, fontSize: 10, fontWeight: '600' }}>Cleared</Text>
+                            <Text style={{ color: colors.green, fontSize: typeScale.label, fontWeight: weight.medium }}>Cleared</Text>
                           ) : (
                             <Text style={s.ladderGap}>{lower ? '+' : '-'}{Math.abs(gap).toFixed(2)} away</Text>
                           )}
@@ -829,8 +829,8 @@ const s = StyleSheet.create({
   actDivider: { marginTop: spacing.xl, marginBottom: spacing.md },
   actDividerLine: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: spacing.md },
   actDividerContent: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
-  actNumber: { fontSize: 11, fontWeight: '800', color: colors.orange[500], letterSpacing: 1 },
-  actTitle: { fontSize: 18, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.3 },
+  actNumber: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.orange[500], letterSpacing: 1 },
+  actTitle: { fontSize: typeScale.title, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.3 },
 
   // Hero
   heroCard: {
@@ -840,141 +840,141 @@ const s = StyleSheet.create({
     // it whatever the picture happens to be doing.
     backgroundColor: 'rgba(23,25,53,0.92)',
     borderWidth: 1, borderColor: 'rgba(249,115,22,0.28)',
-    borderRadius: radius.lg, marginBottom: spacing.md,
+    borderRadius: radius.card, marginBottom: spacing.md,
   },
   heroInner: { padding: spacing.xl, alignItems: 'center' },
-  heroName: { fontSize: 20, fontWeight: '700', color: colors.text.primary, marginBottom: 2 },
-  heroDiscipline: { fontSize: 11, letterSpacing: 1.5, color: colors.text.muted, fontWeight: '600', textTransform: 'uppercase', marginBottom: spacing.md },
-  heroPb: { fontSize: 44, fontWeight: '800', color: colors.text.primary, letterSpacing: -2, marginBottom: spacing.md },
-  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1, marginBottom: spacing.xl },
-  heroBadgeDot: { width: 6, height: 6, borderRadius: 3 },
-  heroBadgeText: { fontSize: 13, fontWeight: '700' },
+  heroName: { fontSize: typeScale.title, fontWeight: weight.bold, color: colors.text.primary, marginBottom: 2 },
+  heroDiscipline: { fontSize: typeScale.label, letterSpacing: 1.5, color: colors.text.muted, fontWeight: weight.medium, textTransform: 'uppercase', marginBottom: spacing.md },
+  heroPb: { fontSize: typeScale.display, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -2, marginBottom: spacing.md },
+  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.card, borderWidth: 1, marginBottom: spacing.xl },
+  heroBadgeDot: { width: 6, height: 6, borderRadius: radius.full },
+  heroBadgeText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   heroStats: { flexDirection: 'row', gap: spacing.lg, marginBottom: spacing.lg },
   heroStat: { alignItems: 'center', minWidth: 70 },
-  heroStatVal: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
-  heroStatLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.muted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+  heroStatVal: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
+  heroStatLabel: { fontSize: typeScale.micro, letterSpacing: 1, color: colors.text.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   heroStatDiv: { width: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
   tierBar: { flexDirection: 'row', gap: 3, width: '100%' },
-  tierSeg: { flex: 1, height: 3, borderRadius: 1.5 },
+  tierSeg: { flex: 1, height: 3, borderRadius: radius.full },
 
   // Sections
   section: {
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.md,
+    borderRadius: radius.control, padding: spacing.lg, marginBottom: spacing.md,
   },
   sectionHead: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     marginBottom: spacing.md, paddingBottom: spacing.sm,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
   },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: colors.text.primary, flex: 1 },
-  sectionSub: { fontSize: 10, color: colors.text.dimmed },
-  sectionDesc: { fontSize: 12, color: colors.text.muted, lineHeight: 17, marginBottom: spacing.md },
+  sectionTitle: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary, flex: 1 },
+  sectionSub: { fontSize: typeScale.label, color: colors.text.dimmed },
+  sectionDesc: { fontSize: typeScale.caption, color: colors.text.muted, lineHeight: 17, marginBottom: spacing.md },
 
   // Editorial
-  editorial: { fontSize: 14, color: colors.text.secondary, lineHeight: 22 },
+  editorial: { fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 22 },
 
   // Tier distribution
   distRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: spacing.sm },
   distLabel: { flexDirection: 'row', alignItems: 'center', gap: 4, width: 90 },
-  distTierName: { fontSize: 11, fontWeight: '700', color: colors.text.dimmed, width: 22 },
-  distName: { fontSize: 11, color: colors.text.muted },
-  distBarWrap: { flex: 1, height: 8, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 4, overflow: 'hidden' },
-  distBarFill: { height: 8, borderRadius: 4 },
-  distPct: { fontSize: 11, color: colors.text.dimmed, width: 28, textAlign: 'right' },
-  youChip: { paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, borderWidth: 1 },
-  youChipText: { fontSize: 8, fontWeight: '800', letterSpacing: 1 },
+  distTierName: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.text.dimmed, width: 22 },
+  distName: { fontSize: typeScale.label, color: colors.text.muted },
+  distBarWrap: { flex: 1, height: 8, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: radius.full, overflow: 'hidden' },
+  distBarFill: { height: 8, borderRadius: radius.full },
+  distPct: { fontSize: typeScale.label, color: colors.text.dimmed, width: 28, textAlign: 'right' },
+  youChip: { paddingHorizontal: 5, paddingVertical: 1, borderRadius: radius.full, borderWidth: 1 },
+  youChipText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1 },
 
   // Similar athletes
   loadRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm },
-  loadText: { fontSize: 13, color: colors.text.muted },
-  mutedText: { fontSize: 13, color: colors.text.dimmed },
+  loadText: { fontSize: typeScale.caption, color: colors.text.muted },
+  mutedText: { fontSize: typeScale.caption, color: colors.text.dimmed },
   athleteCard: {
-    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: radius.sm,
+    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: radius.chip,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
     padding: spacing.md, marginBottom: spacing.sm,
   },
   athleteHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
   athleteAvatar: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center', alignItems: 'center',
   },
-  athleteInitial: { fontSize: 14, fontWeight: '700', color: colors.text.muted },
-  athleteName: { fontSize: 14, fontWeight: '600', color: colors.text.primary },
-  athleteMeta: { fontSize: 11, color: colors.text.muted },
+  athleteInitial: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.muted },
+  athleteName: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary },
+  athleteMeta: { fontSize: typeScale.label, color: colors.text.muted },
   athletePbWrap: { alignItems: 'flex-end' },
-  athletePbLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.dimmed, fontWeight: '600' },
-  athletePbVal: { fontSize: 16, fontWeight: '700', color: colors.orange[500] },
+  athletePbLabel: { fontSize: typeScale.micro, letterSpacing: 1, color: colors.text.dimmed, fontWeight: weight.medium },
+  athletePbVal: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.orange[500] },
   athleteStats: { flexDirection: 'row', gap: spacing.md, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.04)', paddingTop: spacing.sm },
   athleteStatItem: { flex: 1 },
-  athleteStatLabel: { fontSize: 9, letterSpacing: 0.8, color: colors.text.dimmed, fontWeight: '600', textTransform: 'uppercase' },
-  athleteStatVal: { fontSize: 13, fontWeight: '600', color: colors.text.primary, marginTop: 2 },
+  athleteStatLabel: { fontSize: typeScale.micro, letterSpacing: 0.8, color: colors.text.dimmed, fontWeight: weight.medium, textTransform: 'uppercase' },
+  athleteStatVal: { fontSize: typeScale.caption, fontWeight: weight.medium, color: colors.text.primary, marginTop: 2 },
 
   // Performance matrix
   stepsCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    backgroundColor: 'rgba(249,115,22,0.06)', borderRadius: radius.sm,
+    backgroundColor: 'rgba(249,115,22,0.06)', borderRadius: radius.chip,
     padding: spacing.md, marginBottom: spacing.lg,
     borderWidth: 1, borderColor: 'rgba(249,115,22,0.12)',
   },
-  stepsNum: { fontSize: 32, fontWeight: '800', color: colors.orange[500] },
-  stepsLabel: { fontSize: 14, fontWeight: '600', color: colors.text.primary },
-  stepsGap: { fontSize: 11, color: colors.text.muted, marginTop: 1 },
+  stepsNum: { fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.orange[500] },
+  stepsLabel: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary },
+  stepsGap: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 1 },
   matrixRow: { flexDirection: 'row' },
   matrixCell: { width: 62, paddingVertical: 8, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)' },
   matrixHeaderCell: { borderBottomColor: 'rgba(255,255,255,0.06)' },
   matrixLabelCell: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' },
   matrixActiveCol: { backgroundColor: 'rgba(249,115,22,0.04)' },
-  matrixYouCell: { backgroundColor: 'rgba(249,115,22,0.10)', borderRadius: 4 },
-  matrixHeaderText: { fontSize: 10, fontWeight: '700', color: colors.text.muted, letterSpacing: 0.5 },
-  matrixTierDot: { width: 6, height: 6, borderRadius: 3 },
-  matrixTierLabel: { fontSize: 10, fontWeight: '700', color: colors.text.muted },
-  matrixVal: { fontSize: 10, color: colors.text.secondary, fontWeight: '500' },
-  matrixNull: { fontSize: 10, color: colors.text.dimmed },
+  matrixYouCell: { backgroundColor: 'rgba(249,115,22,0.10)', borderRadius: radius.hair },
+  matrixHeaderText: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.text.muted, letterSpacing: 0.5 },
+  matrixTierDot: { width: 6, height: 6, borderRadius: radius.full },
+  matrixTierLabel: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.text.muted },
+  matrixVal: { fontSize: typeScale.label, color: colors.text.secondary, fontWeight: weight.medium },
+  matrixNull: { fontSize: typeScale.label, color: colors.text.dimmed },
 
   // Trajectory cards
   trajCard: {
-    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: radius.sm,
+    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: radius.chip,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
     padding: spacing.md, marginBottom: spacing.sm,
   },
   trajHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  trajDot: { width: 8, height: 8, borderRadius: 4 },
-  trajLabel: { fontSize: 13, fontWeight: '700' },
-  trajCount: { fontSize: 10, color: colors.text.dimmed, marginLeft: 'auto' },
+  trajDot: { width: 8, height: 8, borderRadius: radius.full },
+  trajLabel: { fontSize: typeScale.caption, fontWeight: weight.bold },
+  trajCount: { fontSize: typeScale.label, color: colors.text.dimmed, marginLeft: 'auto' },
   trajStats: { flexDirection: 'row', gap: spacing.lg },
   trajStatItem: {},
-  trajStatLabel: { fontSize: 9, letterSpacing: 0.8, color: colors.text.dimmed, fontWeight: '600', textTransform: 'uppercase' },
-  trajStatVal: { fontSize: 15, fontWeight: '700', color: colors.text.primary, marginTop: 2 },
-  trajStatSub: { fontSize: 10, color: colors.text.muted, marginTop: 1 },
+  trajStatLabel: { fontSize: typeScale.micro, letterSpacing: 0.8, color: colors.text.dimmed, fontWeight: weight.medium, textTransform: 'uppercase' },
+  trajStatVal: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary, marginTop: 2 },
+  trajStatSub: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 1 },
 
   // Scenarios table
   scenTableRow: { flexDirection: 'row' },
   scenTableCell: { width: 58, paddingVertical: 8, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)' },
   scenTableHeader: { borderBottomColor: 'rgba(255,255,255,0.06)' },
   scenTableActiveCol: { backgroundColor: 'rgba(249,115,22,0.05)' },
-  scenTableHeaderText: { fontSize: 10, fontWeight: '700', color: colors.text.muted },
-  scenTableRate: { fontSize: 10, fontWeight: '600', color: colors.green },
-  scenTableVal: { fontSize: 10, color: colors.text.secondary },
+  scenTableHeaderText: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.text.muted },
+  scenTableRate: { fontSize: typeScale.label, fontWeight: weight.medium, color: colors.green },
+  scenTableVal: { fontSize: typeScale.label, color: colors.text.secondary },
   scenLegend: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.md },
   scenLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  scenLegendDot: { width: 10, height: 10, borderRadius: 2 },
-  scenLegendText: { fontSize: 10, color: colors.text.dimmed },
+  scenLegendDot: { width: 10, height: 10, borderRadius: radius.hair },
+  scenLegendText: { fontSize: typeScale.label, color: colors.text.dimmed },
 
   // Ladder
   ladderRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)',
   },
-  ladderRowNext: { backgroundColor: 'rgba(249,115,22,0.04)', borderRadius: radius.sm, paddingHorizontal: spacing.sm },
+  ladderRowNext: { backgroundColor: 'rgba(249,115,22,0.04)', borderRadius: radius.chip, paddingHorizontal: spacing.sm },
   ladderLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  ladderDot: { width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
-  ladderLabel: { fontSize: 14, color: colors.text.muted },
-  ladderNextTag: { fontSize: 9, fontWeight: '700', color: colors.orange[500], letterSpacing: 1, marginTop: 1 },
-  ladderThreshold: { fontSize: 14, fontWeight: '600', color: colors.text.primary },
-  ladderGap: { fontSize: 10, color: colors.text.dimmed, marginTop: 1 },
+  ladderDot: { width: 22, height: 22, borderRadius: radius.full, justifyContent: 'center', alignItems: 'center' },
+  ladderLabel: { fontSize: typeScale.body, color: colors.text.muted },
+  ladderNextTag: { fontSize: typeScale.micro, fontWeight: weight.bold, color: colors.orange[500], letterSpacing: 1, marginTop: 1 },
+  ladderThreshold: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary },
+  ladderGap: { fontSize: typeScale.label, color: colors.text.dimmed, marginTop: 1 },
   ladderYou: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingVertical: spacing.sm,
@@ -982,12 +982,12 @@ const s = StyleSheet.create({
   ladderYouLine: { flex: 1, height: 1, backgroundColor: colors.orange[500] + '40' },
   ladderYouChip: {
     backgroundColor: colors.orange[500] + '15', borderWidth: 1, borderColor: colors.orange[500] + '30',
-    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: radius.control, paddingHorizontal: 10, paddingVertical: 3,
   },
-  ladderYouText: { fontSize: 10, fontWeight: '700', color: colors.orange[500], letterSpacing: 0.5 },
+  ladderYouText: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.orange[500], letterSpacing: 0.5 },
 
   // Footer
   footer: { alignItems: 'center', marginTop: spacing.xl, paddingVertical: spacing.lg },
-  footerText: { fontSize: 10, color: colors.text.dimmed, letterSpacing: 0.5 },
-  footerBrand: { fontSize: 14, fontWeight: '700', color: colors.orange[500] + '40', marginTop: spacing.xs, letterSpacing: -0.5 },
+  footerText: { fontSize: typeScale.label, color: colors.text.dimmed, letterSpacing: 0.5 },
+  footerBrand: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.orange[500] + '40', marginTop: spacing.xs, letterSpacing: -0.5 },
 })

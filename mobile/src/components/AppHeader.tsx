@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, onImage } from '../lib/theme'
+import { spacing, onImage, weight, radius, typeScale } from '../lib/theme'
 import { Tappable } from './ui'
 import BrandMark from './BrandMark'
 
@@ -85,8 +85,8 @@ export default function AppHeader({ onImage: over }: { onImage?: boolean } = {})
         {/* 15, not 18: two letters in a 44pt circle need the smaller size to
             keep the optical margin one letter had. */}
         <Text style={{
-          color: ink, fontSize: initials.length > 1 ? 15 : 18,
-          fontWeight: '700', letterSpacing: 0.5,
+          color: ink, fontSize: initials.length > 1 ? typeScale.body : typeScale.title,
+          fontWeight: weight.bold, letterSpacing: 0.5,
         }}>
           {initials}
         </Text>
@@ -100,7 +100,7 @@ export default function AppHeader({ onImage: over }: { onImage?: boolean } = {})
         onPress={signOut}
         accessibilityLabel="Sign out"
         style={{
-          width: SLOT, height: SLOT, borderRadius: 12,
+          width: SLOT, height: SLOT, borderRadius: radius.control,
           borderWidth: 1, borderColor: edge,
           backgroundColor: 'transparent',
           alignItems: 'center', justifyContent: 'center',

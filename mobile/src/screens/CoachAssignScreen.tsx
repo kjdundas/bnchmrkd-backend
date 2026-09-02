@@ -23,7 +23,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from './../components/ui'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
@@ -230,8 +230,8 @@ export default function CoachAssignScreen() {
 
   const input = {
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
-    borderColor: onImage.cardBorder, borderRadius: radius.md,
-    paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: onImage.ink,
+    borderColor: onImage.cardBorder, borderRadius: radius.control,
+    paddingHorizontal: 12, minHeight: 48, fontSize: typeScale.body, color: onImage.ink,
   }
 
   return (
@@ -516,14 +516,14 @@ export default function CoachAssignScreen() {
             {!!error && (
               <View style={s.errRow}>
                 <Ionicons name="alert-circle" size={15} color={colors.red} style={{ marginTop: 1 }} />
-                <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.red }}>{error}</Text>
+                <Text style={{ flex: 1, fontSize: typeScale.caption, lineHeight: 18, color: colors.red }}>{error}</Text>
               </View>
             )}
             {done && done.failed === 0 && (
               <View style={s.okBlock}>
                 <View style={s.okRow}>
                   <Ionicons name="checkmark-circle" size={15} color={colors.green} style={{ marginTop: 1 }} />
-                  <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.green }}>
+                  <Text style={{ flex: 1, fontSize: typeScale.caption, lineHeight: 18, color: colors.green }}>
                     Sent to {done.ok} {done.ok === 1 ? 'athlete' : 'athletes'}. Anyone with an account
                     sees it as pending until they accept.
                   </Text>
@@ -578,48 +578,48 @@ export default function CoachAssignScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 34, fontWeight: '700', letterSpacing: -0.9, color: onImage.ink },
-  label: { fontSize: 12.5, color: onImage.muted, marginTop: 16, marginBottom: 8 },
+  h1: { fontSize: typeScale.hero, fontWeight: weight.bold, letterSpacing: -0.9, color: onImage.ink },
+  label: { fontSize: typeScale.caption, color: onImage.muted, marginTop: 16, marginBottom: 8 },
   whats: { flexDirection: 'row', gap: 8, marginTop: 4 },
   what: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    minHeight: 44, borderRadius: radius.md, borderWidth: 1,
+    minHeight: 44, borderRadius: radius.control, borderWidth: 1,
   },
-  whatText: { fontSize: 13, fontWeight: '700' },
+  whatText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   notYet: {
     flexDirection: 'row', gap: 10, marginTop: 18, padding: 14,
-    borderRadius: radius.lg, borderWidth: 1, borderColor: 'rgba(240,167,66,0.35)',
+    borderRadius: radius.card, borderWidth: 1, borderColor: 'rgba(240,167,66,0.35)',
     backgroundColor: 'rgba(240,167,66,0.10)',
   },
-  notYetText: { flex: 1, color: onImage.muted, fontSize: 12.5, lineHeight: 18 },
+  notYetText: { flex: 1, color: onImage.muted, fontSize: typeScale.caption, lineHeight: 18 },
   concern: {
     flexDirection: 'row', gap: 10, marginTop: 16, padding: 13,
-    borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(240,167,66,0.35)',
+    borderRadius: radius.control, borderWidth: 1, borderColor: 'rgba(240,167,66,0.35)',
     backgroundColor: 'rgba(240,167,66,0.10)',
   },
-  concernText: { flex: 1, color: onImage.ink, fontSize: 12.5, lineHeight: 18 },
+  concernText: { flex: 1, color: onImage.ink, fontSize: typeScale.caption, lineHeight: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     minHeight: 38, paddingHorizontal: 12, borderRadius: radius.full, borderWidth: 1,
   },
-  chipText: { fontSize: 13, fontWeight: '700' },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   mini: {
-    minHeight: 48, paddingHorizontal: 13, borderRadius: radius.md, borderWidth: 1,
+    minHeight: 48, paddingHorizontal: 13, borderRadius: radius.control, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
     alignItems: 'center', justifyContent: 'center',
   },
-  miniText: { color: onImage.muted, fontSize: 12.5, fontWeight: '700' },
+  miniText: { color: onImage.muted, fontSize: typeScale.caption, fontWeight: weight.bold },
   selectAll: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 34 },
-  selectAllText: { fontSize: 13, fontWeight: '700' },
+  selectAllText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   list: { paddingHorizontal: spacing.lg, gap: 8, marginTop: 8 },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    minHeight: 58, paddingHorizontal: 14, borderRadius: radius.lg, borderWidth: 1,
+    minHeight: 58, paddingHorizontal: 14, borderRadius: radius.card, borderWidth: 1,
   },
-  rowName: { color: onImage.ink, fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
-  rowMeta: { color: onImage.muted, fontSize: 12, marginTop: 1 },
-  empty: { color: onImage.muted, fontSize: 13.5, paddingVertical: 14 },
+  rowName: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  rowMeta: { color: onImage.muted, fontSize: typeScale.caption, marginTop: 1 },
+  empty: { color: onImage.muted, fontSize: typeScale.caption, paddingVertical: 14 },
   errRow: { flexDirection: 'row', gap: 7, marginBottom: 12 },
   okBlock: { gap: 10 },
   seeIt: {
@@ -627,10 +627,10 @@ const s = StyleSheet.create({
     minHeight: 42, paddingHorizontal: 14,
     borderRadius: radius.full, borderWidth: 1, alignSelf: 'flex-start',
   },
-  seeItText: { fontSize: 13, fontWeight: '700' },
+  seeItText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   okRow: { flexDirection: 'row', gap: 7, marginBottom: 12 },
   send: {
-    minHeight: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center',
+    minHeight: 52, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center',
   },
-  sendText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  sendText: { color: '#FFFFFF', fontSize: typeScale.body, fontWeight: weight.bold },
 })

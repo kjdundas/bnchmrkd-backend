@@ -13,7 +13,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { callRpc } from '../lib/supabase'
 import { Tappable } from './ui'
 
@@ -125,27 +125,27 @@ export default function CoachInvitePanel() {
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: spacing.lg },
-  intro: { color: colors.text.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.lg },
-  label: { color: colors.text.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 6 },
+  intro: { color: colors.text.muted, fontSize: typeScale.caption, lineHeight: 17, marginBottom: spacing.lg },
+  label: { color: colors.text.muted, fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.5, marginBottom: 6 },
   row: { flexDirection: 'row', gap: 8 },
   input: {
     flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 11, color: colors.text.primary, fontSize: 14,
+    borderRadius: radius.control, paddingHorizontal: spacing.md, paddingVertical: 11, color: colors.text.primary, fontSize: typeScale.body,
   },
-  sendBtn: { backgroundColor: colors.orange[500], borderRadius: radius.md, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', minWidth: 64 },
-  sendText: { color: '#000', fontSize: 13, fontWeight: '700' },
-  error: { color: colors.red, fontSize: 12, marginTop: spacing.sm },
-  ok: { color: colors.green, fontSize: 12, marginTop: spacing.sm, lineHeight: 17 },
-  muted: { color: colors.text.muted, fontSize: 12, marginTop: spacing.sm },
-  shareBox: { marginTop: spacing.md, backgroundColor: 'rgba(59,130,246,0.06)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.2)', borderRadius: radius.md, padding: spacing.md },
-  shareLabel: { color: colors.text.secondary, fontSize: 11, marginBottom: 6 },
-  shareLink: { color: colors.blue, fontSize: 12 },
+  sendBtn: { backgroundColor: colors.orange[500], borderRadius: radius.control, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', minWidth: 64 },
+  sendText: { color: '#000', fontSize: typeScale.caption, fontWeight: weight.bold },
+  error: { color: colors.red, fontSize: typeScale.caption, marginTop: spacing.sm },
+  ok: { color: colors.green, fontSize: typeScale.caption, marginTop: spacing.sm, lineHeight: 17 },
+  muted: { color: colors.text.muted, fontSize: typeScale.caption, marginTop: spacing.sm },
+  shareBox: { marginTop: spacing.md, backgroundColor: 'rgba(59,130,246,0.06)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.2)', borderRadius: radius.control, padding: spacing.md },
+  shareLabel: { color: colors.text.secondary, fontSize: typeScale.label, marginBottom: 6 },
+  shareLink: { color: colors.blue, fontSize: typeScale.caption },
   section: { marginTop: spacing.xl },
-  sectionKicker: { color: colors.text.dimmed, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: spacing.sm },
+  sectionKicker: { color: colors.text.dimmed, fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.5, marginBottom: spacing.sm },
   item: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 10, marginBottom: 6,
+    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: radius.control, paddingHorizontal: spacing.md, paddingVertical: 10, marginBottom: 6,
   },
-  itemName: { flex: 1, color: colors.text.primary, fontSize: 13 },
-  action: { color: colors.text.muted, fontSize: 11, fontWeight: '600' },
+  itemName: { flex: 1, color: colors.text.primary, fontSize: typeScale.caption },
+  action: { color: colors.text.muted, fontSize: typeScale.label, fontWeight: weight.medium },
 })

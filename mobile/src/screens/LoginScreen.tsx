@@ -13,11 +13,10 @@ import {
   Platform,
   ActivityIndicator,
   Animated,
-  Dimensions,
-} from 'react-native'
+  Dimensions } from 'react-native'
 // Auth is a deliberately DARK surface (matches the web AuthPage), so this
 // screen pins the dark palette rather than following the theme toggle.
-import { darkColors as colors, spacing, radius, fonts } from '../lib/theme'
+import { darkColors as colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import Wordmark from '../components/Wordmark'
 import { useAuth } from '../contexts/AuthContext'
 import DobField from '../components/DobField'
@@ -107,8 +106,7 @@ export default function LoginScreen() {
                 opacity: logoAnim,
                 transform: [
                   { translateY: logoAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 0] }) },
-                ],
-              },
+                ] },
             ]}
           >
             <Wordmark variant="white" height={34} />
@@ -127,8 +125,7 @@ export default function LoginScreen() {
                 opacity: formAnim,
                 transform: [
                   { translateY: formAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
-                ],
-              },
+                ] },
             ]}
           >
             {mode === 'signup' && (
@@ -258,8 +255,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg.primary,
-  },
+    backgroundColor: colors.bg.primary },
   keyboardView: { flex: 1 },
 
   // Background glow effects
@@ -271,8 +267,7 @@ const styles = StyleSheet.create({
     height: SCREEN_W * 0.7,
     borderRadius: SCREEN_W * 0.35,
     backgroundColor: colors.orange[500],
-    opacity: 0.05,
-  },
+    opacity: 0.05 },
   glowBottom: {
     position: 'absolute',
     bottom: -SCREEN_H * 0.1,
@@ -281,146 +276,120 @@ const styles = StyleSheet.create({
     height: SCREEN_W * 0.6,
     borderRadius: SCREEN_W * 0.3,
     backgroundColor: colors.blue,
-    opacity: 0.03,
-  },
+    opacity: 0.03 },
 
   inner: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxl,
-  },
+    paddingHorizontal: spacing.xxl },
 
   // Brand
   brand: {
     alignItems: 'center',
-    marginBottom: 48,
-  },
+    marginBottom: 48 },
   logo: {
-    fontSize: 42,
-    fontWeight: '700',
+    fontSize: typeScale.display,
+    fontWeight: weight.bold,
     color: colors.orange[500],
-    letterSpacing: -1.5,
-  },
+    letterSpacing: -1.5 },
   taglineWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginTop: spacing.md,
-  },
+    marginTop: spacing.md },
   taglineLine: {
     height: 1,
     width: 24,
-    backgroundColor: colors.text.dimmed,
-  },
+    backgroundColor: colors.text.dimmed },
   tagline: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 3,
     color: colors.text.muted,
-    fontWeight: '600',
-  },
+    fontWeight: weight.medium },
 
   // Form
   form: {
-    gap: 0,
-  },
+    gap: 0 },
   inputWrap: {
-    marginBottom: spacing.lg,
-  },
+    marginBottom: spacing.lg },
   inputLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 2,
     color: colors.text.muted,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
+    fontWeight: weight.medium,
+    marginBottom: 6 },
   input: {
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.lg,
     paddingVertical: 16,
-    fontSize: 16,
-    color: colors.text.primary,
-  },
+    fontSize: typeScale.body,
+    color: colors.text.primary },
 
   // Error
   errorWrap: {
     backgroundColor: colors.red + '12',
-    borderRadius: radius.sm,
+    borderRadius: radius.chip,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   errorText: {
     color: colors.red,
-    fontSize: 13,
-    textAlign: 'center',
-  },
+    fontSize: typeScale.caption,
+    textAlign: 'center' },
   successWrap: {
-    backgroundColor: colors.green + '12',
-  },
+    backgroundColor: colors.green + '12' },
   successText: {
-    color: colors.green,
-  },
+    color: colors.green },
 
   // Button
   button: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 18,
     alignItems: 'center',
     shadowColor: colors.orange[500],
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 8,
-  },
+    elevation: 8 },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+    fontSize: typeScale.body,
+    fontWeight: weight.bold,
+    letterSpacing: 0.5 },
 
   // Toggle
   toggle: {
     alignItems: 'center',
-    marginTop: spacing.xl,
-  },
+    marginTop: spacing.xl },
   toggleText: {
     color: colors.text.secondary,
-    fontSize: 14,
-  },
+    fontSize: typeScale.body },
   toggleHighlight: {
     color: colors.orange[400],
-    fontWeight: '600',
-  },
+    fontWeight: weight.medium },
 
   // Role picker
   roleRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
+    gap: spacing.sm },
   roleBtn: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   roleBtnActive: {
     backgroundColor: colors.orange[500] + '15',
-    borderColor: colors.orange[500] + '40',
-  },
+    borderColor: colors.orange[500] + '40' },
   roleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text.muted,
-  },
+    fontSize: typeScale.body,
+    fontWeight: weight.medium,
+    color: colors.text.muted },
   roleTextActive: {
-    color: colors.orange[500],
-  },
-})
+    color: colors.orange[500] } })

@@ -16,7 +16,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { radius, numerals } from '../lib/theme'
+import { radius, numerals, typeScale, weight } from '../lib/theme'
 import { READINESS_COLORS } from '../lib/readiness'
 import { dayLabel, type DayCell } from '../lib/schedule'
 import { sessionType, TYPE_STYLE, exerciseMeta, filled } from '../lib/sessionTypes'
@@ -356,39 +356,39 @@ function SessionBody({
 const s = StyleSheet.create({
   wrap: { gap: 8 },
   head: { marginBottom: 2 },
-  title: { fontSize: 19, fontWeight: '700', letterSpacing: -0.3 },
-  sub: { fontSize: 11.5, marginTop: 2, fontWeight: '600' },
-  empty: { fontSize: 13, lineHeight: 19, paddingVertical: 6 },
-  cardWrap: { borderRadius: radius.md, borderWidth: 1 },
+  title: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3 },
+  sub: { fontSize: typeScale.label, marginTop: 2, fontWeight: weight.medium },
+  empty: { fontSize: typeScale.caption, lineHeight: 19, paddingVertical: 6 },
+  cardWrap: { borderRadius: radius.control, borderWidth: 1 },
   card: { flexDirection: 'row', alignItems: 'center', paddingRight: 8 },
   event: {
     flexDirection: 'row', alignItems: 'center', gap: 11,
-    borderRadius: radius.md, borderWidth: 1, padding: 12,
+    borderRadius: radius.control, borderWidth: 1, padding: 12,
   },
-  blockName: { fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
+  blockName: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.2 },
   ex: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderRadius: radius.sm, borderWidth: 1, padding: 9, marginBottom: 6,
+    borderRadius: radius.chip, borderWidth: 1, padding: 9, marginBottom: 6,
   },
-  exName: { fontSize: 13, fontWeight: '600', flexShrink: 1 },
-  exPrescription: { fontSize: 12.5, fontWeight: '700' },
-  exMeta: { fontSize: 10.5, lineHeight: 15 },
-  exLogged: { fontSize: 10.5, fontWeight: '700', marginTop: 1 },
+  exName: { fontSize: typeScale.caption, fontWeight: weight.medium, flexShrink: 1 },
+  exPrescription: { fontSize: typeScale.caption, fontWeight: weight.bold },
+  exMeta: { fontSize: typeScale.label, lineHeight: 15 },
+  exLogged: { fontSize: typeScale.label, fontWeight: weight.bold, marginTop: 1 },
   exBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
     minWidth: 62, minHeight: 30, paddingHorizontal: 8,
-    borderRadius: radius.sm, borderWidth: 1,
+    borderRadius: radius.chip, borderWidth: 1,
   },
-  exBtnText: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.3 },
+  exBtnText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.3 },
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   tick: {
-    width: 28, height: 28, borderRadius: 14, borderWidth: 1.5,
+    width: 28, height: 28, borderRadius: radius.full, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
   },
-  sessLabel: { fontSize: 14.5, fontWeight: '600' },
-  sessMeta: { fontSize: 11.5 },
+  sessLabel: { fontSize: typeScale.body, fontWeight: weight.medium },
+  sessMeta: { fontSize: typeScale.label },
   move: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 34, height: 34, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
@@ -397,12 +397,12 @@ const s = StyleSheet.create({
     paddingVertical: 9, paddingHorizontal: 2,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)',
   },
-  bullet: { width: 5, height: 5, borderRadius: 2.5 },
-  lineText: { flex: 1, fontSize: 13.5, fontWeight: '500' },
-  lineValue: { fontSize: 14, fontWeight: '700', ...numerals },
+  bullet: { width: 5, height: 5, borderRadius: radius.full },
+  lineText: { flex: 1, fontSize: typeScale.caption, fontWeight: weight.medium },
+  lineValue: { fontSize: typeScale.body, fontWeight: weight.bold, ...numerals },
   checkin: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: radius.md, borderWidth: 1, padding: 12, marginTop: 6,
+    borderRadius: radius.control, borderWidth: 1, padding: 12, marginTop: 6,
   },
-  readDot: { width: 12, height: 12, borderRadius: 6 },
+  readDot: { width: 12, height: 12, borderRadius: radius.full },
 })

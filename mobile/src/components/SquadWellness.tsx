@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
 import InfoDot from './InfoDot'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { checkinStatus, READINESS_COLORS, isToday } from '../lib/readiness'
 import { keyOf, sharesWellness, sharesPain, type SquadAthlete, type SharedCheckin } from '../lib/squads'
@@ -181,20 +181,20 @@ export default function SquadWellness({
 const s = StyleSheet.create({
   wrap: {
     marginHorizontal: spacing.lg, marginTop: 14,
-    borderRadius: radius.lg, borderWidth: 1,
+    borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
     overflow: 'hidden',
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 13 },
-  headTitle: { color: onImage.ink, fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
-  headMeta: { flex: 1, color: onImage.muted, fontSize: 12, textAlign: 'right' },
+  headTitle: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  headMeta: { flex: 1, color: onImage.muted, fontSize: typeScale.caption, textAlign: 'right' },
   body: { borderTopWidth: 1, borderTopColor: onImage.divider, paddingHorizontal: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 11, minHeight: 50 },
-  dot: { width: 9, height: 9, borderRadius: 5 },
-  name: { color: onImage.ink, fontSize: 14, fontWeight: '600' },
-  state: { color: onImage.muted, fontSize: 11.5, marginTop: 1 },
+  dot: { width: 9, height: 9, borderRadius: radius.hair },
+  name: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.medium },
+  state: { color: onImage.muted, fontSize: typeScale.label, marginTop: 1 },
   foot: {
-    color: onImage.dim, fontSize: 11.5, lineHeight: 17,
+    color: onImage.dim, fontSize: typeScale.label, lineHeight: 17,
     paddingVertical: 10, borderTopWidth: 1, borderTopColor: onImage.divider,
   },
 })

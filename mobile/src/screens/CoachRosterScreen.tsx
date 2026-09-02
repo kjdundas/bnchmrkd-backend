@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius, onImage } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { WA_IMPORT_ENABLED } from '../lib/featureFlags'
 import CoachInvitePanel from '../components/CoachInvitePanel'
@@ -63,13 +63,13 @@ function SkeletonCard() {
       <View style={cardStyles.leftSection}>
         <Animated.View style={[cardStyles.avatar, { backgroundColor: 'rgba(255,255,255,0.06)', opacity }]} />
         <View style={cardStyles.nameBlock}>
-          <Animated.View style={{ width: 120, height: 14, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 6 }} />
-          <Animated.View style={{ width: 80, height: 10, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
+          <Animated.View style={{ width: 120, height: 14, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 6 }} />
+          <Animated.View style={{ width: 80, height: 10, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
         </View>
       </View>
       <View style={cardStyles.rightSection}>
-        <Animated.View style={{ width: 50, height: 14, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 4 }} />
-        <Animated.View style={{ width: 30, height: 16, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
+        <Animated.View style={{ width: 50, height: 14, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 4 }} />
+        <Animated.View style={{ width: 30, height: 16, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
       </View>
     </View>
   )
@@ -297,7 +297,7 @@ function AddAthleteModal({
               <Tappable onPress={() => { tapFeedback(); setMethod(null) }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
                 <Ionicons name="chevron-back" size={16} color={onImage.muted} />
-                <Text style={{ color: onImage.muted, fontSize: 13 }}>Back</Text>
+                <Text style={{ color: onImage.muted, fontSize: typeScale.caption }}>Back</Text>
               </Tappable>
               <CoachInvitePanel />
             </View>
@@ -352,7 +352,7 @@ function AddAthleteModal({
             <View style={modalStyles.form}>
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>ATHLETE URL</Text>
-                <TextInput style={[modalStyles.input, { fontSize: 14 }]}
+                <TextInput style={[modalStyles.input, { fontSize: typeScale.body }]}
                   placeholder="https://worldathletics.org/athletes/..."
                   placeholderTextColor={onImage.dim} value={urlInput}
                   onChangeText={setUrlInput} autoCapitalize="none" keyboardType="url" multiline />
@@ -567,7 +567,7 @@ export default function CoachRosterScreen() {
           <Tappable
             onPress={() => { tapFeedback(); navigation.goBack() }}
             accessibilityLabel="Back"
-            style={{ width: 36, height: 36, borderRadius: 18, marginRight: 4,
+            style={{ width: 36, height: 36, borderRadius: radius.full, marginRight: 4,
                      alignItems: 'center', justifyContent: 'center' }}
           >
             <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
@@ -737,13 +737,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   greeting: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: onImage.muted,
-    fontWeight: '500',
+    fontWeight: weight.medium,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: typeScale.figure,
+    fontWeight: weight.bold,
     color: onImage.ink,
     marginTop: 2,
     letterSpacing: -0.5,
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     backgroundColor: colors.orange[500],
     justifyContent: 'center',
     alignItems: 'center',
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
   scanBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(249,115,22,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(249,115,22,0.25)',
@@ -778,19 +778,19 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },
   quickStatItem: { flex: 1, alignItems: 'center' },
-  quickStatNum: { fontSize: 20, fontWeight: '700', color: onImage.ink, letterSpacing: -0.5 },
-  quickStatLabel: { fontSize: 10, letterSpacing: 1, color: onImage.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
+  quickStatNum: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink, letterSpacing: -0.5 },
+  quickStatLabel: { fontSize: typeScale.label, letterSpacing: 1, color: onImage.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   quickStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
 
   tierBar: {
     flexDirection: 'row',
     height: 3,
-    borderRadius: 1.5,
+    borderRadius: radius.full,
     overflow: 'hidden',
     marginTop: spacing.md,
   },
@@ -807,14 +807,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
     height: 42,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typeScale.body,
     color: onImage.ink,
     paddingVertical: 0,
   },
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 18,
+    borderRadius: radius.card,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.orange[500] + '12',
     borderColor: colors.orange[500] + '30',
   },
-  chipText: { fontSize: 12, fontWeight: '600', color: onImage.muted },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.medium, color: onImage.muted },
   chipTextActive: { color: colors.orange[500] },
 
   content: {
@@ -844,10 +844,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   listCount: {
-    fontSize: 11,
+    fontSize: typeScale.label,
     letterSpacing: 1,
     color: onImage.dim,
-    fontWeight: '500',
+    fontWeight: weight.medium,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
     marginTop: spacing.xs,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   emptyIconWrap: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -871,13 +871,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: typeScale.title,
+    fontWeight: weight.medium,
     color: onImage.ink,
     marginBottom: 6,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: typeScale.body,
     color: onImage.muted,
     textAlign: 'center',
     lineHeight: 20,
@@ -899,7 +899,7 @@ const cardStyles = StyleSheet.create({
   avatarRing: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.full,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -907,39 +907,39 @@ const cardStyles = StyleSheet.create({
   avatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { fontSize: 14, fontWeight: '700' },
+  avatarText: { fontSize: typeScale.body, fontWeight: weight.bold },
   nameBlock: { flex: 1, marginLeft: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 15, fontWeight: '600', color: onImage.ink },
+  name: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink },
   trendDot: {
     width: 14,
     height: 14,
-    borderRadius: 7,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  meta: { fontSize: 12, color: onImage.muted, marginTop: 1 },
+  meta: { fontSize: typeScale.caption, color: onImage.muted, marginTop: 1 },
 
   rightSection: { alignItems: 'flex-end', marginLeft: spacing.md },
-  pbValue: { fontSize: 15, fontWeight: '700', color: onImage.ink, letterSpacing: -0.3 },
-  noPb: { fontSize: 14, color: onImage.dim },
+  pbValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: onImage.ink, letterSpacing: -0.3 },
+  noPb: { fontSize: typeScale.body, color: onImage.dim },
   tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: radius.chip,
     borderWidth: 1,
     marginTop: 3,
   },
-  tierDot: { width: 5, height: 5, borderRadius: 2.5 },
-  tierText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
-  raceCount: { fontSize: 10, color: onImage.dim, marginTop: 3 },
+  tierDot: { width: 5, height: 5, borderRadius: radius.full },
+  tierText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.5 },
+  raceCount: { fontSize: typeScale.label, color: onImage.dim, marginTop: 3 },
 })
 
 // ── Modal Styles ────────────────────────────────────────────────────────────
@@ -961,7 +961,7 @@ const modalStyles = StyleSheet.create({
   handle: {
     width: 36,
     height: 4,
-    borderRadius: 2,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignSelf: 'center',
     marginBottom: spacing.lg,
@@ -972,11 +972,11 @@ const modalStyles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: onImage.ink },
+  headerTitle: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink },
   closeBtn: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -994,37 +994,37 @@ const modalStyles = StyleSheet.create({
   methodIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: radius.control,
     justifyContent: 'center',
     alignItems: 'center',
   },
   methodInfo: { flex: 1 },
-  methodTitle: { fontSize: 15, fontWeight: '600', color: onImage.ink },
-  methodDesc: { fontSize: 12, color: onImage.muted, marginTop: 1 },
+  methodTitle: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink },
+  methodDesc: { fontSize: typeScale.caption, color: onImage.muted, marginTop: 1 },
 
   form: { gap: 0 },
   inputWrap: { marginBottom: spacing.lg },
   label: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 2,
     color: onImage.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginBottom: 6,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
-    fontSize: 16,
+    fontSize: typeScale.body,
     color: onImage.ink,
   },
   segmentRow: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     padding: 3,
@@ -1032,18 +1032,18 @@ const modalStyles = StyleSheet.create({
   segmentBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: radius.md - 2,
+    borderRadius: radius.control - 2,
     alignItems: 'center',
   },
   segmentBtnActive: {
     backgroundColor: colors.orange[500] + '15',
   },
-  segmentText: { fontSize: 14, fontWeight: '600', color: onImage.muted },
+  segmentText: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted },
   segmentTextActive: { color: colors.orange[500] },
 
   error: {
     color: colors.red,
-    fontSize: 13,
+    fontSize: typeScale.caption,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
@@ -1056,18 +1056,18 @@ const modalStyles = StyleSheet.create({
   progressDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: radius.full,
     backgroundColor: colors.orange[500],
   },
-  progressText: { color: colors.orange[500], fontSize: 13, fontWeight: '500' },
+  progressText: { color: colors.orange[500], fontSize: typeScale.caption, fontWeight: weight.medium },
 
   primaryBtn: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  primaryBtnText: { color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold },
 
   backLink: {
     flexDirection: 'row',
@@ -1076,5 +1076,5 @@ const modalStyles = StyleSheet.create({
     gap: 4,
     marginTop: spacing.lg,
   },
-  backLinkText: { color: onImage.muted, fontSize: 14, fontWeight: '500' },
+  backLinkText: { color: onImage.muted, fontSize: typeScale.body, fontWeight: weight.medium },
 })

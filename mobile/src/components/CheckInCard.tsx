@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { selectFrom, insertInto, updateIn, SIGNED_OUT } from '../lib/supabase'
 import { checkinStatus, READINESS_COLORS, PAIN_AREAS, todayStr } from '../lib/readiness'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm, onImage } from '../lib/theme'
+import { spacing, radius, rhythm, onImage, typeScale, weight } from '../lib/theme'
 import { successFeedback, errorFeedback } from '../lib/haptics'
 import { Tappable, GlassPanel, MonoKicker } from './ui'
 
@@ -64,12 +64,12 @@ function Chip({ on, danger, onPress, children, grow }: any) {
         // 44pt minimum (Apple HIG). These were ~32pt tall.
         minHeight: 44, justifyContent: 'center',
         paddingHorizontal: grow ? 4 : 14,
-        borderRadius: radius.md, alignItems: 'center',
+        borderRadius: radius.control, alignItems: 'center',
         backgroundColor: on ? activeBg : colors.bg.primary,
         borderWidth: 1, borderColor: on ? activeFg + '73' : colors.glass.border,
       }}
     >
-      <Text style={{ fontSize: 13, fontWeight: '700', color: on ? activeFg : colors.text.secondary }}>
+      <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: on ? activeFg : colors.text.secondary }}>
         {children}
       </Text>
     </Tappable>
@@ -81,10 +81,10 @@ function Scale({ label, hint, children }: any) {
   return (
     <View style={{ marginTop: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <Text style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.text.muted, fontWeight: '600' }}>
+        <Text style={{ fontSize: typeScale.label, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.text.muted, fontWeight: weight.medium }}>
           {label}
         </Text>
-        {!!hint && <Text style={{ fontSize: 9, color: colors.text.dimmed }}>{hint}</Text>}
+        {!!hint && <Text style={{ fontSize: typeScale.micro, color: colors.text.dimmed }}>{hint}</Text>}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>{children}</View>
     </View>
@@ -230,7 +230,7 @@ export default function CheckInCard({
           name={form.pain ? 'checkbox' : 'square-outline'}
           size={20} color={form.pain ? colors.red : colors.text.muted}
         />
-        <Text style={{ fontSize: 14, color: colors.text.primary }}>Any pain or niggle today?</Text>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.primary }}>Any pain or niggle today?</Text>
       </Tappable>
 
       {form.pain && (
@@ -249,14 +249,14 @@ export default function CheckInCard({
           accessibilityLabel={row ? 'Update check-in' : 'Save check-in'}
           style={{
             flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
-            minHeight: 48, borderRadius: radius.md,
+            minHeight: 48, borderRadius: radius.control,
             backgroundColor: colors.accent[500],
           }}
         >
           {saving
             ? <ActivityIndicator size="small" color="#FFFFFF" />
             : <Ionicons name="checkmark" size={15} color="#FFFFFF" />}
-          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+          <Text style={{ color: '#FFFFFF', fontSize: typeScale.caption, fontWeight: weight.bold }}>
             {saving ? 'Saving…' : row ? 'Update check-in' : 'Check in'}
           </Text>
         </Tappable>
@@ -266,7 +266,7 @@ export default function CheckInCard({
             accessibilityLabel="Cancel"
             style={{ paddingHorizontal: 14, minHeight: 48, justifyContent: 'center' }}
           >
-            <Text style={{ fontSize: 13, color: colors.text.muted, fontWeight: '600' }}>Cancel</Text>
+            <Text style={{ fontSize: typeScale.caption, color: colors.text.muted, fontWeight: weight.medium }}>Cancel</Text>
           </Tappable>
         )}
       </View>
@@ -277,14 +277,14 @@ export default function CheckInCard({
           borderLeftWidth: 2, borderLeftColor: colors.red, paddingLeft: 10,
         }}>
           <Ionicons name="alert-circle" size={14} color={colors.red} style={{ marginTop: 2 }} />
-          <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.red }}>
+          <Text style={{ flex: 1, fontSize: typeScale.caption, lineHeight: 18, color: colors.red }}>
             {error}
           </Text>
         </View>
       )}
 
       {form.pain && (
-        <Text style={{ fontSize: 11, color: colors.text.muted, marginTop: 10, lineHeight: 16 }}>
+        <Text style={{ fontSize: typeScale.label, color: colors.text.muted, marginTop: 10, lineHeight: 16 }}>
           If pain persists or worsens, stop and see a physio or doctor. Your coach will see this flagged.
         </Text>
       )}
@@ -301,7 +301,7 @@ export default function CheckInCard({
     >
       <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.glass.border }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: colors.glass.border }} />
         </View>
         <View style={{
           flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
@@ -310,7 +310,7 @@ export default function CheckInCard({
           <View>
             <MonoKicker>30 seconds</MonoKicker>
             <Text style={{
-              fontSize: 26, fontWeight: '700', color: colors.text.primary,
+              fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary,
               letterSpacing: -0.5, marginTop: 4,
             }}>
               Daily check-in
@@ -320,7 +320,7 @@ export default function CheckInCard({
             onPress={() => setSheet(false)}
             accessibilityLabel="Close check-in"
             style={{
-              width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+              width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
               backgroundColor: colors.glass.bg, borderWidth: 1, borderColor: colors.glass.border,
             }}
           >
@@ -359,7 +359,7 @@ export default function CheckInCard({
           }}
         >
           <View style={{
-            width: 34, height: 34, borderRadius: 17,
+            width: 34, height: 34, borderRadius: radius.full,
             alignItems: 'center', justifyContent: 'center',
             backgroundColor: done ? color + '2E' : 'rgba(255,255,255,0.14)',
             borderWidth: 1, borderColor: done ? color + '66' : 'rgba(255,255,255,0.20)',
@@ -372,10 +372,10 @@ export default function CheckInCard({
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: onImage.ink }}>
+            <Text style={{ fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink }}>
               {done ? `Checked in · ${status.label}` : 'Daily check-in'}
             </Text>
-            <Text numberOfLines={1} style={{ fontSize: 12, color: onImage.muted, marginTop: 2 }}>
+            <Text numberOfLines={1} style={{ fontSize: typeScale.caption, color: onImage.muted, marginTop: 2 }}>
               {done
                 ? (status.reasons.length ? status.reasons.join(' · ') : 'All green — have a great session.')
                 : 'Sleep, soreness, energy · 30 seconds'}
@@ -398,7 +398,7 @@ export default function CheckInCard({
     // a 10pt dot — amber should be legible at arm's length.
     return (
       <View style={{
-        borderRadius: 16, marginBottom: rhythm.section,
+        borderRadius: radius.card, marginBottom: rhythm.section,
         backgroundColor: color + '12',
         flexDirection: 'row', alignItems: 'center', gap: 14,
         paddingRight: 16, overflow: 'hidden',
@@ -406,10 +406,10 @@ export default function CheckInCard({
         <View style={{ width: 4, alignSelf: 'stretch', backgroundColor: color }} />
         <View style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>
+          <Text style={{ fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary }}>
             Checked in today · {status.label}
           </Text>
-          <Text numberOfLines={1} style={{ fontSize: 11, color: colors.text.muted, marginTop: 2 }}>
+          <Text numberOfLines={1} style={{ fontSize: typeScale.label, color: colors.text.muted, marginTop: 2 }}>
             {status.reasons.length ? status.reasons.join(' · ') : 'All green — have a great session.'}
           </Text>
         </View>
@@ -419,7 +419,7 @@ export default function CheckInCard({
           hitSlop={12}
           style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
         >
-          <Text style={{ fontSize: 13, color: colors.accent[500], fontWeight: '600' }}>Edit</Text>
+          <Text style={{ fontSize: typeScale.caption, color: colors.accent[500], fontWeight: weight.medium }}>Edit</Text>
         </Tappable>
         </View>
       </View>
@@ -429,14 +429,14 @@ export default function CheckInCard({
   // ── Edit / first-time state ──────────────────────────────────────
   return (
     <View style={{
-      borderRadius: 20, padding: 18, marginBottom: rhythm.section,
+      borderRadius: radius.card, padding: 18, marginBottom: rhythm.section,
       backgroundColor: colors.glass.overlay,
       borderWidth: 1, borderColor: colors.accent[500] + '33',
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name="pulse" size={16} color={colors.accent[500]} />
-        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>Daily check-in</Text>
-        <Text style={{ fontSize: 11, color: colors.text.muted }}>· 30 seconds</Text>
+        <Text style={{ fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary }}>Daily check-in</Text>
+        <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>· 30 seconds</Text>
       </View>
       {formBody}
     </View>

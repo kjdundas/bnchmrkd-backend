@@ -177,19 +177,54 @@ export const spacing = {
   xxxl: 32,
 } as const
 
+// ── Radius ─────────────────────────────────────────────────────────
+// Five steps, from thirty-one. Eight of those thirty-one were card-sized
+// — 14, 15, 16, 17, 18, 19, 20, 22 — so two cards sitting on the same
+// screen had corners a pixel or two apart. Nobody can name why that looks
+// wrong, but the eye does the arithmetic. CheckInCard alone used four.
+//
+// Named by role rather than by size: a card is a card whatever the number
+// turns out to be, and the next person cannot invent a sixth step without
+// noticing they are doing it.
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  full: 9999,
+  hair: 4,      // bar fills, progress tracks, tiny indicators
+  chip: 8,      // chips, badges, tags
+  control: 12,  // buttons, inputs, segmented controls
+  card: 20,     // every card, one corner
+  full: 9999,   // pills, and circles where radius = half the box
 } as const
 
-export const fonts = {
-  mono: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const },
-  display: { fontSize: 16, fontWeight: '600' as const },
-  hero: { fontSize: 32, fontWeight: '700' as const },
+// ── Type scale ─────────────────────────────────────────────────────
+// Ten steps, from forty.
+//
+// The forty were never a scale. They were the residue of fitting text to a
+// box one component at a time, which is why 12.5 appeared 33 times, 11.5
+// twenty-one and 10.5 twenty. Half a pixel is invisible — nobody chose it
+// for how it looked, it was nudged until the text stopped wrapping.
+//
+// The steps sit where the app's real mass already was: 10 to 16 accounted
+// for two thirds of every use, so almost nothing here moves more than a
+// point. Roles, not sizes, because a role survives a redesign.
+export const typeScale = {
+  micro: 9,     // badges, chart ticks, tab-bar labels
+  label: 11,    // mono kickers and section labels — uppercase, tracked
+  caption: 13,  // secondary and meta text
+  body: 15,     // default reading size
+  title: 18,    // card titles
+  stat: 22,     // a figure inside a card
+  figure: 28,   // the figure a card is about
+  hero: 34,     // the focal figure on a screen
+  display: 44,  // a screen that exists for one number
+  mark: 56,     // the mark itself
 } as const
+
+// Three weights, from five. 500 and 800 were each used a handful of times
+// and neither is distinguishable from its neighbour at these sizes.
+export const weight = {
+  regular: '400' as const,  // body
+  medium: '600' as const,   // labels, kickers, buttons
+  bold: '700' as const,     // figures and titles
+}
 
 // Tabular figures. Proportional digits change width as values change, so a
 // counting number or a switching mark visibly jitters. Every numeral the user

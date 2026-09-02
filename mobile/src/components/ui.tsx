@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { BlurView } from 'expo-blur'
 import { LinearGradient as Gradient } from 'expo-linear-gradient'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm, numerals, elevation, onImage } from '../lib/theme'
+import { spacing, radius, rhythm, numerals, elevation, onImage, typeScale, weight } from '../lib/theme'
 import { DURATION, EASE, STAGGER_STEP, STAGGER_MAX_INDEX, useReducedMotion } from '../lib/motion'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -55,7 +55,7 @@ function useCardSurface(level: Surface = 'primary') {
     return {
       position: 'relative' as const,
       overflow: 'hidden' as const,
-      borderRadius: 16,
+      borderRadius: radius.card,
       backgroundColor: colors.bg.primary,
       borderWidth: 0,
       marginBottom: rhythm.tight,
@@ -64,7 +64,7 @@ function useCardSurface(level: Surface = 'primary') {
   return {
     position: 'relative' as const,
     overflow: 'hidden' as const,
-    borderRadius: 20,
+    borderRadius: radius.card,
     backgroundColor: colors.glass.bg,
     borderWidth: 1,
     borderColor: colors.glass.border,
@@ -92,8 +92,8 @@ function CardHeader({
       <View style={{ flex: 1 }}>
         {kicker ? (
           <Text style={{
-            fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
-            color: colors.text.muted, fontWeight: '600',
+            fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase',
+            color: colors.text.muted, fontWeight: weight.medium,
           }}>
             {number ? <Text style={{ color: colors.text.dimmed }}>{number} · </Text> : null}
             {kicker}
@@ -101,14 +101,14 @@ function CardHeader({
         ) : null}
         {title ? (
           <Text style={{
-            fontSize: 22, fontWeight: '700', letterSpacing: -0.4,
+            fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.4,
             color: colors.text.primary, marginTop: 6,
           }}>{title}</Text>
         ) : null}
         {subtitle ? (
           <Text style={{
-            fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
-            color: colors.text.muted, fontWeight: '600', marginTop: 6,
+            fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase',
+            color: colors.text.muted, fontWeight: weight.medium, marginTop: 6,
           }}>{subtitle}</Text>
         ) : null}
       </View>
@@ -131,8 +131,8 @@ export function SectionLabel({ children, style, color }: {
   return (
     <View style={[{ marginTop: rhythm.block, marginBottom: rhythm.tight }, style]}>
       <Text style={{
-        fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
-        color: color || colors.text.muted, fontWeight: '700',
+        fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase',
+        color: color || colors.text.muted, fontWeight: weight.bold,
       }}>{children}</Text>
     </View>
   )
@@ -372,17 +372,17 @@ export function StatValue({ label, value, unit, color }: {
     <View style={{ alignItems: 'flex-end' }}>
       {label ? (
         <Text style={{
-          fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
-          color: colors.text.muted, fontWeight: '600', marginBottom: 2,
+          fontSize: typeScale.micro, letterSpacing: 2, textTransform: 'uppercase',
+          color: colors.text.muted, fontWeight: weight.medium, marginBottom: 2,
         }}>{label}</Text>
       ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
         <Text style={{
-          fontSize: 30, fontWeight: '700', letterSpacing: -1,
+          fontSize: typeScale.figure, fontWeight: weight.bold, letterSpacing: -1,
           color: color || colors.accent[500], ...numerals,
         }}>{value}</Text>
         {unit ? (
-          <Text style={{ fontSize: 13, fontWeight: '600', color: color || colors.accent[500] }}>{unit}</Text>
+          <Text style={{ fontSize: typeScale.caption, fontWeight: weight.medium, color: color || colors.accent[500] }}>{unit}</Text>
         ) : null}
       </View>
     </View>
@@ -397,16 +397,16 @@ export function NoteBlock({ kicker, children, accent }: {
   const bar = accent || colors.accent[500]
   return (
     <View style={{ flexDirection: 'row', gap: 12, marginTop: spacing.md }}>
-      <View style={{ width: 3, borderRadius: 2, backgroundColor: bar }} />
+      <View style={{ width: 3, borderRadius: radius.hair, backgroundColor: bar }} />
       <View style={{ flex: 1 }}>
         {kicker ? (
           <Text style={{
-            fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
-            color: colors.text.muted, fontWeight: '600', marginBottom: 4,
+            fontSize: typeScale.micro, letterSpacing: 2, textTransform: 'uppercase',
+            color: colors.text.muted, fontWeight: weight.medium, marginBottom: 4,
           }}>{kicker}</Text>
         ) : null}
         {typeof children === 'string'
-          ? <Text style={{ fontSize: 14, color: colors.text.primary, lineHeight: 20 }}>{children}</Text>
+          ? <Text style={{ fontSize: typeScale.body, color: colors.text.primary, lineHeight: 20 }}>{children}</Text>
           : children}
       </View>
     </View>
@@ -421,7 +421,7 @@ export function HeroCard({ children, style }: HeroCardProps) {
   const accent = colors.accent[500]
   return (
     <View style={[{
-      position: 'relative', overflow: 'hidden', borderRadius: 20,
+      position: 'relative', overflow: 'hidden', borderRadius: radius.card,
       borderWidth: 1, borderColor: accent + (isDark ? '40' : '26'),
       marginBottom: spacing.md, padding: 20,
       backgroundColor: isDark ? accent + '14' : colors.glass.overlay,
@@ -459,7 +459,7 @@ export function GlassCard({ children, style, glowColor, noPadding }: GlassCardPr
     }, style]}>
       {glowColor && (
         <View pointerEvents="none" style={{
-          position: 'absolute', borderRadius: 9999,
+          position: 'absolute', borderRadius: radius.full,
           top: -30, right: -30, width: 100, height: 100,
           backgroundColor: glowColor, opacity: 0.06,
         }} />
@@ -475,8 +475,8 @@ export function SectionHeader({ label, color, right }: { label: string; color?: 
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {color && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />}
-        <Text style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.text.muted, fontWeight: '600' }}>{label}</Text>
+        {color && <View style={{ width: 8, height: 8, borderRadius: radius.full, backgroundColor: color }} />}
+        <Text style={{ fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase', color: colors.text.muted, fontWeight: weight.medium }}>{label}</Text>
       </View>
       {right}
     </View>
@@ -487,8 +487,8 @@ export function SectionHeader({ label, color, right }: { label: string; color?: 
 export function MonoKicker({ children, color }: { children: string; color?: string }) {
   const { colors } = useTheme()
   return (
-    <Text style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
-      color: color || colors.text.muted, fontWeight: '600' }}>{children}</Text>
+    <Text style={{ fontSize: typeScale.label, letterSpacing: 2.5, textTransform: 'uppercase',
+      color: color || colors.text.muted, fontWeight: weight.medium }}>{children}</Text>
   )
 }
 
@@ -497,9 +497,9 @@ export function TierBadge({ label, color, small }: { label: string; color: strin
   return (
     <View style={{
       paddingHorizontal: 10, paddingVertical: 4,
-      borderRadius: radius.sm, backgroundColor: color + '1F',
+      borderRadius: radius.chip, backgroundColor: color + '1F',
     }}>
-      <Text style={{ fontSize: small ? 9 : 10, fontWeight: '700', letterSpacing: 1,
+      <Text style={{ fontSize: small ? typeScale.micro : typeScale.label, fontWeight: weight.bold, letterSpacing: 1,
         textTransform: 'uppercase', color }}>{label}</Text>
     </View>
   )
@@ -540,17 +540,17 @@ export function StatBlock({ value, label, unit, color, small, delta }: {
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
-        <Text style={{ fontSize: small ? 22 : 28, fontWeight: '700', color: color || colors.text.primary, letterSpacing: -0.5, ...numerals }}>{value}</Text>
-        {unit && <Text style={{ fontSize: 11, color: colors.text.muted, fontWeight: '500' }}>{unit}</Text>}
+        <Text style={{ fontSize: small ? typeScale.stat : typeScale.figure, fontWeight: weight.bold, color: color || colors.text.primary, letterSpacing: -0.5, ...numerals }}>{value}</Text>
+        {unit && <Text style={{ fontSize: typeScale.label, color: colors.text.muted, fontWeight: weight.medium }}>{unit}</Text>}
       </View>
       {delta && (
-        <Text style={{ fontSize: 10, fontWeight: '700', marginTop: 2,
+        <Text style={{ fontSize: typeScale.label, fontWeight: weight.bold, marginTop: 2,
           color: delta.tone === 'up' ? colors.green : delta.tone === 'down' ? colors.red : colors.text.muted }}>
           {delta.text}
         </Text>
       )}
-      <Text style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
-        color: colors.text.muted, marginTop: 4, fontWeight: '600' }}>{label}</Text>
+      <Text style={{ fontSize: typeScale.micro, letterSpacing: 2, textTransform: 'uppercase',
+        color: colors.text.muted, marginTop: 4, fontWeight: weight.medium }}>{label}</Text>
     </View>
   )
 }
@@ -564,9 +564,9 @@ export function TrendArrow({ value, suffix = '', inverted }: {
   const color = isPositive ? colors.green : value === 0 ? colors.text.muted : colors.red
   const arrow = isPositive ? '↑' : value === 0 ? '→' : '↓'
   return (
-    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.sm,
+    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.chip,
       backgroundColor: color + '14' }}>
-      <Text style={{ fontSize: 11, fontWeight: '700', color }}>
+      <Text style={{ fontSize: typeScale.label, fontWeight: weight.bold, color }}>
         {arrow} {Math.abs(value).toFixed(suffix === '%' ? 1 : 2)}{suffix}
       </Text>
     </View>
@@ -588,8 +588,8 @@ export function EmptyState({ icon, title, subtitle }: { icon: string; title: str
         name={icon as any} size={30} color={colors.accent[500]}
         style={{ marginBottom: spacing.md, opacity: 0.85 }}
       />
-      <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary, marginBottom: 6 }}>{title}</Text>
-      <Text style={{ fontSize: 14, color: colors.text.secondary, textAlign: 'center', lineHeight: 20 }}>{subtitle}</Text>
+      <Text style={{ fontSize: typeScale.title, fontWeight: weight.bold, color: colors.text.primary, marginBottom: 6 }}>{title}</Text>
+      <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, textAlign: 'center', lineHeight: 20 }}>{subtitle}</Text>
     </View>
   )
 }
@@ -609,12 +609,12 @@ export function MetricRow({ label, value, unit, color, trend, inverted }: {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
       paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.glass.divider }}>
-      <Text style={{ color: colors.text.secondary, fontSize: 14, flex: 1 }}>{label}</Text>
+      <Text style={{ color: colors.text.secondary, fontSize: typeScale.body, flex: 1 }}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {trend !== undefined && <TrendArrow value={trend} inverted={inverted} />}
-        <Text style={{ color: color || colors.text.primary, fontSize: 16, fontWeight: '600' }}>
+        <Text style={{ color: color || colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium }}>
           {value}
-          {unit && <Text style={{ fontSize: 12, fontWeight: '400', color: colors.text.muted }}> {unit}</Text>}
+          {unit && <Text style={{ fontSize: typeScale.caption, fontWeight: weight.regular, color: colors.text.muted }}> {unit}</Text>}
         </Text>
       </View>
     </View>
@@ -633,8 +633,8 @@ export function StreakChip({ count }: { count: number }) {
       backgroundColor: colors.accent[500] + '14',
     }}>
       <Ionicons name="flame" size={12} color={colors.accent[500]} />
-      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accent[500] }}>{count}</Text>
-      <Text style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase',
+      <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.accent[500] }}>{count}</Text>
+      <Text style={{ fontSize: typeScale.micro, letterSpacing: 1.5, textTransform: 'uppercase',
         color: colors.text.muted }}>day{count === 1 ? '' : 's'}</Text>
     </View>
   )

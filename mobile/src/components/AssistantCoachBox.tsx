@@ -25,7 +25,7 @@ import { View, Text, TextInput, StyleSheet, ActivityIndicator } from 'react-nati
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { askAssistant } from '../lib/api'
 
@@ -160,7 +160,7 @@ export default function AssistantCoachBox({
 const s = StyleSheet.create({
   wrap: {
     marginHorizontal: spacing.lg, marginTop: 22,
-    padding: 14, borderRadius: radius.lg, borderWidth: 1,
+    padding: 14, borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 12 },
@@ -171,24 +171,24 @@ const s = StyleSheet.create({
     borderRadius: radius.full, borderWidth: 1,
     borderColor: onImage.cardBorder,
   },
-  chipText: { color: onImage.muted, fontSize: 12.5, fontWeight: '600' },
+  chipText: { color: onImage.muted, fontSize: typeScale.caption, fontWeight: weight.medium },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 12 },
   input: {
     flex: 1, minHeight: 44, maxHeight: 120, paddingHorizontal: 12, paddingTop: 12,
-    paddingBottom: 10, borderRadius: radius.md, borderWidth: 1,
+    paddingBottom: 10, borderRadius: radius.control, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: 'rgba(255,255,255,0.06)',
-    color: onImage.ink, fontSize: 14.5, textAlignVertical: 'top',
+    color: onImage.ink, fontSize: typeScale.body, textAlignVertical: 'top',
   },
   send: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44, height: 44, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
   },
   msgRow: { flexDirection: 'row', gap: 7, marginTop: 10 },
-  msg: { flex: 1, fontSize: 12.5, lineHeight: 18 },
+  msg: { flex: 1, fontSize: typeScale.caption, lineHeight: 18 },
   answer: {
     marginTop: 12, paddingTop: 12,
     borderTopWidth: 1, borderTopColor: onImage.divider,
   },
-  answerText: { color: onImage.ink, fontSize: 14, lineHeight: 21 },
-  answerFoot: { color: onImage.dim, fontSize: 11, lineHeight: 16, marginTop: 10 },
+  answerText: { color: onImage.ink, fontSize: typeScale.body, lineHeight: 21 },
+  answerFoot: { color: onImage.dim, fontSize: typeScale.label, lineHeight: 16, marginTop: 10 },
 })

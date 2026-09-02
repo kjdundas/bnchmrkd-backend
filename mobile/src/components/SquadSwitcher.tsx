@@ -15,7 +15,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable } from './ui'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import type { Squad } from '../lib/squads'
 
@@ -105,14 +105,14 @@ const s = StyleSheet.create({
     minHeight: 38, paddingHorizontal: 13,
     borderRadius: radius.full, borderWidth: 1,
   },
-  chipText: { fontSize: 13.5, fontWeight: '700', letterSpacing: -0.1 },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold, letterSpacing: -0.1 },
   count: {
-    minWidth: 20, height: 18, borderRadius: 9, paddingHorizontal: 5,
+    minWidth: 20, height: 18, borderRadius: radius.full, paddingHorizontal: 5,
     alignItems: 'center', justifyContent: 'center',
   },
-  countText: { fontSize: 11, fontWeight: '700' },
+  countText: { fontSize: typeScale.label, fontWeight: weight.bold },
   add: {
-    width: 38, height: 38, borderRadius: 19, borderWidth: 1,
+    width: 38, height: 38, borderRadius: radius.full, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
 })

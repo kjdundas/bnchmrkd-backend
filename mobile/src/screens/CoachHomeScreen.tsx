@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius, onImage } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { callRpc, insertInto, deleteFrom } from '../lib/supabase'
@@ -439,7 +439,7 @@ export default function CoachHomeScreen() {
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={styles.feedName} numberOfLines={1}>
-                      <Text style={{ fontWeight: '700', color: onImage.ink }}>{ev.athlete_name}</Text>
+                      <Text style={{ fontWeight: weight.bold, color: onImage.ink }}>{ev.athlete_name}</Text>
                       <Text style={{ color: onImage.muted }}> {meta.verb}</Text>
                     </Text>
                     <View style={styles.feedMetaRow}>
@@ -547,22 +547,22 @@ const sq = StyleSheet.create({
     paddingHorizontal: spacing.lg, paddingTop: 14, paddingBottom: 6,
   },
   card: {
-    width: '47.6%', minHeight: 118, borderRadius: radius.lg,
+    width: '47.6%', minHeight: 118, borderRadius: radius.card,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     backgroundColor: 'rgba(255,255,255,0.10)',
     padding: 13, justifyContent: 'flex-start',
   },
   avatar: {
-    width: 34, height: 34, borderRadius: 17, marginBottom: 9,
+    width: 34, height: 34, borderRadius: radius.full, marginBottom: 9,
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.30)',
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '700', letterSpacing: 0.4 },
-  name: { color: '#FFFFFF', fontSize: 14.5, fontWeight: '700', letterSpacing: -0.2 },
-  meta: { color: 'rgba(255,255,255,0.68)', fontSize: 12, marginTop: 2 },
-  noAccount: { color: 'rgba(255,255,255,0.50)', fontSize: 10.5, marginTop: 6, lineHeight: 14 },
+  avatarText: { color: '#FFFFFF', fontSize: typeScale.caption, fontWeight: weight.bold, letterSpacing: 0.4 },
+  name: { color: '#FFFFFF', fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  meta: { color: 'rgba(255,255,255,0.68)', fontSize: typeScale.caption, marginTop: 2 },
+  noAccount: { color: 'rgba(255,255,255,0.50)', fontSize: typeScale.label, marginTop: 6, lineHeight: 14 },
   empty: {
-    color: 'rgba(255,255,255,0.62)', fontSize: 13.5, lineHeight: 20,
+    color: 'rgba(255,255,255,0.62)', fontSize: typeScale.caption, lineHeight: 20,
     paddingVertical: 18, paddingRight: 20,
   },
 })
@@ -570,62 +570,62 @@ const sq = StyleSheet.create({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
-  greeting: { fontSize: 13, color: onImage.muted, fontWeight: '500' },
-  title: { fontSize: 28, fontWeight: '700', color: onImage.ink, marginTop: 2, letterSpacing: -0.5 },
+  greeting: { fontSize: typeScale.caption, color: onImage.muted, fontWeight: weight.medium },
+  title: { fontSize: typeScale.figure, fontWeight: weight.bold, color: onImage.ink, marginTop: 2, letterSpacing: -0.5 },
 
   statsRow: {
     flexDirection: 'row', marginHorizontal: spacing.lg, marginTop: spacing.sm,
     paddingVertical: spacing.md, backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radius.control, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 20, fontWeight: '700', color: onImage.ink, letterSpacing: -0.5 },
-  statSub: { fontSize: 13, color: onImage.dim, fontWeight: '600' },
-  statLabel: { fontSize: 10, letterSpacing: 1, color: onImage.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
+  statNum: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink, letterSpacing: -0.5 },
+  statSub: { fontSize: typeScale.caption, color: onImage.dim, fontWeight: weight.medium },
+  statLabel: { fontSize: typeScale.label, letterSpacing: 1, color: onImage.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
 
   section: { marginTop: spacing.xl, paddingHorizontal: spacing.lg },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.sm },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: onImage.ink },
-  sectionHint: { marginLeft: 'auto', fontSize: 10, color: onImage.dim },
+  sectionTitle: { fontSize: typeScale.caption, fontWeight: weight.bold, color: onImage.ink },
+  sectionHint: { marginLeft: 'auto', fontSize: typeScale.label, color: onImage.dim },
 
   allClear: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: spacing.md },
-  allClearText: { fontSize: 13, color: onImage.muted },
+  allClearText: { fontSize: typeScale.caption, color: onImage.muted },
 
   row: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingRight: 4,
-    borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
+    borderRadius: radius.control, borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
     paddingLeft: 0, marginBottom: 8, overflow: 'hidden',
   },
-  rowBar: { width: 4, alignSelf: 'stretch', borderTopLeftRadius: radius.md, borderBottomLeftRadius: radius.md, marginRight: spacing.md },
-  rowTitle: { fontSize: 13, fontWeight: '600', color: onImage.ink },
-  rowDetail: { fontSize: 11, color: onImage.muted, marginTop: 1 },
+  rowBar: { width: 4, alignSelf: 'stretch', borderTopLeftRadius: radius.control, borderBottomLeftRadius: radius.control, marginRight: spacing.md },
+  rowTitle: { fontSize: typeScale.caption, fontWeight: weight.medium, color: onImage.ink },
+  rowDetail: { fontSize: typeScale.label, color: onImage.muted, marginTop: 1 },
 
   feedRow: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: spacing.sm,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
   },
-  avatar: { width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center' },
-  avatarText: { fontSize: 12, fontWeight: '700' },
-  feedName: { fontSize: 12.5 },
+  avatar: { width: 34, height: 34, borderRadius: radius.full, justifyContent: 'center', alignItems: 'center' },
+  avatarText: { fontSize: typeScale.caption, fontWeight: weight.bold },
+  feedName: { fontSize: typeScale.caption },
   feedMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
-  feedDetail: { fontSize: 11, color: onImage.muted, flexShrink: 1 },
-  feedTime: { fontSize: 10, color: onImage.dim },
+  feedDetail: { fontSize: typeScale.label, color: onImage.muted, flexShrink: 1 },
+  feedTime: { fontSize: typeScale.label, color: onImage.dim },
   reactRow: { flexDirection: 'row', gap: 4 },
   reactBtn: {
-    width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center',
+    width: 30, height: 30, borderRadius: radius.chip, justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
   },
   reactBtnOn: { backgroundColor: colors.orange[500] + '24', borderColor: colors.orange[500] + '60' },
-  reactEmoji: { fontSize: 14 },
+  reactEmoji: { fontSize: typeScale.body },
 
   emptyWrap: { alignItems: 'center', paddingHorizontal: spacing.xxl, paddingTop: 80 },
   emptyIcon: {
-    width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.03)',
+    width: 60, height: 60, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.lg,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: onImage.ink, marginBottom: 6 },
-  emptySub: { fontSize: 13, color: onImage.muted, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
-  emptyBtn: { backgroundColor: colors.orange[500], borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 24 },
-  emptyBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  emptyTitle: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink, marginBottom: 6 },
+  emptySub: { fontSize: typeScale.caption, color: onImage.muted, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
+  emptyBtn: { backgroundColor: colors.orange[500], borderRadius: radius.control, paddingVertical: 12, paddingHorizontal: 24 },
+  emptyBtnText: { color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold },
 })

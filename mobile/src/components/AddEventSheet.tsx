@@ -8,7 +8,7 @@ import { View, Text, Modal, TextInput, ScrollView, StyleSheet, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius } from '../lib/theme'
+import { spacing, radius, typeScale, weight } from '../lib/theme'
 import { EVENT_KINDS, type EventKind } from '../lib/events'
 import { dayLabel, todayDay, addDays } from '../lib/schedule'
 import { tapFeedback } from '../lib/haptics'
@@ -65,15 +65,15 @@ export default function AddEventSheet({
 
   const input = {
     backgroundColor: colors.bg.primary, borderWidth: 1, borderColor: colors.glass.border,
-    borderRadius: radius.md, paddingHorizontal: 12, minHeight: 48,
-    fontSize: 15, color: colors.text.primary,
+    borderRadius: radius.control, paddingHorizontal: 12, minHeight: 48,
+    fontSize: typeScale.body, color: colors.text.primary,
   }
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
         <View style={s.header}>
           <View style={{ flex: 1 }}>
@@ -123,7 +123,7 @@ export default function AddEventSheet({
               keyboardType="numbers-and-punctuation" keyboardAppearance="dark" />
             <Tappable onPress={() => setEndDate(addDays(date, 1))} accessibilityLabel="Two days"
               style={[s.quick, { borderColor: colors.glass.border }]}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text.secondary }}>+1 day</Text>
+              <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.text.secondary }}>+1 day</Text>
             </Tappable>
           </View>
 
@@ -136,7 +136,7 @@ export default function AddEventSheet({
           {!!error && (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: spacing.md, alignItems: 'flex-start' }}>
               <Ionicons name="alert-circle" size={15} color={colors.red} style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.red }}>{error}</Text>
+              <Text style={{ flex: 1, fontSize: typeScale.caption, lineHeight: 18, color: colors.red }}>{error}</Text>
             </View>
           )}
 
@@ -144,7 +144,7 @@ export default function AddEventSheet({
             style={[s.save, { backgroundColor: colors.accent[500] }]}>
             {saving
               ? <ActivityIndicator color="#fff" />
-              : <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Add to calendar</Text>}
+              : <Text style={{ color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold }}>Add to calendar</Text>}
           </Tappable>
         </ScrollView>
       </View>
@@ -157,27 +157,27 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,
   },
-  title: { fontSize: 24, fontWeight: '700', letterSpacing: -0.5, marginTop: 4 },
+  title: { fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.5, marginTop: 4 },
   close: {
-    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
   },
   label: {
-    fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase',
-    fontWeight: '700', marginTop: spacing.lg, marginBottom: 8,
+    fontSize: typeScale.label, letterSpacing: 1.5, textTransform: 'uppercase',
+    fontWeight: weight.bold, marginTop: spacing.lg, marginBottom: 8,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    minHeight: 44, paddingHorizontal: 12, borderRadius: radius.md, borderWidth: 1,
+    minHeight: 44, paddingHorizontal: 12, borderRadius: radius.control, borderWidth: 1,
   },
-  chipText: { fontSize: 13, fontWeight: '700' },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   quick: {
     minHeight: 48, paddingHorizontal: 14, justifyContent: 'center',
-    borderRadius: radius.md, borderWidth: 1,
+    borderRadius: radius.control, borderWidth: 1,
   },
   save: {
-    marginTop: spacing.xl, minHeight: 52, borderRadius: radius.md,
+    marginTop: spacing.xl, minHeight: 52, borderRadius: radius.control,
     alignItems: 'center', justifyContent: 'center',
   },
 })

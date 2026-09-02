@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius, onImage } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { useTheme } from '../contexts/ThemeContext'
 import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
@@ -429,18 +429,18 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.04)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerName: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
     color: onImage.ink,
   },
   headerMeta: {
-    fontSize: 12,
+    fontSize: typeScale.caption,
     color: onImage.muted,
     marginTop: 1,
   },
@@ -450,10 +450,10 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
   },
-  trendChipText: { fontSize: 10, fontWeight: '600' },
+  trendChipText: { fontSize: typeScale.label, fontWeight: weight.medium },
 
   content: { padding: spacing.lg, paddingTop: spacing.lg },
 
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(23,25,53,0.92)',
     borderWidth: 1,
     borderColor: 'rgba(249,115,22,0.28)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     marginBottom: spacing.lg,
   },
   heroInner: {
@@ -475,8 +475,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heroPb: {
-    fontSize: 44,
-    fontWeight: '800',
+    fontSize: typeScale.display,
+    fontWeight: weight.bold,
     color: onImage.ink,
     letterSpacing: -2,
     marginBottom: spacing.md,
@@ -487,12 +487,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: radius.card,
     borderWidth: 1,
     marginBottom: spacing.xl,
   },
-  heroBadgeDot: { width: 6, height: 6, borderRadius: 3 },
-  heroBadgeText: { fontSize: 13, fontWeight: '700' },
+  heroBadgeDot: { width: 6, height: 6, borderRadius: radius.full },
+  heroBadgeText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   heroStats: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -501,32 +501,32 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heroStat: { alignItems: 'center', minWidth: 60 },
-  heroStatVal: { fontSize: 17, fontWeight: '700', color: onImage.ink },
-  heroStatLabel: { fontSize: 9, letterSpacing: 1, color: onImage.muted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+  heroStatVal: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink },
+  heroStatLabel: { fontSize: typeScale.micro, letterSpacing: 1, color: onImage.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   heroStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
   tierBar: { flexDirection: 'row', gap: 3, width: '100%' },
-  tierSegment: { flex: 1, height: 3, borderRadius: 1.5 },
+  tierSegment: { flex: 1, height: 3, borderRadius: radius.full },
 
   // No PB
   noPbCard: {
     alignItems: 'center',
     padding: spacing.xxl,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
-  noPbText: { fontSize: 15, fontWeight: '600', color: onImage.muted },
-  noPbSub: { fontSize: 13, color: onImage.muted, textAlign: 'center', lineHeight: 18 },
+  noPbText: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted },
+  noPbSub: { fontSize: typeScale.caption, color: onImage.muted, textAlign: 'center', lineHeight: 18 },
 
   // Sections
   section: {
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -539,15 +539,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.04)',
   },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: onImage.ink, flex: 1 },
+  sectionTitle: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink, flex: 1 },
   sectionCount: {
-    fontSize: 11,
+    fontSize: typeScale.label,
     color: onImage.dim,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     backgroundColor: 'rgba(255,255,255,0.04)',
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: radius.chip,
   },
 
   // Season progression
@@ -559,21 +559,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)',
     gap: spacing.md,
   },
-  seasonYear: { fontSize: 13, fontWeight: '700', color: onImage.muted, width: 38 },
+  seasonYear: { fontSize: typeScale.caption, fontWeight: weight.bold, color: onImage.muted, width: 38 },
   seasonBarWrap: {
     flex: 1,
     height: 6,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 3,
+    borderRadius: radius.full,
     overflow: 'hidden',
   },
   seasonBarFill: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: radius.full,
   },
   seasonRight: { alignItems: 'flex-end', minWidth: 70 },
-  seasonBest: { fontSize: 14, fontWeight: '700', color: onImage.ink },
-  seasonCount: { fontSize: 10, color: onImage.dim, marginTop: 1 },
+  seasonBest: { fontSize: typeScale.body, fontWeight: weight.bold, color: onImage.ink },
+  seasonCount: { fontSize: typeScale.label, color: onImage.dim, marginTop: 1 },
 
   // Race log
   raceRow: {
@@ -585,21 +585,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)',
   },
   raceMarkRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  raceMark: { fontSize: 15, fontWeight: '700', color: onImage.ink },
-  raceComp: { fontSize: 11, color: onImage.muted, marginTop: 1 },
-  raceDate: { fontSize: 12, color: onImage.muted },
+  raceMark: { fontSize: typeScale.body, fontWeight: weight.bold, color: onImage.ink },
+  raceComp: { fontSize: typeScale.label, color: onImage.muted, marginTop: 1 },
+  raceDate: { fontSize: typeScale.caption, color: onImage.muted },
   pbChip: {
     backgroundColor: colors.orange[500] + '18',
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 4,
+    borderRadius: radius.hair,
     borderWidth: 1,
     borderColor: colors.orange[500] + '30',
   },
-  pbChipText: { fontSize: 9, fontWeight: '700', color: colors.orange[500], letterSpacing: 0.5 },
-  moreText: { fontSize: 11, color: onImage.dim, textAlign: 'center', marginTop: spacing.sm },
+  pbChipText: { fontSize: typeScale.micro, fontWeight: weight.bold, color: colors.orange[500], letterSpacing: 0.5 },
+  moreText: { fontSize: typeScale.label, color: onImage.dim, textAlign: 'center', marginTop: spacing.sm },
 
   // Empty
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
-  emptyText: { fontSize: 15, color: onImage.muted },
+  emptyText: { fontSize: typeScale.body, color: onImage.muted },
 })

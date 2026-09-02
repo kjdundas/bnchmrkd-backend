@@ -36,7 +36,7 @@ export interface TierBand {
   floorIsSynthetic: boolean
 }
 import DisciplineToggle from './DisciplineToggle'
-import { spacing, radius, rhythm, numerals, elevation, onDark, onImage } from '../lib/theme'
+import { spacing, radius, rhythm, numerals, elevation, onDark, onImage, typeScale, weight } from '../lib/theme'
 import { DURATION, EASE, STAGGER_STEP, useReducedMotion } from '../lib/motion'
 import {
   groupMetrics, ringModel, fmtMetricValue, timeAgo, formatMark,
@@ -312,21 +312,21 @@ function RailRing({ g, latest, shown, isPb, index, onDarkSurface, withLightPool,
                 alignItems: 'center', justifyContent: 'center',
               }}>
                 <Text style={{
-                  fontSize: 15, fontWeight: '700', color: valueColor,
+                  fontSize: typeScale.body, fontWeight: weight.bold, color: valueColor,
                   ...numerals, ...(shadow || {}),
                 }}>
                   {fmtMetricValue(latest)}
                 </Text>
                 {!!g.unit && (
                   <Text style={{
-                    fontSize: 9.5, fontWeight: '600', color: unitColor,
+                    fontSize: typeScale.micro, fontWeight: weight.medium, color: unitColor,
                     marginTop: 1, letterSpacing: 0.2, ...(shadow || {}),
                   }}>{g.unit}</Text>
                 )}
               </View>
             </View>
             <Text numberOfLines={2} style={{
-              fontSize: 11, fontWeight: '600', color: labelColor,
+              fontSize: typeScale.label, fontWeight: weight.medium, color: labelColor,
               textAlign: 'center', lineHeight: 13.5, ...(shadow || {}),
             }}>
               {g.label || g.key}
@@ -447,16 +447,18 @@ function PerformanceHeroInner({
       </View>
 
       <Text style={{
-        fontSize: 10, letterSpacing: 2.2, textTransform: 'uppercase',
-        color: onDark.muted, fontWeight: '600', marginTop: spacing.lg,
+        fontSize: typeScale.label, letterSpacing: 2.2, textTransform: 'uppercase',
+        color: onDark.muted, fontWeight: weight.medium, marginTop: spacing.lg,
       }}>
         Latest performance{view.discipline ? ` · ${view.discipline}` : ''}
       </Text>
 
       <Text style={{
-        // Widened from 54 to 64. Premium type is about RANGE — a 64px numeral
-        // against a 10px mono label is a scale contrast the old set never had.
-        fontSize: 64, lineHeight: 68, fontWeight: '700',
+        // The scale's top step. Premium type is about RANGE — this numeral
+        // against an 11px mono label is a 5:1 contrast, and it is now the
+        // same step as the PB on Trajectory and the rank on Boards, so all
+        // three move together if it ever wants to be bigger.
+        fontSize: typeScale.mark, lineHeight: 60, fontWeight: weight.bold,
         letterSpacing: -2.4, color: onDark.ink, ...numerals,
       }}>
         {formatMark(value, view.discipline)}
@@ -464,14 +466,14 @@ function PerformanceHeroInner({
 
       {/* Web sets this line in a serif face for contrast against the numerals. */}
       <Text style={{
-        fontSize: 23, color: onDark.ink, fontFamily: 'Georgia',
+        fontSize: typeScale.stat, color: onDark.ink, fontFamily: 'Georgia',
         textAlign: 'center', marginTop: 2,
       }}>
         {delta}
       </Text>
 
       {!!caption && (
-        <Text style={{ fontSize: 14, color: onDark.dim, marginTop: 6, textAlign: 'center' }}>
+        <Text style={{ fontSize: typeScale.body, color: onDark.dim, marginTop: 6, textAlign: 'center' }}>
           {caption}
         </Text>
       )}
@@ -620,31 +622,31 @@ function TrendCard({
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{
-          width: 36, height: 36, borderRadius: 18,
+          width: 36, height: 36, borderRadius: radius.full,
           backgroundColor: over ? 'rgba(255,255,255,0.12)' : colors.glass.overlay,
           alignItems: 'center', justifyContent: 'center',
         }}>
           <Ionicons name={icon} size={16} color={accent} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '600', color: ink }}>
+          <Text numberOfLines={1} style={{ fontSize: typeScale.body, fontWeight: weight.medium, color: ink }}>
             {title}
           </Text>
           {!!ago && (
             <Text style={{
-              fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase',
-              fontWeight: '700', color: accent, marginTop: 2,
+              fontSize: typeScale.label, letterSpacing: 1.2, textTransform: 'uppercase',
+              fontWeight: weight.bold, color: accent, marginTop: 2,
             }}>{ago}</Text>
           )}
         </View>
       </View>
 
       <Text style={{
-        fontSize: 30, fontWeight: '600', letterSpacing: -0.6,
+        fontSize: typeScale.figure, fontWeight: weight.medium, letterSpacing: -0.6,
         color: ink, marginTop: 10, ...numerals,
       }}>
         {bigValue}
-        {!!unit && <Text style={{ fontSize: 15, fontWeight: '500', color: sub }}> {unit}</Text>}
+        {!!unit && <Text style={{ fontSize: typeScale.body, fontWeight: weight.medium, color: sub }}> {unit}</Text>}
       </Text>
 
       {/* The card chart is a shape; the numbers live one tap away. */}
@@ -657,8 +659,8 @@ function TrendCard({
           {chart}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 2 }}>
             <Text style={{
-              fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase',
-              fontWeight: '700', color: over ? onDark.accent : INDIGO,
+              fontSize: typeScale.label, letterSpacing: 1.4, textTransform: 'uppercase',
+              fontWeight: weight.bold, color: over ? onDark.accent : INDIGO,
             }}>
               Every race
             </Text>
@@ -689,14 +691,14 @@ function TrendCard({
             marginTop: spacing.lg,
             // 44pt minimum touch target (Apple HIG) — 11pt padding gave ~40.
             minHeight: 44, justifyContent: 'center',
-            borderRadius: radius.lg,
+            borderRadius: radius.card,
             backgroundColor: over ? 'rgba(255,255,255,0.10)' : colors.bg.primary,
             borderWidth: 1,
             borderColor: over ? 'rgba(255,255,255,0.22)' : colors.glass.border,
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: over ? onImage.ink : colors.text.secondary }}>
+          <Text style={{ fontSize: typeScale.caption, fontWeight: weight.medium, color: over ? onImage.ink : colors.text.secondary }}>
             {action}
           </Text>
         </Tappable>
@@ -715,7 +717,7 @@ function TrendCard({
 
   return (
     <View style={{
-      backgroundColor: colors.glass.bg, borderRadius: 20,
+      backgroundColor: colors.glass.bg, borderRadius: radius.card,
       borderWidth: 1, borderColor: colors.glass.border,
       padding: 22, marginBottom: rhythm.section,
     }}>

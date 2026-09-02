@@ -15,7 +15,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 
 export default function FilterRow({
@@ -69,11 +69,11 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.lg, marginBottom: 7,
   },
   clear: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  clearText: { fontSize: 11, fontWeight: '700' },
+  clearText: { fontSize: typeScale.label, fontWeight: weight.bold },
   row: { paddingHorizontal: spacing.lg, gap: 7 },
   chip: {
     minHeight: 32, paddingHorizontal: 11, borderRadius: radius.full, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
-  chipText: { fontSize: 12.5, fontWeight: '700' },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold },
 })

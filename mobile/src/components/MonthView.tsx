@@ -19,7 +19,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable } from './ui'
-import { spacing, radius, numerals } from '../lib/theme'
+import { spacing, radius, numerals, typeScale, weight } from '../lib/theme'
 import { READINESS_COLORS } from '../lib/readiness'
 import { WEEKDAY_LETTER, parseDay, type MonthModel, type DayCell } from '../lib/schedule'
 import { EVENT_STYLE, eventKind } from '../lib/events'
@@ -119,7 +119,7 @@ function Cell({
       <Text style={[s.num, {
         color: dim ? colors.text.dimmed
           : d.isToday ? colors.accent[500] : colors.text.secondary,
-        fontWeight: d.isToday ? '800' : '600',
+        fontWeight: d.isToday ? weight.bold : weight.medium,
         opacity: dim ? 0.55 : 1,
       }]}>
         {parseDay(d.date).getDate()}
@@ -150,35 +150,35 @@ function Cell({
 const s = StyleSheet.create({
   nav: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   arrow: {
-    width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    width: 36, height: 36, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.07)',
   },
-  title: { fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
-  titleHint: { fontSize: 9.5, fontWeight: '600', marginTop: 2 },
+  title: { fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  titleHint: { fontSize: typeScale.micro, fontWeight: weight.medium, marginTop: 2 },
   headRow: { flexDirection: 'row', marginBottom: 4 },
-  headLetter: { flex: 1, textAlign: 'center', fontSize: 9.5, fontWeight: '700', letterSpacing: 0.5 },
+  headLetter: { flex: 1, textAlign: 'center', fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.5 },
   row: { flexDirection: 'row' },
   cell: {
-    flex: 1, alignItems: 'center', paddingVertical: 5, borderRadius: 9,
+    flex: 1, alignItems: 'center', paddingVertical: 5, borderRadius: radius.chip,
     minHeight: 44, justifyContent: 'center', gap: 3, overflow: 'hidden',
   },
-  evBar: { position: 'absolute', top: 0, left: 4, right: 4, height: 2.5, borderRadius: 2 },
-  num: { fontSize: 13, ...numerals },
+  evBar: { position: 'absolute', top: 0, left: 4, right: 4, height: 2.5, borderRadius: radius.hair },
+  num: { fontSize: typeScale.caption, ...numerals },
   marks: { flexDirection: 'row', gap: 2.5, height: 5, alignItems: 'center' },
-  dot: { width: 5, height: 5, borderRadius: 2.5 },
+  dot: { width: 5, height: 5, borderRadius: radius.full },
   footer: {
     flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, gap: 10,
   },
   hint: {
     flex: 1, flexShrink: 1, minWidth: 0,
-    fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '700',
+    fontSize: typeScale.label, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: weight.bold,
   },
   add: {
     // flexShrink 0 is the fix: the button keeps its width and the hint gives
     // way, rather than the row overflowing its container.
     flexShrink: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
-    paddingHorizontal: 14, minHeight: 40, borderRadius: radius.md, borderWidth: 1,
+    paddingHorizontal: 14, minHeight: 40, borderRadius: radius.control, borderWidth: 1,
   },
-  addText: { fontSize: 12.5, fontWeight: '700' },
+  addText: { fontSize: typeScale.caption, fontWeight: weight.bold },
 })

@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing } from '../lib/theme'
+import { colors, spacing, typeScale, weight } from '../lib/theme'
 import { AlmanacCard } from './ui'
 import ProjectionChart, { type HistorySummary } from './ProjectionChart'
 import { getTier } from '../lib/performanceTiers'
@@ -224,15 +224,15 @@ const styles = StyleSheet.create({
     marginTop: spacing.md, paddingHorizontal: 2,
   },
   calNoteText: {
-    flex: 1, color: colors.text.muted, fontSize: 11.5, lineHeight: 17,
+    flex: 1, color: colors.text.muted, fontSize: typeScale.label, lineHeight: 17,
   },
   projFootnote: {
-    color: colors.text.dimmed, fontSize: 10.5, lineHeight: 16,
+    color: colors.text.dimmed, fontSize: typeScale.label, lineHeight: 16,
     marginTop: spacing.md,
   },
   projLede: {
-    color: colors.text.secondary, fontSize: 14, lineHeight: 21,
+    color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21,
     marginTop: spacing.lg,
   },
-  projStrong: { color: colors.text.primary, fontWeight: '700' },
+  projStrong: { color: colors.text.primary, fontWeight: weight.bold },
 })

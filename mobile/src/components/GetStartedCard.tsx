@@ -26,7 +26,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius } from '../lib/theme'
+import { spacing, radius, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import {
   nextStep, progress, shouldShowSetup, type SetupStep, type StepId,
@@ -113,20 +113,20 @@ export default function GetStartedCard({
 const s = StyleSheet.create({
   wrap: {
     marginHorizontal: spacing.lg, marginBottom: spacing.md,
-    borderRadius: radius.lg, borderWidth: 1, padding: 16,
+    borderRadius: radius.card, borderWidth: 1, padding: 16,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  count: { fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  title: { fontSize: 19, fontWeight: '800', letterSpacing: -0.4, marginTop: 10 },
-  why: { fontSize: 14, lineHeight: 20.5, marginTop: 6 },
+  count: { fontSize: typeScale.label, fontWeight: weight.bold, fontVariant: ['tabular-nums'] },
+  title: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.4, marginTop: 10 },
+  why: { fontSize: typeScale.body, lineHeight: 20.5, marginTop: 6 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 15 },
   cta: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     minHeight: 44, paddingHorizontal: 18, borderRadius: radius.full,
   },
-  ctaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  ctaText: { color: '#FFFFFF', fontSize: typeScale.body, fontWeight: weight.bold },
   skip: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center' },
-  skipText: { fontSize: 14, fontWeight: '600' },
+  skipText: { fontSize: typeScale.body, fontWeight: weight.medium },
   dots: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 15 },
-  dot: { height: 6, borderRadius: 3 },
+  dot: { height: 6, borderRadius: radius.full },
 })

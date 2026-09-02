@@ -31,7 +31,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { useTheme } from '../contexts/ThemeContext'
-import { onImage } from '../lib/theme'
+import { onImage, typeScale, weight, radius } from '../lib/theme'
 import { useApprovals } from '../contexts/ApprovalsContext'
 import { tapFeedback } from '../lib/haptics'
 
@@ -162,7 +162,7 @@ export default function FloatingTabBar({
                 style={[
                   styles.label,
                   { color: isFocused ? '#FFFFFF' : onImage.navDim },
-                  isFocused && { fontWeight: '700' },
+                  isFocused && { fontWeight: weight.bold },
                 ]}
               >
                 {label}
@@ -222,9 +222,9 @@ const styles = StyleSheet.create({
   // colour so it reads as a dot ON the icon rather than a stray pixel.
   badge: {
     position: 'absolute', top: -2, right: -4,
-    width: 9, height: 9, borderRadius: 5,
+    width: 9, height: 9, borderRadius: radius.hair,
     backgroundColor: '#8B83FF',
     borderWidth: 1.5, borderColor: 'rgba(28,30,48,0.98)',
   },
-  label: { fontSize: 8.5, letterSpacing: 1, fontWeight: '600' },
+  label: { fontSize: typeScale.micro, letterSpacing: 1, fontWeight: weight.medium },
 })

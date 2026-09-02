@@ -13,7 +13,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { onImageColors as colors, spacing, radius, rhythm } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from './ui'
 import { metricNote } from '../lib/metricScience'
 
@@ -71,23 +71,23 @@ export default function MetricScienceBlock({
 
 const s = StyleSheet.create({
   body: {
-    fontSize: 13.5, lineHeight: 20, color: colors.text.secondary, marginTop: 8,
+    fontSize: typeScale.caption, lineHeight: 20, color: colors.text.secondary, marginTop: 8,
   },
   relHead: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     gap: 8, marginTop: rhythm.section,
   },
-  rank: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 5 },
-  rankText: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.4 },
+  rank: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: radius.hair },
+  rankText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.4 },
   ref: {
-    marginTop: rhythm.section, padding: 14, borderRadius: radius.md,
+    marginTop: rhythm.section, padding: 14, borderRadius: radius.control,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
   refKicker: {
-    fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase',
-    color: colors.text.muted, fontWeight: '700',
+    fontSize: typeScale.micro, letterSpacing: 1.6, textTransform: 'uppercase',
+    color: colors.text.muted, fontWeight: weight.bold,
   },
-  refClaim: { fontSize: 12.5, lineHeight: 18.5, color: colors.text.secondary },
-  refCite: { fontSize: 11.5, fontWeight: '700', color: colors.accent[500], flexShrink: 1 },
+  refClaim: { fontSize: typeScale.caption, lineHeight: 18.5, color: colors.text.secondary },
+  refCite: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.accent[500], flexShrink: 1 },
 })

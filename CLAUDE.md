@@ -47,6 +47,21 @@ Live site: https://www.bnchmrkd.org (Railway, deploys automatically from `main`)
 - Theme: the app is **light** (gradient `#F6F7FB → #FFFFFF → #EDEBFE`) except the splash
   screen and auth page, which are dark. Fonts: Instrument Sans (display), DM Mono (numerals/labels).
 
+## Mobile design tokens (`mobile/src/lib/theme.ts`) — enforced, not advisory
+
+- **Never write a bare `fontSize`, `borderRadius` or `fontWeight` number** in `mobile/src`.
+  Use the scales: `typeScale` (10 steps: micro 9 · label 11 · caption 13 · body 15 ·
+  title 18 · stat 22 · figure 28 · hero 34 · display 44 · mark 56), `radius`
+  (5: hair 4 · chip 8 · control 12 · card 20 · full), `weight` (3: regular · medium · bold).
+  These replaced 40 / 31 / 5 ad-hoc values. Adding an eleventh step is how that comes back —
+  reach for an existing one first.
+- A computed circle is `borderRadius: SIZE / 2`, or `radius.full`. Never the literal half.
+- **Every tap goes through `Tappable`** (`components/ui.tsx`) — it carries hit slop, the press
+  response and the accessibility role. Raw `TouchableOpacity` is banned. Stacked list rows
+  pass `hitSlop={0}` so neighbouring rows' targets don't overlap.
+- `node mobile/scripts/checks/ttokens.js` fails the build on any of the above. Run it after
+  touching styles; the other harnesses in that folder cover first-run, boards and corpus logic.
+
 ## Chart rules (Keenan's standing preferences)
 
 - Time-based (sprint) axes are **inverted so faster = higher** — improvement must read as climbing.

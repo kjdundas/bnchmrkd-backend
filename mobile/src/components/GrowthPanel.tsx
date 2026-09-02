@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { MonoKicker } from './ui'
 import InfoDot from './InfoDot'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import {
   GROWTH_LABEL, GROWTH_TONE, growthHeadline, growthAdvice,
   daysSinceLastHeight, REMEASURE_DAYS, RAPID_CM_PER_YEAR, estimateConflict,
@@ -73,7 +73,7 @@ export default function GrowthPanel({
       {advice.map((line, i) => (
         <View key={i} style={s.line}>
           <View style={[s.bullet, { backgroundColor: i === 0 ? tone : onImage.dim }]} />
-          <Text style={[s.lineText, i === 0 && { color: onImage.ink, fontWeight: '600' }]}>
+          <Text style={[s.lineText, i === 0 && { color: onImage.ink, fontWeight: weight.medium }]}>
             {line}
           </Text>
         </View>
@@ -131,15 +131,15 @@ function Fact({ label, value }: { label: string; value: string }) {
 const s = StyleSheet.create({
   wrap: {
     marginHorizontal: spacing.lg, marginTop: spacing.lg,
-    borderRadius: radius.lg, borderWidth: 1,
+    borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
     padding: 15,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   headline: { marginTop: 9 },
-  level: { fontSize: 19, fontWeight: '800', letterSpacing: -0.4 },
+  level: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.4 },
   detail: {
-    color: onImage.muted, fontSize: 13, marginTop: 2,
+    color: onImage.muted, fontSize: typeScale.caption, marginTop: 2,
     fontVariant: ['tabular-nums'],
   },
   facts: {
@@ -148,23 +148,23 @@ const s = StyleSheet.create({
   },
   fact: {},
   factVal: {
-    color: onImage.ink, fontSize: 15, fontWeight: '700',
+    color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold,
     fontVariant: ['tabular-nums'],
   },
   factLabel: {
-    color: onImage.dim, fontSize: 10, marginTop: 1,
-    letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: '600',
+    color: onImage.dim, fontSize: typeScale.label, marginTop: 1,
+    letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: weight.medium,
   },
   line: { flexDirection: 'row', gap: 9, marginTop: 12, alignItems: 'flex-start' },
-  bullet: { width: 5, height: 5, borderRadius: 3, marginTop: 6 },
-  lineText: { flex: 1, color: onImage.muted, fontSize: 13, lineHeight: 19 },
+  bullet: { width: 5, height: 5, borderRadius: radius.hair, marginTop: 6 },
+  lineText: { flex: 1, color: onImage.muted, fontSize: typeScale.caption, lineHeight: 19 },
   stale: {
     flexDirection: 'row', gap: 8, alignItems: 'flex-start',
-    marginTop: 14, padding: 10, borderRadius: 10, borderWidth: 1,
+    marginTop: 14, padding: 10, borderRadius: radius.chip, borderWidth: 1,
   },
-  staleText: { flex: 1, fontSize: 12, lineHeight: 17 },
+  staleText: { flex: 1, fontSize: typeScale.caption, lineHeight: 17 },
   source: {
-    color: onImage.dim, fontSize: 10.5, lineHeight: 16,
+    color: onImage.dim, fontSize: typeScale.label, lineHeight: 16,
     marginTop: 16, paddingTop: 12,
     borderTopWidth: 1, borderTopColor: onImage.divider,
   },

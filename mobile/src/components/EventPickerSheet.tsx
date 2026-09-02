@@ -17,7 +17,7 @@ import { View, Text, Modal, ScrollView, StyleSheet, ActivityIndicator } from 're
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius } from '../lib/theme'
+import { spacing, radius, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { byGroup } from '../lib/disciplines'
 import { upsertInto } from '../lib/supabase'
@@ -113,7 +113,7 @@ export default function EventPickerSheet({
                       />
                       <Text style={[s.chipText, {
                         color: on ? colors.text.primary : colors.text.secondary,
-                        fontWeight: on ? '700' : '600',
+                        fontWeight: on ? weight.bold : weight.medium,
                       }]}>
                         {d.name}
                       </Text>
@@ -163,21 +163,21 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: 14, borderBottomWidth: 1,
   },
-  title: { fontSize: 17, fontWeight: '700' },
-  lede: { fontSize: 15, lineHeight: 22 },
-  hint: { fontSize: 13, lineHeight: 19, marginTop: 8 },
+  title: { fontSize: typeScale.title, fontWeight: weight.bold },
+  lede: { fontSize: typeScale.body, lineHeight: 22 },
+  hint: { fontSize: typeScale.caption, lineHeight: 19, marginTop: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     minHeight: 42, paddingHorizontal: 13,
     borderRadius: radius.full, borderWidth: 1,
   },
-  chipText: { fontSize: 14 },
+  chipText: { fontSize: typeScale.body },
   primary: {
-    paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, marginLeft: 2,
+    paddingHorizontal: 5, paddingVertical: 2, borderRadius: radius.hair, marginLeft: 2,
   },
-  primaryText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
-  error: { fontSize: 13, marginTop: 18, lineHeight: 19 },
+  primaryText: { color: '#FFFFFF', fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.5 },
+  error: { fontSize: typeScale.caption, marginTop: 18, lineHeight: 19 },
   foot: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
     padding: spacing.lg, paddingBottom: 30, borderTopWidth: 1,
@@ -186,5 +186,5 @@ const s = StyleSheet.create({
     minHeight: 50, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
   },
-  saveText: { fontSize: 16, fontWeight: '700' },
+  saveText: { fontSize: typeScale.body, fontWeight: weight.bold },
 })

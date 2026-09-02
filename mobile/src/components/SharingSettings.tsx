@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
 import InfoDot from './InfoDot'
-import { spacing, radius } from '../lib/theme'
+import { spacing, radius, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { callRpc } from '../lib/supabase'
 import {
@@ -147,22 +147,22 @@ const s = StyleSheet.create({
   // and adding it again would inset this card further than every sibling.
   wrap: {
     marginTop: spacing.lg,
-    borderRadius: radius.lg, borderWidth: 1, padding: 16,
+    borderRadius: radius.card, borderWidth: 1, padding: 16,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  summary: { fontSize: 14.5, fontWeight: '600', marginTop: 9, lineHeight: 20 },
-  always: { fontSize: 12.5, lineHeight: 18, marginTop: 7 },
+  summary: { fontSize: typeScale.body, fontWeight: weight.medium, marginTop: 9, lineHeight: 20 },
+  always: { fontSize: typeScale.caption, lineHeight: 18, marginTop: 7 },
   row: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
     paddingTop: 14, marginTop: 14, borderTopWidth: 1,
   },
-  label: { fontSize: 14.5, fontWeight: '700' },
-  detail: { fontSize: 12.5, lineHeight: 18, marginTop: 2 },
-  failed: { fontSize: 12, marginTop: 5, fontWeight: '600' },
+  label: { fontSize: typeScale.body, fontWeight: weight.bold },
+  detail: { fontSize: typeScale.caption, lineHeight: 18, marginTop: 2 },
+  failed: { fontSize: typeScale.caption, marginTop: 5, fontWeight: weight.medium },
   track: {
-    width: 46, height: 28, borderRadius: 14, borderWidth: 1,
+    width: 46, height: 28, borderRadius: radius.full, borderWidth: 1,
     padding: 2, justifyContent: 'center',
   },
-  knob: { width: 22, height: 22, borderRadius: 11 },
-  foot: { fontSize: 11.5, lineHeight: 17, marginTop: 16 },
+  knob: { width: 22, height: 22, borderRadius: radius.full },
+  foot: { fontSize: typeScale.label, lineHeight: 17, marginTop: 16 },
 })

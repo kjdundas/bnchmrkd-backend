@@ -25,7 +25,7 @@ import React, { useEffect, useRef } from 'react'
 import { View, Text, Animated, StyleSheet, Easing } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { useReducedMotion } from '../lib/motion'
 import { LOAD_FAILED_TITLE, LOAD_FAILED_BODY } from '../lib/loadState'
 
@@ -147,7 +147,7 @@ export function NothingHere({
 const s = StyleSheet.create({
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingHorizontal: 14, borderRadius: radius.lg, borderWidth: 1,
+    paddingHorizontal: 14, borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
   },
   cards: {
@@ -156,13 +156,13 @@ const s = StyleSheet.create({
   },
   card: {
     width: '47.5%', minHeight: 150, padding: 13,
-    borderRadius: radius.lg, borderWidth: 1,
+    borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
   },
   state: { paddingHorizontal: spacing.lg, paddingTop: 30, alignItems: 'center' },
-  title: { color: onImage.ink, fontSize: 17, fontWeight: '700', marginTop: 12 },
+  title: { color: onImage.ink, fontSize: typeScale.title, fontWeight: weight.bold, marginTop: 12 },
   body: {
-    color: onImage.muted, fontSize: 14, lineHeight: 20, textAlign: 'center',
+    color: onImage.muted, fontSize: typeScale.body, lineHeight: 20, textAlign: 'center',
     marginTop: 6, maxWidth: 320,
   },
 })

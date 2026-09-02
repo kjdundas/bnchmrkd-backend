@@ -19,7 +19,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable } from './ui'
-import { radius, onImage } from '../lib/theme'
+import { radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { formatMark } from '../lib/disciplineScience'
 import { pbOf, trendOf, inEvent } from '../lib/athleteResults'
@@ -153,39 +153,39 @@ export default function SquadAthleteCard({
 
 const s = StyleSheet.create({
   card: {
-    width: '47.6%', minHeight: 150, borderRadius: radius.lg,
+    width: '47.6%', minHeight: 150, borderRadius: radius.card,
     borderWidth: 1, borderColor: onImage.cardBorder,
     backgroundColor: onImage.card, padding: 13,
   },
   top: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   avatar: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 34, height: 34, borderRadius: radius.full,
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.30)',
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '700', letterSpacing: 0.4 },
+  avatarText: { color: '#FFFFFF', fontSize: typeScale.caption, fontWeight: weight.bold, letterSpacing: 0.4 },
   trendWrap: {
-    width: 24, height: 24, borderRadius: 12,
+    width: 24, height: 24, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  name: { color: onImage.ink, fontSize: 14.5, fontWeight: '700', letterSpacing: -0.2, marginTop: 9 },
-  meta: { color: onImage.muted, fontSize: 11.5, marginTop: 1 },
+  name: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2, marginTop: 9 },
+  meta: { color: onImage.muted, fontSize: typeScale.label, marginTop: 1 },
   growth: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     alignSelf: 'flex-start', marginTop: 5,
     paddingHorizontal: 6, paddingVertical: 2.5,
-    borderRadius: 5, borderWidth: 1,
+    borderRadius: radius.hair, borderWidth: 1,
   },
-  growthText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
+  growthText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.2 },
   events: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 9 },
-  event: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
-  eventText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.2 },
+  event: { borderWidth: 1, borderRadius: radius.chip, paddingHorizontal: 6, paddingVertical: 3 },
+  eventText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.2 },
   bottom: { marginTop: 'auto', paddingTop: 10 },
   mark: {
-    color: onImage.ink, fontSize: 19, fontWeight: '700',
+    color: onImage.ink, fontSize: typeScale.title, fontWeight: weight.bold,
     letterSpacing: -0.5, fontVariant: ['tabular-nums'],
   },
-  markMeta: { color: onImage.dim, fontSize: 10.5, marginTop: 1 },
-  noMark: { color: onImage.dim, fontSize: 11, lineHeight: 15 },
+  markMeta: { color: onImage.dim, fontSize: typeScale.label, marginTop: 1 },
+  noMark: { color: onImage.dim, fontSize: typeScale.label, lineHeight: 15 },
 })

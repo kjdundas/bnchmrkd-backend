@@ -16,7 +16,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, TextInput, StyleSheet } from 'react-native'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius } from '../lib/theme'
+import { spacing, radius, typeScale, weight } from '../lib/theme'
 import { toIsoDob, fromIsoDob, ageFromDob } from '../lib/age'
 
 export default function DobField({
@@ -53,9 +53,9 @@ export default function DobField({
     backgroundColor: colors.bg.input,
     borderWidth: 1,
     borderColor: invalid ? colors.red : colors.glass.border,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: 12, paddingVertical: 12,
-    fontSize: 16, color: colors.text.primary,
+    fontSize: typeScale.body, color: colors.text.primary,
     textAlign: 'center' as const,
     ...extra,
   })
@@ -64,10 +64,10 @@ export default function DobField({
     <View style={{ marginBottom: spacing.lg }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
         <Text style={{
-          fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
-          color: colors.text.muted, fontWeight: '600',
+          fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase',
+          color: colors.text.muted, fontWeight: weight.medium,
         }}>{label}</Text>
-        {required && <Text style={{ fontSize: 10, color: colors.accent[500] }}>required</Text>}
+        {required && <Text style={{ fontSize: typeScale.label, color: colors.accent[500] }}>required</Text>}
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -116,16 +116,16 @@ export default function DobField({
       {/* Echo the age back. It is the fastest way for someone to catch a
           transposed year, and it shows why the app is asking. */}
       {iso && age != null && !invalid && (
-        <Text style={{ fontSize: 12, color: colors.text.secondary, marginTop: 7 }}>
+        <Text style={{ fontSize: typeScale.caption, color: colors.text.secondary, marginTop: 7 }}>
           {age} years old — you'll be compared against{' '}
-          <Text style={{ fontWeight: '700', color: colors.text.primary }}>
+          <Text style={{ fontWeight: weight.bold, color: colors.text.primary }}>
             {age < 13 ? 'U13' : age < 15 ? 'U15' : age < 17 ? 'U17' : age < 20 ? 'U20' : 'Senior'}
           </Text>
           {' '}standards.
         </Text>
       )}
       {invalid && (
-        <Text style={{ fontSize: 12, color: colors.red, marginTop: 7 }}>
+        <Text style={{ fontSize: typeScale.caption, color: colors.red, marginTop: 7 }}>
           That isn't a date we can use — check the day, month and year.
         </Text>
       )}

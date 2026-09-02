@@ -26,7 +26,7 @@ import { LinearGradient as Gradient } from 'expo-linear-gradient'
 // StyleSheet below (rgba(255,255,255,0.02) fills, 0.06 borders). Those were
 // written for a dark surface and were never migrated — the screen has been
 // sitting in a half-state ever since, light-mode ink on dark-era chrome.
-import { onImageColors as colors, spacing, radius, rhythm, onImage } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, onImage, typeScale, weight } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
@@ -992,8 +992,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
   header: { padding: spacing.lg, paddingBottom: spacing.sm },
   headerTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  screenTitle: { fontSize: 26, fontWeight: '700', color: colors.text.primary, marginTop: 4 },
-  screenSub: { color: colors.text.secondary, fontSize: 14, marginTop: 4 },
+  screenTitle: { fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary, marginTop: 4 },
+  screenSub: { color: colors.text.secondary, fontSize: typeScale.body, marginTop: 4 },
 
   // Mode toggle
   modeToggle: {
@@ -1001,7 +1001,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: 3,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -1013,44 +1013,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
-    borderRadius: radius.sm,
+    borderRadius: radius.chip,
   },
   modeBtnActive: {
     backgroundColor: 'rgba(139,131,255,0.16)',
     borderWidth: 1,
     borderColor: 'rgba(139,131,255,0.34)',
   },
-  modeBtnText: { color: colors.text.muted, fontSize: 13, fontWeight: '600' },
+  modeBtnText: { color: colors.text.muted, fontSize: typeScale.caption, fontWeight: weight.medium },
   modeBtnTextActive: { color: colors.orange[500] },
 
   // Back button
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.md,
     minHeight: 44,
   },
-  backText: { color: colors.text.secondary, fontSize: 14 },
+  backText: { color: colors.text.secondary, fontSize: typeScale.body },
 
   // Quick-log section
   quickLogSection: { marginBottom: spacing.md },
   quickLogHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: spacing.sm },
   quickLogLabel: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 1.8,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
   },
   quickLogRow: { gap: 8 },
   quickLogPill: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     paddingHorizontal: 14, minHeight: 44, justifyContent: 'center',
-    borderRadius: 12, borderWidth: 1,
+    borderRadius: radius.control, borderWidth: 1,
   },
-  quickLogPillText: { color: colors.text.primary, fontSize: 13, fontWeight: '600' },
-  quickLogPillUnit: { color: colors.text.muted, fontSize: 10, fontWeight: '500' },
+  quickLogPillText: { color: colors.text.primary, fontSize: typeScale.caption, fontWeight: weight.medium },
+  quickLogPillUnit: { color: colors.text.muted, fontSize: typeScale.label, fontWeight: weight.medium },
 
   // Performance Hero Card
   perfHero: {
     position: 'relative', overflow: 'hidden',
-    borderRadius: 20, borderWidth: 1, borderColor: onImage.cardBorder,
+    borderRadius: radius.card, borderWidth: 1, borderColor: onImage.cardBorder,
     padding: 20, marginBottom: rhythm.section,
   },
   // The 1pt of light on the top edge — the single thing that separates glass
@@ -1065,23 +1065,23 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   perfHeroTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
     color: colors.text.primary,
   },
   perfHeroSub: {
     color: colors.text.muted,
-    fontSize: 12,
+    fontSize: typeScale.caption,
     marginTop: 4,
     lineHeight: 18,
   },
 
   // Category grid label
   catGridLabel: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 2,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginBottom: spacing.sm,
     marginTop: spacing.sm,
   },
@@ -1091,23 +1091,23 @@ const styles = StyleSheet.create({
   catCard: {
     position: 'relative', overflow: 'hidden',
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
+    borderRadius: radius.card, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
     backgroundColor: 'rgba(255,255,255,0.05)',
     paddingVertical: 16, paddingRight: 16, paddingLeft: 18,
     marginBottom: 10,
   },
   catSpine: {
     position: 'absolute', left: 0, top: 12, bottom: 12,
-    width: 3, borderRadius: 2,
+    width: 3, borderRadius: radius.hair,
   },
-  catCount: { fontSize: 16, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  catCountUnit: { fontSize: 11, fontWeight: '600', color: colors.text.dimmed },
-  catCardTitle: { color: colors.text.primary, fontSize: 16, fontWeight: '600' },
-  catCardDesc: { color: colors.text.muted, fontSize: 12, marginTop: 2 },
+  catCount: { fontSize: typeScale.body, fontWeight: weight.bold, fontVariant: ['tabular-nums'] },
+  catCountUnit: { fontSize: typeScale.label, fontWeight: weight.medium, color: colors.text.dimmed },
+  catCardTitle: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
+  catCardDesc: { color: colors.text.muted, fontSize: typeScale.caption, marginTop: 2 },
 
   // Category header (metric picker)
   catTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
-  catDesc: { color: colors.text.secondary, fontSize: 13, marginTop: 2 },
+  catDesc: { color: colors.text.secondary, fontSize: typeScale.caption, marginTop: 2 },
 
   // Metric list
   metricList: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm, paddingBottom: TAB_BAR_CLEARANCE },
@@ -1117,20 +1117,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.lg,
   },
-  metricLabel: { color: colors.text.primary, fontSize: 15, fontWeight: '500' },
-  metricProtocol: { color: colors.text.dimmed, fontSize: 11, marginTop: 3 },
+  metricLabel: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
+  metricProtocol: { color: colors.text.dimmed, fontSize: typeScale.label, marginTop: 3 },
   metricRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metricUnit: { fontSize: 13, fontWeight: '600' },
+  metricUnit: { fontSize: typeScale.caption, fontWeight: weight.medium },
 
   // Input screen
   inputScreenContent: { padding: spacing.xxl, paddingTop: spacing.lg, paddingBottom: TAB_BAR_CLEARANCE },
   inputHeader: { alignItems: 'center', marginBottom: spacing.lg },
   metricTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: typeScale.stat,
+    fontWeight: weight.bold,
     color: colors.text.primary,
     textAlign: 'center',
     marginTop: 8,
@@ -1141,7 +1141,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(52,211,153,0.10)',
-    borderRadius: radius.sm,
+    borderRadius: radius.chip,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     marginBottom: spacing.lg,
@@ -1149,14 +1149,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52,211,153,0.2)',
     gap: 8,
   },
-  pbLabel: { fontSize: 10, letterSpacing: 1.5, color: colors.green, fontWeight: '700' },
-  pbValue: { fontSize: 16, fontWeight: '700', color: colors.green },
-  pbUnit: { fontSize: 12, fontWeight: '400' },
+  pbLabel: { fontSize: typeScale.label, letterSpacing: 1.5, color: colors.green, fontWeight: weight.bold },
+  pbValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.green },
+  pbUnit: { fontSize: typeScale.caption, fontWeight: weight.regular },
 
   // Input
   inputWrap: { alignItems: 'center', marginVertical: spacing.xl },
   inputBorder: {
-    borderRadius: radius.xl,
+    borderRadius: radius.card,
     borderWidth: 1,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
@@ -1165,8 +1165,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
   },
   valueInput: {
-    fontSize: 48,
-    fontWeight: '700',
+    fontSize: typeScale.display,
+    fontWeight: weight.bold,
     color: colors.orange[400],
     textAlign: 'center',
     minWidth: 160,
@@ -1174,9 +1174,9 @@ const styles = StyleSheet.create({
   },
   unitLabel: {
     color: colors.text.muted,
-    fontSize: 13,
+    fontSize: typeScale.caption,
     marginTop: spacing.sm,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
@@ -1190,29 +1190,29 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   moreToggleText: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 1.5,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     textTransform: 'uppercase',
   },
   moreSection: { marginBottom: spacing.md, gap: spacing.md },
   fieldGroup: { gap: 8 },
   fieldLabel: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 1.5,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginBottom: 6,
   },
   fieldInput: {
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: typeScale.body,
     color: colors.text.primary,
   },
 
@@ -1225,10 +1225,10 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   protocolToggleText: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 1.5,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     textTransform: 'uppercase',
   },
   protocolBody: {
@@ -1239,13 +1239,13 @@ const styles = StyleSheet.create({
   protocolBar: {
     width: 2,
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 1,
+    borderRadius: radius.full,
     marginRight: spacing.md,
   },
   protocolText: {
     flex: 1,
     color: colors.text.secondary,
-    fontSize: 12,
+    fontSize: typeScale.caption,
     lineHeight: 18,
   },
 
@@ -1257,22 +1257,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,107,107,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(255,107,107,0.28)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     marginBottom: spacing.md,
   },
-  errorText: { color: colors.red, fontSize: 12, flex: 1 },
+  errorText: { color: colors.red, fontSize: typeScale.caption, flex: 1 },
 
   // Save button
   saveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    borderRadius: radius.lg, paddingVertical: 18,
+    borderRadius: radius.card, paddingVertical: 18,
     backgroundColor: colors.accent[500],
     marginTop: rhythm.section,
   },
   saveBtnDisabled: { opacity: 0.4 },
-  saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
+  saveBtnText: { color: '#fff', fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: 0.5 },
 
   // History
   historyRow: {
@@ -1283,12 +1283,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.04)',
   },
-  historyValue: { color: colors.text.primary, fontSize: 15, fontWeight: '600' },
-  historyUnit: { fontSize: 12, fontWeight: '400', color: colors.text.muted },
-  historyDate: { color: colors.text.dimmed, fontSize: 11, marginTop: 2 },
+  historyValue: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
+  historyUnit: { fontSize: typeScale.caption, fontWeight: weight.regular, color: colors.text.muted },
+  historyDate: { color: colors.text.dimmed, fontSize: typeScale.label, marginTop: 2 },
   historyPB: {
     paddingHorizontal: 0, paddingVertical: 0, backgroundColor: 'transparent',
   },
-  historyPBText: { color: colors.green, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  historyPBText: { color: colors.green, fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1 },
 
 })

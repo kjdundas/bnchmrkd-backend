@@ -18,7 +18,7 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Tappable, GlassPanel, MonoKicker } from './ui'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { READINESS_COLORS } from '../lib/readiness'
 import { sessionType, TYPE_STYLE } from '../lib/sessionTypes'
 import { EVENT_STYLE, eventKind } from '../lib/events'
@@ -130,13 +130,13 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: 10,
   },
-  count: { fontSize: 11.5, fontWeight: '700' },
+  count: { fontSize: typeScale.label, fontWeight: weight.bold },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: radius.md, borderWidth: 1, padding: 11, marginBottom: 6,
+    borderRadius: radius.control, borderWidth: 1, padding: 11, marginBottom: 6,
   },
-  title: { fontSize: 13.5, fontWeight: '600' },
-  tag: { fontSize: 8.5, fontWeight: '800', letterSpacing: 0.9 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  block: { fontSize: 11, lineHeight: 16, marginTop: 4 },
+  title: { fontSize: typeScale.caption, fontWeight: weight.medium },
+  tag: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.9 },
+  dot: { width: 8, height: 8, borderRadius: radius.full },
+  block: { fontSize: typeScale.label, lineHeight: 16, marginTop: 4 },
 })

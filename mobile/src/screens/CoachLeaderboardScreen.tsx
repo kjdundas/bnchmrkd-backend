@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from '../components/ui'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
@@ -310,15 +310,15 @@ export default function CoachLeaderboardScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 34, fontWeight: '700', letterSpacing: -0.9, color: onImage.ink },
+  h1: { fontSize: typeScale.hero, fontWeight: weight.bold, letterSpacing: -0.9, color: onImage.ink },
   modes: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.lg, marginTop: 14 },
   mode: {
     minHeight: 36, paddingHorizontal: 14, borderRadius: radius.full, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
-  modeText: { fontSize: 13, fontWeight: '700' },
+  modeText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   filtered: {
-    color: onImage.muted, fontSize: 12, fontWeight: '600',
+    color: onImage.muted, fontSize: typeScale.caption, fontWeight: weight.medium,
     paddingHorizontal: spacing.lg, marginTop: 14,
   },
   board: { marginTop: 22, paddingHorizontal: spacing.lg },
@@ -326,33 +326,33 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     marginBottom: 10, gap: 10,
   },
-  boardTitle: { color: onImage.ink, fontSize: 18, fontWeight: '700', letterSpacing: -0.3, flex: 1 },
-  boardCount: { color: onImage.muted, fontSize: 12 },
+  boardTitle: { color: onImage.ink, fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3, flex: 1 },
+  boardCount: { color: onImage.muted, fontSize: typeScale.caption },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     minHeight: 58, paddingHorizontal: 14, marginBottom: 7,
-    borderRadius: radius.lg, borderWidth: 1,
+    borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
   },
   rank: {
     width: 22, textAlign: 'center', color: onImage.muted,
-    fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'],
+    fontSize: typeScale.body, fontWeight: weight.bold, fontVariant: ['tabular-nums'],
   },
-  name: { color: onImage.ink, fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
-  meta: { color: onImage.muted, fontSize: 11.5, marginTop: 1 },
-  tier: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 5, borderWidth: 1 },
-  tierText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
+  name: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  meta: { color: onImage.muted, fontSize: typeScale.label, marginTop: 1 },
+  tier: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: radius.hair, borderWidth: 1 },
+  tierText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.4 },
   mark: {
-    color: onImage.ink, fontSize: 15.5, fontWeight: '700',
+    color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold,
     fontVariant: ['tabular-nums'], minWidth: 62, textAlign: 'right',
   },
-  emptyTitle: { color: onImage.ink, fontSize: 17, fontWeight: '700', marginTop: 12 },
+  emptyTitle: { color: onImage.ink, fontSize: typeScale.title, fontWeight: weight.bold, marginTop: 12 },
   emptyBody: {
-    color: onImage.muted, fontSize: 14, lineHeight: 20, textAlign: 'center',
+    color: onImage.muted, fontSize: typeScale.body, lineHeight: 20, textAlign: 'center',
     marginTop: 6, maxWidth: 320,
   },
   foot: {
-    color: onImage.muted, fontSize: 12, lineHeight: 18,
+    color: onImage.muted, fontSize: typeScale.caption, lineHeight: 18,
     paddingHorizontal: spacing.lg, marginTop: 20,
   },
 })

@@ -15,7 +15,7 @@ import Svg, {
   Polygon,
   Text as SvgText,
 } from 'react-native-svg'
-import { colors, spacing } from '../lib/theme'
+import { colors, spacing, typeScale } from '../lib/theme'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -219,11 +219,11 @@ function formatDate(iso: string): string {
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center' },
-  noData: { color: colors.text.muted, fontSize: 12, textAlign: 'center', marginTop: 40 },
+  noData: { color: colors.text.muted, fontSize: typeScale.caption, textAlign: 'center', marginTop: 40 },
   xAxis: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 4,
   },
-  dateLabel: { color: colors.text.dimmed, fontSize: 9, letterSpacing: 0.5 },
+  dateLabel: { color: colors.text.dimmed, fontSize: typeScale.micro, letterSpacing: 0.5 },
 })

@@ -14,7 +14,7 @@ import { View, Text, Modal, TextInput, ScrollView, StyleSheet, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius } from '../lib/theme'
+import { spacing, radius, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import type { Squad, SquadAthlete } from '../lib/squads'
 
@@ -78,15 +78,15 @@ export default function SquadSheet({
 
   const input = {
     backgroundColor: colors.bg.primary, borderWidth: 1, borderColor: colors.glass.border,
-    borderRadius: radius.md, paddingHorizontal: 12, minHeight: 48,
-    fontSize: 15, color: colors.text.primary,
+    borderRadius: radius.control, paddingHorizontal: 12, minHeight: 48,
+    fontSize: typeScale.body, color: colors.text.primary,
   }
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
 
         <View style={s.header}>
@@ -107,7 +107,7 @@ export default function SquadSheet({
           {!!error && (
             <View style={s.errorRow}>
               <Ionicons name="alert-circle" size={15} color={colors.red} style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.red }}>{error}</Text>
+              <Text style={{ flex: 1, fontSize: typeScale.caption, lineHeight: 18, color: colors.red }}>{error}</Text>
             </View>
           )}
 
@@ -213,7 +213,7 @@ export default function SquadSheet({
                   accessibilityLabel={confirmDelete ? 'Confirm delete squad' : 'Delete squad'}
                   style={[s.danger, { borderColor: colors.red + '5C' }]}
                 >
-                  <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.red }}>
+                  <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.red }}>
                     {confirmDelete ? 'Tap again to delete' : 'Delete squad'}
                   </Text>
                 </Tappable>
@@ -281,24 +281,24 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-end',
     paddingHorizontal: spacing.lg, paddingTop: 12, paddingBottom: 14, gap: 12,
   },
-  title: { fontSize: 24, fontWeight: '700', letterSpacing: -0.5, marginTop: 4 },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 12.5, lineHeight: 18, marginBottom: 8, marginTop: 14 },
+  title: { fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.5, marginTop: 4 },
+  close: { width: 36, height: 36, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: typeScale.caption, lineHeight: 18, marginBottom: 8, marginTop: 14 },
   errorRow: { flexDirection: 'row', gap: 7, marginTop: 12 },
   primary: {
-    minHeight: 48, borderRadius: radius.md, marginTop: 18,
+    minHeight: 48, borderRadius: radius.control, marginTop: 18,
     alignItems: 'center', justifyContent: 'center',
   },
-  primaryText: { color: '#FFFFFF', fontSize: 14.5, fontWeight: '700' },
+  primaryText: { color: '#FFFFFF', fontSize: typeScale.body, fontWeight: weight.bold },
   danger: {
-    minHeight: 44, borderRadius: radius.md, borderWidth: 1, marginTop: 12,
+    minHeight: 44, borderRadius: radius.control, borderWidth: 1, marginTop: 12,
     alignItems: 'center', justifyContent: 'center',
   },
   pick: {
-    minHeight: 56, borderRadius: radius.md, borderWidth: 1,
+    minHeight: 56, borderRadius: radius.control, borderWidth: 1,
     paddingHorizontal: 14, paddingVertical: 10, marginTop: 8, gap: 10,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  pickText: { fontSize: 15, fontWeight: '600' },
-  pickSub: { fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.54)', marginTop: 2 },
+  pickText: { fontSize: typeScale.body, fontWeight: weight.medium },
+  pickSub: { fontSize: typeScale.caption, lineHeight: 17, color: 'rgba(255,255,255,0.54)', marginTop: 2 },
 })

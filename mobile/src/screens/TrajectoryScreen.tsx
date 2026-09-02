@@ -27,7 +27,7 @@ import { Ionicons } from '@expo/vector-icons'
 // (`rgba(255,255,255,0.06)` borders, `0.03` header cells, and so on). Those
 // were never wrong — they were written for a dark surface and only started
 // looking broken when the app's paper went light underneath them.
-import { onImageColors as colors, spacing, radius, rhythm, onImage } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, onImage, typeScale, weight } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
 import AppHeader from '../components/AppHeader'
@@ -497,7 +497,7 @@ function TierPositioningSection({
             style={{
               position: 'absolute', left: 0, top: 0, bottom: 0,
               width: `${Math.max(2, (tier.tier / tier.maxTier) * 100)}%`,
-              borderRadius: 3,
+              borderRadius: radius.hair,
             }}
           />
           {Array.from({ length: tier.maxTier - 1 }, (_, i) => i + 1).map((t) => (
@@ -577,7 +577,7 @@ function SimilarAthletesSection({
   if (error) {
     return (
       <AlmanacCard glass kicker="BENCHMARKS" title="Similar athletes" accent={colors.accent[500]}>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, lineHeight: 20 }}>{error}</Text>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 20 }}>{error}</Text>
       </AlmanacCard>
     )
   }
@@ -585,7 +585,7 @@ function SimilarAthletesSection({
   if (!age) {
     return (
       <AlmanacCard glass kicker="BENCHMARKS" title="Similar athletes" accent={colors.accent[500]}>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, lineHeight: 20 }}>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 20 }}>
           Add your date of birth in Profile to compare yourself against athletes
           who ran this time at your age.
         </Text>
@@ -596,7 +596,7 @@ function SimilarAthletesSection({
   if (similar.length === 0) {
     return (
       <AlmanacCard glass kicker="BENCHMARKS" title="Similar athletes" accent={colors.accent[500]}>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, lineHeight: 20 }}>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 20 }}>
           No close matches in the database for this mark at your age yet.
         </Text>
       </AlmanacCard>
@@ -605,7 +605,7 @@ function SimilarAthletesSection({
 
   return (
     <AlmanacCard glass kicker="BENCHMARKS" title="Similar Athletes" accent={colors.orange[500]}>
-      <Text style={{ fontSize: 12.5, color: colors.text.muted, lineHeight: 18, marginBottom: 10 }}>
+      <Text style={{ fontSize: typeScale.caption, color: colors.text.muted, lineHeight: 18, marginBottom: 10 }}>
         Athletes who were on a comparable mark at the same age. What they went
         on to do is underneath — it is what happened to them, not a forecast.
       </Text>
@@ -761,8 +761,8 @@ function CompetitionLadderSection({
               numberOfLines={1}
               style={[
                 styles.ladderLabel,
-                isMet && { color: colors.text.primary, fontWeight: '600' },
-                isNext && { color: colors.orange[500], fontWeight: '700' },
+                isMet && { color: colors.text.primary, fontWeight: weight.medium },
+                isNext && { color: colors.orange[500], fontWeight: weight.bold },
               ]}
             >
               {rung.label}
@@ -839,7 +839,7 @@ function PerformanceMatrixSection({
                     ]}
                   >
                     {val != null ? (
-                      <Text style={[styles.matrixVal, isYou && { color: colors.orange[500], fontWeight: '700' }]}>
+                      <Text style={[styles.matrixVal, isYou && { color: colors.orange[500], fontWeight: weight.bold }]}>
                         {formatPerformance(val, discipline)}
                       </Text>
                     ) : (
@@ -1035,21 +1035,21 @@ function TrajectoryBody() {
 
 const styles = StyleSheet.create({
   // Performance Matrix (age-group × tier grid)
-  matrixCaption: { color: colors.text.secondary, fontSize: 12, lineHeight: 17, marginBottom: spacing.md },
+  matrixCaption: { color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 17, marginBottom: spacing.md },
   matrixRow: { flexDirection: 'row' },
   matrixCell: {
     width: 62, height: 34, alignItems: 'center', justifyContent: 'center',
     borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.06)',
   },
   matrixHeaderCell: { backgroundColor: 'rgba(255,255,255,0.03)' },
-  matrixHeaderText: { color: colors.text.muted, fontSize: 10, fontWeight: '700' },
+  matrixHeaderText: { color: colors.text.muted, fontSize: typeScale.label, fontWeight: weight.bold },
   matrixActiveCol: { backgroundColor: 'rgba(139,131,255,0.07)' },
   matrixLabelCell: { flexDirection: 'row', gap: 5, backgroundColor: 'rgba(255,255,255,0.03)' },
-  matrixTierLabel: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 },
+  matrixTierLabel: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.5 },
   matrixYouCell: { backgroundColor: 'rgba(139,131,255,0.20)', borderColor: colors.orange[500] },
-  matrixVal: { color: colors.text.secondary, fontSize: 10.5 },
-  matrixNull: { color: colors.text.dimmed, fontSize: 10.5 },
-  matrixYouNote: { color: colors.orange[400], fontSize: 11, fontWeight: '600', marginTop: spacing.md },
+  matrixVal: { color: colors.text.secondary, fontSize: typeScale.label },
+  matrixNull: { color: colors.text.dimmed, fontSize: typeScale.label },
+  matrixYouNote: { color: colors.orange[400], fontSize: typeScale.label, fontWeight: weight.medium, marginTop: spacing.md },
 
   // The ground Home and Programs both land on once you scroll past their
   // photographs. Trajectory has no photograph, so it simply starts there.
@@ -1065,25 +1065,25 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginLeft: -spacing.sm,
   },
-  title: { fontSize: 26, fontWeight: '700', color: colors.text.primary, marginTop: 4 },
+  title: { fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary, marginTop: 4 },
 
   content: { padding: spacing.lg, paddingTop: spacing.md },
 
   // Discipline picker
   disciplineCardContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   pbLabel: {
-    color: colors.text.muted, fontSize: 9, letterSpacing: 2,
-    textTransform: 'uppercase', fontWeight: '600',
+    color: colors.text.muted, fontSize: typeScale.micro, letterSpacing: 2,
+    textTransform: 'uppercase', fontWeight: weight.medium,
   },
   pbValue: {
-    color: colors.text.primary, fontSize: 34, fontWeight: '700',
+    color: colors.text.primary, fontSize: typeScale.hero, fontWeight: weight.bold,
     letterSpacing: -1.2, marginTop: 3, fontVariant: ['tabular-nums'],
   },
-  tierRule: { width: 26, height: 2, borderRadius: 1, marginTop: 12, marginBottom: 7 },
+  tierRule: { width: 26, height: 2, borderRadius: radius.full, marginTop: 12, marginBottom: 7 },
 
   tierSection: { alignItems: 'center' },
   tierLabel: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1.6,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.6,
     textTransform: 'uppercase',
   },
 
@@ -1092,17 +1092,17 @@ const styles = StyleSheet.create({
   // with the tier label beside it; white against the tier's own wash is the
   // contrast that reads as premium rather than as a highlight.
   pbDisplay: {
-    fontSize: 56, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.mark, fontWeight: weight.bold, color: colors.text.primary,
     letterSpacing: -2.2, marginTop: 4,
     fontVariant: ['tabular-nums'],
   },
   heroPanel: { padding: 22, marginBottom: spacing.lg },
   heroTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 14 },
   tierNameLarge: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1.6,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.6,
     textTransform: 'uppercase', marginTop: 2,
   },
-  tierShortLarge: { fontSize: 14, fontWeight: '600', marginTop: spacing.xs },
+  tierShortLarge: { fontSize: typeScale.body, fontWeight: weight.medium, marginTop: spacing.xs },
 
   tierStats: {
     flexDirection: 'row',
@@ -1114,8 +1114,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   tierStat: { flex: 1, alignItems: 'center' },
-  tierStatLabel: { fontSize: 9, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
-  tierStatValue: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
+  tierStatLabel: { fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: weight.medium, marginBottom: 2 },
+  tierStatValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
   tierStatDivider: {
     width: 1,
     height: 32,
@@ -1127,7 +1127,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md, paddingHorizontal: 2,
   },
   calNoteText: {
-    flex: 1, color: colors.text.muted, fontSize: 11.5, lineHeight: 17,
+    flex: 1, color: colors.text.muted, fontSize: typeScale.label, lineHeight: 17,
   },
   trendRow: {
     flexDirection: 'row', gap: 9, alignItems: 'flex-start',
@@ -1135,15 +1135,15 @@ const styles = StyleSheet.create({
   },
   // A rule, like the ladder spine — so the whole screen speaks one language
   // rather than mixing bars and bubbles.
-  trendDot: { width: 2, height: 15, borderRadius: 1, marginTop: 3 },
-  trendText: { flex: 1, fontSize: 13.5, lineHeight: 20, fontWeight: '500' },
+  trendDot: { width: 2, height: 15, borderRadius: radius.full, marginTop: 3 },
+  trendText: { flex: 1, fontSize: typeScale.caption, lineHeight: 20, fontWeight: weight.medium },
   pctFootnote: {
-    color: colors.text.dimmed, fontSize: 10.5, lineHeight: 15,
+    color: colors.text.dimmed, fontSize: typeScale.label, lineHeight: 15,
     marginTop: spacing.md,
   },
   tierLadderContainer: { marginTop: spacing.md },
   tierTrack: {
-    height: 6, borderRadius: 3, overflow: 'hidden',
+    height: 6, borderRadius: radius.full, overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.10)',
     position: 'relative',
   },
@@ -1152,7 +1152,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 2,
   },
-  tierLadderLabel: { fontSize: 9, color: colors.text.dimmed, fontWeight: '600' },
+  tierLadderLabel: { fontSize: typeScale.micro, color: colors.text.dimmed, fontWeight: weight.medium },
 
   // Similar athletes
   similarAthleteRow: {
@@ -1163,20 +1163,20 @@ const styles = StyleSheet.create({
   // A ranked list reads as a ranking. The rows used to be name-left,
   // value-right with nothing saying these were ordered by closeness.
   similarRank: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1,
     color: colors.text.dimmed, width: 20,
     fontVariant: ['tabular-nums'],
   },
-  similarAthleteName: { fontSize: 14, fontWeight: '700', color: colors.text.primary, marginBottom: 2 },
-  similarAthleteCountry: { fontSize: 12, color: colors.text.dimmed },
+  similarAthleteName: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary, marginBottom: 2 },
+  similarAthleteCountry: { fontSize: typeScale.caption, color: colors.text.dimmed },
   similarAthletePb: { alignItems: 'flex-end' },
-  similarAthletePbValue: { fontSize: 16, fontWeight: '700', color: colors.orange[500] },
-  similarAthleteAge: { fontSize: 10, color: colors.text.muted, marginTop: 2 },
+  similarAthletePbValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.orange[500] },
+  similarAthleteAge: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 2 },
 
   // Improvement scenarios
   scenarioCard: {
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
@@ -1188,9 +1188,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
-  scenarioName: { fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  scenarioAge: { fontSize: 12, color: colors.text.muted },
-  scenarioPb: { fontSize: 18, fontWeight: '700', textAlign: 'right' },
+  scenarioName: { fontSize: typeScale.body, fontWeight: weight.bold, marginBottom: 4 },
+  scenarioAge: { fontSize: typeScale.caption, color: colors.text.muted },
+  scenarioPb: { fontSize: typeScale.title, fontWeight: weight.bold, textAlign: 'right' },
 
   scenarioStats: {
     flexDirection: 'row',
@@ -1199,8 +1199,8 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.04)',
   },
   scenarioStat: { flex: 1, alignItems: 'center' },
-  scenarioStatLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
-  scenarioStatValue: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
+  scenarioStatLabel: { fontSize: typeScale.micro, letterSpacing: 1, color: colors.text.dimmed, fontWeight: weight.medium, marginBottom: 2 },
+  scenarioStatValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
   scenarioStatDivider: {
     width: 1,
     height: 28,
@@ -1209,23 +1209,23 @@ const styles = StyleSheet.create({
 
   // Competition ladder
   projLede: {
-    color: colors.text.secondary, fontSize: 14, lineHeight: 21,
+    color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21,
     marginTop: spacing.lg,
   },
-  projStrong: { color: colors.text.primary, fontWeight: '700' },
+  projStrong: { color: colors.text.primary, fontWeight: weight.bold },
   projFootnote: {
-    color: colors.text.dimmed, fontSize: 10.5, lineHeight: 16,
+    color: colors.text.dimmed, fontSize: typeScale.label, lineHeight: 16,
     marginTop: spacing.md,
   },
   ladderLede: {
-    color: colors.text.secondary, fontSize: 13, lineHeight: 19,
+    color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 19,
     marginBottom: spacing.md,
   },
-  ladderCountValue: { color: colors.orange[500], fontSize: 24, fontWeight: '700', letterSpacing: -0.5 },
-  ladderCountOf: { color: colors.text.dimmed, fontSize: 15, fontWeight: '600' },
+  ladderCountValue: { color: colors.orange[500], fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.5 },
+  ladderCountOf: { color: colors.text.dimmed, fontSize: typeScale.body, fontWeight: weight.medium },
   ladderCountLabel: {
-    color: colors.text.muted, fontSize: 9, letterSpacing: 2,
-    fontWeight: '600', marginTop: 2,
+    color: colors.text.muted, fontSize: typeScale.micro, letterSpacing: 2,
+    fontWeight: weight.medium, marginTop: 2,
   },
   ladderRungNext: {
     // The tint used to be applied with marginHorizontal: -10, which made the
@@ -1233,7 +1233,7 @@ const styles = StyleSheet.create({
     // to jut out of the stack. The inset is constant now and only the fill
     // changes.
     backgroundColor: 'rgba(139,131,255,0.09)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
   },
   ladderRung: {
     flexDirection: 'row', alignItems: 'center',
@@ -1243,7 +1243,7 @@ const styles = StyleSheet.create({
   },
   ladderSpine: {
     position: 'absolute', left: 0, top: 8, bottom: 8,
-    width: 2, borderRadius: 1,
+    width: 2, borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.14)',
   },
   // The label column has to take the slack, or the mark packs up against it
@@ -1251,14 +1251,14 @@ const styles = StyleSheet.create({
   // circle used to give this row its width, and removing the circle collapsed
   // it onto the label.
   ladderLabel: {
-    flex: 1, fontSize: 15, color: colors.text.secondary, fontWeight: '500',
+    flex: 1, fontSize: typeScale.body, color: colors.text.secondary, fontWeight: weight.medium,
   },
   // Fixed width so the marks form a true column down the card rather than
   // ragging against labels of different lengths.
   ladderRight: { alignItems: 'flex-end', minWidth: 92 },
   ladderThreshold: {
-    fontSize: 16, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary,
     fontVariant: ['tabular-nums'], letterSpacing: -0.3,
   },
-  ladderGap: { fontSize: 11.5, color: colors.text.muted, marginTop: 3 },
+  ladderGap: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 3 },
 })

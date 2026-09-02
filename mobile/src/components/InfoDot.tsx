@@ -22,7 +22,7 @@ import { View, Text, Modal, Pressable, StyleSheet, ScrollView } from 'react-nati
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable } from './ui'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { GLOSSARY, type GlossaryKey } from '../lib/glossary'
 
@@ -100,19 +100,19 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: spacing.lg,
   },
   card: {
-    width: '100%', maxWidth: 400, borderRadius: radius.lg,
+    width: '100%', maxWidth: 400, borderRadius: radius.card,
     borderWidth: 1, padding: 20,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  title: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
-  body: { fontSize: 15, lineHeight: 22 },
+  title: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3 },
+  body: { fontSize: typeScale.body, lineHeight: 22 },
   note: {
-    marginTop: 14, padding: 12, borderRadius: radius.md ?? 10, borderWidth: 1,
+    marginTop: 14, padding: 12, borderRadius: radius.control ?? 10, borderWidth: 1,
   },
-  noteText: { fontSize: 13.5, lineHeight: 20 },
+  noteText: { fontSize: typeScale.caption, lineHeight: 20 },
   close: {
     marginTop: 18, minHeight: 44, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
   },
-  closeText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  closeText: { color: '#FFFFFF', fontSize: typeScale.body, fontWeight: weight.bold },
 })

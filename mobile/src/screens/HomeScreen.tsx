@@ -24,7 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, onImage } from '../lib/theme'
+import { colors, spacing, onImage, typeScale, weight, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, callRpc } from '../lib/supabase'
@@ -754,24 +754,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
   },
   greetingName: {
-    fontSize: 28, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary,
     marginTop: 4, letterSpacing: -0.5,
   },
   clubText: {
-    fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase',
-    color: colors.text.muted, marginTop: 4, fontWeight: '600',
+    fontSize: typeScale.label, letterSpacing: 1.5, textTransform: 'uppercase',
+    color: colors.text.muted, marginTop: 4, fontWeight: weight.medium,
   },
 
   // Limiting Factor
   limitingRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   limitingIconWrap: {
-    width: 40, height: 40, borderRadius: 12,
+    width: 40, height: 40, borderRadius: radius.control,
     backgroundColor: 'rgba(245,158,11,0.1)',
     alignItems: 'center', justifyContent: 'center', marginTop: 2,
   },
-  limitingAxis: { color: colors.text.primary, fontSize: 16, fontWeight: '700' },
-  limitingScore: { color: colors.text.secondary, fontSize: 12, marginTop: 2 },
-  limitingDesc: { color: colors.text.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
+  limitingAxis: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.bold },
+  limitingScore: { color: colors.text.secondary, fontSize: typeScale.caption, marginTop: 2 },
+  limitingDesc: { color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 19, marginTop: 6 },
 
   // Activity feed
   activityRow: {
@@ -780,21 +780,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)', gap: 8,
   },
   activityDot: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
-  dotInner: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
+  dotInner: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.2)' },
   activityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  activityLabel: { color: colors.text.primary, fontSize: 14, fontWeight: '500', textTransform: 'capitalize' },
-  activityDate: { color: colors.text.dimmed, fontSize: 11, marginTop: 2 },
-  activityValue: { color: colors.orange[400], fontSize: 16, fontWeight: '700' },
-  activityUnit: { fontSize: 11, fontWeight: '400', color: colors.text.muted },
+  activityLabel: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium, textTransform: 'capitalize' },
+  activityDate: { color: colors.text.dimmed, fontSize: typeScale.label, marginTop: 2 },
+  activityValue: { color: colors.orange[400], fontSize: typeScale.body, fontWeight: weight.bold },
+  activityUnit: { fontSize: typeScale.label, fontWeight: weight.regular, color: colors.text.muted },
   pbBadge: {
-    backgroundColor: colors.green + '20', borderRadius: 4,
+    backgroundColor: colors.green + '20', borderRadius: radius.hair,
     paddingHorizontal: 6, paddingVertical: 2,
     borderWidth: 1, borderColor: colors.green + '40',
   },
-  pbText: { color: colors.green, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  pbText: { color: colors.green, fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1 },
 
   // Insight
   insightRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  insightIcon: { fontSize: 22, marginTop: 2 },
-  insightText: { color: colors.text.secondary, fontSize: 14, lineHeight: 21, flex: 1 },
+  insightIcon: { fontSize: typeScale.stat, marginTop: 2 },
+  insightText: { color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21, flex: 1 },
 })

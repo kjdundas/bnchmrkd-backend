@@ -13,7 +13,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { View, Text, Modal, Animated, ScrollView, Dimensions } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm, numerals, elevation, onImage, onDark } from '../lib/theme'
+import { spacing, radius, rhythm, numerals, elevation, onImage, onDark, typeScale, weight } from '../lib/theme'
 import { DURATION, EASE, STAGGER_STEP, useReducedMotion } from '../lib/motion'
 import { Tappable, MonoKicker, GlassPanel } from './ui'
 import { AthleteDNALadder } from './HomeSections'
@@ -98,24 +98,24 @@ function AxisRow({
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 }}>
       <Text
         numberOfLines={1}
-        style={{ width: 88, fontSize: 13, color: over ? onImage.muted : colors.text.secondary, fontWeight: '500' }}
+        style={{ width: 88, fontSize: typeScale.caption, color: over ? onImage.muted : colors.text.secondary, fontWeight: weight.medium }}
       >
         {axis.label}
       </Text>
 
       {/* Track gives the score a scale to be read against. */}
       <View style={{
-        flex: 1, height: 7, borderRadius: 4,
+        flex: 1, height: 7, borderRadius: radius.hair,
         backgroundColor: over ? 'rgba(255,255,255,0.16)' : colors.glass.divider,
         overflow: 'hidden',
       }}>
         {!untested && (
-          <Animated.View style={{ width: w, height: '100%', borderRadius: 4, backgroundColor: fill }} />
+          <Animated.View style={{ width: w, height: '100%', borderRadius: radius.hair, backgroundColor: fill }} />
         )}
       </View>
 
       <Text style={{
-        width: 26, textAlign: 'right', fontSize: 13, fontWeight: '700',
+        width: 26, textAlign: 'right', fontSize: typeScale.caption, fontWeight: weight.bold,
         color: untested
           ? (over ? onImage.dim : colors.text.dimmed)
           : (over ? onImage.ink : colors.text.primary),
@@ -159,7 +159,7 @@ function DnaSheet({
         {/* Grabber + close. A sheet must always offer an explicit dismiss,
             not just the swipe (Apple HIG escape-routes). */}
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.glass.border }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: colors.glass.border }} />
         </View>
         <View style={{
           flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -167,7 +167,7 @@ function DnaSheet({
         }}>
           <View>
             <MonoKicker>The profile</MonoKicker>
-            <Text style={{ fontSize: 26, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5, marginTop: 4 }}>
+            <Text style={{ fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.5, marginTop: 4 }}>
               Athlete DNA
             </Text>
           </View>
@@ -175,7 +175,7 @@ function DnaSheet({
             onPress={onClose}
             accessibilityLabel="Close Athlete DNA"
             style={{
-              width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+              width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
               backgroundColor: colors.glass.bg, borderWidth: 1, borderColor: colors.glass.border,
             }}
           >
@@ -196,8 +196,8 @@ function DnaSheet({
           {/* The tests behind the scores. This is the natural place for them —
               an axis score is only meaningful next to what produced it. */}
           <Text style={{
-            fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
-            color: colors.text.muted, fontWeight: '700',
+            fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase',
+            color: colors.text.muted, fontWeight: weight.bold,
             marginTop: rhythm.block, marginBottom: rhythm.tight,
           }}>
             The tests behind these scores
@@ -246,21 +246,21 @@ export default function DnaStrip({
         <View style={{ flex: 1 }}>
           <MonoKicker color={over ? onImage.dim : undefined}>Athlete DNA</MonoKicker>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: ink, letterSpacing: -0.6, ...numerals }}>
+            <Text style={{ fontSize: typeScale.figure, fontWeight: weight.bold, color: ink, letterSpacing: -0.6, ...numerals }}>
               {overall ?? '—'}
             </Text>
             {overallTier && (
-              <Text style={{ fontSize: 14, fontWeight: '600', color: sub }}>
+              <Text style={{ fontSize: typeScale.body, fontWeight: weight.medium, color: sub }}>
                 {overallTier.label}
               </Text>
             )}
-            <Text style={{ fontSize: 12, color: dim }}>
+            <Text style={{ fontSize: typeScale.caption, color: dim }}>
               · {active.length}/{axes.length} measured
             </Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 }}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: link }}>Open</Text>
+          <Text style={{ fontSize: typeScale.caption, fontWeight: weight.medium, color: link }}>Open</Text>
           <Ionicons name="chevron-forward" size={15} color={link} />
         </View>
       </View>
@@ -277,9 +277,9 @@ export default function DnaStrip({
       {/* Colour is never the only signal — the focus axis is named. */}
       {focus && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12 }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.amber }} />
-          <Text style={{ fontSize: 12, color: sub }}>
-            <Text style={{ fontWeight: '700', color: ink }}>{focus.label}</Text>
+          <View style={{ width: 8, height: 8, borderRadius: radius.full, backgroundColor: colors.amber }} />
+          <Text style={{ fontSize: typeScale.caption, color: sub }}>
+            <Text style={{ fontWeight: weight.bold, color: ink }}>{focus.label}</Text>
             {' is your focus area — lowest of the six.'}
           </Text>
         </View>
@@ -306,7 +306,7 @@ export default function DnaStrip({
           accessibilityLabel={label}
           style={{
             backgroundColor: colors.glass.bg,
-            borderRadius: 20, borderWidth: 1, borderColor: colors.glass.border,
+            borderRadius: radius.card, borderWidth: 1, borderColor: colors.glass.border,
             ...pad,
             ...elevation.raised,
           }}

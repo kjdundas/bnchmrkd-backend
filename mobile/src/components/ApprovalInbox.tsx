@@ -20,7 +20,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import {
   fetchPendingFor, respond, KIND_LABEL, KIND_ICON, consequenceOf,
@@ -40,22 +40,22 @@ export function ApprovalBanner({
       style={{
         flexDirection: 'row', alignItems: 'center', gap: 12,
         paddingHorizontal: 16, paddingVertical: 14, marginBottom: spacing.md,
-        borderRadius: radius.lg, borderWidth: 1,
+        borderRadius: radius.card, borderWidth: 1,
         borderColor: colors.accent[500] + '5C',
         backgroundColor: colors.accent[500] + '1F',
       }}
     >
       <View style={{
-        width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+        width: 30, height: 30, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
         backgroundColor: colors.accent[500],
       }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>{count}</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: typeScale.caption, fontWeight: weight.bold }}>{count}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: onImage.ink, fontSize: 14.5, fontWeight: '700' }}>
+        <Text style={{ color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold }}>
           {count === 1 ? 'One thing needs your answer' : `${count} things need your answer`}
         </Text>
-        <Text style={{ color: onImage.muted, fontSize: 12.5, marginTop: 1 }}>
+        <Text style={{ color: onImage.muted, fontSize: typeScale.caption, marginTop: 1 }}>
           Nothing takes effect until you decide.
         </Text>
       </View>
@@ -129,7 +129,7 @@ export default function ApprovalInbox({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
 
         <View style={s.header}>
@@ -262,30 +262,30 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-end',
     paddingHorizontal: spacing.lg, paddingTop: 12, paddingBottom: 14, gap: 12,
   },
-  title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.6, marginTop: 4 },
+  title: { fontSize: typeScale.figure, fontWeight: weight.bold, letterSpacing: -0.6, marginTop: 4 },
   close: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
   },
-  error: { fontSize: 13, paddingHorizontal: spacing.lg, paddingBottom: 8 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', marginTop: 12 },
-  emptyBody: { fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: 6, maxWidth: 320 },
+  error: { fontSize: typeScale.caption, paddingHorizontal: spacing.lg, paddingBottom: 8 },
+  emptyTitle: { fontSize: typeScale.title, fontWeight: weight.bold, marginTop: 12 },
+  emptyBody: { fontSize: typeScale.body, lineHeight: 20, textAlign: 'center', marginTop: 6, maxWidth: 320 },
   card: {
-    borderWidth: 1, borderRadius: radius.lg, padding: 16,
+    borderWidth: 1, borderRadius: radius.card, padding: 16,
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 },
-  cardTitle: { fontSize: 16.5, fontWeight: '700', letterSpacing: -0.2 },
-  cardDetail: { fontSize: 13.5, marginTop: 3 },
-  consequence: { fontSize: 12.5, lineHeight: 17, marginTop: 10 },
+  cardTitle: { fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  cardDetail: { fontSize: typeScale.caption, marginTop: 3 },
+  consequence: { fontSize: typeScale.caption, lineHeight: 17, marginTop: 10 },
   noteInput: {
-    borderWidth: 1, borderRadius: radius.md, padding: 12, marginTop: 12,
-    fontSize: 14, minHeight: 72, textAlignVertical: 'top',
+    borderWidth: 1, borderRadius: radius.control, padding: 12, marginTop: 12,
+    fontSize: typeScale.body, minHeight: 72, textAlignVertical: 'top',
   },
   actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
   btn: {
-    minHeight: 44, borderRadius: radius.md, paddingHorizontal: 18,
+    minHeight: 44, borderRadius: radius.control, paddingHorizontal: 18,
     alignItems: 'center', justifyContent: 'center',
   },
-  btnText: { fontSize: 14, fontWeight: '700' },
+  btnText: { fontSize: typeScale.body, fontWeight: weight.bold },
 })

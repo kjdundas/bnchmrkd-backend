@@ -20,7 +20,7 @@ import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius, onImage } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { useTheme } from '../contexts/ThemeContext'
 import { isLowerBetter } from '../lib/disciplineScience'
@@ -306,20 +306,20 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.04)',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: typeScale.figure,
+    fontWeight: weight.bold,
     color: onImage.ink,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: onImage.muted,
     marginTop: 2,
   },
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.orange[500] + '2E',
     borderColor: colors.orange[500] + '8C',
   },
-  chipText: { fontSize: 12.5, fontWeight: '700', color: onImage.muted },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold, color: onImage.muted },
   // White, not the accent: the accent on its own 18%-alpha plate over a
   // photo is a colour on a colour, and it was the palest thing in the row.
   chipTextActive: { color: '#FFFFFF' },
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   // Discipline list
   disciplineGroup: { marginBottom: spacing.lg },
   groupCard: {
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: onImage.cardBorder,
     backgroundColor: onImage.card,
@@ -370,12 +370,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingLeft: 2,
   },
-  groupDot: { width: 6, height: 6, borderRadius: 3 },
+  groupDot: { width: 6, height: 6, borderRadius: radius.full },
   groupLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 1.5,
     color: onImage.ink,
-    fontWeight: '700',
+    fontWeight: weight.bold,
     textTransform: 'uppercase',
   },
   disciplineRow: {
@@ -391,15 +391,15 @@ const styles = StyleSheet.create({
   disciplineIcon: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: radius.chip,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   disciplineName: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: typeScale.body,
+    fontWeight: weight.medium,
     color: onImage.ink,
   },
 
@@ -408,44 +408,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     padding: spacing.xl,
   },
   inputCardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
     color: onImage.ink,
     marginBottom: 4,
   },
   inputCardDesc: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: onImage.muted,
     marginBottom: spacing.xl,
   },
   inputRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
   inputWrap: {},
   inputLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 2,
     color: onImage.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginBottom: 6,
   },
   markInput: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
     color: onImage.ink,
   },
   segmentRow: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     padding: 3,
@@ -454,18 +454,18 @@ const styles = StyleSheet.create({
   segmentBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: radius.md - 2,
+    borderRadius: radius.control - 2,
     alignItems: 'center',
   },
   segmentBtnActive: { backgroundColor: colors.orange[500] + '15' },
-  segmentText: { fontSize: 14, fontWeight: '600', color: onImage.muted },
+  segmentText: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted },
   segmentTextActive: { color: colors.orange[500] },
   analyseBtn: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  analyseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  analyseBtnText: { color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold },
 })

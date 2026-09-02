@@ -30,7 +30,7 @@ import { metricForExercise } from '../lib/exerciseMetrics'
 import { API_BASE } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
-import { spacing, radius, rhythm, onImage } from '../lib/theme'
+import { spacing, radius, rhythm, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback, errorFeedback } from '../lib/haptics'
 import { DURATION, EASE, useReducedMotion } from '../lib/motion'
 import { EmptyState, MonoKicker, Tappable, GlassPanel, SectionLabel } from '../components/ui'
@@ -114,7 +114,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
       }}
     >
       <Text style={{
-        fontSize: 12, fontWeight: '600',
+        fontSize: typeScale.caption, fontWeight: weight.medium,
         color: active ? '#FFFFFF' : colors.text.secondary,
       }}>{label}</Text>
     </Tappable>
@@ -141,7 +141,7 @@ function ModeCard({
       accessibilityLabel={`${title}. ${subtitle}`}
       style={{
         flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-        padding: 14, borderRadius: radius.md, borderWidth: 1,
+        padding: 14, borderRadius: radius.control, borderWidth: 1,
         borderColor: active ? colors.accent[500] + '73' : colors.glass.border,
         backgroundColor: active ? colors.accent[500] + '1F' : colors.bg.primary,
       }}
@@ -153,12 +153,12 @@ function ModeCard({
       />
       <View style={{ flex: 1, gap: 3 }}>
         <Text style={{
-          fontSize: 14.5, fontWeight: '700',
+          fontSize: typeScale.body, fontWeight: weight.bold,
           color: active ? colors.accent[500] : colors.text.primary,
         }}>
           {title}
         </Text>
-        <Text style={{ fontSize: 12, lineHeight: 17, color: colors.text.muted }}>
+        <Text style={{ fontSize: typeScale.caption, lineHeight: 17, color: colors.text.muted }}>
           {subtitle}
         </Text>
       </View>
@@ -386,8 +386,8 @@ function IntakeForm({
 
   const input = {
     backgroundColor: colors.bg.primary, borderWidth: 1, borderColor: colors.glass.border,
-    borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 12,
-    fontSize: 15, color: colors.text.primary,
+    borderRadius: radius.control, paddingHorizontal: 12, paddingVertical: 12,
+    fontSize: typeScale.body, color: colors.text.primary,
   }
 
   // A single-choice question is answered by the tap itself — asking for a
@@ -427,9 +427,9 @@ function IntakeForm({
           <MonoKicker>{onReview ? 'Review' : `Question ${i + 1} of ${steps.length}`}</MonoKicker>
           {!!step?.optional && <MonoKicker color={colors.text.dimmed}>Optional</MonoKicker>}
         </View>
-        <View style={{ height: 3, borderRadius: 2, backgroundColor: colors.glass.divider, overflow: 'hidden' }}>
+        <View style={{ height: 3, borderRadius: radius.hair, backgroundColor: colors.glass.divider, overflow: 'hidden' }}>
           <View style={{
-            height: '100%', borderRadius: 2, backgroundColor: colors.accent[500],
+            height: '100%', borderRadius: radius.hair, backgroundColor: colors.accent[500],
             width: `${Math.round(((i + 1) / total) * 100)}%`,
           }} />
         </View>
@@ -445,12 +445,12 @@ function IntakeForm({
         {onReview ? (
           <View>
             <Text style={{
-              fontSize: 22, fontWeight: '700', color: colors.text.primary,
+              fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary,
               letterSpacing: -0.4, marginBottom: 4,
             }}>
               Ready to build
             </Text>
-            <Text style={{ fontSize: 13, color: colors.text.secondary, marginBottom: spacing.lg, lineHeight: 19 }}>
+            <Text style={{ fontSize: typeScale.caption, color: colors.text.secondary, marginBottom: spacing.lg, lineHeight: 19 }}>
               Tap anything to change it.
             </Text>
 
@@ -466,8 +466,8 @@ function IntakeForm({
                 }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 11, color: colors.text.muted }}>{st.q}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary, marginTop: 2 }}>
+                  <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>{st.q}</Text>
+                  <Text style={{ fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary, marginTop: 2 }}>
                     {answerLabel(st, intake)}
                   </Text>
                 </View>
@@ -478,13 +478,13 @@ function IntakeForm({
         ) : (
           <View>
             <Text style={{
-              fontSize: 22, fontWeight: '700', color: colors.text.primary,
+              fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary,
               letterSpacing: -0.4, lineHeight: 28,
             }}>
               {step.q}
             </Text>
             {!!step.hint && (
-              <Text style={{ fontSize: 13, color: colors.text.secondary, marginTop: 6, lineHeight: 19 }}>
+              <Text style={{ fontSize: typeScale.caption, color: colors.text.secondary, marginTop: 6, lineHeight: 19 }}>
                 {step.hint}
               </Text>
             )}
@@ -587,7 +587,7 @@ function IntakeForm({
           style={{
             flexDirection: 'row', alignItems: 'center', gap: 5,
             paddingHorizontal: 14, minHeight: 48, justifyContent: 'center',
-            borderRadius: radius.md,
+            borderRadius: radius.control,
             borderWidth: 1, borderColor: colors.glass.border,
           }}
         >
@@ -595,7 +595,7 @@ function IntakeForm({
             name={i === 0 ? 'close' : 'chevron-back'}
             size={15} color={colors.text.secondary}
           />
-          <Text style={{ color: colors.text.secondary, fontSize: 13, fontWeight: '600' }}>
+          <Text style={{ color: colors.text.secondary, fontSize: typeScale.caption, fontWeight: weight.medium }}>
             {i === 0 ? 'Cancel' : 'Back'}
           </Text>
         </Tappable>
@@ -606,14 +606,14 @@ function IntakeForm({
             accessibilityLabel="Generate a training program"
             style={{
               flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-              gap: 8, minHeight: 48, borderRadius: radius.md,
+              gap: 8, minHeight: 48, borderRadius: radius.control,
               backgroundColor: colors.accent[500],
             }}
           >
             {generating
               ? <ActivityIndicator size="small" color="#FFFFFF" />
               : <Ionicons name="sparkles" size={15} color="#FFFFFF" />}
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: weight.bold, fontSize: typeScale.body }}>
               {generating ? 'Building your program…' : 'Generate program'}
             </Text>
           </Tappable>
@@ -624,14 +624,14 @@ function IntakeForm({
             accessibilityLabel={answered ? 'Next question' : 'Skip this question'}
             style={{
               flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-              gap: 6, minHeight: 48, borderRadius: radius.md,
+              gap: 6, minHeight: 48, borderRadius: radius.control,
               backgroundColor: answered ? colors.accent[500] : 'transparent',
               borderWidth: answered ? 0 : 1, borderColor: colors.glass.border,
             }}
           >
             <Text style={{
               color: answered ? '#FFFFFF' : colors.text.secondary,
-              fontWeight: '700', fontSize: 14,
+              fontWeight: weight.bold, fontSize: typeScale.body,
             }}>
               {answered ? 'Next' : 'Skip'}
             </Text>
@@ -644,7 +644,7 @@ function IntakeForm({
       </View>
 
       {onReview && (
-        <Text style={{ fontSize: 11, color: colors.text.muted, marginTop: spacing.md, lineHeight: 16 }}>
+        <Text style={{ fontSize: typeScale.label, color: colors.text.muted, marginTop: spacing.md, lineHeight: 16 }}>
           Educational guidance, not medical advice. Review with your coach (and a
           parent/guardian if under 18) before starting. Stop and see a professional
           if anything hurts.
@@ -665,11 +665,11 @@ function BlockHeader({ name, type }: { name: string; type: SessionType }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 7 }}>
       <Ionicons name={st.icon as any} size={13} color={tone} />
-      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text.secondary, flex: 1 }}>
+      <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.text.secondary, flex: 1 }}>
         {name}
       </Text>
-      <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: tone + '24' }}>
-        <Text style={{ fontSize: 8.5, fontWeight: '800', letterSpacing: 0.8, color: tone }}>
+      <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.hair, backgroundColor: tone + '24' }}>
+        <Text style={{ fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.8, color: tone }}>
           {st.label.toUpperCase()}
         </Text>
       </View>
@@ -689,21 +689,21 @@ function ExerciseRow({ ex, type = 'track' }: { ex: any; type?: SessionType }) {
 
   return (
     <View style={{
-      backgroundColor: colors.bg.primary, borderRadius: radius.sm,
+      backgroundColor: colors.bg.primary, borderRadius: radius.chip,
       borderWidth: 1, borderColor: colors.glass.divider,
       paddingHorizontal: 10, paddingVertical: 8, marginBottom: 6,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text.primary, flex: 1 }}>{ex.name}</Text>
+        <Text style={{ fontSize: typeScale.caption, fontWeight: weight.medium, color: colors.text.primary, flex: 1 }}>{ex.name}</Text>
         {filled(ex.prescription) && (
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent[500] }}>{ex.prescription}</Text>
+          <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.accent[500] }}>{ex.prescription}</Text>
         )}
       </View>
       {meta.length > 0 && (
-        <Text style={{ fontSize: 11, color: colors.text.muted, marginTop: 3 }}>{meta.join(' · ')}</Text>
+        <Text style={{ fontSize: typeScale.label, color: colors.text.muted, marginTop: 3 }}>{meta.join(' · ')}</Text>
       )}
       {filled(ex.cue) && (
-        <Text style={{ fontSize: 11, color: colors.text.muted, fontStyle: 'italic', marginTop: 3 }}>{ex.cue}</Text>
+        <Text style={{ fontSize: typeScale.label, color: colors.text.muted, fontStyle: 'italic', marginTop: 3 }}>{ex.cue}</Text>
       )}
       {/* On a technical drill this IS the prescription, so it is given the
           weight a load would have elsewhere rather than being another
@@ -714,7 +714,7 @@ function ExerciseRow({ ex, type = 'track' }: { ex: any; type?: SessionType }) {
           borderTopWidth: 1, borderTopColor: colors.glass.divider,
         }}>
           <Ionicons name="checkmark-circle-outline" size={13} color={colors.amber} style={{ marginTop: 1 }} />
-          <Text style={{ fontSize: 11, lineHeight: 16, color: colors.text.secondary, flex: 1 }}>
+          <Text style={{ fontSize: typeScale.label, lineHeight: 16, color: colors.text.secondary, flex: 1 }}>
             {ex.good_rep}
           </Text>
         </View>
@@ -750,7 +750,7 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
 
   return (
     <View style={{
-      backgroundColor: colors.glass.bg, borderRadius: radius.lg,
+      backgroundColor: colors.glass.bg, borderRadius: radius.card,
       borderWidth: 1, borderColor: colors.glass.border,
       marginBottom: spacing.md, overflow: 'hidden',
     }}>
@@ -761,29 +761,29 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
       >
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: colors.text.primary, flexShrink: 1 }}>
+            <Text numberOfLines={1} style={{ fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary, flexShrink: 1 }}>
               {s.title || program.title}
             </Text>
             {fromCoach && (
-              <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: colors.blue + '1F' }}>
-                <Text style={{ fontSize: 8, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', color: colors.blue }}>
+              <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.hair, backgroundColor: colors.blue + '1F' }}>
+                <Text style={{ fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1, textTransform: 'uppercase', color: colors.blue }}>
                   From coach
                 </Text>
               </View>
             )}
           </View>
           {!!meta && (
-            <Text numberOfLines={1} style={{ fontSize: 11, color: colors.text.muted, marginTop: 3 }}>{meta}</Text>
+            <Text numberOfLines={1} style={{ fontSize: typeScale.label, color: colors.text.muted, marginTop: 3 }}>{meta}</Text>
           )}
           {total > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <View style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: colors.glass.divider, overflow: 'hidden' }}>
+              <View style={{ flex: 1, height: 5, borderRadius: radius.hair, backgroundColor: colors.glass.divider, overflow: 'hidden' }}>
                 <View style={{
-                  width: `${pct}%`, height: '100%', borderRadius: 3,
+                  width: `${pct}%`, height: '100%', borderRadius: radius.hair,
                   backgroundColor: allDone ? colors.green : colors.accent[500],
                 }} />
               </View>
-              <Text style={{ fontSize: 10, color: allDone ? colors.green : colors.text.muted, fontWeight: '600' }}>
+              <Text style={{ fontSize: typeScale.label, color: allDone ? colors.green : colors.text.muted, fontWeight: weight.medium }}>
                 {completed}/{total} this wk
               </Text>
             </View>
@@ -796,13 +796,13 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
         <View style={{ paddingHorizontal: 14, paddingBottom: 14, borderTopWidth: 1, borderTopColor: colors.glass.divider }}>
           {s.focus_rationale ? (
             <View style={{
-              marginTop: 12, padding: 10, borderRadius: radius.md,
+              marginTop: 12, padding: 10, borderRadius: radius.control,
               backgroundColor: colors.blue + '0F',
             }}>
-              <Text style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.blue, fontWeight: '700', marginBottom: 4 }}>
+              <Text style={{ fontSize: typeScale.micro, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.blue, fontWeight: weight.bold, marginBottom: 4 }}>
                 Why this plan
               </Text>
-              <Text style={{ fontSize: 12, color: colors.text.secondary, lineHeight: 17 }}>{s.focus_rationale}</Text>
+              <Text style={{ fontSize: typeScale.caption, color: colors.text.secondary, lineHeight: 17 }}>{s.focus_rationale}</Text>
             </View>
           ) : null}
 
@@ -810,10 +810,10 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
             <View style={{
               flexDirection: 'row', gap: 8, alignItems: 'flex-start',
               marginTop: 12, backgroundColor: colors.accent[500] + '0F',
-              borderRadius: radius.sm, padding: 10,
+              borderRadius: radius.chip, padding: 10,
             }}>
               <Ionicons name="leaf-outline" size={14} color={colors.accent[500]} style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1, fontSize: 12, color: colors.accent[500], lineHeight: 17 }}>
+              <Text style={{ flex: 1, fontSize: typeScale.caption, color: colors.accent[500], lineHeight: 17 }}>
                 {s.maturity_note}
               </Text>
             </View>
@@ -823,17 +823,17 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
             const isDone = done.has(i)
             return (
               <View key={i} style={{
-                marginTop: 12, padding: 12, borderRadius: radius.md,
+                marginTop: 12, padding: 12, borderRadius: radius.control,
                 backgroundColor: isDone ? colors.green + '0F' : colors.bg.primary,
                 borderWidth: 1, borderColor: isDone ? colors.green + '33' : 'transparent',
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text.primary }}>
+                    <Text style={{ fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary }}>
                       {sess.label || `Session ${i + 1}`}
                     </Text>
                     {sess.focus ? (
-                      <Text style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.accent[500], fontWeight: '600', marginTop: 3 }}>
+                      <Text style={{ fontSize: typeScale.label, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.accent[500], fontWeight: weight.medium, marginTop: 3 }}>
                         {sess.focus}
                       </Text>
                     ) : null}
@@ -847,7 +847,7 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
                       name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
                       size={19} color={isDone ? colors.green : colors.text.muted}
                     />
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: isDone ? colors.green : colors.text.muted }}>
+                    <Text style={{ fontSize: typeScale.label, fontWeight: weight.bold, color: isDone ? colors.green : colors.text.muted }}>
                       {isDone ? 'Done' : 'Mark done'}
                     </Text>
                   </Tappable>
@@ -861,27 +861,27 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
                         ? b.exercises.map((ex: any, k: number) => (
                             <ExerciseRow key={k} ex={ex} type={sessionType(b.type || sess.type)} />
                           ))
-                        : <Text style={{ fontSize: 12, color: colors.text.muted, lineHeight: 17 }}>{b.detail}</Text>}
+                        : <Text style={{ fontSize: typeScale.caption, color: colors.text.muted, lineHeight: 17 }}>{b.detail}</Text>}
                     </View>
                   ))}
                 </View>
 
                 {sess.notes ? (
-                  <Text style={{ fontSize: 11, color: colors.text.muted, fontStyle: 'italic', marginTop: 6 }}>{sess.notes}</Text>
+                  <Text style={{ fontSize: typeScale.label, color: colors.text.muted, fontStyle: 'italic', marginTop: 6 }}>{sess.notes}</Text>
                 ) : null}
               </View>
             )
           })}
 
           {s.progression ? (
-            <Text style={{ fontSize: 12, color: colors.text.secondary, marginTop: 12, lineHeight: 17 }}>
-              <Text style={{ fontWeight: '700' }}>Progression: </Text>{s.progression}
+            <Text style={{ fontSize: typeScale.caption, color: colors.text.secondary, marginTop: 12, lineHeight: 17 }}>
+              <Text style={{ fontWeight: weight.bold }}>Progression: </Text>{s.progression}
             </Text>
           ) : null}
           {s.safety_note ? (
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginTop: 10 }}>
               <Ionicons name="alert-circle-outline" size={14} color={colors.amber} style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1, fontSize: 12, color: colors.text.muted, lineHeight: 17 }}>{s.safety_note}</Text>
+              <Text style={{ flex: 1, fontSize: typeScale.caption, color: colors.text.muted, lineHeight: 17 }}>{s.safety_note}</Text>
             </View>
           ) : null}
 
@@ -891,7 +891,7 @@ function ProgramCard({ program, open, onToggle, onDelete, isDone, onToggleSessio
             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: rhythm.section, minHeight: 44 }}
           >
             <Ionicons name="trash-outline" size={13} color={colors.text.muted} />
-            <Text style={{ fontSize: 12, color: colors.red }}>Delete program</Text>
+            <Text style={{ fontSize: typeScale.caption, color: colors.red }}>Delete program</Text>
           </Tappable>
         </View>
       )}
@@ -1249,7 +1249,7 @@ function ProgramsBody() {
         }}>
           <View style={{ flex: 1 }}>
             <Text style={{
-              fontSize: 34, fontWeight: '700', letterSpacing: -0.9,
+              fontSize: typeScale.hero, fontWeight: weight.bold, letterSpacing: -0.9,
               color: onImage.ink,
             }}>
               Your{'\n'}Schedule
@@ -1266,7 +1266,7 @@ function ProgramsBody() {
               }}
             >
               <Ionicons name="sparkles" size={13} color="#FFFFFF" />
-              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>Generate</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: typeScale.caption, fontWeight: weight.bold }}>Generate</Text>
             </Tappable>
           )}
         </View>
@@ -1287,7 +1287,7 @@ function ProgramsBody() {
                   borderColor: colors.accent[500] + '73',
                 }]}>
                 <Text style={{
-                  fontSize: 12, fontWeight: '700',
+                  fontSize: typeScale.caption, fontWeight: weight.bold,
                   color: view === v ? colors.accent[500] : colors.text.secondary,
                 }}>
                   {v === 'week' ? 'Week' : 'Month'}
@@ -1353,7 +1353,7 @@ function ProgramsBody() {
           {!!error && (
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginTop: spacing.md }}>
               <Ionicons name="alert-circle" size={15} color={colors.red} style={{ marginTop: 1 }} />
-              <Text style={{ color: colors.red, fontSize: 12, flex: 1, lineHeight: 17 }}>{error}</Text>
+              <Text style={{ color: colors.red, fontSize: typeScale.caption, flex: 1, lineHeight: 17 }}>{error}</Text>
             </View>
           )}
 
@@ -1458,7 +1458,7 @@ function MoveSessionSheet({
                 accessibilityLabel={d}
                 style={[styles.dayChip, { borderColor: colors.glass.border }]}
               >
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text.primary }}>{d}</Text>
+                <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.text.primary }}>{d}</Text>
               </Tappable>
             ))}
           </View>
@@ -1474,22 +1474,22 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: spacing.lg,
   },
   sheet: {
-    width: '100%', maxWidth: 400, borderRadius: radius.lg, borderWidth: 1,
+    width: '100%', maxWidth: 400, borderRadius: radius.card, borderWidth: 1,
     padding: spacing.lg, gap: 4,
   },
-  sheetTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
-  sheetHint: { fontSize: 12, lineHeight: 17 },
+  sheetTitle: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3 },
+  sheetHint: { fontSize: typeScale.caption, lineHeight: 17 },
   sheetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md },
   viewToggle: { flexDirection: 'row', gap: 6, marginBottom: spacing.md },
   viewBtn: {
     flex: 1, minHeight: 36, alignItems: 'center', justifyContent: 'center',
-    borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: radius.control, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
   dayChip: {
     minWidth: 44, minHeight: 44, paddingHorizontal: 10,
     alignItems: 'center', justifyContent: 'center',
-    borderRadius: radius.md, borderWidth: 1,
+    borderRadius: radius.control, borderWidth: 1,
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
 })

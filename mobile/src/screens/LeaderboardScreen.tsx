@@ -27,7 +27,7 @@ import ScreenBackdrop from '../components/ScreenBackdrop'
 import { Tappable, MonoKicker, Stagger } from '../components/ui'
 import { SkeletonCards, LoadFailed } from '../components/LoadState'
 import InfoDot from '../components/InfoDot'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import { selectFrom } from '../lib/supabase'
 import { newTrouble, loadPhase } from '../lib/loadState'
@@ -258,7 +258,7 @@ export default function LeaderboardScreen() {
                     >
                       <Text style={[s.chipText, {
                         color: on ? colors.text.primary : colors.text.secondary,
-                        fontWeight: on ? '700' : '600',
+                        fontWeight: on ? weight.bold : weight.medium,
                       }]}>{o.label}</Text>
                     </Tappable>
                   )
@@ -404,8 +404,8 @@ export default function LeaderboardScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 30, fontWeight: '800', letterSpacing: -0.7, marginTop: 6 },
-  lede: { fontSize: 13.5, lineHeight: 19.5, marginTop: 6, marginBottom: 18 },
+  h1: { fontSize: typeScale.figure, fontWeight: weight.bold, letterSpacing: -0.7, marginTop: 6 },
+  lede: { fontSize: typeScale.caption, lineHeight: 19.5, marginTop: 6, marginBottom: 18 },
 
   scope: {
     flexDirection: 'row', gap: 4, marginHorizontal: spacing.lg,
@@ -416,63 +416,63 @@ const s = StyleSheet.create({
     flex: 1, minHeight: 34, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5,
   },
-  scopeText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
-  scopeN: { fontSize: 9.5, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  scopeText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.4 },
+  scopeN: { fontSize: typeScale.micro, fontWeight: weight.bold, fontVariant: ['tabular-nums'] },
 
   seg: { flexDirection: 'row', gap: 7, marginHorizontal: spacing.lg, marginTop: 12 },
   segBtn: {
-    flex: 1, minHeight: 40, borderRadius: radius.md ?? 10, borderWidth: 1,
+    flex: 1, minHeight: 40, borderRadius: radius.control ?? 10, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
-  segText: { fontSize: 12.5, fontWeight: '700' },
+  segText: { fontSize: typeScale.caption, fontWeight: weight.bold },
 
   chips: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 7,
     marginHorizontal: spacing.lg, marginTop: 11,
   },
   chip: { minHeight: 34, paddingHorizontal: 12, borderRadius: radius.full, borderWidth: 1, justifyContent: 'center' },
-  chipText: { fontSize: 12.5 },
+  chipText: { fontSize: typeScale.caption },
 
   card: {
     marginHorizontal: spacing.lg, marginTop: 16,
-    borderRadius: radius.lg, borderWidth: 1, padding: 18,
+    borderRadius: radius.card, borderWidth: 1, padding: 18,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  event: { fontSize: 15.5, fontWeight: '700', letterSpacing: -0.2 },
+  event: { fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
 
   rankRow: { flexDirection: 'row', alignItems: 'baseline', gap: 11 },
-  rankN: { fontSize: 52, fontWeight: '800', letterSpacing: -2.2, fontVariant: ['tabular-nums'] },
-  rankOf: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  rankN: { fontSize: typeScale.mark, fontWeight: weight.bold, letterSpacing: -2.2, fontVariant: ['tabular-nums'] },
+  rankOf: { fontSize: typeScale.caption, fontWeight: weight.medium, lineHeight: 18 },
   band: {
-    fontSize: 10.5, fontWeight: '700', letterSpacing: 1.2,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.2,
     textTransform: 'uppercase', marginTop: 9,
   },
 
   ladder: { marginTop: 16, gap: 3 },
   lrow: {
     flexDirection: 'row', alignItems: 'center', gap: 11,
-    paddingHorizontal: 11, paddingVertical: 8, borderRadius: 9, borderWidth: 1,
+    paddingHorizontal: 11, paddingVertical: 8, borderRadius: radius.chip, borderWidth: 1,
   },
-  lpos: { fontSize: 11.5, fontWeight: '700', width: 32, fontVariant: ['tabular-nums'] },
-  lbar: { flex: 1, height: 5, borderRadius: 3 },
-  lme: { fontSize: 11.5, fontWeight: '700' },
-  gap: { textAlign: 'center', fontSize: 11, letterSpacing: 3, paddingVertical: 2 },
+  lpos: { fontSize: typeScale.label, fontWeight: weight.bold, width: 32, fontVariant: ['tabular-nums'] },
+  lbar: { flex: 1, height: 5, borderRadius: radius.hair },
+  lme: { fontSize: typeScale.label, fontWeight: weight.bold },
+  gap: { textAlign: 'center', fontSize: typeScale.label, letterSpacing: 3, paddingVertical: 2 },
 
   empty: { alignItems: 'center', paddingVertical: 14 },
-  emptyTitle: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
-  emptyBody: { fontSize: 13, lineHeight: 19.5, textAlign: 'center', marginTop: 6 },
+  emptyTitle: { fontSize: typeScale.body, fontWeight: weight.bold, textAlign: 'center' },
+  emptyBody: { fontSize: typeScale.caption, lineHeight: 19.5, textAlign: 'center', marginTop: 6 },
 
   mine: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderTopWidth: 1, paddingTop: 12, marginTop: 14, width: '100%',
   },
-  mineL: { fontSize: 12 },
-  mineV: { fontSize: 17, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  mineL: { fontSize: typeScale.caption },
+  mineV: { fontSize: typeScale.title, fontWeight: weight.bold, fontVariant: ['tabular-nums'] },
 
   note: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
     marginHorizontal: spacing.lg, marginTop: 12,
-    borderWidth: 1, borderRadius: radius.md ?? 10, padding: 12,
+    borderWidth: 1, borderRadius: radius.control ?? 10, padding: 12,
   },
-  noteText: { flex: 1, fontSize: 11.5, lineHeight: 17 },
+  noteText: { flex: 1, fontSize: typeScale.label, lineHeight: 17 },
 })

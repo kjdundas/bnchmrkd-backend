@@ -21,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, radius, onImage } from '../lib/theme'
+import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from '../components/ui'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import AppHeader from '../components/AppHeader'
@@ -364,62 +364,62 @@ function Pip({ tone, text }: { tone: string; text: string }) {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 34, fontWeight: '700', letterSpacing: -0.9, color: onImage.ink },
+  h1: { fontSize: typeScale.hero, fontWeight: weight.bold, letterSpacing: -0.9, color: onImage.ink },
 
   nav: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: spacing.lg, marginTop: 14, gap: 8,
   },
   arrow: {
-    width: 34, height: 34, borderRadius: 17, borderWidth: 1,
+    width: 34, height: 34, borderRadius: radius.full, borderWidth: 1,
     borderColor: onImage.chipEdge, backgroundColor: onImage.chipPlate,
     alignItems: 'center', justifyContent: 'center',
   },
-  heading: { color: onImage.ink, fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
-  range: { color: onImage.muted, fontSize: 11.5, marginTop: 1 },
+  heading: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  range: { color: onImage.muted, fontSize: typeScale.label, marginTop: 1 },
 
   strip: { flexDirection: 'row', gap: 6, paddingHorizontal: spacing.lg, marginTop: 14 },
   day: {
-    flex: 1, minHeight: 62, borderRadius: radius.lg, borderWidth: 1,
+    flex: 1, minHeight: 62, borderRadius: radius.card, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center', paddingVertical: 7, gap: 1,
   },
-  dayLetter: { color: onImage.dim, fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
+  dayLetter: { color: onImage.dim, fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.6 },
   dayNum: {
-    color: onImage.muted, fontSize: 15, fontWeight: '700',
+    color: onImage.muted, fontSize: typeScale.body, fontWeight: weight.bold,
     fontVariant: ['tabular-nums'],
   },
   dots: { flexDirection: 'row', gap: 3, height: 5, alignItems: 'center' },
-  dot: { width: 4, height: 4, borderRadius: 2 },
+  dot: { width: 4, height: 4, borderRadius: radius.full },
 
   waiting: {
-    color: '#F59E0B', fontSize: 12, fontWeight: '600',
+    color: '#F59E0B', fontSize: typeScale.caption, fontWeight: weight.medium,
     paddingHorizontal: spacing.lg, marginTop: 12,
   },
-  dayHead: { color: onImage.ink, fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
+  dayHead: { color: onImage.ink, fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3 },
 
   card: {
     marginHorizontal: spacing.lg, marginTop: 10,
-    borderRadius: radius.lg, borderWidth: 1,
+    borderRadius: radius.card, borderWidth: 1,
     borderColor: onImage.cardBorder, backgroundColor: onImage.card,
     overflow: 'hidden',
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13 },
   icon: {
-    width: 32, height: 32, borderRadius: 10, borderWidth: 1,
+    width: 32, height: 32, borderRadius: radius.chip, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
-  cardTitle: { color: onImage.ink, fontSize: 15.5, fontWeight: '700', letterSpacing: -0.2 },
+  cardTitle: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
   counts: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' },
-  count: { color: onImage.muted, fontSize: 11.5 },
-  pip: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, borderWidth: 1 },
-  pipText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
+  count: { color: onImage.muted, fontSize: typeScale.label },
+  pip: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.hair, borderWidth: 1 },
+  pipText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.2 },
 
   names: {
     borderTopWidth: 1, borderTopColor: onImage.divider,
     paddingHorizontal: 13, paddingVertical: 6,
   },
   notes: {
-    color: onImage.muted, fontSize: 12.5, lineHeight: 18,
+    color: onImage.muted, fontSize: typeScale.caption, lineHeight: 18,
     paddingVertical: 8,
   },
   session: { paddingTop: 10, paddingBottom: 4 },
@@ -429,23 +429,23 @@ const s = StyleSheet.create({
   },
   lineRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 7 },
   lineNum: {
-    color: onImage.dim, fontSize: 11, fontWeight: '700', minWidth: 13,
+    color: onImage.dim, fontSize: typeScale.label, fontWeight: weight.bold, minWidth: 13,
     fontVariant: ['tabular-nums'], marginTop: 1.5,
   },
-  lineText: { flex: 1, color: onImage.ink, fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  lineText: { flex: 1, color: onImage.ink, fontSize: typeScale.body, lineHeight: 20, fontWeight: weight.medium },
   noPlan: {
-    color: onImage.dim, fontSize: 12.5, lineHeight: 18,
+    color: onImage.dim, fontSize: typeScale.caption, lineHeight: 18,
     paddingVertical: 10, fontStyle: 'italic',
   },
   name: { flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: 40 },
-  nameText: { color: onImage.ink, fontSize: 14, fontWeight: '600', flexShrink: 1 },
-  noAccount: { color: onImage.dim, fontSize: 10.5 },
-  stateText: { marginLeft: 'auto', fontSize: 11, fontWeight: '700' },
+  nameText: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.medium, flexShrink: 1 },
+  noAccount: { color: onImage.dim, fontSize: typeScale.label },
+  stateText: { marginLeft: 'auto', fontSize: typeScale.label, fontWeight: weight.bold },
 
   empty: { paddingHorizontal: spacing.lg, paddingTop: 26, alignItems: 'center' },
-  emptyTitle: { color: onImage.ink, fontSize: 16, fontWeight: '700', marginTop: 10 },
+  emptyTitle: { color: onImage.ink, fontSize: typeScale.body, fontWeight: weight.bold, marginTop: 10 },
   emptyBody: {
-    color: onImage.muted, fontSize: 13.5, lineHeight: 19, textAlign: 'center',
+    color: onImage.muted, fontSize: typeScale.caption, lineHeight: 19, textAlign: 'center',
     marginTop: 5, maxWidth: 300,
   },
   cta: {
@@ -453,5 +453,5 @@ const s = StyleSheet.create({
     minHeight: 40, paddingHorizontal: 15, marginTop: 14,
     borderRadius: radius.full, borderWidth: 1,
   },
-  ctaText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  ctaText: { color: '#FFFFFF', fontSize: typeScale.caption, fontWeight: weight.bold },
 })
