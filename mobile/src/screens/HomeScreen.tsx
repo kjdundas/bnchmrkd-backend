@@ -165,6 +165,7 @@ export default function HomeScreen() {
   // Reported up by CheckInCard, which already runs this query.
   const [hasCheckin, setHasCheckin] = useState(false)
   const [hasCoach, setHasCoach] = useState(false)
+  const [openCheckin, setOpenCheckin] = useState(0)
   const [setupHidden, setSetupHidden] = useState(false)
   const setupKey = `@bnchmrkd_setup_hidden_${user?.id || 'anon'}`
   useEffect(() => {
@@ -558,9 +559,35 @@ export default function HomeScreen() {
             AsyncStorage.setItem(setupKey, '1').catch(() => {})
           }}
           onAct={(step) => {
-            if (step.id === 'event') setEventPickerOpen(true)
-            else if (step.route === 'Log') navigation.navigate('Log' as never)
-            else if (step.route === 'Profile') navigation.navigate('Profile' as never)
+            // A switch on the id, not a chain of route checks. The chain
+            // handled 'Log' and 'Profile' and silently fell through for the
+            // check-in step, whose route is 'Home' — the button rendered, the
+            // press registered, and nothing happened. The default case below
+            // makes that a compile error rather than a dead button: add a
+            // step id without handling it and the default case says so out
+            // loud instead of doing nothing. (It cannot be a compile-time
+            // exhaustiveness check while StepId spans both roles — the coach
+            // ids are in the same union and would never be handled here.)
+            switch (step.id) {
+              case 'event':
+                setEventPickerOpen(true)
+                break
+              case 'result':
+                navigation.navigate('Log' as never)
+                break
+              case 'checkin':
+                // The check-in is not a screen — it is the card further down
+                // this same screen. Open its sheet directly.
+                setOpenCheckin((n) => n + 1)
+                break
+              case 'coach':
+                navigation.navigate('Profile' as never)
+                break
+              default: {
+                const unhandled: never = step.id as never
+                console.warn('Get started step with no action:', unhandled)
+              }
+            }
           }}
         />
 
@@ -611,7 +638,7 @@ export default function HomeScreen() {
           />
         </Stagger>
 
-        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage onState={setHasCheckin} /></Stagger>
+        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage onState={setHasCheckin} openSignal={openCheckin} /></Stagger>
 
         <Stagger index={2}>
           <PerformanceHero

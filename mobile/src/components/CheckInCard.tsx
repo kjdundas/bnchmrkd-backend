@@ -92,8 +92,7 @@ function Scale({ label, hint, children }: any) {
 }
 
 export default function CheckInCard({
-  athleteId, onImage: over, onState,
-}: {
+  athleteId, onImage: over, onState, openSignal = 0 }: {
   athleteId?: string | null
   /** True when the card sits over the stadium backdrop rather than on paper. */
   onImage?: boolean
@@ -101,6 +100,10 @@ export default function CheckInCard({
    *  without running the same query a second time. Two queries for one fact
    *  is how two parts of a screen start disagreeing. */
   onState?: (hasCheckin: boolean) => void
+  /** Bumped by a caller to open the check-in sheet from outside — the
+      Get started card's CTA, which otherwise has nowhere to send anyone:
+      the check-in is not a screen, it is this card. */
+  openSignal?: number
 }) {
   const { colors } = useTheme()
   const [row, setRow] = useState<any>(null)
@@ -111,6 +114,15 @@ export default function CheckInCard({
   const [error, setError] = useState('')
   const [sheet, setSheet] = useState(false)
   const [form, setForm] = useState<Form>({ ...EMPTY })
+
+  // Opened from outside. Skips the first render so the sheet does not fly up
+  // the moment the home screen mounts.
+  const firstSignal = React.useRef(true)
+  useEffect(() => {
+    if (firstSignal.current) { firstSignal.current = false; return }
+    if (row) setEditing(true)
+    setSheet(true)
+  }, [openSignal])
 
   const load = useCallback(async () => {
     if (!athleteId) return
