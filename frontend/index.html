@@ -11,8 +11,8 @@
          CSS that references it. This starts the fetch immediately,
          in parallel with the JS bundle, instead of at the back of the
          queue. Matches the breakpoint used in the CSS in bnchmarkd-app.jsx. -->
-    <link rel="preload" as="image" href="/hero-stadium-mobile.jpg" media="(max-width: 768px)" />
-    <link rel="preload" as="image" href="/hero-stadium.jpg" media="(min-width: 769px)" />
+    <link rel="preload" as="image" href="/hero-stadium-mobile.jpg" media="(max-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/hero-stadium.jpg" media="(min-width: 769px)" fetchpriority="high" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Non-render-blocking font load: paints immediately with the fallback

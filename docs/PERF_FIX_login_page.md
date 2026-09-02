@@ -436,4 +436,34 @@ numbers once that's done, rather than more local/simulated testing.
 
 ## Status
 
-Pushed to `main`, awaiting deploy + re-measurement.
+Pushed to `main` and re-measured against production with a fresh
+PageSpeed Insights run. Real, verified improvement in the specific area
+targeted:
+
+| LCP sub-part | Before | After |
+|---|---|---|
+| Resource load delay | 620 ms | 400 ms |
+| Element render delay | 1,570 ms | 1,660 ms (flat, within noise) |
+
+The "Request is discoverable in initial document" check flipped from
+failing to passing — the preload genuinely worked as intended. But it
+also revealed the real story: **Element render delay, at ~1.6 seconds, is
+the dominant cost by a wide margin, and it barely moved.** That number
+isn't about *when* the image data arrives — it's the time between the
+image being ready and the browser actually being free to paint it, which
+means it's dominated by JavaScript execution (React mounting, GSAP setup,
+Tailwind CSS application across a ~6,000-line landing page component), not
+network or image loading at all.
+
+Also fixed a remaining check on the same insight: added `fetchpriority="high"`
+to both preload links (Lighthouse specifically flags this as required for
+full effect, not just `rel="preload"` alone).
+
+**Honest assessment:** the preload was a real, measurable, low-risk win —
+but it was not the dominant bottleneck, and fixing the actual dominant one
+(cutting JS execution time before first paint) is a meaningfully bigger,
+more invasive change than anything shipped in this whole thread — likely
+code-splitting or deferring parts of `bnchmarkd-app.jsx`, which directly
+trades off against the "keep it simple" request that prompted this
+follow-up. Flagging this as a decision point rather than continuing to
+ship incremental fixes against a cost that isn't primarily networking.
