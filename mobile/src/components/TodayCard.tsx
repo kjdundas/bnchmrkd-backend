@@ -30,32 +30,36 @@ const TONE: Record<string, string> = {
 }
 
 export default function TodayCard({
-  day, block, onOpen,
+  day, block, onOpen, footer,
 }: {
   day: DayCell | null
   /** Which week of the block today sits in, if a program is running. */
   block?: BlockWeek | null
   onOpen: () => void
+  /** Hosted below a divider — the check-in. Looking at what you are about to
+      do and saying how you feel about it is one moment, and it was two cards.
+      A footer also keeps the card alive on a rest day, when there is no
+      session to show but there is still a check-in to answer. */
+  footer?: React.ReactNode
 }) {
-  if (!day) return null
+  const hasSessions = !!day && day.sessions.length > 0
+  const hasEvents = !!day && day.events.length > 0
+  // A day with only a check-in on it does not need a card telling you so —
+  // unless the check-in itself is being hosted here.
+  if (!hasSessions && !hasEvents && !footer) return null
 
-  const hasSessions = day.sessions.length > 0
-  const hasEvents = day.events.length > 0
-  // A day with only a check-in on it does not need a card telling you so.
-  if (!hasSessions && !hasEvents) return null
-
-  const done = day.sessions.filter((sess) => sess.done).length
-  const allDone = hasSessions && done === day.sessions.length
+  const done = day ? day.sessions.filter((sess) => sess.done).length : 0
+  const allDone = hasSessions && done === day!.sessions.length
 
   return (
     <GlassPanel
       tone="deep"
       intensity={24}
-      radius={20}
-      onPress={onOpen}
+      radius={radius.card}
+      onPress={hasSessions || hasEvents ? onOpen : undefined}
       accessibilityLabel={
-        `Today: ${day.sessions.length} sessions, ${done} done`
-        + (hasEvents ? `, ${day.events.map((e: any) => e.title).join(', ')}` : '')
+        `Today: ${day?.sessions.length ?? 0} sessions, ${done} done`
+        + (hasEvents ? `, ${day!.events.map((e: any) => e.title).join(', ')}` : '')
         + '. Open the schedule.'
       }
       style={{ padding: 16, marginBottom: spacing.lg }}
@@ -67,7 +71,7 @@ export default function TodayCard({
             <Text style={[s.count, {
               color: allDone ? TONE.green : onImage.muted,
             }]}>
-              {done} of {day.sessions.length} done
+              {done} of {day!.sessions.length} done
             </Text>
           )}
           <Ionicons name="chevron-forward" size={14} color={onImage.dim} />
@@ -75,7 +79,7 @@ export default function TodayCard({
       </View>
 
       {/* An event first — a race today outranks the session that was planned. */}
-      {day.events.map((e: any, i: number) => {
+      {(day?.events || []).map((e: any, i: number) => {
         const st = EVENT_STYLE[eventKind(e.kind)]
         const tone = TONE[st.tone] || TONE.accent
         return (
@@ -87,7 +91,7 @@ export default function TodayCard({
         )
       })}
 
-      {day.sessions.map((sess, i) => {
+      {(day?.sessions || []).map((sess, i) => {
         const st = TYPE_STYLE[sessionType(sess.type)]
         return (
           <View key={i} style={[s.row, {
@@ -106,8 +110,8 @@ export default function TodayCard({
             }]}>
               {sess.label}
             </Text>
-            {day.readiness.level !== 'none' && i === 0 && (
-              <View style={[s.dot, { backgroundColor: READINESS_COLORS[day.readiness.level] }]} />
+            {day!.readiness.level !== 'none' && i === 0 && (
+              <View style={[s.dot, { backgroundColor: READINESS_COLORS[day!.readiness.level] }]} />
             )}
           </View>
         )
@@ -120,6 +124,13 @@ export default function TodayCard({
           Week {block.week} of {block.total} · {block.phase === 'deload' ? 'Deload' : 'Build'}
           {block.adjustment ? ` — ${block.adjustment}` : ''}
         </Text>
+      )}
+
+      {!!footer && (
+        <>
+          {(hasSessions || hasEvents) && <View style={s.rule} />}
+          {footer}
+        </>
       )}
     </GlassPanel>
   )
@@ -139,4 +150,5 @@ const s = StyleSheet.create({
   tag: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.9 },
   dot: { width: 8, height: 8, borderRadius: radius.full },
   block: { fontSize: typeScale.label, lineHeight: 16, marginTop: 4 },
+  rule: { height: 1, backgroundColor: 'rgba(255,255,255,0.10)', marginTop: 12, marginBottom: 10 },
 })

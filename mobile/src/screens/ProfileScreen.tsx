@@ -4,7 +4,7 @@
 // Uses HeroCard, AlmanacCard, MonoKicker, StreakChip, AnimatedBar
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   View,
   Text,
@@ -23,6 +23,10 @@ import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import SharingSettings from '../components/SharingSettings'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
 import DnaStrip from '../components/DnaCard'
+import { MetricRail } from '../components/OuraSections'
+import IndicatorPicker from '../components/IndicatorPicker'
+import { loadIndicators, saveIndicators } from '../lib/indicators'
+import { groupMetrics } from '../lib/metricSemantics'
 import ResultsTable from '../components/ResultsTable'
 import { countPersonalBests } from '../lib/resultSemantics'
 import DobField from '../components/DobField'
@@ -55,6 +59,13 @@ export default function ProfileScreen() {
   const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
+  // The rings, and the sheet that reorders them. They were on Home, above the
+  // mark, reading the same `metrics` array the DNA strip below reads — the
+  // same data drawn twice, two blocks apart. They are a profile, so they live
+  // on the profile.
+  const [indicators, setIndicators] = useState<string[]>([])
+  const [pickerFor, setPickerFor] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [performances, setPerformances] = useState<any[]>([])
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
@@ -74,6 +85,26 @@ export default function ProfileScreen() {
   })
 
   // athlete_profiles holds height/weight; user_profiles (via AuthContext) holds identity.
+  // Read once per athlete. The rail falls back to its automatic order while
+  // this is in flight, so a slow read never leaves the rings blank.
+  useEffect(() => {
+    if (!user) { setIndicators([]); return }
+    let cancelled = false
+    loadIndicators(user.id).then((keys) => { if (!cancelled) setIndicators(keys) })
+    return () => { cancelled = true }
+  }, [user])
+
+  // Written through on every edit rather than on dismiss: the sheet can be
+  // swiped away, and a swipe is not a cancel.
+  const changeIndicators = useCallback((keys: string[]) => {
+    setIndicators(keys)
+    if (user) saveIndicators(user.id, keys)
+  }, [user])
+
+  // The picker lists what the athlete has actually logged, in the same
+  // automatic order the rail would use.
+  const metricGroups = useMemo(() => groupMetrics(metrics), [metrics])
+
   useEffect(() => {
     if (!user) return
     selectFrom('athlete_profiles', { filter: `id=eq.${user.id}`, limit: '1' })
@@ -344,6 +375,16 @@ export default function ProfileScreen() {
 
             <SectionLabel>Physical profile</SectionLabel>
 
+            {!!metrics.length && (
+              <MetricRail
+                metrics={metrics}
+                onDarkSurface={isDark}
+                order={indicators}
+                discipline={discipline}
+                onCustomise={(key) => { setPickerFor(key); setPickerOpen(true) }}
+              />
+            )}
+
             <DnaStrip
               metrics={metrics}
               discipline={discipline}
@@ -504,6 +545,15 @@ export default function ProfileScreen() {
 
         <View style={{ height: 30 }} />
       </ScrollView>
+
+      <IndicatorPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        groups={metricGroups}
+        chosen={indicators}
+        onChange={changeIndicators}
+        focusKey={pickerFor}
+      />
     </SafeAreaView>
   )
 }

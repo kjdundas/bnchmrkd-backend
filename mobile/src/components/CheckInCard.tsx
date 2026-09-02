@@ -92,7 +92,7 @@ function Scale({ label, hint, children }: any) {
 }
 
 export default function CheckInCard({
-  athleteId, onImage: over, onState, openSignal = 0 }: {
+  athleteId, onImage: over, onState, openSignal = 0, bare = false }: {
   athleteId?: string | null
   /** True when the card sits over the stadium backdrop rather than on paper. */
   onImage?: boolean
@@ -104,6 +104,10 @@ export default function CheckInCard({
       Get started card's CTA, which otherwise has nowhere to send anyone:
       the check-in is not a screen, it is this card. */
   openSignal?: number
+  /** Render the row WITHOUT its own panel, for hosting inside another card.
+      Today's session and how you feel about it are one moment in an athlete's
+      day; two stacked cards asked the same question twice. */
+  bare?: boolean
 }) {
   const { colors } = useTheme()
   const [row, setRow] = useState<any>(null)
@@ -344,20 +348,20 @@ export default function CheckInCard({
   // whole thing collapses to a single line and opens in a sheet.
   if (over) {
     const done = !!row
+    const label = done
+      ? `Checked in today, ${status.label}. Tap to update.`
+      : 'Daily check-in, takes 30 seconds. Tap to start.'
+    const open = () => { if (row) setEditing(true); setSheet(true) }
+    const Shell: any = bare ? Tappable : GlassPanel
+    const shellProps = bare
+      ? { onPress: open, accessibilityLabel: label, hitSlop: 0,
+          style: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 13, minHeight: 46 } }
+      : { onPress: open, accessibilityLabel: label, radius: radius.card,
+          style: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 13,
+                   paddingHorizontal: 16, minHeight: 62, marginBottom: rhythm.section } }
     return (
       <>
-        <GlassPanel
-          onPress={() => { if (row) setEditing(true); setSheet(true) }}
-          accessibilityLabel={done
-            ? `Checked in today, ${status.label}. Tap to update.`
-            : 'Daily check-in, takes 30 seconds. Tap to start.'}
-          radius={18}
-          style={{
-            flexDirection: 'row', alignItems: 'center', gap: 13,
-            paddingHorizontal: 16, minHeight: 62,
-            marginBottom: rhythm.section,
-          }}
-        >
+        <Shell {...shellProps}>
           <View style={{
             width: 34, height: 34, borderRadius: radius.full,
             alignItems: 'center', justifyContent: 'center',
@@ -383,7 +387,7 @@ export default function CheckInCard({
           </View>
 
           <Ionicons name="chevron-forward" size={17} color={onImage.dim} />
-        </GlassPanel>
+        </Shell>
 
         {formSheet}
       </>

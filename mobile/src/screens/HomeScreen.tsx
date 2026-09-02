@@ -1,12 +1,28 @@
 // ═══════════════════════════════════════════════════════════════════════
-// HOME SCREEN — The athlete's dashboard.
-// Home is the DAILY loop and nothing else: am I okay today, and what was my
-// last mark. It ends after ~2 screens on purpose.
-//   coach requests → MetricRail → CheckInCard → PerformanceHero →   (rings first)
-//   discipline switcher → race trend → since-last-visit
+// HOME SCREEN — four blocks, one question each.
 //
-// Exploration lives on Trajectory (per-discipline analysis) and physical
-// profile on Profile. See the block comment mid-file for what moved where.
+//   1  the mark        what did I do          (hero — no card around it)
+//   2  today           what am I doing now    (session + check-in, one card)
+//   3  where I stand   how do I compare
+//   4  since last time what changed
+//
+// It was ten. Four of those ten answered the same question — the metric rail,
+// the Today card, the check-in and the hero were all "how am I doing right
+// now" — and the rail and the DNA strip were computed from the same `metrics`
+// array, one drawn as rings and one as a score. A screen where everything is
+// a card of equal weight reads as wallpaper: uniformity tells the eye that
+// nothing matters more than anything else.
+//
+// The mark leads and carries no chrome at all, because it is the reason the
+// app exists. It used to be the fourth thing you saw, at 22 points, inside a
+// card, under a kicker reading YOUR HEADLINE.
+//
+// The greeting is gone. It was set at 10px, uppercase, tracked out, in muted
+// grey — the athlete's own name was the smallest, faintest text on their home
+// screen. Identity lives in AppHeader; the streak sits on the date line.
+//
+// Exploration lives on Trajectory (per-discipline analysis), the rings and
+// the DNA profile on Profile.
 //
 // KEY: Physical metrics (athlete_metrics) bridge to competition data.
 // If a user logs sprint_100m = 11.23s, that populates the hero as a "100m" PB.
@@ -19,40 +35,35 @@ import {
   StyleSheet,
   RefreshControl,
   Animated,
-  ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, onImage, typeScale, weight, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, callRpc } from '../lib/supabase'
-import { AlmanacCard, MonoKicker, EmptyState, Stagger, SectionLabel } from '../components/ui'
+import { Stagger, SectionLabel, Tappable } from '../components/ui'
 import {
   RivalCard,
   WhereYouStand,
   ScienceSpotlight,
   SinceLastVisit,
-  WeeklyRecap,
   Sparkline,
 } from '../components/HomeSections'
-import { XPBar, StreakChip as GamStreakChip } from '../components/GamificationUI'
+import { StreakChip as GamStreakChip } from '../components/GamificationUI'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import CheckInCard from '../components/CheckInCard'
-import DnaStrip from '../components/DnaCard'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
-import { PerformanceHero, RaceTrendCard, MetricRail, type HomeView, type TierBand } from '../components/OuraSections'
-import { LOWER_IS_BETTER, groupMetrics } from '../lib/metricSemantics'
+import { PerformanceHero, type HomeView, type TierBand } from '../components/OuraSections'
+import { LOWER_IS_BETTER } from '../lib/metricSemantics'
 import { isLowerBetter } from '../lib/disciplineScience'
 import { countsForAnalysis } from '../lib/resultSemantics'
 import TodayCard from '../components/TodayCard'
+import HomeStanding from '../components/HomeStanding'
 import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
 import { fetchEvents } from '../lib/events'
-import IndicatorPicker from '../components/IndicatorPicker'
-import { loadIndicators, saveIndicators } from '../lib/indicators'
 import ApprovalInbox, { ApprovalBanner } from '../components/ApprovalInbox'
 import GetStartedCard from '../components/GetStartedCard'
 import EventPickerSheet from '../components/EventPickerSheet'
@@ -73,7 +84,6 @@ import {
 } from '../lib/disciplineScience'
 import {
   WhatIfExplorer,
-  NextMilestone,
   SmartDailyInsight,
 } from '../components/IntelligenceCards'
 
@@ -179,11 +189,6 @@ export default function HomeScreen() {
     AsyncStorage.getItem(setupKey).then((v: string | null) => setSetupHidden(v === '1')).catch(() => {})
   }, [setupKey])
   const [refreshing, setRefreshing] = useState(false)
-  // Which rings the athlete has chosen for the rail, and the picker that
-  // edits them. Empty means automatic — see src/lib/indicators.ts.
-  const [indicators, setIndicators] = useState<string[]>([])
-  const [pickerFor, setPickerFor] = useState<string | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
   // Just enough to answer "what am I doing today" — the schedule tab owns the
   // full picture; this is a window onto the same model.
   const [todayPrograms, setTodayPrograms] = useState<any[]>([])
@@ -282,27 +287,6 @@ export default function HomeScreen() {
     })
     return () => { cancelled = true }
   }, [user, metrics.length])
-
-  // The saved indicator order. Read once per athlete; the rail falls back to
-  // its automatic order while this is in flight, so a slow read never leaves
-  // the rings blank.
-  useEffect(() => {
-    if (!user) { setIndicators([]); return }
-    let cancelled = false
-    loadIndicators(user.id).then((keys) => { if (!cancelled) setIndicators(keys) })
-    return () => { cancelled = true }
-  }, [user])
-
-  // Written through on every edit rather than on dismiss: the sheet can be
-  // swiped away, and a swipe is not a cancel.
-  const changeIndicators = useCallback((keys: string[]) => {
-    setIndicators(keys)
-    if (user) saveIndicators(user.id, keys)
-  }, [user])
-
-  // The picker lists what the athlete has actually logged, in the same
-  // automatic order the rail would use.
-  const metricGroups = useMemo(() => groupMetrics(metrics), [metrics])
 
   // ── Today ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -517,10 +501,9 @@ export default function HomeScreen() {
     }
   }, [discipline, competitionPb, sex, age])
 
-  // Greeting
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  const firstName = profile?.full_name?.split(' ')[0] || 'Athlete'
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
 
   return (
     // The photograph is the screen. It sits BEHIND the scroll view rather than
@@ -596,101 +579,104 @@ export default function HomeScreen() {
 
         <ApprovalBanner count={pendingCount} onPress={() => { tapFeedback(); setInboxOpen(true) }} />
 
-        {/* ── Greeting line (identity moved to AppHeader) ── */}
-        <View style={styles.greetingSection}>
-          <View style={styles.greetingTopRow}>
-            <View style={{ flex: 1 }}>
-              <MonoKicker color="rgba(255,255,255,0.62)">{greeting + ', ' + firstName}</MonoKicker>
-            </View>
-            {streak > 0 && <GamStreakChip streak={streak} />}
-          </View>
-        </View>
-
         {/* ── Pending coach requests (only renders if any) ── */}
         <View style={{ marginTop: spacing.md }}>
           <AthleteCoachLinks pendingOnly />
         </View>
 
-        {/* ══ Oura-style top: rail → check-in → hero → trend cards ══
-            Order mirrors the web HomeView so both apps read the same. */}
-        {/* Rings first, in the sky. They were nested inside PerformanceHero,
-            which had two problems: they sat below the check-in bar, and they
-            vanished entirely for any athlete with no race result — the hero
-            returns null without one, taking the day's readings with it. They
-            are their own block now. */}
-        {!!metrics.length && (
-          <Stagger index={0}>
-            <MetricRail
-              metrics={metrics}
-              onDarkSurface
-              withLightPool
-              order={indicators}
-              discipline={perfDiscipline || activeDiscipline || storedDiscipline}
-              onCustomise={(key) => { setPickerFor(key); setPickerOpen(true) }}
-            />
-          </Stagger>
-        )}
+        {/* ── Date line ────────────────────────────────────────────
+            What the greeting used to be, carrying something. A 10px
+            "GOOD MORNING, KEENAN" in muted grey was the smallest text on
+            the screen and told the athlete nothing they did not know. */}
+        <View style={styles.dateRow}>
+          <Text style={styles.dateText}>{today}</Text>
+          {streak > 0 && <GamStreakChip streak={streak} />}
+        </View>
 
-        {/* What is actually happening today, before any of the retrospective
-            material below it. */}
+        {/* ══ 1 · THE MARK ══════════════════════════════════════════
+            No card. `surface: 'hero'` exists for exactly one block per
+            screen and this is it — the number the app is for. */}
+        <Stagger index={0}>
+          {homeView.lastRace && homeView.pb != null ? (
+            <PerformanceHero
+              view={homeView}
+              disciplines={availableDisciplines}
+              onSelectDiscipline={setActiveDiscipline}
+              scrollY={scrollY}
+              band={tierBand}
+            />
+          ) : (
+            // PerformanceHero returns null without a mark, and the block it
+            // leads is the one the screen is built around — so the empty case
+            // needs a shape of its own rather than a hole. Same position, same
+            // weight, one thing to do.
+            <Tappable
+              onPress={() => { tapFeedback(); navigation.navigate('Log' as never) }}
+              accessibilityLabel="No result yet. Log your first one."
+              style={styles.heroEmpty}
+            >
+              <Text style={styles.heroEmptyMark}>—</Text>
+              <Text style={styles.heroEmptyTitle}>No result yet</Text>
+              <Text style={styles.heroEmptyBody}>
+                Log a race or a test and this becomes your mark.
+              </Text>
+            </Tappable>
+          )}
+        </Stagger>
+
+        {/* ══ 2 · TODAY ═════════════════════════════════════════════
+            The session and the check-in, in one card. They were two, and
+            they are one moment: you look at what you are about to do and
+            you say how you feel about it. The card survives a rest day
+            because the check-in still needs answering on one. */}
         <Stagger index={1}>
           <TodayCard
             day={todayCell}
             block={todayBlock}
             onOpen={() => navigation.navigate('Programs' as never)}
+            footer={
+              <CheckInCard
+                athleteId={user?.id}
+                onImage
+                bare
+                onState={setHasCheckin}
+                openSignal={openCheckin}
+              />
+            }
           />
         </Stagger>
 
-        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage onState={setHasCheckin} openSignal={openCheckin} /></Stagger>
-
+        {/* ══ 3 · WHERE YOU STAND ═══════════════════════════════════
+            Silent unless there is a real position. Boards owns the
+            reasons; Home owns the one number. */}
         <Stagger index={2}>
-          <PerformanceHero
-            view={homeView}
-            disciplines={availableDisciplines}
-            onSelectDiscipline={setActiveDiscipline}
-            scrollY={scrollY}
-            band={tierBand}
-          />
-        </Stagger>
-
-        <Stagger index={4}>
-          <RaceTrendCard view={homeView} onLog={() => navigation.navigate('Log' as never)} onImage />
-        </Stagger>
-
-        {/* Athlete DNA — compact by design. One tap opens the full ladder and
-            the tests behind it in a sheet, which keeps the daily screen short
-            without burying the feature. */}
-        <Stagger index={5}>
-          <DnaStrip
-            metrics={metrics}
+          <HomeStanding
             discipline={discipline}
-            dob={profile?.dob}
-            onLog={() => navigation.navigate('Log' as never)}
-            onImage
+            onOpen={() => { tapFeedback(); navigation.navigate('Boards' as never) }}
           />
         </Stagger>
 
-        {/* ── Since you were last here ──────────────────────────────
-            The only ambient block that stays on Home. Recent activity, the
-            weekly recap and the daily insight were three more full cards
-            saying overlapping things; this is the digest.
-
+        {/* ══ 4 · SINCE YOU WERE HERE ═══════════════════════════════
             REMOVED from Home and why:
-              WhereYouStand   → Trajectory already has TierPositioning +
-                                CompetitionLadder for the same question
+              MetricRail      → Profile. It is a profile, not a headline,
+                                and it read the same `metrics` array the
+                                DNA strip did — the same data drawn twice.
+              DnaStrip        → Profile, where it already rendered. It was
+                                on screen twice within two taps.
+              RaceTrendCard   → Trajectory owns history; the hero already
+                                carries the last mark and its delta.
+              Greeting        → AppHeader carries identity.
+              WhereYouStand   → Trajectory has TierPositioning
               RivalCard       → Trajectory has SimilarAthletes
               WhatIfExplorer  → Trajectory has ImprovementScenarios
-              NextMilestone   → covered by Trajectory's tier positioning
-              DNA ladder,
-              Limiting factor → moved to Profile (physical, not per-race)
-              ScienceSpotlight→ moved to Trajectory
-              XP bar          → now a level chip in AppHeader
+              ScienceSpotlight→ Trajectory
+              XP bar          → a level chip in AppHeader
               Recent activity,
               Weekly recap,
               Daily insight   → folded into Since-last-visit
-            ──────────────────────────────────────────────────────────── */}
-        <Stagger index={6}>
-          <SectionLabel color={onImage.dim}>Since you were last here</SectionLabel>
+            ──────────────────────────────────────────────────────── */}
+        <Stagger index={3}>
+          <SectionLabel color={onImage.dim}>Since you were here</SectionLabel>
           <SinceLastVisit metrics={metrics} performances={performances} onImage />
         </Stagger>
 
@@ -717,14 +703,6 @@ export default function HomeScreen() {
         onChanged={() => { refreshPending(); loadData() }}
       />
 
-      <IndicatorPicker
-        visible={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        groups={metricGroups}
-        chosen={indicators}
-        onChange={changeIndicators}
-        focusKey={pickerFor}
-      />
       </SafeAreaView>
     </View>
   )
@@ -749,13 +727,28 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.lg, paddingTop: spacing.sm },
 
-  greetingSection: { marginBottom: spacing.md, paddingTop: spacing.sm },
-  greetingTopRow: {
-    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+  // The date line the greeting became. Sentence case at reading size, not a
+  // tracked-out 10px label — it is a sentence, so it is set like one.
+  dateRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: spacing.sm, paddingTop: spacing.xs, minHeight: 26,
   },
-  greetingName: {
-    fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary,
-    marginTop: 4, letterSpacing: -0.5,
+  // The empty hero. Same slot and roughly the same height as the real one, so
+  // the screen does not reflow the day an athlete logs their first mark.
+  heroEmpty: { alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.lg },
+  heroEmptyMark: {
+    fontSize: typeScale.mark, lineHeight: 60, fontWeight: weight.bold,
+    color: 'rgba(255,255,255,0.22)', letterSpacing: -2.4,
+  },
+  heroEmptyTitle: {
+    fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink, marginTop: 4,
+  },
+  heroEmptyBody: {
+    fontSize: typeScale.body, color: onImage.muted, marginTop: 4, textAlign: 'center',
+  },
+  dateText: {
+    fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted,
+    letterSpacing: -0.1,
   },
   clubText: {
     fontSize: typeScale.label, letterSpacing: 1.5, textTransform: 'uppercase',
