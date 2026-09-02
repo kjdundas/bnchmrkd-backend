@@ -295,15 +295,23 @@ export const onDark = {
 } as const
 
 // ── Text over a photograph ─────────────────────────────────────────
-// Colour alone cannot carry text on a picture, because the picture changes.
-// Measured on the live hero the labels scored 1.08, 1.20 and 1.59 to 1; on
-// the Programs screen the title, the Generate button, the week toggle and
-// the session counter all came in under 2.2, several of them at 1.04 — the
-// same colour as the photograph behind them.
+// A precaution, NOT a fix for a measured failure. Read the next paragraph
+// before citing this anywhere.
 //
-// A shadow makes every glyph carry its own local darkness, so it reads
-// wherever the image happens to be bright, and it costs no chrome. Spread
-// on any Text that sits on ScreenBackdrop rather than on a panel.
+// I originally justified this token with contrast ratios of 1.04, 1.08 and
+// 1.59 to 1, taken by sampling single points I had guessed the position of.
+// Those samples were landing on the photograph BETWEEN the glyphs, so they
+// were comparing the picture with itself. Measured properly — cluster the
+// near-white pixels, then compare each cluster against the ground ringing
+// it — every text element on the Programs screen scores between 3.87 and
+// 15.39 to 1. Nothing failed. The numbers were an artefact of my method.
+//
+// The token stays because the backdrop is a PHOTOGRAPH and photographs are
+// swapped: text that passes on a dim gym at dusk can fail on a bright one,
+// and a shadow makes each glyph carry its own local darkness for the cost
+// of no chrome at all. Use it on Text sitting on ScreenBackdrop rather than
+// on a panel — as insurance against an image nobody has chosen yet, not as
+// a repair to something broken.
 export const lift = {
   textShadowColor: 'rgba(6,7,18,0.92)',
   textShadowOffset: { width: 0, height: 1 },

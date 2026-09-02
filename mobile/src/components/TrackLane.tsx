@@ -8,17 +8,19 @@
 // two standards at either end.
 //
 // ── WHY SKIA AND NOT THE SVG THIS REPLACED ───────────────────────────
-// Measured against the stadium photograph the old arc scored 1.00:1 — the
-// stroke was, to the pixel, the same colour as the backdrop behind it. Its
-// labels came in at 1.08, 1.20 and 1.59:1. The only element on that hero
-// that passed WCAG was the caption, because the caption was the only thing
-// sitting on a solid band.
+// CORRECTION: I first justified this with contrast ratios — the arc at
+// 1.00:1, its labels at 1.08, 1.20 and 1.59 — taken by point-sampling
+// coordinates I had guessed. Those points were landing on the photograph
+// between the glyphs and comparing it with itself. Re-measured properly the
+// text on these screens passes comfortably. Do not repeat those figures.
 //
-// Two things fix that and react-native-svg can do neither: a GLOW, so the
-// marker survives whatever is behind it, and a SCRIM drawn into the same
-// canvas, so the lane carries its own ground instead of hoping the photo is
-// dark today. A drop shadow on an SVG stroke renders as nothing on iOS at
-// this size and is ignored on Android.
+// What survives that correction is the design argument, which never needed
+// the numbers: a 5pt arc between two labels is the shape every fitness app
+// draws, and the reason to spend Skia here is a GLOW and a SCRIM drawn into
+// the same canvas, so the lane carries its own ground rather than depending
+// on which photograph is behind it today. A drop shadow on an SVG stroke
+// renders as nothing on iOS at this size and is ignored on Android — that
+// part is a real capability gap, not a measurement.
 //
 // ── AND WHY IT FALLS BACK ────────────────────────────────────────────
 // Same contract as BlockProgress: Skia is required lazily behind a

@@ -1240,13 +1240,14 @@ function ProgramsBody() {
         )}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.accent[500]} />}
       >
-        {/* The title sits straight on the photograph, so it has to carry its
-            own darkness — measured over the gym shot it scored 1.04:1, the
-            same colour as the wall behind it.
+        {/* It was two hard-wrapped lines starting at spacing.sm, which put
+            "Your" under the translucent header the moment the screen
+            scrolled a pixel — that is the clipping in the screenshot, and
+            it is the real bug here. One line, and it clears the header.
 
-            It was also two hard-wrapped lines starting at spacing.sm, which
-            put "Your" under a translucent header the moment the screen
-            scrolled a pixel. One line, and it clears the header. */}
+            The shadow is insurance for a swappable backdrop, not a repair:
+            see the note on `lift` in theme.ts for why the contrast figures
+            I first cited were wrong. */}
         <View style={{
           flexDirection: 'row', alignItems: 'center',
           justifyContent: 'space-between', gap: 12,
