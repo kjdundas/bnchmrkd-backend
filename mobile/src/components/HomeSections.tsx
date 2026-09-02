@@ -34,7 +34,7 @@ import {
   AXIS_INFO,
   disciplinePriority,
 } from '../lib/disciplineScience'
-import { findRival } from '../lib/historicalRivals'
+import { similarAthletes, type SimilarAthlete } from '../lib/corpus'
 // Not historicalRivals' own ageFromDob: that file is synced verbatim from the
 // web frontend, so mobile points its callers at the shared helper instead of
 // forking the sync.
@@ -269,82 +269,80 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
   const cal = discipline ? getCalibration(discipline, sex) : null
   const higher = !!cal?.higher
   const athleteAge = useMemo(() => (dob ? ageFromDob(dob) : null), [dob])
-  const rival = useMemo(
-    () => (discipline ? findRival(discipline, sex, athleteAge, pb, higher) : null),
-    [discipline, sex, athleteAge, pb, higher]
-  )
 
-  if (!rival || pb == null) return null
+  // Was HISTORICAL_RIVALS: about 150 hand-typed rows of famous names, whose
+  // slowest 100m entry was 10.75, so a fifteen-year-old was "paced" by
+  // whichever Olympian happened to be nearest. Several events had no
+  // women's pool and fell back to the men's; five events returned nothing.
+  //
+  // Now it asks the corpus: of 6,892 real careers, who was actually at your
+  // mark at your age, in your event and on your implement. And because
+  // these are whole careers rather than a single famous moment, it can also
+  // say what happened to them afterwards — which is the part a fifteen-
+  // year-old needs, in both directions.
+  const [rival, setRival] = useState<SimilarAthlete | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // findRival falls back to `bucket.M` when an event has no women's pool, so a
-  // female athlete could be silently benchmarked against men with nothing on
-  // screen saying so. Say so.
-  const crossSex = sex === 'F' && (rival as any).poolSex === 'M'
+  useEffect(() => {
+    let live = true
+    if (!discipline || pb == null || athleteAge == null) { setRival(null); return }
+    setLoading(true)
+    similarAthletes({ discipline, sex, age: athleteAge, mark: pb, limit: 1 })
+      .then((rows) => { if (live) setRival(rows[0] || null) })
+      .finally(() => { if (live) setLoading(false) })
+    return () => { live = false }
+  }, [discipline, sex, athleteAge, pb])
+
+  // No corpus for this event, or nobody near this mark at this age. Say
+  // nothing rather than reaching for someone who is not comparable.
+  if (loading || !rival || pb == null) return null
 
   const unit = higher ? 'm' : 's'
-  const diff = Math.abs(rival.diff)
-  const ageLabel =
-    athleteAge != null && rival.age != null
-      ? rival.age === athleteAge
-        ? `at age ${athleteAge}`
-        : athleteAge < rival.age
-        ? `${rival.age - athleteAge} year${rival.age - athleteAge === 1 ? '' : 's'} younger`
-        : `${athleteAge - rival.age} year${athleteAge - rival.age === 1 ? '' : 's'} older`
-      : rival.age != null
-      ? `at age ${rival.age}`
-      : ''
+  const diff = Math.abs(pb - rival.atYourAge)
+  const ahead = higher ? pb > rival.atYourAge : pb < rival.atYourAge
 
-  const youPct = barPct(pb, rival.mark, higher)
-  const themPct = barPct(rival.mark, rival.mark, higher)
+  // What they went on to do — on the senior implement where the athlete is
+  // still on an age-group one, because a career that stops at seventeen is
+  // an artefact of the specification change, not a retirement.
+  const later = rival.seniorBest ?? rival.bestSameEvent
+  const laterAge = rival.ageAtSeniorBest
+  const laterEvent = rival.seniorEvent && rival.seniorEvent !== discipline ? rival.seniorEvent : null
+  const wentOn = later != null && laterAge != null && laterAge > (athleteAge ?? 0)
+
+  const youPct = barPct(pb, rival.atYourAge, higher)
+  const themPct = barPct(rival.atYourAge, rival.atYourAge, higher)
   const lo = Math.min(youPct, themPct)
   const span = Math.abs(youPct - themPct)
 
   return (
-    // Was a bespoke purple card with two 120pt blurred "glow orbs" bleeding
-    // out of the corners, white text on a 6%-purple fill. On the light paper
-    // it was unreadable; on the dark ground the orbs were just smudges. It is
-    // the same glass as every other block now, and the accent lives in the
-    // type rather than in decoration behind it.
     <GlassPanel tone="deep" intensity={24} radius={20} style={s.rivalCard}>
       <View style={s.rivalHeader}>
         <View style={{ flex: 1 }}>
-          <MonoKicker color={c.text.muted}>Your pacer</MonoKicker>
-          <Text style={[s.rivalName, { color: c.text.primary }]}>{rival.name}</Text>
-          {!!rival.note && (
-            <Text style={[s.rivalNote, { color: c.text.dimmed }]}>{rival.note}</Text>
-          )}
+          <MonoKicker color={c.text.muted}>At your age</MonoKicker>
+          <Text style={[s.rivalName, { color: c.text.primary }]}>{rival.athlete}</Text>
         </View>
-        <Text style={[s.rivalCountry, { color: c.text.dimmed }]}>{rival.country}</Text>
+        <Text style={[s.rivalCountry, { color: c.text.dimmed }]}>{rival.nationality || ''}</Text>
       </View>
 
       <View style={s.rivalBody}>
         <Text style={[s.rivalDesc, { color: c.text.secondary }]}>
-          {rival.name.split(' ').slice(-1)[0]}'s breakthrough{ageLabel ? ` ${ageLabel}` : ''}:{' '}
+          At {Math.floor(athleteAge ?? 0)}, {rival.athlete.split(' ').slice(-1)[0]} was on{' '}
           <Text style={[s.rivalBold, { color: c.text.primary }]}>
-            {fmtMark(rival.mark, higher, discipline)}
+            {fmtMark(rival.atYourAge, higher, discipline)}
           </Text>.
         </Text>
-        <Text style={[s.rivalDiff, { color: rival.ahead ? c.green : c.amber }]}>
-          Your PB is {diff.toFixed(2)}{unit}{' '}
-          {rival.ahead
-            ? higher ? 'beyond' : 'faster than'
-            : higher ? 'short of' : 'off'}{' '}
-          that benchmark
+        <Text style={[s.rivalDiff, { color: ahead ? c.green : c.amber }]}>
+          You are {diff.toFixed(2)}{unit}{' '}
+          {ahead ? (higher ? 'beyond' : 'ahead of') : (higher ? 'short of' : 'off')} that
         </Text>
       </View>
 
       <View style={s.rivalBarWrap}>
         <View style={[s.rivalBarTrack, { backgroundColor: 'rgba(255,255,255,0.10)' }]}>
-          <View
-            style={[
-              s.rivalBarFill,
-              {
-                left: `${lo}%` as any,
-                width: `${span}%` as any,
-                backgroundColor: rival.ahead ? c.green : c.amber,
-              },
-            ]}
-          />
+          <View style={[s.rivalBarFill, {
+            left: `${lo}%` as any, width: `${span}%` as any,
+            backgroundColor: ahead ? c.green : c.amber,
+          }]} />
         </View>
         <View style={s.rivalBarLabels}>
           <View>
@@ -354,18 +352,19 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[s.rivalBarTag, { color: c.accent[500] }]}>PACER</Text>
+            <Text style={[s.rivalBarTag, { color: c.accent[500] }]}>THEM, THEN</Text>
             <Text style={[s.rivalBarVal, { color: c.accent[500] }]}>
-              {fmtMark(rival.mark, higher, discipline)}
+              {fmtMark(rival.atYourAge, higher, discipline)}
             </Text>
           </View>
         </View>
       </View>
 
-      {crossSex && (
+      {wentOn && (
         <Text style={[s.rivalNote, { color: c.text.muted, marginTop: 12, letterSpacing: 0 }]}>
-          We don't hold a women's pool for {discipline} yet, so this comparison is
-          against a men's mark. Read it as a shape, not a target.
+          They went on to {fmtMark(later as number, higher, discipline)}
+          {laterEvent ? ` in the ${laterEvent}` : ''} at {laterAge}. That is what one
+          athlete did, not what you will do.
         </Text>
       )}
     </GlassPanel>
