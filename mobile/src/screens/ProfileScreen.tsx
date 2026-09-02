@@ -327,7 +327,7 @@ export default function ProfileScreen() {
         </AlmanacCard>
         )}
 
-        {/* ── Physical profile ─────────────────────────────────────────
+        {/* ── Athlete DNA ─────────────────────────────────────────
             ONE DNA implementation. The strip opens the full ladder (and the
             tests behind it) in a sheet — the same component Home renders, so
             the detail can't drift or duplicate. ──────────────────────────── */}
@@ -350,7 +350,7 @@ export default function ProfileScreen() {
             >
               <Ionicons name="pulse" size={17} color={c.accent[500]} />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.crossLinkTitle, { color: c.text.primary }]}>Physical profile & DNA</Text>
+                <Text style={[styles.crossLinkTitle, { color: c.text.primary }]}>Athlete DNA</Text>
                 <Text style={[styles.crossLinkBody, { color: c.text.secondary }]}>
                   On Trajectory, under your events
                 </Text>

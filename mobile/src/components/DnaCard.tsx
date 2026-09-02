@@ -166,7 +166,7 @@ function DnaSheet({
           paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm,
         }}>
           <View>
-            <MonoKicker>The profile</MonoKicker>
+            <MonoKicker>In detail</MonoKicker>
             <Text style={{ fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.5, marginTop: 4 }}>
               Athlete DNA
             </Text>
@@ -211,7 +211,7 @@ function DnaSheet({
 
 // ── The strip ──────────────────────────────────────────────────────
 export default function DnaStrip({
-  metrics, discipline, dob, onLog, onImage: over,
+  metrics, discipline, dob, onLog, onImage: over, noKicker = false,
 }: {
   metrics: any[]
   discipline?: string | null
@@ -219,6 +219,11 @@ export default function DnaStrip({
   onLog?: () => void
   /** True when the strip sits over the stadium backdrop rather than on paper. */
   onImage?: boolean
+  /** The section heading above already says "Athlete DNA". Two of the same
+      words stacked is how one concept ends up reading as two features — the
+      ladder inside already solves this with `bare`, and this is the same
+      idea one level up. */
+  noKicker?: boolean
 }) {
   const { colors } = useTheme()
   const [open, setOpen] = useState(false)
@@ -244,7 +249,9 @@ export default function DnaStrip({
       {/* Header: the one number, its tier, and the way in. */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
-          <MonoKicker color={over ? onImage.dim : undefined}>Athlete DNA</MonoKicker>
+          {!noKicker && (
+            <MonoKicker color={over ? onImage.dim : undefined}>Athlete DNA</MonoKicker>
+          )}
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
             <Text style={{ fontSize: typeScale.figure, fontWeight: weight.bold, color: ink, letterSpacing: -0.6, ...numerals }}>
               {overall ?? '—'}

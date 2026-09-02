@@ -97,17 +97,16 @@ export default function PhysicalProfile({
   if (!metrics.length) {
     return (
       <>
-        <SectionLabel color={onImage.dim}>What you are made of</SectionLabel>
+        <SectionLabel color={onImage.dim}>Athlete DNA</SectionLabel>
         <Tappable
           onPress={() => { tapFeedback(); onLog() }}
           accessibilityLabel="No physical tests yet. Log one."
           style={{ marginBottom: rhythm.section }}
         >
           <GlassPanel tone="deep" intensity={24} radius={radius.card} style={{ padding: 16 }}>
-            <MonoKicker color={onImage.dim}>Athlete DNA</MonoKicker>
             <Text style={{
               fontSize: typeScale.title, fontWeight: weight.bold,
-              color: onImage.ink, marginTop: 4,
+              color: onImage.ink,
             }}>
               No physical tests yet
             </Text>
@@ -129,7 +128,7 @@ export default function PhysicalProfile({
 
   return (
     <>
-      <SectionLabel color={onImage.dim}>What you are made of</SectionLabel>
+      <SectionLabel color={onImage.dim}>Athlete DNA</SectionLabel>
 
       <MetricRail
         metrics={metrics}
@@ -145,6 +144,7 @@ export default function PhysicalProfile({
         dob={dob}
         onLog={onLog}
         onImage
+        noKicker
       />
 
       {/* The one sentence this whole block exists to produce. */}
