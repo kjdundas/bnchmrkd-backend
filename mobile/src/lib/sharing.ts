@@ -18,13 +18,13 @@
 
 import { selectFrom, upsertInto } from './supabase'
 
-export type ShareKey = 'wellness' | 'pain' | 'metrics' | 'body'
+export type ShareKey = 'wellness' | 'pain' | 'metrics' | 'body' | 'boards'
 
 export type Sharing = Record<ShareKey, boolean>
 
 /** Absent means shared. Stated once, here, and referenced everywhere else. */
 export const ALL_SHARED: Sharing = {
-  wellness: true, pain: true, metrics: true, body: true,
+  wellness: true, pain: true, metrics: true, body: true, boards: true,
 }
 
 export const SHARE_CATEGORIES: {
@@ -66,7 +66,15 @@ export const SHARE_CATEGORIES: {
     ifOff: 'Your coach sees no measurements. Nothing else is affected.',
     icon: 'body-outline',
   },
-]
+  {
+    key: 'boards',
+    label: 'Leaderboards',
+    detail: 'Your approved results count towards squad, city, region and world boards.',
+    // Said plainly, because the thing people fear is that opting out is
+    // punished somewhere else. It is not.
+    ifOff: 'You disappear from everyone else\u2019s boards and yours stop showing a position. Nothing else changes \u2014 your results and your coach\u2019s view of them stay exactly as they are.',
+    icon: 'podium-outline',
+  },]
 
 /**
  * Competition results are deliberately NOT a category.
@@ -92,6 +100,7 @@ export async function fetchSharing(userId: string): Promise<Sharing> {
       pain: r.pain !== false,
       metrics: r.metrics !== false,
       body: r.body !== false,
+      boards: r.boards !== false,
     }
   } catch {
     // A failed read must not silently look like "everything is private" —
@@ -109,18 +118,30 @@ export async function saveSharing(userId: string, next: Sharing): Promise<void> 
     pain: next.pain,
     metrics: next.metrics,
     body: next.body,
+    boards: next.boards,
     updated_at: new Date().toISOString(),
   })
 }
 
-/** How many categories are switched off — drives the summary line. */
+/**
+ * The categories that are about the COACH.
+ *
+ * `boards` lives in the same table and the same settings screen, but it is a
+ * different question — it governs peer leaderboards, not the coach. Counting
+ * it here would have told an athlete who left the boards that their coach
+ * could no longer see something, which is untrue and exactly the kind of
+ * wrong reassurance this feature exists to avoid.
+ */
+export const COACH_CATEGORIES = SHARE_CATEGORIES.filter((c) => c.key !== 'boards')
+
+/** How many coach-facing categories are switched off — drives the summary. */
 export const withheldCount = (s: Sharing): number =>
-  SHARE_CATEGORIES.filter((c) => !s[c.key]).length
+  COACH_CATEGORIES.filter((c) => !s[c.key]).length
 
 export function summaryOf(s: Sharing): string {
-  const off = SHARE_CATEGORIES.filter((c) => !s[c.key])
+  const off = COACH_CATEGORIES.filter((c) => !s[c.key])
   if (!off.length) return 'Your coach can see everything below.'
-  if (off.length === SHARE_CATEGORIES.length) {
+  if (off.length === COACH_CATEGORIES.length) {
     return 'Your coach sees your results and nothing else.'
   }
   const names = off.map((c) => c.label.toLowerCase())
@@ -144,11 +165,15 @@ export function sharingOf(row: any): Sharing {
     pain: row.shares_pain !== false && row.pain_shared !== false,
     metrics: row.shares_metrics !== false,
     body: row.shares_body !== false,
+    // Not a coach-facing category. A coach's view of an athlete is unchanged
+    // by whether that athlete appears on peer leaderboards.
+    boards: true,
   }
 }
 
 /** The line a coach sees where a withheld card would have been. */
 export const NOT_SHARED_LABEL: Record<ShareKey, string> = {
+  boards: 'Not on leaderboards',
   wellness: 'Wellness not shared',
   pain: 'Pain and injury not shared',
   metrics: 'Test results not shared',

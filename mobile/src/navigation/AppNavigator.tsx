@@ -33,6 +33,7 @@ import CoachResultsScreen from '../screens/CoachResultsScreen'
 import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
 import CoachAssignScreen from '../screens/CoachAssignScreen'
 import CoachLeaderboardScreen from '../screens/CoachLeaderboardScreen'
+import LeaderboardScreen from '../screens/LeaderboardScreen'
 import CoachScheduleScreen from '../screens/CoachScheduleScreen'
 import { ApprovalsProvider } from '../contexts/ApprovalsContext'
 import AthleteDetailScreen from '../screens/AthleteDetailScreen'
@@ -57,6 +58,7 @@ function AthleteTabs() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'HOME' }} />
       <Tab.Screen name="Programs" component={ProgramsScreen} options={{ tabBarLabel: 'PROGRAMS' }} />
       <Tab.Screen name="Log" component={LogScreen} options={{ tabBarLabel: 'LOG' }} />
+      <Tab.Screen name="Boards" component={LeaderboardScreen} options={{ tabBarLabel: 'BOARDS' }} />
       <Tab.Screen name="Trajectory" component={TrajectoryScreen} options={{ tabBarLabel: 'TRAJECTORY' }} />
     </Tab.Navigator>
   )

@@ -50,6 +50,7 @@ const ICONS: Record<string, [string, string]> = {
   Analyse: ['flash', 'flash-outline'],
   Schedule: ['calendar', 'calendar-outline'],
   Leaderboards: ['podium', 'podium-outline'],
+  Boards: ['podium', 'podium-outline'],
   CoachProfile: ['person', 'person-outline'],
 }
 
