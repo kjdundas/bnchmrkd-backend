@@ -25,8 +25,9 @@ import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 import ScreenBackdrop from '../components/ScreenBackdrop'
 import { Tappable, MonoKicker, Stagger } from '../components/ui'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import AppHeader from '../components/AppHeader'
 import { SkeletonCards, LoadFailed } from '../components/LoadState'
 import CorpusStanding from '../components/CorpusStanding'
 import FieldStrip from '../components/FieldStrip'
@@ -65,7 +66,6 @@ export default function LeaderboardScreen() {
 
   const [pos, setPos] = useState<Position | null>(null)
   const [stripW, setStripW] = useState(0)
-  const insets = useSafeAreaInsets()
 
   // Placed on the board, or not. Drives which explanation the screen owes
   // you — the suppression rule belongs under a board that HAS placed you,
@@ -153,8 +153,17 @@ export default function LeaderboardScreen() {
   const phase = loadPhase({ loading, failed, isEmpty: !options.length })
 
   return (
+    // Same shell as every other athlete screen, which this one did not have.
+    // A ScrollView as a direct child of the root has nothing pinned above it,
+    // so content slides under the status bar the moment you scroll — padding
+    // only ever positioned it correctly at rest, which is why the last fix
+    // held for one screenshot and failed on the next. AppHeader lives OUTSIDE
+    // the scroll view and stays put; it also gives Boards the way into
+    // Profile that every other tab already had.
     <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
       <ScreenBackdrop scrollY={scrollY} image="discus" />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <AppHeader onImage />
       <ScrollView
         contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE + spacing.xl }}
         refreshControl={
@@ -165,11 +174,7 @@ export default function LeaderboardScreen() {
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false })}
       >
-        {/* paddingTop was a hardcoded 64 — a guess at the status bar that
-            is wrong on any device with a taller notch, which is why the
-            filter chips were rendering under the clock. Every other screen
-            uses the real inset; this one now does too. */}
-        <View style={{ paddingHorizontal: spacing.lg, paddingTop: insets.top + spacing.sm }}>
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm }}>
           <MonoKicker color={onImage.dim}>Where you stand</MonoKicker>
           <Text style={[s.h1, { color: onImage.ink }]}>Leaderboard</Text>
           <Text style={[s.lede, { color: onImage.muted }]}>
@@ -448,6 +453,7 @@ export default function LeaderboardScreen() {
           </>
         )}
       </ScrollView>
+      </SafeAreaView>
     </View>
   )
 }

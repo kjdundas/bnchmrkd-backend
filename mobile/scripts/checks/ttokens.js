@@ -119,5 +119,43 @@ for (const p of files) {
 }
 check('every tap goes through Tappable', touchables.length === 0, touchables.slice(0, 12).join('\n'))
 
+
+// ── 6. A screen on a photograph opens its safe area first ────────────
+// Boards shipped with its ScrollView as a direct child of the root: no
+// SafeAreaView at all. Nothing bounded the top, so content slid under the
+// status bar as soon as you scrolled — and padding the first child only
+// positioned it correctly at rest, which is why a fix for that held for
+// exactly one screenshot.
+//
+// The invariant is narrow on purpose. My first version of this check also
+// demanded a pinned AppHeader, and it immediately "failed" three screens
+// that are all correct: two because the first <ScrollView> in the file
+// belongs to a modal or a sub-component defined above the render, and one
+// because a pushed detail screen carries a back button instead, which is
+// the right header for it. A check that cries wolf gets ignored, and then
+// it is worse than no check at all.
+//
+// So this asserts only the thing that actually prevents scroll-under, and
+// only in the region that is actually the screen shell: after
+// <ScreenBackdrop>, a SafeAreaView opens before the first scroll view.
+{
+  const bad = []
+  for (const p of files) {
+    const src = fs.readFileSync(p, 'utf8')
+    const bd = src.indexOf('<ScreenBackdrop')
+    if (bd === -1) continue
+    const shell = src.slice(bd)
+    const safe = shell.search(/<SafeAreaView/)
+    const scroll = shell.search(/<(Animated\.)?ScrollView|<FlatList|<SectionList/)
+    if (safe === -1) {
+      bad.push(`       ${rel(p)}: on ScreenBackdrop with no SafeAreaView`)
+    } else if (scroll !== -1 && safe > scroll) {
+      bad.push(`       ${rel(p)}: scroll view opens before the safe area`)
+    }
+  }
+  check('every screen on the photo backdrop opens its safe area before scrolling',
+    bad.length === 0, bad.join('\n'))
+}
+
 console.log(`\n${failures === 0 ? 'all passed' : failures + ' of ' + checks + ' checks failed'}`)
 process.exit(failures === 0 ? 0 : 1)
