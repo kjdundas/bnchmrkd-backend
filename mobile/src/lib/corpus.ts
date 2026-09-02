@@ -161,6 +161,29 @@ export async function coverage(discipline: string, sex: string | null | undefine
   }
 }
 
+export type PeakAge = { peak: number; p25: number; p75: number; n: number } | null
+
+/**
+ * The age athletes in this event actually peaked at, per sex.
+ *
+ * Replaces a table of 21 hand-written numbers that were the same for both
+ * sexes and defaulted to 27 for anything unlisted. Returns null rather than
+ * a guess when fewer than 20 careers support it — a peak age off six people
+ * is a rumour.
+ */
+export async function peakAge(discipline: string, sex: string | null | undefined): Promise<PeakAge> {
+  if (!discipline) return null
+  try {
+    const rows = await callRpc('corpus_peak_age', { p_discipline: discipline, p_sex: sex || 'M' })
+    const r = Array.isArray(rows) ? rows[0] : rows
+    if (!r || r.peak_age == null) return null
+    return { peak: num(r.peak_age) as number, p25: num(r.p25_age) as number,
+             p75: num(r.p75_age) as number, n: num(r.n) as number }
+  } catch {
+    return null
+  }
+}
+
 // ── How much weight a band can carry ─────────────────────────────────
 //
 // Drawn from the sample at the athlete's own age, not the sample overall.

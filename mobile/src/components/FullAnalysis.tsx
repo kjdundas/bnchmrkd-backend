@@ -29,6 +29,11 @@ import {
   getCalibration,
 } from '../lib/disciplineScience'
 import { projectAllTrajectories } from '../lib/improvementCurves'
+import {
+  similarAthletes as fetchSimilarAthletes,
+  peakAge as fetchPeakAge,
+  type PeakAge, type SimilarAthlete,
+} from '../lib/corpus'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -94,8 +99,8 @@ function buildEditorial(
   const isJumps = isJumpsDiscipline(discipline)
   const currentTier = tier?.tier || 0
   const tierName = tier?.tierName || 'Unknown'
-  const peakAge = TYPICAL_PEAK_AGES[discipline] || 27
-  const yearsToPeak = Math.max(0, peakAge - age)
+  const peakAgeValue = TYPICAL_PEAK_AGES[discipline] || 27
+  const yearsToPeak = Math.max(0, peakAgeValue - age)
 
   const discNoun = isThrows ? 'throwers' : isJumps ? 'jumpers'
     : isHurdleDiscipline(discipline) ? 'hurdlers'
@@ -107,10 +112,10 @@ function buildEditorial(
   )
   const simRef = simNames.length > 0 ? ` — a trajectory shared by ${simNames.join(' and ')}` : ''
   const peakSentence = yearsToPeak > 0
-    ? ` Typical peak window for ${discDisplay} is age ${peakAge}–${peakAge + 2} (${yearsToPeak} year${yearsToPeak !== 1 ? 's' : ''} out).`
+    ? ` Typical peak window for ${discDisplay} is age ${peakAgeValue}–${peakAgeValue + 2} (${yearsToPeak} year${yearsToPeak !== 1 ? 's' : ''} out).`
     : ''
 
-  const typicalPeak = peakAge
+  const typicalPeak = peakAgeValue
   const isPastPeak = age > typicalPeak + 2
   const isInPeakWindow = age >= typicalPeak - 1 && age <= typicalPeak + 2
 
@@ -255,34 +260,41 @@ export default function FullAnalysis({
   // print "0%" as though the athlete were last in the world.
   const percentile = performancePercentile(mark, discipline, sex)
   const zones = qualifierZones(discipline, sex)
-  const peakAge = TYPICAL_PEAK_AGES[discipline] || 27
-  const yearsToPeak = Math.max(0, peakAge - age)
+  const [peak, setPeak] = useState<PeakAge>(null)
+  const peakAgeValue = peak?.peak ?? TYPICAL_PEAK_AGES[discipline] ?? 27
+  const yearsToPeak = Math.max(0, peakAgeValue - age)
 
   // ── Similar athletes ──
   const [similarAthletes, setSimilarAthletes] = useState<any[]>([])
   const [similarLoading, setSimilarLoading] = useState(true)
 
   useEffect(() => {
-    const fetchSimilar = async () => {
-      const eventCode = getEventCode(discipline, sex)
-      if (!eventCode) { setSimilarLoading(false); return }
-      try {
-        const token = getCachedToken()
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/find_similar_athletes`, {
-          method: 'POST',
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ p_discipline_code: eventCode, p_pb: mark, p_age: age, p_limit: 5 }),
-        })
-        if (res.ok) setSimilarAthletes(await res.json())
-      } catch (e) { console.warn('Similar athletes:', e) }
-      setSimilarLoading(false)
-    }
-    fetchSimilar()
+    // Was a hand-rolled fetch to find_similar_athletes, which has had two
+    // overloads since the implement-weight migration — both accepting a
+    // four-argument call, so every request was ambiguous and errored, and
+    // the catch below turned that into an empty section nobody questioned.
+    //
+    // It also queried the older tables, whose 38 discipline rows carry the
+    // implement as a column. Those rows now live in reference.results, where
+    // the implement is part of the event, so a 5 kg shot is compared against
+    // 5 kg and not against 7.26.
+    let live = true
+    setSimilarLoading(true)
+    fetchSimilarAthletes({ discipline, sex, age, mark, limit: 5 })
+      .then((rows: SimilarAthlete[]) => { if (live) setSimilarAthletes(rows) })
+      .finally(() => { if (live) setSimilarLoading(false) })
+    return () => { live = false }
   }, [discipline, mark, age, sex])
+
+  // ── Peak age, observed ──
+  // TYPICAL_PEAK_AGES was 21 numbers typed by hand, identical for both
+  // sexes, defaulting to 27. The corpus knows what it actually is: the 100m
+  // peaks at 24 for both sexes, not 26, and the 10,000m at 27, not 29.
+  useEffect(() => {
+    let live = true
+    fetchPeakAge(discipline, sex).then((p: PeakAge) => { if (live) setPeak(p) })
+    return () => { live = false }
+  }, [discipline, sex])
 
   // ── Editorial ──
   const editorial = useMemo(() =>
@@ -374,7 +386,7 @@ export default function FullAnalysis({
             <View style={s.heroStatDiv} />
             <View style={s.heroStat}>
               <Text style={[s.heroStatVal, yearsToPeak > 0 ? { color: colors.green } : { color: colors.text.muted }]}>
-                {yearsToPeak > 0 ? `${peakAge}–${peakAge + 2}` : 'In window'}
+                {yearsToPeak > 0 ? `${peakAgeValue}–${peakAgeValue + 2}` : 'In window'}
               </Text>
               <Text style={s.heroStatLabel}>Peak Window</Text>
             </View>

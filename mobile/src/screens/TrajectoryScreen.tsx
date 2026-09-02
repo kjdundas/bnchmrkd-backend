@@ -48,7 +48,6 @@ import {
   EmptyState,
   Divider,
 } from '../components/ui'
-import { projectAllTrajectories, hasImprovementCurves } from '../lib/improvementCurves'
 // The projection card now lives in its own component, because the coach
 // side shows the same chart and two copies of a young athlete's projected
 // future is exactly the kind of thing that must not be able to disagree.
