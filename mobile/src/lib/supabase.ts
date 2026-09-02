@@ -30,6 +30,35 @@ export function getCachedToken() {
 }
 
 /**
+ * Whether a real user token is cached.
+ *
+ * This matters more than it looks. `headers()` below falls back to the anon
+ * key when there is no user token, and that fallback quietly turns "signed
+ * out" into "signed in with no data": RLS filters every table on
+ * `auth.uid()`, so a read comes back as `[]` with a 200 and the screen renders
+ * its empty state, while a write comes back 401 with nobody listening.
+ *
+ * Reads keep the fallback — a few tables are legitimately readable anon. Every
+ * WRITE now refuses instead, so the failure is loud and says what it is.
+ */
+export function hasAuth() {
+  return !!_cachedToken
+}
+
+/** `err.code` on the error thrown when a write is attempted signed out. */
+export const SIGNED_OUT = 'SIGNED_OUT'
+
+function requireAuth(where: string) {
+  if (_cachedToken) return
+  const err: any = new Error(
+    "You're signed out, so that couldn't be saved. Sign in and try again.",
+  )
+  err.code = SIGNED_OUT
+  err.where = where
+  throw err
+}
+
+/**
  * Bearer header for calls to our OWN backend API (Railway), which verifies the
  * Supabase JWT. Mirrors web's supabaseRest.authHeader(). Returns {} when signed
  * out so callers can spread it unconditionally.
@@ -65,6 +94,7 @@ export async function selectFrom(table: string, opts: { filter?: string; order?:
 }
 
 export async function insertInto(table: string, data: any) {
+  requireAuth(`insertInto ${table}`)
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: 'POST',
     headers: headers(),
@@ -84,6 +114,7 @@ export async function insertInto(table: string, data: any) {
  * same key updates the existing row instead of erroring.
  */
 export async function upsertInto(table: string, data: any, onConflict?: string) {
+  requireAuth(`upsertInto ${table}`)
   // PostgREST resolves a conflict against the PRIMARY KEY unless told
   // otherwise. Where the uniqueness lives in a separate unique index — as it
   // does for a logged set, keyed on where the exercise sits — the target has
@@ -104,6 +135,7 @@ export async function upsertInto(table: string, data: any, onConflict?: string) 
 }
 
 export async function updateIn(table: string, filter: string, data: any) {
+  requireAuth(`updateIn ${table}`)
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
     method: 'PATCH',
     headers: headers(),
@@ -118,6 +150,7 @@ export async function updateIn(table: string, filter: string, data: any) {
 }
 
 export async function deleteFrom(table: string, filter: string) {
+  requireAuth(`deleteFrom ${table}`)
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
     method: 'DELETE',
     headers: headers(),

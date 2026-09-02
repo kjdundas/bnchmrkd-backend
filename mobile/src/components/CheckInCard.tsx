@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { View, Text, ActivityIndicator, Modal, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { selectFrom, insertInto, updateIn } from '../lib/supabase'
+import { selectFrom, insertInto, updateIn, SIGNED_OUT } from '../lib/supabase'
 import { checkinStatus, READINESS_COLORS, PAIN_AREAS, todayStr } from '../lib/readiness'
 import { useTheme } from '../contexts/ThemeContext'
 import { spacing, radius, rhythm, onImage } from '../lib/theme'
@@ -28,6 +28,24 @@ interface Form {
   energy: number | null
   pain: boolean
   pain_areas: string[]
+}
+
+/**
+ * A message an athlete can act on, out of whatever the REST helper threw.
+ * `insertInto athlete_checkins failed: 401 {...}` is not one.
+ */
+function cleanError(e: any): string {
+  const msg = String(e?.message || '')
+  if (e?.code === SIGNED_OUT || /\b40[13]\b/.test(msg)) {
+    return 'You\u2019re signed out, so that couldn\u2019t be saved. Sign in again and it will go through.'
+  }
+  if (/Network request failed|fetch/i.test(msg)) {
+    return 'No connection \u2014 your check-in was not saved. Try again when you\u2019re back online.'
+  }
+  if (/\b409\b|duplicate/i.test(msg)) {
+    return 'You have already checked in today. Pull to refresh and edit it instead.'
+  }
+  return msg.replace(/^\w+ [\w.]+ failed: \d+\s*/, '').slice(0, 160)
 }
 
 const EMPTY: Form = { sleep_hours: null, soreness: null, mood: null, energy: null, pain: false, pain_areas: [] }
@@ -90,6 +108,7 @@ export default function CheckInCard({
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [sheet, setSheet] = useState(false)
   const [form, setForm] = useState<Form>({ ...EMPTY })
 
@@ -109,14 +128,18 @@ export default function CheckInCard({
         })
       }
       setEditing(!r)
-    } catch {
+    } catch (e: any) {
+      // Was silent, which made a failed read indistinguishable from a first
+      // check-in of the day — the athlete then filled the form in and the save
+      // collided with a row they could not see.
       setRow(null); setEditing(true)
+      setError(cleanError(e) || 'Could not load today\u2019s check-in.')
     } finally { setLoading(false) }
   }, [athleteId])
 
   useEffect(() => { load() }, [load])
 
-  const set = (k: keyof Form, v: any) => setForm((s) => ({ ...s, [k]: v }))
+  const set = (k: keyof Form, v: any) => { setError(''); setForm((s) => ({ ...s, [k]: v })) }
   const toggleArea = (a: string) =>
     setForm((s) => ({
       ...s,
@@ -124,7 +147,7 @@ export default function CheckInCard({
     }))
 
   const save = async () => {
-    setSaving(true)
+    setSaving(true); setError('')
     try {
       const payload = {
         sleep_hours: form.sleep_hours, soreness: form.soreness, mood: form.mood,
@@ -139,9 +162,12 @@ export default function CheckInCard({
       successFeedback()
       setEditing(false)
       setSheet(false)
-    } catch {
-      // Stay in edit mode so the athlete can retry — and say so physically.
+    } catch (e: any) {
+      // Stay in edit mode so the athlete can retry — and SAY WHY. A haptic on
+      // its own is the bug this replaces: the buzz fired, the write had been
+      // refused, and the screen said nothing at all.
       errorFeedback()
+      setError(cleanError(e) || 'Could not save your check-in. Try again.')
     } finally { setSaving(false) }
   }
 
@@ -232,6 +258,18 @@ export default function CheckInCard({
           </Tappable>
         )}
       </View>
+
+      {!!error && (
+        <View style={{
+          flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginTop: 12,
+          borderLeftWidth: 2, borderLeftColor: colors.red, paddingLeft: 10,
+        }}>
+          <Ionicons name="alert-circle" size={14} color={colors.red} style={{ marginTop: 2 }} />
+          <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.red }}>
+            {error}
+          </Text>
+        </View>
+      )}
 
       {form.pain && (
         <Text style={{ fontSize: 11, color: colors.text.muted, marginTop: 10, lineHeight: 16 }}>

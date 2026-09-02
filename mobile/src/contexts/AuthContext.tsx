@@ -1,5 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase, selectFrom, insertInto, updateIn, setCachedToken } from '../lib/supabase'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { supabase, selectFrom, insertInto, updateIn, setCachedToken, getCachedToken, SUPABASE_URL } from '../lib/supabase'
+
+// ── The session, recovered without getSession() ──────────────────────
+//
+// getSession() can hang indefinitely on the gotrue Web Locks bug — that is
+// why the REST helpers cache the token instead of calling it. The startup
+// path below still called it, guarded by a 3s timeout that gave up and let
+// the app render. When it hung, the timeout fired, the app came up looking
+// signed in, and setCachedToken was NEVER called: every read then ran as
+// anon and returned [] with a 200, and every write returned 401 into a
+// silent catch. A check-in buzzed and did nothing.
+//
+// So the timeout no longer just gives up. It reads the persisted session
+// straight out of storage — the same place supabase-js keeps it — and
+// caches the token itself. An expired one is treated as absent, which is
+// the honest answer: writes then fail loudly with 'you're signed out'
+// rather than quietly.
+const SESSION_KEY = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`
+
+async function tokenFromStorage(): Promise<string | null> {
+  try {
+    const raw = await AsyncStorage.getItem(SESSION_KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw)
+    const sess = p?.currentSession ?? p
+    const token = sess?.access_token ?? null
+    const expiresAt = Number(sess?.expires_at ?? 0)
+    // 30s of slack so a token about to expire is not treated as usable.
+    if (!token || (expiresAt && Date.now() / 1000 > expiresAt - 30)) return null
+    return token
+  } catch {
+    return null
+  }
+}
 import type { Session, User } from '@supabase/supabase-js'
 
 // user_profiles table — matches web app structure
@@ -169,7 +203,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Safety timeout: never stay on splash more than 3s
-    const timeout = setTimeout(() => setLoading(false), 3000)
+    const timeout = setTimeout(async () => {
+      // getSession() never came back. Recover the token ourselves rather than
+      // rendering a signed-in app with no credentials behind it.
+      if (!getCachedToken()) {
+        const token = await tokenFromStorage()
+        if (token) setCachedToken(token)
+      }
+      setLoading(false)
+    }, 3000)
 
     // Get initial session
     supabase.auth
