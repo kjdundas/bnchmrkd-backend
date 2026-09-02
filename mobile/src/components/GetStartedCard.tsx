@@ -29,22 +29,26 @@ import { Tappable, MonoKicker } from './ui'
 import { spacing, radius } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import {
-  nextStep, progress, shouldShowSetup, type SetupStep,
+  nextStep, progress, shouldShowSetup, type SetupStep, type StepId,
 } from '../lib/firstRun'
 
 export default function GetStartedCard({
-  steps, dismissed, onDismiss, onAct,
+  steps, dismissed, onDismiss, onAct, alreadyOffered = [],
 }: {
   steps: SetupStep[]
   dismissed: boolean
   onDismiss: () => void
   /** Handed the step so the screen decides how to route or open a sheet. */
   onAct: (step: SetupStep) => void
+  /** Steps this screen already offers a control for. The card stands down
+      for those rather than putting a second button above the first — and
+      disappears entirely when they are all that is left. */
+  alreadyOffered?: StepId[]
 }) {
   const { colors } = useTheme()
-  if (!shouldShowSetup(steps, dismissed)) return null
+  if (!shouldShowSetup(steps, dismissed, alreadyOffered)) return null
 
-  const step = nextStep(steps)
+  const step = nextStep(steps, alreadyOffered)
   if (!step) return null
   const { done, total } = progress(steps)
   // Whether this one can be waved away. The event and first-athlete steps

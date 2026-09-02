@@ -553,6 +553,9 @@ export default function HomeScreen() {
             hasCheckin,
             hasCoach,
           })}
+          // Home has its own Daily check-in row, so the card does not
+          // promote a check-in on top of it.
+          alreadyOffered={['checkin']}
           dismissed={setupHidden}
           onDismiss={() => {
             setSetupHidden(true)

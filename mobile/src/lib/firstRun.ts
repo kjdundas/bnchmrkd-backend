@@ -139,9 +139,23 @@ export function coachSteps(f: CoachFacts): SetupStep[] {
   ]
 }
 
-/** The first thing still to do, or null when setup is finished. */
-export function nextStep(steps: SetupStep[]): SetupStep | null {
-  return steps.find((s) => !s.done) || null
+/**
+ * The first thing still to do, or null when there is nothing left to say.
+ *
+ * `alreadyOffered` names steps the host screen presents in its own right.
+ * Home has a Daily check-in row of its own, so the card promoting a check-in
+ * sat directly above a second button doing exactly the same thing — the card
+ * read as a duplicate rather than a prompt, and a prompt that repeats what is
+ * already on screen teaches people to ignore the card entirely.
+ *
+ * The step is skipped for the CARD, not for the person: it still counts in
+ * `progress`, still shows as an outstanding dot, and still gets done by the
+ * control the page already has.
+ */
+export function nextStep(
+  steps: SetupStep[], alreadyOffered: StepId[] = [],
+): SetupStep | null {
+  return steps.find((s) => !s.done && !alreadyOffered.includes(s.id)) || null
 }
 
 /** Everything required is done — optional steps do not hold the card open. */
@@ -161,12 +175,18 @@ export function progress(steps: SetupStep[]): { done: number; total: number } {
  * data. Someone who logged a result before setting an event still has the
  * important step outstanding, and that is exactly who needs the card.
  */
-export function shouldShowSetup(steps: SetupStep[], dismissed: boolean): boolean {
+export function shouldShowSetup(
+  steps: SetupStep[], dismissed: boolean, alreadyOffered: StepId[] = [],
+): boolean {
   // Every step, not just the required ones. Gating on isSetUp here meant an
   // athlete who set an event and logged a result was "finished", so the
   // check-in and connect-your-coach steps could never be shown at all —
   // two steps that existed only in the code.
-  if (steps.every((s) => s.done)) return false
+  //
+  // Nothing to show also covers the case where everything outstanding is
+  // already offered by the page itself: the card goes away rather than
+  // repeating a button an inch below itself.
+  if (!nextStep(steps, alreadyOffered)) return false
   // The one step that cannot be dismissed away, because without it the app
   // cannot do the thing it exists to do.
   const eventMissing = steps.some((s) => s.id === 'event' && !s.done)
