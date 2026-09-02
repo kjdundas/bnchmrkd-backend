@@ -62,6 +62,25 @@ Live site: https://www.bnchmrkd.org (Railway, deploys automatically from `main`)
 - `node mobile/scripts/checks/ttokens.js` fails the build on any of the above. Run it after
   touching styles; the other harnesses in that folder cover first-run, boards and corpus logic.
 
+## Performance tiers — calibrated, not asserted
+
+- Senior tiers T4-T7 (Qualifier, Finalist, Medalist, World Class) in
+  `mobile/src/lib/performanceLevels.js` are **measured** from `reference.season_bests`
+  (World Athletics season bests, ages 20-32): Qualifier = p10 of that distribution,
+  Finalist = p5, Medalist = p1, World Class = p0.2, direction taken from
+  `disciplines.lower_better`. That mapping was fitted against four independent ground
+  truths in the 100m — Olympic final medians from `public.olympic_results` and the
+  published Paris-2024 entry standards — and lands inside five hundredths on all four.
+- **T1-T3 (Emerging, Developing, National) are NOT from the corpus and must not be.**
+  The corpus is elite-only: its slowest 1% of senior men's 100m is 11.45, faster than
+  the app's Emerging cut. There are no club athletes in it. Those three rungs are
+  development standards from Keenan's spreadsheet.
+- Junior rows (U13-U20) are untouched for the same reason — the corpus holds 22 U13
+  athletes and 377 U15s, all of them internationals.
+- `node mobile/scripts/checks/ttiers.js` fails on a repeated cut, a row that does not
+  rise in difficulty, or a tier named after an Olympic standard drifting more than a
+  tenth from the measured one. Run it after any change to the levels table.
+
 ## Chart rules (Keenan's standing preferences)
 
 - Time-based (sprint) axes are **inverted so faster = higher** — improvement must read as climbing.
