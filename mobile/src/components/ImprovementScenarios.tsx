@@ -11,7 +11,7 @@
 // conversation about a young person's career. One definition, one picture.
 // ════════════════════════════════════════════════════════════════════════
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing } from '../lib/theme'
@@ -21,6 +21,10 @@ import { getTier } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { isLowerBetter, formatMark as formatPerformance } from '../lib/disciplineScience'
 import { hasImprovementCurves, projectAllTrajectories } from '../lib/improvementCurves'
+import {
+  trajectoryBand, confidenceAt, CONFIDENCE_COPY,
+  type BandPoint, type Confidence,
+} from '../lib/corpus'
 
 export default function ImprovementScenariosSection({
   discipline,
@@ -45,6 +49,41 @@ export default function ImprovementScenariosSection({
   // card. `sex` is now passed through untouched — improvementCurves
   // normalises it — and the failure modes are told apart instead of all
   // collapsing into one silent null.
+  // ── The band, observed rather than projected ────────────────────────
+  //
+  // The bundled curves multiply the athlete's own PB forward by population
+  // improvement RATES, compounding a percentage a year and extrapolating
+  // with a decay factor once the table runs out. That was the best available
+  // when the only data was 38 hard-coded curves.
+  //
+  // The corpus can answer the question directly instead: of 6,892 real
+  // careers, find the athletes who were within 4% of this mark at this age,
+  // and report what they ACTUALLY ran at every later age. No compounding, no
+  // extrapolation, no decay constant — and a sample size at every point,
+  // which is the thing the old curves could not give and the reason a band
+  // off nine athletes must not be drawn like a band off nine hundred.
+  const [band, setBand] = useState<BandPoint[] | null>(null)
+  const [bandDone, setBandDone] = useState(false)
+
+  useEffect(() => {
+    let live = true
+    if (!pb || !age) { setBand(null); setBandDone(true); return }
+    setBandDone(false)
+    trajectoryBand({ discipline, sex, age, mark: pb })
+      .then((rows) => { if (live) setBand(rows.length >= 2 ? rows : null) })
+      .finally(() => { if (live) setBandDone(true) })
+    return () => { live = false }
+  }, [discipline, sex, age, pb])
+
+  const fromCorpus = useMemo(() => {
+    if (!band || age == null) return null
+    // Only forward: the athlete's own past is drawn from their own results,
+    // and other people's pasts are not their history.
+    return band
+      .filter((b) => b.age >= Math.floor(age))
+      .map((b) => ({ age: b.age, projected: b.p50, p25: b.p25, p75: b.p75, n: b.n }))
+  }, [band, age])
+
   const { projections, blocked } = useMemo(() => {
     if (!pb) return { projections: null, blocked: 'nopb' as const }
     if (!age) return { projections: null, blocked: 'noage' as const }
@@ -67,6 +106,10 @@ export default function ImprovementScenariosSection({
   }, [pb, age, discipline, sex])
 
   const lower = isLowerBetter(discipline)
+  const confidence: Confidence = band && age != null ? confidenceAt(band, age) : 'none'
+  // The corpus wins where it has anything to say; the curves stay as the
+  // fallback for events and ages it does not reach.
+  const line = fromCorpus && fromCorpus.length >= 2 ? fromCorpus : projections?.steady
 
   const [histSummary, setHistSummary] = useState<HistorySummary | null>(null)
 
@@ -77,7 +120,8 @@ export default function ImprovementScenariosSection({
   const nextCut = tierNow?.nextCut
   const nextTierName = tierNow?.nextTierName
 
-  if (!projections) {
+  if (!line && !bandDone) return null
+  if (!line) {
     const message =
       blocked === 'noage'
         ? 'Add your date of birth in Profile and we can project this forward — the curves are age-dependent, so there is nothing to anchor to without it.'
@@ -111,7 +155,7 @@ export default function ImprovementScenariosSection({
           : (pt.projected > best.projected ? pt : best)),
       null,
     )
-  const peak = peakOf(projections.steady)
+  const peak = peakOf(line)
   const gain = peak ? (lower ? pb - peak.projected : peak.projected - pb) : null
   const peakTier = peak
     ? getTier(discipline, sex, getAgeGroup(peak.age), peak.projected)
@@ -120,7 +164,7 @@ export default function ImprovementScenariosSection({
   return (
     <AlmanacCard glass kicker="FUTURE" title="Where this could go" accent={colors.orange[500]}>
       <ProjectionChart
-        steady={projections.steady}
+        steady={line}
         history={history}
         nowAge={nowAge}
         lower={lower}
@@ -158,12 +202,17 @@ export default function ImprovementScenariosSection({
       )}
 
       <Text style={styles.projFootnote}>
-        Built from year-on-year improvement rates of real athletes in this
-        event, by age. The shaded band is the 25th to 75th percentile of how
-        they developed — a spread of outcomes, not a confidence interval, and
-        not a prediction about you. It stops five years out because the
-        optimistic edge assumes a top-quarter year every year, which nobody
-        sustains for longer than that.
+        {fromCorpus
+          ? `Every athlete in our records who was within 4% of your mark at your age, and what they actually went on to run. The band is the 25th to 75th percentile of what happened to them — real outcomes, not a forecast, and not a confidence interval. ${CONFIDENCE_COPY[confidence]}`
+          : 'Built from year-on-year improvement rates of real athletes in this event, by age. The shaded band is the 25th to 75th percentile of how they developed — a spread of outcomes, not a confidence interval, and not a prediction about you. It stops five years out because the optimistic edge assumes a top-quarter year every year, which nobody sustains for longer than that.'}
+      </Text>
+
+      {/* A young athlete reading an upward line will read a promise into it.
+          Most athletes ahead at sixteen are not ahead at twenty-five, and the
+          chart cannot say that by itself. */}
+      <Text style={styles.projFootnote}>
+        Where you are now is a weak guide to where you finish. Plenty of these
+        athletes were passed by people behind them today.
       </Text>
     </AlmanacCard>
   )
