@@ -164,6 +164,148 @@ export default function LeaderboardScreen() {
       <ScreenBackdrop scrollY={scrollY} image="discus" />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <AppHeader onImage />
+
+      {/* ── Pinned: the title, and every filter ───────────────────────
+          These were inside the scroll view, so they slid under the header
+          the moment the screen moved — twice fixed by padding, which only
+          ever positions content at rest and does nothing once it scrolls.
+
+          They are controls, not content. On a screen whose whole job is
+          filtering, the filters scrolling away is wrong even without the
+          collision: you cannot see what you are filtering by while you read
+          the result. Outside the ScrollView they are pinned by
+          construction, and no amount of scrolling can put them anywhere.
+
+          The two-line lede went with them. It explained the privacy rule on
+          every single visit, and the rule is already stated on the card when
+          a board is too thin and in the note at the bottom when it is not. */}
+      <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.xs }}>
+        <Text style={[s.h1, { color: onImage.ink }]}>Leaderboard</Text>
+      </View>
+
+      {phase === 'ready' && (
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md }}>
+            {/* Scope */}
+          <Stagger index={1}>
+            <View style={[s.scope, { borderColor: colors.glass.border }]}>
+              {SCOPES.map((sc) => {
+                const on = sc.key === scope
+                const n = counts?.[sc.key]
+                return (
+                  <Tappable
+                    key={sc.key}
+                    onPress={() => { tapFeedback(); setScope(sc.key) }}
+                    accessibilityLabel={`${sc.label} leaderboard`}
+                    accessibilityState={{ selected: on }}
+                    style={[s.scopeBtn, on ? { backgroundColor: colors.accent[500] } : null] as any}
+                  >
+                    <Text style={[s.scopeText, { color: on ? '#0B0C18' : colors.text.muted }]}>
+                      {sc.label}
+                    </Text>
+                    {n != null && !on && (
+                      <Text style={[s.scopeN, { color: colors.text.muted }]}>{n}</Text>
+                    )}
+                  </Tappable>
+                )
+              })}
+            </View>
+          </Stagger>
+
+          {/* Kind */}
+          <Stagger index={2}>
+            <View style={s.seg}>
+              {(['performance', 'metric'] as Kind[]).map((k) => {
+                const on = k === kind
+                const label = k === 'performance' ? 'Performances' : 'Physical tests'
+                const has = k === 'performance' ? events.length : metrics.length
+                return (
+                  <Tappable
+                    key={k}
+                    onPress={() => {
+                      if (!has) return
+                      tapFeedback(); setKind(k)
+                      setKey(k === 'performance' ? events[0] || '' : metrics[0]?.key || '')
+                    }}
+                    disabled={!has}
+                    accessibilityLabel={label}
+                    accessibilityState={{ selected: on }}
+                    style={[s.segBtn, {
+                      borderColor: on ? colors.accent[500] + '4D' : colors.glass.border,
+                      backgroundColor: on ? colors.accent[500] + '2E' : colors.glass.bg,
+                      opacity: has ? 1 : 0.4,
+                    }]}
+                  >
+                    <Text style={[s.segText, { color: on ? colors.text.primary : colors.text.muted }]}>
+                      {label}
+                    </Text>
+                  </Tappable>
+                )
+              })}
+            </View>
+          </Stagger>
+
+          {/* What, and who against */}
+          <Stagger index={2}>
+            <View style={s.chips}>
+              {options.map((o) => {
+                const on = o.key === key
+                return (
+                  <Tappable
+                    key={o.key}
+                    onPress={() => { tapFeedback(); setKey(o.key) }}
+                    accessibilityLabel={o.label}
+                    accessibilityState={{ selected: on }}
+                    style={[s.chip, {
+                      borderColor: on ? colors.accent[500] + '4D' : colors.glass.border,
+                      backgroundColor: on ? colors.accent[500] + '2E' : colors.glass.bg,
+                    }]}
+                  >
+                    <Text style={[s.chipText, {
+                      color: on ? colors.text.primary : colors.text.secondary,
+                      fontWeight: on ? weight.bold : weight.medium,
+                    }]}>{o.label}</Text>
+                  </Tappable>
+                )
+              })}
+            </View>
+
+            <View style={s.chips}>
+              {!!myAge && (
+                <Tappable
+                  onPress={() => { tapFeedback(); setSameAge((v) => !v) }}
+                  accessibilityLabel={`Compare within ${myAge}`}
+                  accessibilityState={{ selected: sameAge }}
+                  style={[s.chip, {
+                    borderColor: sameAge ? colors.accent[500] + '4D' : colors.glass.border,
+                    backgroundColor: sameAge ? colors.accent[500] + '2E' : colors.glass.bg,
+                  }]}
+                >
+                  <Text style={[s.chipText, { color: sameAge ? colors.text.primary : colors.text.muted }]}>
+                    {sameAge ? myAge : 'All ages'}
+                  </Text>
+                </Tappable>
+              )}
+              {!!myGender && (
+                <Tappable
+                  onPress={() => { tapFeedback(); setSameGender((v) => !v) }}
+                  accessibilityLabel="Compare within your category"
+                  accessibilityState={{ selected: sameGender }}
+                  style={[s.chip, {
+                    borderColor: sameGender ? colors.accent[500] + '4D' : colors.glass.border,
+                    backgroundColor: sameGender ? colors.accent[500] + '2E' : colors.glass.bg,
+                  }]}
+                >
+                  <Text style={[s.chipText, { color: sameGender ? colors.text.primary : colors.text.muted }]}>
+                    {sameGender ? (myGender === 'F' ? 'Women' : 'Men') : 'All'}
+                  </Text>
+                </Tappable>
+              )}
+            </View>
+          </Stagger>
+
+        </View>
+      )}
+
       <ScrollView
         contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE + spacing.xl }}
         refreshControl={
@@ -174,14 +316,6 @@ export default function LeaderboardScreen() {
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false })}
       >
-        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm }}>
-          <MonoKicker color={onImage.dim}>Where you stand</MonoKicker>
-          <Text style={[s.h1, { color: onImage.ink }]}>Leaderboard</Text>
-          <Text style={[s.lede, { color: onImage.muted }]}>
-            Your position for your event and age group. Nobody else's numbers
-            are shown to you, and yours are not shown to them.
-          </Text>
-        </View>
 
         {phase === 'loading' && (
           <View style={{ marginTop: 24 }}><SkeletonCards cards={2} /></View>
@@ -206,124 +340,6 @@ export default function LeaderboardScreen() {
 
         {phase === 'ready' && (
           <>
-            {/* Scope */}
-            <Stagger index={1}>
-              <View style={[s.scope, { borderColor: colors.glass.border }]}>
-                {SCOPES.map((sc) => {
-                  const on = sc.key === scope
-                  const n = counts?.[sc.key]
-                  return (
-                    <Tappable
-                      key={sc.key}
-                      onPress={() => { tapFeedback(); setScope(sc.key) }}
-                      accessibilityLabel={`${sc.label} leaderboard`}
-                      accessibilityState={{ selected: on }}
-                      style={[s.scopeBtn, on ? { backgroundColor: colors.accent[500] } : null] as any}
-                    >
-                      <Text style={[s.scopeText, { color: on ? '#0B0C18' : colors.text.muted }]}>
-                        {sc.label}
-                      </Text>
-                      {n != null && !on && (
-                        <Text style={[s.scopeN, { color: colors.text.muted }]}>{n}</Text>
-                      )}
-                    </Tappable>
-                  )
-                })}
-              </View>
-            </Stagger>
-
-            {/* Kind */}
-            <Stagger index={2}>
-              <View style={s.seg}>
-                {(['performance', 'metric'] as Kind[]).map((k) => {
-                  const on = k === kind
-                  const label = k === 'performance' ? 'Performances' : 'Physical tests'
-                  const has = k === 'performance' ? events.length : metrics.length
-                  return (
-                    <Tappable
-                      key={k}
-                      onPress={() => {
-                        if (!has) return
-                        tapFeedback(); setKind(k)
-                        setKey(k === 'performance' ? events[0] || '' : metrics[0]?.key || '')
-                      }}
-                      disabled={!has}
-                      accessibilityLabel={label}
-                      accessibilityState={{ selected: on }}
-                      style={[s.segBtn, {
-                        borderColor: on ? colors.accent[500] + '4D' : colors.glass.border,
-                        backgroundColor: on ? colors.accent[500] + '2E' : colors.glass.bg,
-                        opacity: has ? 1 : 0.4,
-                      }]}
-                    >
-                      <Text style={[s.segText, { color: on ? colors.text.primary : colors.text.muted }]}>
-                        {label}
-                      </Text>
-                    </Tappable>
-                  )
-                })}
-              </View>
-            </Stagger>
-
-            {/* What, and who against */}
-            <Stagger index={2}>
-              <View style={s.chips}>
-                {options.map((o) => {
-                  const on = o.key === key
-                  return (
-                    <Tappable
-                      key={o.key}
-                      onPress={() => { tapFeedback(); setKey(o.key) }}
-                      accessibilityLabel={o.label}
-                      accessibilityState={{ selected: on }}
-                      style={[s.chip, {
-                        borderColor: on ? colors.accent[500] + '4D' : colors.glass.border,
-                        backgroundColor: on ? colors.accent[500] + '2E' : colors.glass.bg,
-                      }]}
-                    >
-                      <Text style={[s.chipText, {
-                        color: on ? colors.text.primary : colors.text.secondary,
-                        fontWeight: on ? weight.bold : weight.medium,
-                      }]}>{o.label}</Text>
-                    </Tappable>
-                  )
-                })}
-              </View>
-
-              <View style={s.chips}>
-                {!!myAge && (
-                  <Tappable
-                    onPress={() => { tapFeedback(); setSameAge((v) => !v) }}
-                    accessibilityLabel={`Compare within ${myAge}`}
-                    accessibilityState={{ selected: sameAge }}
-                    style={[s.chip, {
-                      borderColor: sameAge ? colors.accent[500] + '4D' : colors.glass.border,
-                      backgroundColor: sameAge ? colors.accent[500] + '2E' : colors.glass.bg,
-                    }]}
-                  >
-                    <Text style={[s.chipText, { color: sameAge ? colors.text.primary : colors.text.muted }]}>
-                      {sameAge ? myAge : 'All ages'}
-                    </Text>
-                  </Tappable>
-                )}
-                {!!myGender && (
-                  <Tappable
-                    onPress={() => { tapFeedback(); setSameGender((v) => !v) }}
-                    accessibilityLabel="Compare within your category"
-                    accessibilityState={{ selected: sameGender }}
-                    style={[s.chip, {
-                      borderColor: sameGender ? colors.accent[500] + '4D' : colors.glass.border,
-                      backgroundColor: sameGender ? colors.accent[500] + '2E' : colors.glass.bg,
-                    }]}
-                  >
-                    <Text style={[s.chipText, { color: sameGender ? colors.text.primary : colors.text.muted }]}>
-                      {sameGender ? (myGender === 'F' ? 'Women' : 'Men') : 'All'}
-                    </Text>
-                  </Tappable>
-                )}
-              </View>
-            </Stagger>
-
             {/* The board */}
             <Stagger index={3}>
               <View style={[s.card, {
@@ -460,7 +476,6 @@ export default function LeaderboardScreen() {
 
 const s = StyleSheet.create({
   h1: { fontSize: typeScale.figure, fontWeight: weight.bold, letterSpacing: -0.7, marginTop: 6 },
-  lede: { fontSize: typeScale.caption, lineHeight: 19.5, marginTop: 6, marginBottom: 18 },
 
   scope: {
     flexDirection: 'row', gap: 4, marginHorizontal: spacing.lg,
