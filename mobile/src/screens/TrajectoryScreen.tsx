@@ -34,7 +34,7 @@ import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { BACKDROP_GROUND } from '../components/ScreenBackdrop'
-import { ScienceSpotlight, RivalCard } from '../components/HomeSections'
+import { ScienceSpotlight } from '../components/HomeSections'
 import { selectFrom, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { LinearGradient as Gradient } from 'expo-linear-gradient'
 import {
@@ -606,6 +606,10 @@ function SimilarAthletesSection({
 
   return (
     <AlmanacCard glass kicker="BENCHMARKS" title="Similar Athletes" accent={colors.orange[500]}>
+      <Text style={{ fontSize: 12.5, color: colors.text.muted, lineHeight: 18, marginBottom: 10 }}>
+        Athletes who were on a comparable mark at the same age. What they went
+        on to do is underneath — it is what happened to them, not a forecast.
+      </Text>
       {similar.map((athlete: any, idx: number) => (
         <View key={idx} style={styles.similarAthleteRow}>
           <Text style={styles.similarRank}>{String(idx + 1).padStart(2, '0')}</Text>
@@ -614,16 +618,14 @@ function SimilarAthletesSection({
             <Text style={styles.similarAthleteCountry}>{athlete.nationality || '—'}</Text>
           </View>
           <View style={styles.similarAthletePb}>
-            {/* Their mark AT THIS AGE, not their career best — the whole
-                point is what they were doing when they were here. */}
+            {/* Their mark at the age they were matched on. The age is stated
+                because the version before this showed the age of their CAREER
+                best next to it, which read as the age of the match and made
+                the whole table look wrong. */}
             <Text style={styles.similarAthletePbValue}>
               {formatPerformance(athlete.atYourAge, discipline)}
             </Text>
-            {athlete.seniorBest != null && athlete.ageAtSeniorBest != null && (
-              <Text style={styles.similarAthleteAge}>
-                {formatPerformance(athlete.seniorBest, discipline)} at {athlete.ageAtSeniorBest}
-              </Text>
-            )}
+            <Text style={styles.similarAthleteAge}>at {athlete.matchedAge}</Text>
           </View>
         </View>
       ))}
@@ -1002,12 +1004,10 @@ function TrajectoryBody() {
           {/* Historical rival — a named athlete who ran this at your age.
               Runs off local data in historicalRivals.js, so it works even when
               the similar-athletes RPC or the network doesn't. */}
-          <RivalCard
-            pb={selectedPb}
-            discipline={selectedDiscipline}
-            sex={sex}
-            dob={(profile as any)?.dob}
-          />
+          {/* RivalCard removed: this screen already has the Similar
+              Athletes table above, and one athlete pulled out of that same
+              query into a second card said the same thing twice — with a
+              different age on it, which is worse than redundant. */}
 
           <ImprovementScenariosSection
             discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex}

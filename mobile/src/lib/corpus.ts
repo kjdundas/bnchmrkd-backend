@@ -35,6 +35,10 @@ import { callRpc } from './supabase'
 export type SimilarAthlete = {
   athlete: string
   nationality: string | null
+  /** The age they were when they set the mark below. Within a year of the
+      athlete's own — it is stated rather than implied, because the previous
+      version showed the age of their CAREER best and it read as this one. */
+  matchedAge: number
   /** Their season best at the age you are now, in your event and implement. */
   atYourAge: number
   /** Their best in that same event — which, for an age-group implement,
@@ -101,6 +105,7 @@ export async function similarAthletes(opts: {
     return rows.map((r: any) => ({
       athlete: String(r.athlete || ''),
       nationality: r.nationality || null,
+      matchedAge: num(r.matched_age) as number,
       atYourAge: num(r.at_your_age) as number,
       bestSameEvent: num(r.best_same_event) as number,
       seniorEvent: r.senior_event || null,
