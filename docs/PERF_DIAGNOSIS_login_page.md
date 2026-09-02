@@ -211,3 +211,25 @@ effectively zero even though it's correctly present in the HTML the whole
 time.
 
 See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.
+(Also not the dominant cause on-device — see the next follow-up.)
+
+---
+
+# Follow-up — 2026-09-02: real Lighthouse data changes the diagnosis
+
+After five rounds of on-device-reported "still slow" despite fixes that all
+tested correctly, stopped guessing and ran real Google PageSpeed Insights
+against production instead. Key finding: `Time to First Byte: 0ms` — the
+server responds essentially instantly, which undercuts the distance/region
+theorizing from the last two follow-ups as the dominant factor.
+
+The real cost, per Lighthouse's LCP breakdown: the hero background photo
+(`div.hero-bg`, the page's biggest visual element) has an **"Element render
+delay" of 1,570ms** — almost entirely separate from its own download time.
+Paired with an "LCP request discovery" warning, the cause is structural:
+the image is set via a `background-image` in a runtime-injected `<style>`
+tag, so the browser can't discover or start fetching it until React has
+downloaded, executed, and mounted — a full dependency chain the image sits
+at the back of, instead of loading in parallel with everything else.
+
+See [PERF_FIX_login_page.md](./PERF_FIX_login_page.md) for the fix applied.

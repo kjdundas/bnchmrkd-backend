@@ -375,4 +375,65 @@ takes. The `<noscript>` fallback preserves normal behavior with JS disabled.
 
 ## Status
 
-Pushed to `main`. Awaiting on-device confirmation.
+Pushed to `main`. On-device check came back negative again — moved to
+getting objective measurement data instead of further on-device guessing;
+see the next follow-up.
+
+---
+
+# Follow-up — 2026-09-02: real Lighthouse data, and a genuine fix
+
+**Context:** after five rounds of code changes with no visible on-device
+improvement, stopped guessing and pulled real mobile performance data from
+Google PageSpeed Insights (real Lighthouse run against production, mobile
+device emulation, Slow 4G throttling) instead of continuing to theorize.
+
+## What the data actually showed
+
+Mobile performance score: 73/100. `Time to First Byte: 0ms` — the server
+responds essentially instantly, which quietly rules out the last two
+rounds' distance/region theorizing as the dominant cause. Total Blocking
+Time and Cumulative Layout Shift were both perfect (0).
+
+The real cost was in the **LCP breakdown**, for the `div.hero-bg` element
+(the hero background photo — Lighthouse's own pick for the page's biggest
+visual element):
+| Sub-part | Duration |
+|---|---|
+| Time to First Byte | 0 ms |
+| Resource load delay | 620 ms |
+| Resource load duration | 190 ms |
+| **Element render delay** | **1,570 ms** |
+
+Paired with an **"LCP request discovery"** warning: the browser couldn't
+even start fetching the hero image until React had downloaded, executed,
+and mounted enough to inject the CSS referencing it — `background-image`
+set via a runtime `<style>` tag has no way to be discovered early the way
+an `<img src>` or a `<link rel="preload">` can be. The image sits at the
+back of a dependency chain (HTML → JS bundle → React mounts → CSS applies →
+browser finally learns the image URL exists) instead of loading in
+parallel with everything else.
+
+## Fix
+
+Added two `<link rel="preload" as="image">` hints in `frontend/index.html`,
+matching the existing mobile/desktop breakpoint (`max-width: 768px`) used
+in the CSS:
+```html
+<link rel="preload" as="image" href="/hero-stadium-mobile.jpg" media="(max-width: 768px)" />
+<link rel="preload" as="image" href="/hero-stadium.jpg" media="(min-width: 769px)" />
+```
+This tells the browser about the hero image immediately, in the HTML
+itself, so it starts downloading in parallel with the JS bundle instead of
+waiting for React to render before the browser even knows it exists.
+
+## Verification
+
+Rebuilt successfully, changes are minimal and low-risk (two standard
+`<link>` tags, no logic change). Real verification is the same PageSpeed
+Insights re-run against production after deploy — see the before/after
+numbers once that's done, rather than more local/simulated testing.
+
+## Status
+
+Pushed to `main`, awaiting deploy + re-measurement.
