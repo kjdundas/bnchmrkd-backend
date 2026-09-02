@@ -102,3 +102,19 @@ collisions where two real athletes share one career, pairs differing by sex,
 and similar names with nothing to corroborate them. Each needs a human. 38
 close pairs also remain above the 0.72 threshold — everything left is a
 judgement call rather than a rule.
+
+## corpus_mark_distribution (2026-09)
+
+`reference.mark_distribution(discipline, sex, mark, age_lo, age_hi, buckets)`
+with a `public.corpus_mark_distribution` wrapper, granted to anon+authenticated.
+
+Returns a histogram of season bests for the event plus the athlete's percentile
+within it. Tails trimmed at p01/p99 before bucketing — one mistyped hand time
+turns 26 buckets into 25 empty boxes and a spike.
+
+**The population is World Athletics ranked athletes.** Its slowest 1% of senior
+men's 100m is 11.45. Any surface drawing this must name the population: "faster
+than 54% of ranked senior men" is true, "faster than 54% of men" is not.
+
+Verified: 100m/M/10.33 → 53.8th percentile of 892 athletes, 5,228 season bests,
+p05 9.97 / p50 10.37 / p95 11.04.

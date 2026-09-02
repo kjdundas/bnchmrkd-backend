@@ -26,6 +26,7 @@ import { useAuth } from '../contexts/AuthContext'
 import ScreenBackdrop from '../components/ScreenBackdrop'
 import { Tappable, MonoKicker, Stagger } from '../components/ui'
 import { SkeletonCards, LoadFailed } from '../components/LoadState'
+import CorpusStanding from '../components/CorpusStanding'
 import InfoDot from '../components/InfoDot'
 import { spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
@@ -60,6 +61,16 @@ export default function LeaderboardScreen() {
   const [sameGender, setSameGender] = useState(true)
 
   const [pos, setPos] = useState<Position | null>(null)
+
+  // Placed on the board, or not. Drives which explanation the screen owes
+  // you — the suppression rule belongs under a board that HAS placed you,
+  // because `explain()` already gives it in full when one has not.
+  const placed = pos?.rank != null && pos.field > 0
+
+  // The mark the world-distribution is drawn against. Performances only:
+  // a CMJ height has no World Athletics population to sit inside, and
+  // pretending otherwise would be the most confident kind of wrong.
+  const distMark = kind === 'performance' && pos?.value != null ? pos.value : null
   const [counts, setCounts] = useState<ScopeCounts | null>(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
@@ -387,15 +398,39 @@ export default function LeaderboardScreen() {
               </View>
             </Stagger>
 
-            <Stagger index={4}>
-              <View style={[s.note, { borderColor: colors.glass.border, backgroundColor: colors.glass.bg }]}>
-                <Ionicons name="lock-closed-outline" size={13} color={colors.text.muted} />
-                <Text style={[s.noteText, { color: colors.text.muted }]}>
-                  A board needs {pos?.minField ?? 5} people before it will place
-                  you. Below that, a position would give away individual numbers.
-                </Text>
-              </View>
-            </Stagger>
+            {/* ── The field ────────────────────────────────────────
+                The board can only rank you against other bnchmrkd
+                accounts, and with a squad of one that is four rows of
+                filters over an apology. This does not wait for anybody
+                else to sign up. */}
+            {!!distMark && (
+              <Stagger index={4}>
+                <CorpusStanding
+                  discipline={key}
+                  sex={myGender}
+                  mark={distMark}
+                  colour={colors.accent[500]}
+                  valueFmt={(v) => formatMark(v, key)}
+                />
+              </Stagger>
+            )}
+
+            {/* The suppression rule, said ONCE. `explain()` already gives it
+                in full whenever a board is too thin, and this note repeated
+                the same clause verbatim directly underneath — so the one
+                screen that exists to explain a privacy promise was the one
+                screen that said it twice. */}
+            {placed && (
+              <Stagger index={5}>
+                <View style={[s.note, { borderColor: colors.glass.border, backgroundColor: colors.glass.bg }]}>
+                  <Ionicons name="lock-closed-outline" size={13} color={colors.text.muted} />
+                  <Text style={[s.noteText, { color: colors.text.muted }]}>
+                    A board needs {pos?.minField ?? 5} people before it will place
+                    you. Below that, a position would give away individual numbers.
+                  </Text>
+                </View>
+              </Stagger>
+            )}
           </>
         )}
       </ScrollView>

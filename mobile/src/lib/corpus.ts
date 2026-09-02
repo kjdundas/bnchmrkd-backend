@@ -227,3 +227,67 @@ export const PROJECTION_DISCLAIMER =
 
 /** A band widens; it does not arrive. Handy for the chart to key off. */
 export const bandWidth = (b: BandPoint) => Math.abs(b.p75 - b.p25)
+
+
+// ── Where a mark sits in the world ───────────────────────────────────
+//
+// The Boards tab can only rank an athlete against other bnchmrkd accounts.
+// With a squad of one it has nothing to say, and the screen becomes four
+// rows of filters over an apology. This does not depend on anybody else
+// signing up: 892 ranked senior men have run a 100m in the corpus, so
+// "where do I stand" has an answer today.
+//
+// The population is ELITE and every surface that draws this has to say so.
+// "Faster than 54% of men" is a different and much bigger claim than
+// "faster than 54% of RANKED senior men", and only the second one is true.
+
+export type MarkDistribution = {
+  /** Histogram buckets, low to high mark. */
+  bins: { lo: number; hi: number; n: number }[]
+  /** Season bests behind the curve, and the people who set them. */
+  total: number
+  athletes: number
+  /** Share of the population this mark beats, in the event's own direction. */
+  percentile: number
+  lowerBetter: boolean
+  p05: number
+  p50: number
+  p95: number
+} | null
+
+export async function markDistribution(opts: {
+  discipline: string
+  sex: string | null | undefined
+  mark: number
+  ageLo?: number
+  ageHi?: number
+}): Promise<MarkDistribution> {
+  if (!opts.discipline || !Number.isFinite(opts.mark)) return null
+  try {
+    const rows = await callRpc('corpus_mark_distribution', {
+      p_discipline: opts.discipline,
+      p_sex: opts.sex || 'M',
+      p_mark: opts.mark,
+      p_age_lo: opts.ageLo ?? 20,
+      p_age_hi: opts.ageHi ?? 34,
+    })
+    if (!Array.isArray(rows) || !rows.length) return null
+    const first: any = rows[0]
+    const bins = rows
+      .map((r: any) => ({ lo: num(r.lo) as number, hi: num(r.hi) as number, n: num(r.n) as number }))
+      .filter((b) => b.lo != null && b.hi != null && b.n != null)
+    if (bins.length < 4) return null
+    return {
+      bins,
+      total: num(first.total) as number,
+      athletes: num(first.athletes) as number,
+      percentile: num(first.percentile) ?? 0,
+      lowerBetter: !!first.lower_better,
+      p05: num(first.p05) as number,
+      p50: num(first.p50) as number,
+      p95: num(first.p95) as number,
+    }
+  } catch {
+    return null
+  }
+}
