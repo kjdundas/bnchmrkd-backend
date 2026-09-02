@@ -4,7 +4,7 @@
 // Uses HeroCard, AlmanacCard, MonoKicker, StreakChip, AnimatedBar
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   View,
   Text,
@@ -22,11 +22,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import SharingSettings from '../components/SharingSettings'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
-import DnaStrip from '../components/DnaCard'
-import { MetricRail } from '../components/OuraSections'
-import IndicatorPicker from '../components/IndicatorPicker'
-import { loadIndicators, saveIndicators } from '../lib/indicators'
-import { groupMetrics } from '../lib/metricSemantics'
 import ResultsTable from '../components/ResultsTable'
 import { countPersonalBests } from '../lib/resultSemantics'
 import DobField from '../components/DobField'
@@ -45,7 +40,6 @@ import {
   RADAR_AXES,
   buildDnaProfile,
   scoreToTier,
-  findLimitingFactor,
 } from '../lib/disciplineScience'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 
@@ -59,13 +53,6 @@ export default function ProfileScreen() {
   const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
-  // The rings, and the sheet that reorders them. They were on Home, above the
-  // mark, reading the same `metrics` array the DNA strip below reads — the
-  // same data drawn twice, two blocks apart. They are a profile, so they live
-  // on the profile.
-  const [indicators, setIndicators] = useState<string[]>([])
-  const [pickerFor, setPickerFor] = useState<string | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [performances, setPerformances] = useState<any[]>([])
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
@@ -85,26 +72,6 @@ export default function ProfileScreen() {
   })
 
   // athlete_profiles holds height/weight; user_profiles (via AuthContext) holds identity.
-  // Read once per athlete. The rail falls back to its automatic order while
-  // this is in flight, so a slow read never leaves the rings blank.
-  useEffect(() => {
-    if (!user) { setIndicators([]); return }
-    let cancelled = false
-    loadIndicators(user.id).then((keys) => { if (!cancelled) setIndicators(keys) })
-    return () => { cancelled = true }
-  }, [user])
-
-  // Written through on every edit rather than on dismiss: the sheet can be
-  // swiped away, and a swipe is not a cancel.
-  const changeIndicators = useCallback((keys: string[]) => {
-    setIndicators(keys)
-    if (user) saveIndicators(user.id, keys)
-  }, [user])
-
-  // The picker lists what the athlete has actually logged, in the same
-  // automatic order the rail would use.
-  const metricGroups = useMemo(() => groupMetrics(metrics), [metrics])
-
   useEffect(() => {
     if (!user) return
     selectFrom('athlete_profiles', { filter: `id=eq.${user.id}`, limit: '1' })
@@ -201,7 +168,6 @@ export default function ProfileScreen() {
   // with the PB count gamification awards XP for.
   const pbCount = useMemo(() => countPersonalBests(performances), [performances])
 
-  const limitingFactor = useMemo(() => findLimitingFactor(dnaProfile, null, null), [dnaProfile])
   const firstLog = metrics.length > 0 ? metrics[metrics.length - 1] : null
   const daysSinceStart = firstLog
     ? Math.ceil((Date.now() - new Date(firstLog.recorded_at).getTime()) / 86400000)
@@ -373,52 +339,25 @@ export default function ProfileScreen() {
             <SectionLabel>Competition results</SectionLabel>
             <ResultsTable performances={performances} />
 
-            <SectionLabel>Physical profile</SectionLabel>
-
-            {!!metrics.length && (
-              <MetricRail
-                metrics={metrics}
-                onDarkSurface={isDark}
-                order={indicators}
-                discipline={discipline}
-                onCustomise={(key) => { setPickerFor(key); setPickerOpen(true) }}
-              />
-            )}
-
-            <DnaStrip
-              metrics={metrics}
-              discipline={discipline}
-              dob={profile?.dob}
-              onLog={() => navigation.navigate('Log' as never)}
-            />
-          </>
-        )}
-
-        {!isCoach && limitingFactor && (
-          <AlmanacCard kicker="FOCUS AREA" title="Limiting factor" accent={c.amber}>
-            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <View style={{
-                width: 38, height: 38, borderRadius: radius.full,
-                backgroundColor: c.amber + '1F',
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Ionicons name="warning" size={19} color={c.amber} />
-              </View>
+            {/* The physical profile and the DNA moved to Trajectory, under
+                the discipline cards. They are what produces the marks, and
+                nobody opens a screen with sign-out on it to look at their
+                sprint numbers. */}
+            <Tappable
+              onPress={() => navigation.navigate('Trajectory' as never)}
+              accessibilityLabel="Open your physical profile on the Trajectory tab"
+              style={[styles.crossLink, { borderColor: c.glass.border, backgroundColor: c.glass.bg }]}
+            >
+              <Ionicons name="pulse" size={17} color={c.accent[500]} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: typeScale.body, fontWeight: weight.bold, color: c.text.primary }}>
-                  {limitingFactor.axisLabel}
+                <Text style={[styles.crossLinkTitle, { color: c.text.primary }]}>Physical profile & DNA</Text>
+                <Text style={[styles.crossLinkBody, { color: c.text.secondary }]}>
+                  On Trajectory, under your events
                 </Text>
-                <Text style={{ fontSize: typeScale.caption, color: c.text.secondary, marginTop: 2 }}>
-                  Score: <Text style={{ color: c.amber, fontWeight: weight.bold }}>{limitingFactor.score}</Text>
-                </Text>
-                {!!limitingFactor.why && (
-                  <Text style={{ fontSize: typeScale.caption, color: c.text.secondary, marginTop: 8, lineHeight: 19 }}>
-                    {limitingFactor.why}
-                  </Text>
-                )}
               </View>
-            </View>
-          </AlmanacCard>
+              <Ionicons name="chevron-forward" size={16} color={c.text.dimmed} />
+            </Tappable>
+          </>
         )}
 
         {/* ════════════════════════════════════════════════════════════════
@@ -546,14 +485,6 @@ export default function ProfileScreen() {
         <View style={{ height: 30 }} />
       </ScrollView>
 
-      <IndicatorPicker
-        visible={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        groups={metricGroups}
-        chosen={indicators}
-        onChange={changeIndicators}
-        focusKey={pickerFor}
-      />
     </SafeAreaView>
   )
 }
@@ -767,6 +698,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.control,
     backgroundColor: 'rgba(251,113,133,0.04)',
   },
+  crossLink: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderWidth: 1, borderRadius: radius.card, padding: 15,
+    marginBottom: spacing.lg,
+  },
+  crossLinkTitle: { fontSize: typeScale.body, fontWeight: weight.bold },
+  crossLinkBody: { fontSize: typeScale.caption, marginTop: 2 },
+
   signOutText: { color: colors.red, fontSize: typeScale.body, fontWeight: weight.medium },
 
   // Theme toggle

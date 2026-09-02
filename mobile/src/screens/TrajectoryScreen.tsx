@@ -32,6 +32,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import PhysicalProfile from '../components/PhysicalProfile'
 import { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { ScienceSpotlight } from '../components/HomeSections'
 import { selectFrom, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
@@ -153,11 +154,16 @@ function formatPerformance(value: number, discipline: string): string {
 function DisciplinePicker({
   performances,
   onSelectDiscipline,
+  onLog,
 }: {
   performances: any[]
   onSelectDiscipline: (discipline: string) => void
+  /** Into the Log tab — the only action either empty state offers. */
+  onLog: () => void
 }) {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  const athleteId = user?.id
+  const dob = profile?.dob
 
   // Group performances by discipline and get stats.
   //
@@ -198,6 +204,10 @@ function DisciplinePicker({
     })
   }, [performances, profile])
 
+  // No races is not no athlete. The physical profile still renders — for
+  // most people it is the first thing in the app that has anything to say
+  // about them, and hiding it behind a race they have not run yet was how it
+  // ended up on a settings screen in the first place.
   if (disciplineStats.length === 0) {
     return (
       <ScrollView
@@ -209,6 +219,13 @@ function DisciplinePicker({
           title="No competition data yet"
           subtitle="Log your first race in the Log tab to see your trajectory analysis."
         />
+        <PhysicalProfile
+          athleteId={athleteId}
+          discipline={null}
+          dob={dob}
+          onLog={onLog}
+        />
+        <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
     )
   }
@@ -254,6 +271,15 @@ function DisciplinePicker({
           </AlmanacCard>
         </Tappable>
       ))}
+
+      {/* Under the discipline cards, because it is the same subject one level
+          down: these are the qualities that produce the marks above. */}
+      <PhysicalProfile
+        athleteId={athleteId}
+        discipline={disciplineStats[0]?.discipline || null}
+        dob={dob}
+        onLog={onLog}
+      />
 
       <View style={{ height: TAB_BAR_CLEARANCE }} />
     </ScrollView>
@@ -1025,6 +1051,7 @@ function TrajectoryBody() {
         <DisciplinePicker
           performances={performances}
           onSelectDiscipline={(d) => setSelectedDiscipline(d)}
+          onLog={() => navigation.navigate('Log' as never)}
         />
       )}
     </SafeAreaView>
