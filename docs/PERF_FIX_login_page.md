@@ -513,4 +513,27 @@ deleted, in case this gets revisited later — harmless to leave.
 
 ## Status
 
-Pushed to `main`, awaiting deploy + fresh PageSpeed re-measurement.
+Pushed to `main` and re-measured with a fresh PageSpeed run against
+production:
+
+| Metric | Before this fix | After |
+|---|---|---|
+| Performance score | 74 | 79 |
+| First Contentful Paint | 3.9 s | **2.3 s** |
+| Largest Contentful Paint | 4.2 s | 5.0 s (see below) |
+
+FCP — arguably the metric that best matches "the page looks blank" — improved
+by 1.6 seconds, a real and substantial win, and matches the theory exactly:
+removing the element that had a 1.6s render delay let real content (the
+headline) paint that much sooner.
+
+**LCP went up, and that's worth being straight about rather than glossing
+over.** With the hero image gone, Lighthouse's "largest" element detection
+picked a *different* element further down the page — an SVG `<text>` label
+inside the "Career Trajectory" preview card — which turns out to have its
+own render delay (1,780 ms) exceeding what the hero image had. Net effect:
+the top of the page now appears meaningfully faster (FCP), but the specific
+LCP metric is now tracking a different, deeper problem than before, not a
+solved one. If this gets revisited, the trajectory-chart card is the next
+concrete thing to look at — same investigation method (Lighthouse LCP
+breakdown), different element.
