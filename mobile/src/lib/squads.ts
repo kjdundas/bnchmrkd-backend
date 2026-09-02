@@ -14,6 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { selectFrom, insertInto, updateIn, deleteFrom, callRpc } from './supabase'
+import { type Trouble } from './loadState'
 
 export type SquadAthlete = {
   subject_kind: 'account' | 'roster'
@@ -54,14 +55,15 @@ export function subjectFor(a: SquadAthlete) {
     : { rosterId: a.roster_athlete_id as string }
 }
 
-export async function fetchSquads(coachId: string): Promise<Squad[]> {
+export async function fetchSquads(coachId: string, trouble?: Trouble): Promise<Squad[]> {
   if (!coachId) return []
   try {
     return (await selectFrom('squads', {
       filter: `coach_id=eq.${coachId}`,
       order: 'sort_order.asc',
     })) as Squad[]
-  } catch {
+  } catch (e) {
+    trouble?.note('squads', e)
     return []
   }
 }
@@ -73,10 +75,13 @@ export async function fetchSquads(coachId: string): Promise<Squad[]> {
  * select-own-only — a coach cannot read a linked athlete's name directly, and
  * widening that policy would hand them the whole profile row, email included.
  */
-export async function fetchSquadAthletes(): Promise<SquadAthlete[]> {
+export async function fetchSquadAthletes(trouble?: Trouble): Promise<SquadAthlete[]> {
   try {
     return ((await callRpc('get_coach_squad')) || []) as SquadAthlete[]
-  } catch {
+  } catch (e) {
+    // The squad itself failing is the worst case: every panel downstream
+    // then renders 'no athletes', which reads as an empty roster.
+    trouble?.note('squad', e)
     return []
   }
 }
@@ -132,4 +137,261 @@ export function squadCounts(all: SquadAthlete[]) {
     else unassigned++
   }
   return { counts, unassigned, total: all.length }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// THE COACH'S WEEK
+//
+// Assigning one session to eight athletes writes eight rows — that is the
+// right shape, because each athlete answers for themselves and one of them
+// declining must not remove the session from the other seven. But it is the
+// wrong shape to LOOK at: a coach opening Tuesday should see one session
+// with eight names on it, not the same session eight times.
+//
+// So the rows are pulled per athlete and regrouped here, on one key: what it
+// is, what it is called, and when. Two genuinely different sessions on the
+// same day stay two cards; one session fanned out to a squad becomes one.
+// ═══════════════════════════════════════════════════════════════════════
+
+export type Attendee = {
+  athlete: SquadAthlete
+  /** 'pending' | 'accepted' | 'declined'. Absent in the data means accepted. */
+  approval: string
+  eventId: string
+}
+
+export type SquadEvent = {
+  key: string
+  kind: string
+  title: string
+  day: string
+  discipline: string | null
+  notes: string | null
+  /** What is actually IN the session — the lines the coach wrote when they
+   *  assigned it. Carried through because a card that names a session and
+   *  cannot say what it was is a reminder, not a plan. */
+  lines: string[]
+  attendees: Attendee[]
+  accepted: number
+  pending: number
+  declined: number
+}
+
+/**
+ * Every calendar row for these athletes between two days, inclusive.
+ *
+ * Two queries rather than one `or=(...)`: an account and a roster entry live
+ * in different columns, and PostgREST's `or` across two `in` lists is a
+ * filter string long enough to hit a URL limit on a real squad.
+ */
+export async function fetchSquadEvents(
+  athletes: SquadAthlete[], fromDay: string, toDay: string, trouble?: Trouble,
+): Promise<Map<string, any[]>> {
+  const byUser = athletes.map((a) => a.athlete_user_id).filter(Boolean) as string[]
+  const byRoster = athletes.map((a) => a.roster_athlete_id).filter(Boolean) as string[]
+  const out = new Map<string, any[]>()
+  for (const a of athletes) out.set(keyOf(a), [])
+
+  const pull = async (col: string, ids: string[]) => {
+    if (!ids.length) return
+    try {
+      const rows = (await selectFrom('athlete_events', {
+        filter: `${col}=in.(${ids.join(',')})&event_date=gte.${fromDay}&event_date=lte.${toDay}`,
+        order: 'event_date.asc',
+        limit: '2000',
+      })) as any[]
+      for (const r of rows || []) {
+        const k = r[col]
+        if (k) out.get(k)?.push(r)
+      }
+    } catch (e) { trouble?.note(`events:${col}`, e) }
+  }
+  await Promise.all([pull('athlete_id', byUser), pull('roster_athlete_id', byRoster)])
+  return out
+}
+
+/** Absent approval means accepted — the same rule the results side uses. */
+const approvalOf = (r: any): string => r?.approval || 'accepted'
+
+/**
+ * The lines a coach wrote, out of whatever shape the row carries.
+ *
+ * `structure` is jsonb and has held more than one shape over the life of
+ * this table, so this reads defensively rather than assuming .lines is an
+ * array of strings — a session that renders as [object Object] is worse
+ * than one that renders as nothing.
+ */
+function linesOf(structure: any): string[] {
+  const raw = Array.isArray(structure) ? structure : structure?.lines
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((l: any) => (typeof l === 'string' ? l : l?.text || l?.name || ''))
+    .map((l: string) => String(l).trim())
+    .filter(Boolean)
+}
+
+/**
+ * Collapse per-athlete rows into one card per real-world session.
+ *
+ * The key deliberately excludes the athlete and the row id, and deliberately
+ * includes the date: the same session title on Monday and Wednesday is two
+ * sessions, because a coach standing on the track on Wednesday cannot attend
+ * Monday's.
+ */
+export function groupSquadEvents(
+  athletes: SquadAthlete[], eventsBy: Map<string, any[]>,
+): SquadEvent[] {
+  const byKey = new Map<string, SquadEvent>()
+
+  for (const a of athletes) {
+    for (const r of eventsBy.get(keyOf(a)) || []) {
+      const day = String(r.event_date || '').slice(0, 10)
+      if (!day) continue
+      const kind = String(r.kind || 'other')
+      const title = String(r.title || '').trim()
+      const key = `${day}|${kind}|${title.toLowerCase()}`
+      let ev = byKey.get(key)
+      if (!ev) {
+        ev = {
+          key, kind, day, title: title || kind,
+          discipline: r.discipline || null, notes: r.notes || null,
+          lines: linesOf(r.structure),
+          attendees: [], accepted: 0, pending: 0, declined: 0,
+        }
+        byKey.set(key, ev)
+      }
+      const approval = approvalOf(r)
+      ev.attendees.push({ athlete: a, approval, eventId: String(r.id) })
+      if (approval === 'pending') ev.pending++
+      else if (approval === 'declined') ev.declined++
+      else ev.accepted++
+    }
+  }
+
+  for (const ev of byKey.values()) {
+    ev.attendees.sort((x, y) => x.athlete.name.localeCompare(y.athlete.name))
+  }
+  return [...byKey.values()].sort(
+    (x, y) => x.day.localeCompare(y.day) || x.title.localeCompare(y.title))
+}
+
+/** The week's cards, keyed by day, so a day with nothing on it is knowable. */
+export function eventsByDay(events: SquadEvent[]): Map<string, SquadEvent[]> {
+  const out = new Map<string, SquadEvent[]>()
+  for (const e of events) {
+    const list = out.get(e.day)
+    if (list) list.push(e)
+    else out.set(e.day, [e])
+  }
+  return out
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// THE SQUAD'S WELLNESS
+//
+// Read from `shared_checkins`, never from `athlete_checkins`. The view is
+// where the athlete's sharing preference is applied, column by column — a
+// coach whose athlete shares pain but not sleep gets the row with the sleep
+// columns nulled and two flags saying which half is missing and why.
+//
+// Reading the table directly would return nothing at all now (the coach's
+// policy on it was removed), which is the correct failure: a path that
+// forgets the preference cannot accidentally work.
+// ═══════════════════════════════════════════════════════════════════════
+
+export type SharedCheckin = {
+  athlete_id: string
+  checkin_date: string
+  sleep_hours: number | null
+  soreness: number | null
+  mood: number | null
+  energy: number | null
+  pain: boolean | null
+  pain_areas: string[] | null
+  pain_note: string | null
+  wellness_shared: boolean
+  pain_shared: boolean
+}
+
+export async function fetchSquadCheckins(
+  athletes: SquadAthlete[], fromDay: string, toDay: string, trouble?: Trouble,
+): Promise<Map<string, SharedCheckin[]>> {
+  // Only athletes with an account: a roster entry has nobody to check in.
+  const ids = athletes.map((a) => a.athlete_user_id).filter(Boolean) as string[]
+  const out = new Map<string, SharedCheckin[]>()
+  for (const id of ids) out.set(id, [])
+  if (!ids.length) return out
+
+  try {
+    const rows = (await selectFrom('shared_checkins', {
+      filter: `athlete_id=in.(${ids.join(',')})&checkin_date=gte.${fromDay}&checkin_date=lte.${toDay}`,
+      order: 'checkin_date.asc',
+      limit: '2000',
+    })) as SharedCheckin[]
+    for (const r of rows || []) out.get(r.athlete_id)?.push(r)
+  } catch (e) { trouble?.note('checkins', e) }
+  return out
+}
+
+/**
+ * Whether this athlete shares wellness, judged from the ROWS rather than
+ * guessed. The view stamps every row with the flag, so one row is enough —
+ * and no rows at all means we genuinely do not know, in which case the
+ * honest answer is "shared, nothing logged" rather than accusing them of
+ * hiding something.
+ */
+export function sharesWellness(rows: SharedCheckin[] | undefined): boolean {
+  const r = (rows || [])[0]
+  return r ? r.wellness_shared !== false : true
+}
+
+export function sharesPain(rows: SharedCheckin[] | undefined): boolean {
+  const r = (rows || [])[0]
+  return r ? r.pain_shared !== false : true
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// GROWTH ACROSS THE SQUAD
+//
+// Heights, sitting heights and body mass for everyone, turned into one
+// reading per athlete. Anthropometrics live in athlete_metrics alongside
+// the gym numbers, so this is the same fan-out as everything else — the
+// only difference is that these three keys are read as a time series
+// rather than as a best.
+//
+// Approval and sharing both still apply: fetchMetricsForMany goes through
+// the same policies, so a metric awaiting an answer or belonging to an
+// athlete who has switched body measurements off simply is not here.
+// ═══════════════════════════════════════════════════════════════════════
+
+import { growthReading, type GrowthReading } from './growth'
+
+const HEIGHT_KEY = 'standing_height'
+const SITTING_KEY = 'sitting_height'
+const MASS_KEY = 'body_mass'
+
+const seriesOf = (rows: any[], key: string) => (rows || [])
+  .filter((r) => r?.metric_key === key && r?.recorded_at)
+  .map((r) => ({ day: String(r.recorded_at).slice(0, 10), cm: Number(r.value) }))
+
+export function growthForMany(
+  athletes: SquadAthlete[], metricsBy: Map<string, any[]>,
+): Map<string, GrowthReading> {
+  const out = new Map<string, GrowthReading>()
+  for (const a of athletes) {
+    const rows = metricsBy.get(keyOf(a)) || []
+    out.set(keyOf(a), growthReading(seriesOf(rows, HEIGHT_KEY), {
+      masses: seriesOf(rows, MASS_KEY),
+      sittingHeights: seriesOf(rows, SITTING_KEY),
+    }))
+  }
+  return out
+}
+
+/** The same reading for one athlete, off the rows a detail screen already has. */
+export function growthOf(rows: any[]): GrowthReading {
+  return growthReading(seriesOf(rows, HEIGHT_KEY), {
+    masses: seriesOf(rows, MASS_KEY),
+    sittingHeights: seriesOf(rows, SITTING_KEY),
+  })
 }
