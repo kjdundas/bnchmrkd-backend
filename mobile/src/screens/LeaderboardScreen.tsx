@@ -154,7 +154,7 @@ export default function LeaderboardScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
-      <ScreenBackdrop scrollY={scrollY} image="stadium" />
+      <ScreenBackdrop scrollY={scrollY} image="discus" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE + spacing.xl }}
         refreshControl={

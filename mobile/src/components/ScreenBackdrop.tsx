@@ -74,6 +74,28 @@ export const BACKDROPS = {
     topScrim: 0.62,
     leftScrim: 0.66,
   },
+  // The discus cage, for Boards. The brightest of the three by a wide
+  // margin — it is two thirds sky — so it needs the heaviest hand. Measured
+  // off the portrait crop, the band the header and title sit in has a 90th
+  // percentile of L=0.679, which puts plain white at 1.44:1 before any
+  // scrim. What each setting buys, and costs:
+  //
+  //   topScrim   white     photo kept
+  //     0.62     3.41:1       38%
+  //     0.70     4.14:1       30%
+  //     0.74     4.64:1       26%   <- here
+  //
+  // 0.74 is the first step where white clears AA outright rather than
+  // merely clearing the large-text allowance, and on Boards that matters:
+  // the scope chips sit on bare photograph at label size, not title size.
+  // A quarter of the picture survives, which on a photo this bright is
+  // still plainly a discus cage.
+  discus: {
+    source: require('../../assets/discus-hero.jpg'),
+    position: 'center' as const,
+    topScrim: 0.74,
+    leftScrim: 0.66,
+  },
 } as const
 
 /**
