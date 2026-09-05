@@ -2,6 +2,21 @@
 // COACH INVITE PANEL (mobile) — Phase A · A5
 // Invite an athlete by email; manage pending invites + linked athletes.
 // Backed by invite_athlete / revoke_link / get_my_links RPCs.
+//
+// ── WHY THIS ROOT IS BOUNDED ───────────────────────────────────────────
+// The sheet that hosts this panel is sized by its content (maxHeight 80%,
+// no height, no flex). A ScrollView has no intrinsic height — it takes one
+// from its parent — so a ScrollView inside a content-sized parent measures
+// ZERO, and the host wrapped this in `flex: 1`, which contributes nothing
+// inside a content-sized parent either. Both agreed the answer was nought.
+//
+// The result was a sheet that opened to its title bar and nothing else:
+// tapping "Invite Athlete" showed a header, an X, and empty space. The
+// whole coach-side invite flow was unreachable, on a screen whose sibling
+// branch ("Manual Entry") worked because it sizes to its content.
+//
+// A definite bound fixes it: the panel takes what its content needs, up to
+// a share of the screen, and scrolls past that.
 // ═══════════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useCallback } from 'react'
 import {
@@ -11,6 +26,7 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
+  Dimensions,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
@@ -133,7 +149,7 @@ export default function CoachInvitePanel() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: spacing.lg },
+  wrap: { paddingHorizontal: spacing.lg, maxHeight: Dimensions.get('window').height * 0.58 },
   intro: { color: colors.text.muted, fontSize: typeScale.caption, lineHeight: 17, marginBottom: spacing.lg },
   label: { color: colors.text.muted, fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.5, marginBottom: 6 },
   row: { flexDirection: 'row', gap: 8 },

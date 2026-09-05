@@ -293,7 +293,12 @@ function AddAthleteModal({
           )}
 
           {method === 'invite' && (
-            <View style={{ flex: 1, paddingBottom: spacing.lg }}>
+            <View style={{ paddingBottom: spacing.lg }}>
+              {/* NOT flex: 1. The sheet is content-sized (maxHeight 80%, no
+                  height), so a flex child measures zero and took the panel
+                  with it — the invite sheet opened to a title bar and
+                  nothing under it. The panel bounds its own height now;
+                  this only spaces it. */}
               <Tappable onPress={() => { tapFeedback(); setMethod(null) }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
                 <Ionicons name="chevron-back" size={16} color={onImage.muted} />
