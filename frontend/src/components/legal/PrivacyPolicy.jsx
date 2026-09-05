@@ -51,9 +51,11 @@ export default function PrivacyPolicy({ onBack }) {
           <section>
             <h2 className="text-lg font-bold text-white mb-2">1. Who we are</h2>
             <p>
-              bnchmrkd. is a sports analytics platform for track and field athletics, operated by [COMPANY NAME],
-              a [JURISDICTION]-registered entity. For questions about this policy or your data, contact us at
-              [CONTACT EMAIL].
+              bnchmrkd. is a sports analytics platform for track and field athletics, operated by
+              <strong className="text-white">Keenan Dundas</strong>, trading as bnchmrkd, based in Dubai, United Arab
+              Emirates. bnchmrkd is not a registered company; it is operated by an individual, and Keenan Dundas is the
+              data controller for the purposes of this policy. For questions about this policy or your data, contact
+              <a href="mailto:keenan.bnchmrkd@gmail.com" className="text-white underline">keenan.bnchmrkd@gmail.com</a>.
             </p>
           </section>
 
@@ -113,7 +115,7 @@ export default function PrivacyPolicy({ onBack }) {
             </p>
             <p>
               If you believe we have collected personal information from a child in violation of this policy, please
-              contact us at [CONTACT EMAIL] and we will delete that information promptly.
+              contact us at keenan.bnchmrkd@gmail.com and we will delete that information promptly.
             </p>
           </section>
 
@@ -177,7 +179,7 @@ export default function PrivacyPolicy({ onBack }) {
               access</strong> from your profile at any time, which takes effect immediately, and you can
               <strong className="text-white"> withhold your physical test results or leave the rankings</strong> from your sharing settings.
             </p>
-            <p className="mt-2">To exercise any of the others, contact [CONTACT EMAIL]. We will respond within the timeframes required by applicable law.</p>
+            <p className="mt-2">To exercise any of the others, contact keenan.bnchmrkd@gmail.com. We will respond within the timeframes required by applicable law.</p>
           </section>
 
           <section>
@@ -212,7 +214,7 @@ export default function PrivacyPolicy({ onBack }) {
           <section>
             <h2 className="text-lg font-bold text-white mb-2">14. Contact</h2>
             <p>
-              If you have questions about this Privacy Policy or how we handle your data, contact us at [CONTACT EMAIL].
+              If you have questions about this Privacy Policy or how we handle your data, contact us at keenan.bnchmrkd@gmail.com.
             </p>
           </section>
 
