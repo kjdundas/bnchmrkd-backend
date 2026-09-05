@@ -4,48 +4,31 @@
 // No emojis — professional Ionicons, Strava-style data layout
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import {
+  Animated,
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import AppHeader from '../components/AppHeader'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { useTheme } from '../contexts/ThemeContext'
 import { isLowerBetter } from '../lib/disciplineScience'
 import FullAnalysis from '../components/FullAnalysis'
+// One catalogue, shared with the athlete's own event picker.
+import { DISCIPLINES } from '../lib/disciplines'
+import { Tappable } from '../components/ui'
 
-// ── Discipline catalog (icon-based, no emojis) ─────────────────────────────
-const DISCIPLINES: { name: string; icon: string; group: string }[] = [
-  { name: '60m', icon: 'flash-outline', group: 'Sprint' },
-  { name: '100m', icon: 'flash-outline', group: 'Sprint' },
-  { name: '200m', icon: 'flash-outline', group: 'Sprint' },
-  { name: '400m', icon: 'flash-outline', group: 'Sprint' },
-  { name: '800m', icon: 'timer-outline', group: 'Middle' },
-  { name: '1500m', icon: 'timer-outline', group: 'Middle' },
-  { name: '3000m', icon: 'fitness-outline', group: 'Long' },
-  { name: '3000m Steeplechase', icon: 'fitness-outline', group: 'Long' },
-  { name: '5000m', icon: 'fitness-outline', group: 'Long' },
-  { name: '10000m', icon: 'fitness-outline', group: 'Long' },
-  { name: '100m Hurdles', icon: 'reorder-four-outline', group: 'Hurdles' },
-  { name: '110m Hurdles', icon: 'reorder-four-outline', group: 'Hurdles' },
-  { name: '400m Hurdles', icon: 'reorder-four-outline', group: 'Hurdles' },
-  { name: 'High Jump', icon: 'trending-up-outline', group: 'Jumps' },
-  { name: 'Long Jump', icon: 'trending-up-outline', group: 'Jumps' },
-  { name: 'Triple Jump', icon: 'trending-up-outline', group: 'Jumps' },
-  { name: 'Pole Vault', icon: 'trending-up-outline', group: 'Jumps' },
-  { name: 'Shot Put', icon: 'ellipse-outline', group: 'Throws' },
-  { name: 'Discus Throw', icon: 'ellipse-outline', group: 'Throws' },
-  { name: 'Javelin Throw', icon: 'ellipse-outline', group: 'Throws' },
-  { name: 'Hammer Throw', icon: 'ellipse-outline', group: 'Throws' },
-]
 
 // Group icon colors
 const GROUP_COLORS: Record<string, string> = {
@@ -66,7 +49,17 @@ function parseMark(input: string, discipline: string): number | null {
 }
 
 // ── Discipline Picker ───────────────────────────────────────────────────────
-function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void }) {
+function DisciplinePicker({
+  onSelect, scrollY,
+}: {
+  onSelect: (discipline: string) => void
+  /** The backdrop's parallax/dissolve driver. Without it the photograph sits
+   *  at full strength behind a thirty-row list, so the same chip reads at
+   *  5:1 over a dark rack and 2.5:1 over a sunlit wall forty pixels away.
+   *  The other two branches of this screen were given the driver; this one —
+   *  the one you actually land on — was missed. */
+  scrollY: Animated.Value
+}) {
   const [filterGroup, setFilterGroup] = useState('all')
   const groups = ['all', 'Sprint', 'Middle', 'Long', 'Hurdles', 'Jumps', 'Throws']
   const filtered = filterGroup === 'all' ? DISCIPLINES : DISCIPLINES.filter(d => d.group === filterGroup)
@@ -83,17 +76,30 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
   }, [filtered, filterGroup])
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      {/* Filter chips */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+    <Animated.ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      scrollEventThrottle={16}
+      onScroll={Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+    >
+      {/* Filter chips. contentContainerStyle, not style: the padding has to
+          be INSIDE the scroller or the last chip is clipped at the edge
+          with nothing to say the row continues. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipRow}
+        style={styles.chipScroll}
+      >
         {groups.map(g => (
-          <TouchableOpacity key={g}
+          <Tappable key={g}
             style={[styles.chip, filterGroup === g && styles.chipActive]}
-            onPress={() => setFilterGroup(g)}>
+            onPress={() => { tapFeedback(); setFilterGroup(g) }}>
             <Text style={[styles.chipText, filterGroup === g && styles.chipTextActive]}>
               {g === 'all' ? 'All' : g}
             </Text>
-          </TouchableOpacity>
+          </Tappable>
         ))}
       </ScrollView>
 
@@ -102,30 +108,41 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
         <View key={group} style={styles.disciplineGroup}>
           {filterGroup === 'all' && (
             <View style={styles.groupHeader}>
-              <View style={[styles.groupDot, { backgroundColor: GROUP_COLORS[group] || colors.text.dimmed }]} />
+              <View style={[styles.groupDot, { backgroundColor: GROUP_COLORS[group] || onImage.dim }]} />
               <Text style={styles.groupLabel}>{group}</Text>
             </View>
           )}
-          {disciplines.map(d => (
-            <TouchableOpacity key={d.name} style={styles.disciplineRow}
-              onPress={() => onSelect(d.name)} activeOpacity={0.6}>
+          {/* One plate under the whole group rather than a divider drawn
+              straight onto the photograph. A hairline at 3% white is
+              invisible over a bright frame and needs no measuring to know
+              it — the rows had nothing holding them together. */}
+          <View style={styles.groupCard}>
+          {disciplines.map((d, i) => (
+            <Tappable key={d.name}
+              style={[styles.disciplineRow, i === disciplines.length - 1 && { borderBottomWidth: 0 }]}
+              hitSlop={0} onPress={() => { tapFeedback(); onSelect(d.name) }}>
+              {/* '10' is 6% alpha — a tint that vanished over the photo and
+                  left the icon floating. A visible plate and a border, at
+                  the strength the rest of the app uses. */}
               <View style={[styles.disciplineIcon, {
-                backgroundColor: (GROUP_COLORS[d.group] || colors.text.dimmed) + '10',
+                backgroundColor: (GROUP_COLORS[d.group] || onImage.dim) + '26',
+                borderColor: (GROUP_COLORS[d.group] || onImage.dim) + '59',
               }]}>
                 <Ionicons
                   name={d.icon as any}
                   size={16}
-                  color={GROUP_COLORS[d.group] || colors.text.muted}
+                  color={GROUP_COLORS[d.group] || onImage.muted}
                 />
               </View>
               <Text style={styles.disciplineName}>{d.name}</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.text.dimmed} />
-            </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={15} color={onImage.muted} />
+            </Tappable>
           ))}
+          </View>
         </View>
       ))}
       <View style={{ height: 40 }} />
-    </ScrollView>
+    </Animated.ScrollView>
   )
 }
 
@@ -133,6 +150,10 @@ function DisciplinePicker({ onSelect }: { onSelect: (discipline: string) => void
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachAnalyseScreen() {
+  // Drives the backdrop's parallax and blur. Without a scroll driver the
+  // photograph never dissolves — it sits at full strength behind the whole
+  // list, which is what made these two screens unreadable.
+  const scrollY = useRef(new Animated.Value(0)).current
   const { colors: c } = useTheme()
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null)
   const [markInput, setMarkInput] = useState('')
@@ -159,13 +180,16 @@ export default function CoachAnalyseScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <AppHeader onImage />
       {/* Header */}
       <View style={styles.header}>
         {(selectedDiscipline || result) && (
-          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
-          </TouchableOpacity>
+          <Tappable onPress={() => { tapFeedback(); handleBack() }} style={styles.backBtn} accessibilityLabel="Back">
+            <Ionicons name="chevron-back" size={22} color={onImage.ink} />
+          </Tappable>
         )}
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>
@@ -179,14 +203,16 @@ export default function CoachAnalyseScreen() {
 
       {/* Step 1: Pick discipline */}
       {!selectedDiscipline && !result && (
-        <DisciplinePicker onSelect={(d) => setSelectedDiscipline(d)} />
+        <DisciplinePicker onSelect={(d) => setSelectedDiscipline(d)} scrollY={scrollY} />
       )}
 
       {/* Step 2: Enter mark + age */}
       {selectedDiscipline && !result && (
         <KeyboardAvoidingView style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Animated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
             <View style={styles.inputCard}>
               <Text style={styles.inputCardTitle}>{selectedDiscipline}</Text>
               <Text style={styles.inputCardDesc}>
@@ -201,7 +227,7 @@ export default function CoachAnalyseScreen() {
                   <TextInput
                     style={styles.markInput}
                     placeholder={isLowerBetter(selectedDiscipline) ? 'e.g. 10.85 or 1:52.30' : 'e.g. 65.20'}
-                    placeholderTextColor={colors.text.dimmed}
+                    placeholderTextColor={onImage.dim}
                     value={markInput}
                     onChangeText={setMarkInput}
                     keyboardType="numbers-and-punctuation"
@@ -213,7 +239,7 @@ export default function CoachAnalyseScreen() {
                   <TextInput
                     style={styles.markInput}
                     placeholder="e.g. 17"
-                    placeholderTextColor={colors.text.dimmed}
+                    placeholderTextColor={onImage.dim}
                     value={ageInput}
                     onChangeText={setAgeInput}
                     keyboardType="number-pad"
@@ -224,47 +250,49 @@ export default function CoachAnalyseScreen() {
               {/* Gender toggle */}
               <View style={styles.segmentRow}>
                 {(['M', 'F'] as const).map(g => (
-                  <TouchableOpacity key={g}
+                  <Tappable key={g}
                     style={[styles.segmentBtn, sex === g && styles.segmentBtnActive]}
-                    onPress={() => setSex(g)}>
+                    onPress={() => { tapFeedback(); setSex(g) }}>
                     <Text style={[styles.segmentText, sex === g && styles.segmentTextActive]}>
                       {g === 'M' ? 'Male' : 'Female'}
                     </Text>
-                  </TouchableOpacity>
+                  </Tappable>
                 ))}
               </View>
 
-              <TouchableOpacity
+              <Tappable
                 style={[styles.analyseBtn, (!markInput.trim() || !ageInput.trim()) && { opacity: 0.4 }]}
-                onPress={handleAnalyse}
+                onPress={() => { tapFeedback(); handleAnalyse() }}
                 disabled={!markInput.trim() || !ageInput.trim()}
-                activeOpacity={0.7}
               >
                 <Text style={styles.analyseBtnText}>Run Analysis</Text>
-              </TouchableOpacity>
+              </Tappable>
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </KeyboardAvoidingView>
       )}
 
       {/* Step 3: Full 5-Act Analysis */}
       {result && (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
           <FullAnalysis
             discipline={result.discipline}
             mark={result.mark}
             age={result.age}
             sex={result.sex}
           />
-        </ScrollView>
+        </Animated.ScrollView>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   )
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -278,48 +306,63 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.04)',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text.primary,
+    fontSize: typeScale.figure,
+    fontWeight: weight.bold,
+    color: onImage.ink,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 13,
-    color: colors.text.muted,
+    fontSize: typeScale.caption,
+    color: onImage.muted,
     marginTop: 2,
   },
   content: {
     padding: spacing.lg,
     paddingTop: spacing.md,
+    // The tab bar floats over the content rather than bounding it.
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
-  // Chips
-  chipScroll: { marginBottom: spacing.lg, maxHeight: 36 },
+  // Chips — the same chip as FilterRow on the leaderboards, deliberately.
+  // These were 3% white on 6% white: over a photograph that is not a chip,
+  // it is text floating on whatever happens to be behind it, which is how
+  // "Hurdles" ended up at 2.6:1 while "Long" read at 5:1 in the same row.
+  chipScroll: { marginBottom: spacing.lg, maxHeight: 40 },
+  chipRow: { gap: 7, paddingRight: spacing.lg, alignItems: 'center' },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    minHeight: 32,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    borderRadius: radius.full,
+    backgroundColor: onImage.chipPlate,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    marginRight: spacing.sm,
+    borderColor: onImage.chipEdge,
   },
   chipActive: {
-    backgroundColor: colors.orange[500] + '12',
-    borderColor: colors.orange[500] + '30',
+    backgroundColor: colors.orange[500] + '2E',
+    borderColor: colors.orange[500] + '8C',
   },
-  chipText: { fontSize: 12, fontWeight: '600', color: colors.text.muted },
-  chipTextActive: { color: colors.orange[500] },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold, color: onImage.muted },
+  // White, not the accent: the accent on its own 18%-alpha plate over a
+  // photo is a colour on a colour, and it was the palest thing in the row.
+  chipTextActive: { color: '#FFFFFF' },
 
   // Discipline list
   disciplineGroup: { marginBottom: spacing.lg },
+  groupCard: {
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: onImage.cardBorder,
+    backgroundColor: onImage.card,
+    overflow: 'hidden',
+  },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -327,35 +370,37 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingLeft: 2,
   },
-  groupDot: { width: 6, height: 6, borderRadius: 3 },
+  groupDot: { width: 6, height: 6, borderRadius: radius.full },
   groupLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 1.5,
-    color: colors.text.muted,
-    fontWeight: '600',
+    color: onImage.ink,
+    fontWeight: weight.bold,
     textTransform: 'uppercase',
   },
   disciplineRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 4,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 13,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.03)',
+    borderBottomColor: onImage.divider,
     gap: spacing.md,
   },
   disciplineIcon: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: radius.chip,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   disciplineName: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.text.primary,
+    fontSize: typeScale.body,
+    fontWeight: weight.medium,
+    color: onImage.ink,
   },
 
   // Input card
@@ -363,44 +408,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     padding: spacing.xl,
   },
   inputCardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text.primary,
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
+    color: onImage.ink,
     marginBottom: 4,
   },
   inputCardDesc: {
-    fontSize: 13,
-    color: colors.text.muted,
+    fontSize: typeScale.caption,
+    color: onImage.muted,
     marginBottom: spacing.xl,
   },
   inputRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
   inputWrap: {},
   inputLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 2,
-    color: colors.text.muted,
-    fontWeight: '600',
+    color: onImage.muted,
+    fontWeight: weight.medium,
     marginBottom: 6,
   },
   markInput: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text.primary,
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
+    color: onImage.ink,
   },
   segmentRow: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     padding: 3,
@@ -409,18 +454,18 @@ const styles = StyleSheet.create({
   segmentBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: radius.md - 2,
+    borderRadius: radius.control - 2,
     alignItems: 'center',
   },
   segmentBtnActive: { backgroundColor: colors.orange[500] + '15' },
-  segmentText: { fontSize: 14, fontWeight: '600', color: colors.text.muted },
+  segmentText: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted },
   segmentTextActive: { color: colors.orange[500] },
   analyseBtn: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  analyseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  analyseBtnText: { color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold },
 })

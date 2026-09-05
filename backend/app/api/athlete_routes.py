@@ -25,13 +25,28 @@ router = APIRouter(
 # ATHLETE SEARCH & BROWSE
 # ============================================================
 
+# ── A note on `def` vs `async def` in this module ──────────────────────
+# These handlers are declared `def`, not `async def`, on purpose.
+#
+# FastAPI runs an `async def` handler ON the event loop and a plain `def`
+# handler in a threadpool. Every handler below makes SYNCHRONOUS blocking
+# calls -- psycopg2 queries here, the sync OpenAI client in the assistant --
+# so declaring them `async` put a blocking call on the event loop and
+# serialised every concurrent request behind it. The connection pool's ten
+# slots were never reachable, and a 20-second program generation made
+# /health unresponsive for its duration.
+#
+# One athlete never noticed. A coach opening a squad of thirty will.
+# If any of these ever gains a real `await`, it must go back to `async def`.
+# ──────────────────────────────────────────────────────────────────────
+
 @router.get(
     "/athletes",
     status_code=status.HTTP_200_OK,
     summary="Search and browse athletes",
     description="Search athletes by name with optional discipline filter. Powers the dropdown autocomplete.",
 )
-async def search_athletes(
+def search_athletes(
     search: Optional[str] = Query(None, description="Name search query"),
     discipline: Optional[str] = Query(None, description="Discipline code filter (e.g. M100, F400H)"),
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
@@ -101,7 +116,7 @@ async def search_athletes(
     summary="Get athlete profile",
     description="Full athlete profile with personal bests across all disciplines.",
 )
-async def get_athlete(athlete_id: int) -> dict[str, Any]:
+def get_athlete(athlete_id: int) -> dict[str, Any]:
     """Get a single athlete's full profile."""
     with get_db() as (conn, cur):
         # Basic info
@@ -157,7 +172,7 @@ async def get_athlete(athlete_id: int) -> dict[str, Any]:
     summary="Get career trajectory",
     description="Season-by-season performance data for plotting career curves.",
 )
-async def get_trajectory(
+def get_trajectory(
     athlete_id: int,
     discipline: str = Query(..., description="Discipline code (e.g. M100)"),
 ) -> dict[str, Any]:
@@ -207,7 +222,7 @@ async def get_trajectory(
     summary="Get individual race results",
     description="All race results for an athlete in a discipline, optionally filtered by season.",
 )
-async def get_races(
+def get_races(
     athlete_id: int,
     discipline: str = Query(..., description="Discipline code (e.g. M100)"),
     season: Optional[int] = Query(None, description="Filter by season year"),
@@ -255,7 +270,7 @@ async def get_races(
     description="Find athletes with similar performance at a similar age. "
                 "Replaces the hardcoded SIMILAR_ATHLETES pool.",
 )
-async def find_similar_athletes(
+def find_similar_athletes(
     discipline: str = Query(..., description="Discipline code (e.g. M100)"),
     pb: float = Query(..., gt=0, description="Personal best time in seconds"),
     age: int = Query(..., ge=10, le=50, description="Current age"),
@@ -309,7 +324,7 @@ async def find_similar_athletes(
     summary="Get discipline statistics",
     description="Aggregate statistics for a discipline.",
 )
-async def get_discipline_stats(code: str) -> dict[str, Any]:
+def get_discipline_stats(code: str) -> dict[str, Any]:
     """Get aggregate stats for a discipline."""
     with get_db() as (conn, cur):
         cur.execute("SELECT id, name, gender FROM disciplines WHERE code = %s", [code])

@@ -22,8 +22,46 @@
 
 const PRODUCTION = 'https://web-production-295f1.up.railway.app'
 
+import { authHeader } from './supabase'
+
 export const API_BASE: string =
   (process.env.EXPO_PUBLIC_API_BASE || '').trim().replace(/\/+$/, '') || PRODUCTION
 
 /** True when the app is NOT talking to production — worth showing on screen. */
 export const IS_LOCAL_API = API_BASE !== PRODUCTION
+
+/**
+ * Ask the assistant a question about data the CLIENT has already fetched.
+ *
+ * The endpoint deliberately touches no database: everything the model sees
+ * is sent in `context`, pulled under this user's own Supabase auth, where
+ * row-level security and the coach-athlete consent rules already decided
+ * what they may see. So the assistant cannot reach past what the person
+ * asking could have read for themselves.
+ *
+ * It cannot write anything either — a coach action goes through the screen
+ * that owns it, where the validator and the approval flow live.
+ */
+export async function askAssistant(input: {
+  role: 'coach' | 'athlete'
+  question: string
+  context: any
+  history?: { role: 'user' | 'assistant'; content: string }[]
+}): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/v1/assistant`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeader() },
+    body: JSON.stringify({
+      role: input.role,
+      question: input.question,
+      context: input.context ?? {},
+      history: input.history ?? [],
+    }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({} as any))
+    throw new Error((body as any).detail || `Assistant error ${res.status}`)
+  }
+  const { answer } = await res.json()
+  return String(answer || '').trim() || 'No answer came back.'
+}

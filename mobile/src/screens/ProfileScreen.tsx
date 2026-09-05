@@ -10,7 +10,6 @@ import {
   Text,
   ScrollView,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Alert,
   Pressable,
@@ -18,10 +17,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
+import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import SharingSettings from '../components/SharingSettings'
 import { useTheme, type ThemeMode } from '../contexts/ThemeContext'
-import DnaStrip from '../components/DnaCard'
 import ResultsTable from '../components/ResultsTable'
 import { countPersonalBests } from '../lib/resultSemantics'
 import DobField from '../components/DobField'
@@ -40,12 +40,16 @@ import {
   RADAR_AXES,
   buildDnaProfile,
   scoreToTier,
-  findLimitingFactor,
 } from '../lib/disciplineScience'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile } = useAuth()
+  // One screen, two accounts. A coach was being shown their competition
+  // record, their DNA strip, their height and weight and a count of their
+  // personal bests — none of which a coach has, all of which read as empty
+  // states nagging them to log something they will never log.
+  const isCoach = profile?.role === 'coach' || (profile as any)?.account_type === 'coach'
   const { mode: themeMode, setMode: setThemeMode, isDark, colors: c } = useTheme()
   const [editing, setEditing] = useState(false)
   const [metrics, setMetrics] = useState<any[]>([])
@@ -164,7 +168,6 @@ export default function ProfileScreen() {
   // with the PB count gamification awards XP for.
   const pbCount = useMemo(() => countPersonalBests(performances), [performances])
 
-  const limitingFactor = useMemo(() => findLimitingFactor(dnaProfile, null, null), [dnaProfile])
   const firstLog = metrics.length > 0 ? metrics[metrics.length - 1] : null
   const daysSinceStart = firstLog
     ? Math.ceil((Date.now() - new Date(firstLog.recorded_at).getTime()) / 86400000)
@@ -259,7 +262,7 @@ export default function ProfileScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={c.text.primary} />
         </Tappable>
-        <Text style={{ fontSize: 17, fontWeight: '700', color: c.text.primary }}>Profile</Text>
+        <Text style={{ fontSize: typeScale.title, fontWeight: weight.bold, color: c.text.primary }}>Profile</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ════════════════════════════════════════════════════════════════
@@ -274,7 +277,9 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={[styles.displayName, { color: c.text.primary }]}>{profile?.full_name || 'Athlete'}</Text>
+            <Text style={[styles.displayName, { color: c.text.primary }]}>
+              {profile?.full_name || (isCoach ? 'Coach' : 'Athlete')}
+            </Text>
             {profile?.club && <Text style={[styles.clubText, { color: c.text.secondary }]}>{profile.club}</Text>}
 
             <View style={styles.badges}>
@@ -283,10 +288,10 @@ export default function ProfileScreen() {
                   {profile?.role === 'coach' ? 'COACH' : 'ATHLETE'}
                 </Text>
               </View>
-              {overallTier && (
+              {!isCoach && overallTier && (
                 <TierBadge label={`${overallTier.label} · ${overallScore}`} color={overallTier.color} />
               )}
-              <StreakChip count={streak} />
+              {!isCoach && <StreakChip count={streak} />}
             </View>
           </View>
         </HeroCard>
@@ -294,6 +299,7 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             STATS GRID
             ════════════════════════════════════════════════════════════ */}
+        {!isCoach && (
         <AlmanacCard kicker="CAREER STATS" accent={c.accent[500]}>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
@@ -319,62 +325,51 @@ export default function ProfileScreen() {
             </View>
           </View>
         </AlmanacCard>
+        )}
 
-        {/* ── Physical profile ─────────────────────────────────────────
+        {/* ── Athlete DNA ─────────────────────────────────────────
             ONE DNA implementation. The strip opens the full ladder (and the
             tests behind it) in a sheet — the same component Home renders, so
             the detail can't drift or duplicate. ──────────────────────────── */}
         {/* ── Competition record ──────────────────────────────────────
             Every result, including the ones that do not count. See
             ResultsTable for why a DNF has to be visible here. ─────────── */}
-        <SectionLabel>Competition results</SectionLabel>
-        <ResultsTable performances={performances} />
+        {!isCoach && (
+          <>
+            <SectionLabel>Competition results</SectionLabel>
+            <ResultsTable performances={performances} />
 
-        <SectionLabel>Physical profile</SectionLabel>
-
-        <DnaStrip
-          metrics={metrics}
-          discipline={discipline}
-          dob={profile?.dob}
-          onLog={() => navigation.navigate('Log' as never)}
-        />
-
-        {limitingFactor && (
-          <AlmanacCard kicker="FOCUS AREA" title="Limiting factor" accent={c.amber}>
-            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <View style={{
-                width: 38, height: 38, borderRadius: 19,
-                backgroundColor: c.amber + '1F',
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Ionicons name="warning" size={19} color={c.amber} />
-              </View>
+            {/* The physical profile and the DNA moved to Trajectory, under
+                the discipline cards. They are what produces the marks, and
+                nobody opens a screen with sign-out on it to look at their
+                sprint numbers. */}
+            <Tappable
+              onPress={() => navigation.navigate('Trajectory' as never)}
+              accessibilityLabel="Open your physical profile on the Trajectory tab"
+              style={[styles.crossLink, { borderColor: c.glass.border, backgroundColor: c.glass.bg }]}
+            >
+              <Ionicons name="pulse" size={17} color={c.accent[500]} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: c.text.primary }}>
-                  {limitingFactor.axisLabel}
+                <Text style={[styles.crossLinkTitle, { color: c.text.primary }]}>Athlete DNA</Text>
+                <Text style={[styles.crossLinkBody, { color: c.text.secondary }]}>
+                  On Trajectory, under your events
                 </Text>
-                <Text style={{ fontSize: 13, color: c.text.secondary, marginTop: 2 }}>
-                  Score: <Text style={{ color: c.amber, fontWeight: '700' }}>{limitingFactor.score}</Text>
-                </Text>
-                {!!limitingFactor.why && (
-                  <Text style={{ fontSize: 13, color: c.text.secondary, marginTop: 8, lineHeight: 19 }}>
-                    {limitingFactor.why}
-                  </Text>
-                )}
               </View>
-            </View>
-          </AlmanacCard>
+              <Ionicons name="chevron-forward" size={16} color={c.text.dimmed} />
+            </Tappable>
+          </>
         )}
 
         {/* ════════════════════════════════════════════════════════════════
             PROFILE DETAILS — Editable info
             ════════════════════════════════════════════════════════════ */}
-        <AlmanacCard kicker="ATHLETE PROFILE" title="Details" accent={colors.blue}>
+        <AlmanacCard kicker={isCoach ? 'COACH PROFILE' : 'ATHLETE PROFILE'}
+          title="Details" accent={colors.blue}>
           {!editing && (
-            <TouchableOpacity onPress={() => setEditing(true)} style={styles.editBtn}>
+            <Tappable onPress={() => setEditing(true)} style={styles.editBtn}>
               <Ionicons name="pencil" size={13} color={colors.orange[400]} />
               <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
+            </Tappable>
           )}
 
           {editing ? (
@@ -388,28 +383,28 @@ export default function ProfileScreen() {
 
               <View style={{ marginBottom: spacing.lg }}>
                 <Text style={{
-                  fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
-                  color: colors.text.muted, fontWeight: '600', marginBottom: 8,
+                  fontSize: typeScale.label, letterSpacing: 2, textTransform: 'uppercase',
+                  color: colors.text.muted, fontWeight: weight.medium, marginBottom: 8,
                 }}>I compete in</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {([['M', "Men's"], ['F', "Women's"]] as const).map(([v, l]) => (
-                    <TouchableOpacity
+                    <Tappable
                       key={v}
                       onPress={() => setSex(v)}
                       accessibilityLabel={`${l} category${sex === v ? ', selected' : ''}`}
                       style={{
                         flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center',
-                        borderRadius: radius.md,
+                        borderRadius: radius.control,
                         backgroundColor: sex === v ? colors.orange[500] : colors.bg.primary,
                         borderWidth: 1,
                         borderColor: sex === v ? colors.orange[500] : colors.glass.border,
                       }}
                     >
                       <Text style={{
-                        fontSize: 13, fontWeight: '700',
+                        fontSize: typeScale.caption, fontWeight: weight.bold,
                         color: sex === v ? '#FFFFFF' : colors.text.secondary,
                       }}>{l}</Text>
-                    </TouchableOpacity>
+                    </Tappable>
                   ))}
                 </View>
               </View>
@@ -420,34 +415,45 @@ export default function ProfileScreen() {
               <Field label="Weight (kg)" value={form.weight_kg} onChange={(v) => setForm({ ...form, weight_kg: v })} keyboard="decimal-pad" />
 
               <View style={styles.btnRow}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditing(false)}>
+                <Tappable style={styles.cancelBtn} onPress={() => setEditing(false)}>
                   <Text style={styles.cancelBtnText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
+                </Tappable>
+                <Tappable style={styles.saveBtn} onPress={handleSave} disabled={saving}>
                   <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save'}</Text>
-                </TouchableOpacity>
+                </Tappable>
               </View>
             </>
           ) : (
             <>
-              <InfoRow
-                icon="calendar-number-outline" label="Date of birth"
-                value={profile?.dob
-                  ? `${new Date(profile.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${ageFromDob(profile.dob)} yrs`
-                  : 'Not set — tap Edit'}
-              />
-              <InfoRow
-                icon="body-outline" label="Category"
-                value={profile?.sex === 'F' ? "Women's" : profile?.sex === 'M' ? "Men's" : 'Not set — tap Edit'}
-              />
+              {!isCoach && (
+                <>
+                  <InfoRow
+                    icon="calendar-number-outline" label="Date of birth"
+                    value={profile?.dob
+                      ? `${new Date(profile.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${ageFromDob(profile.dob)} yrs`
+                      : 'Not set — tap Edit'}
+                  />
+                  <InfoRow
+                    icon="body-outline" label="Category"
+                    value={profile?.sex === 'F' ? "Women's" : profile?.sex === 'M' ? "Men's" : 'Not set — tap Edit'}
+                  />
+                </>
+              )}
               <InfoRow icon="flag-outline" label="Country" value={profile?.country || '—'} />
-              <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
-              <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
-              <InfoRow icon="calendar-outline" label="Tracking since" value={
-                firstLog
-                  ? new Date(firstLog.recorded_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-                  : '—'
-              } />
+              {!isCoach && (
+                <>
+                  <InfoRow icon="fitness-outline" label="Height" value={physical.height_cm ? `${physical.height_cm} cm` : '—'} />
+                  <InfoRow icon="scale-outline" label="Weight" value={physical.weight_kg ? `${physical.weight_kg} kg` : '—'} />
+                  <InfoRow icon="calendar-outline" label="Tracking since" value={
+                    firstLog
+                      ? new Date(firstLog.recorded_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+                      : '—'
+                  } />
+                </>
+              )}
+              {isCoach && (
+                <InfoRow icon="people-outline" label="Club" value={(profile as any)?.club_school || '—'} />
+              )}
               <InfoRow icon="mail-outline" label="Email" value={user?.email || '—'} />
             </>
           )}
@@ -463,17 +469,22 @@ export default function ProfileScreen() {
         {/* ════════════════════════════════════════════════════════════════
             SIGN OUT
             ════════════════════════════════════════════════════════════ */}
-        <TouchableOpacity style={[styles.signOutBtn, { borderColor: c.red + '20', backgroundColor: c.red + '04' }]}
-          onPress={handleSignOut} activeOpacity={0.7}>
+        {/* Renders nothing at all when this athlete has no coach — see the
+            component for why an empty relationship should not get a screen. */}
+        <SharingSettings userId={user?.id} />
+
+        <Tappable style={[styles.signOutBtn, { borderColor: c.red + '20', backgroundColor: c.red + '04' }]}
+          onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={c.red} />
           <Text style={[styles.signOutText, { color: c.red }]}>Sign Out</Text>
-        </TouchableOpacity>
+        </Tappable>
 
         {/* Version */}
         <Text style={[styles.version, { color: c.text.dimmed }]}>bnchmrkd. v0.1.0</Text>
 
         <View style={{ height: 30 }} />
       </ScrollView>
+
     </SafeAreaView>
   )
 }
@@ -511,14 +522,17 @@ function Field({ label, value, onChange, keyboard }: {
 // ── Styles ──
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg.primary },
-  content: { padding: spacing.lg },
+  // Profile is a TAB on the coach side (where the floating bar hovers over
+  // it) and a pushed screen on the athlete side (where it doesn't). The
+  // clearance is harmless on the pushed one and necessary on the tab.
+  content: { padding: spacing.lg, paddingBottom: TAB_BAR_CLEARANCE },
 
   // Avatar hero
   avatarSection: { alignItems: 'center' },
   avatarRing: {
     width: 92,
     height: 92,
-    borderRadius: 46,
+    borderRadius: radius.full,
     borderWidth: 2,
     borderColor: 'rgba(249,115,22,0.4)',
     alignItems: 'center',
@@ -532,14 +546,14 @@ const styles = StyleSheet.create({
   avatar: {
     width: 78,
     height: 78,
-    borderRadius: 39,
+    borderRadius: radius.full,
     backgroundColor: colors.orange[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 30, fontWeight: '700', color: '#fff' },
-  displayName: { fontSize: 24, fontWeight: '700', color: colors.text.primary },
-  clubText: { color: colors.text.secondary, fontSize: 14, marginTop: 4 },
+  avatarText: { fontSize: typeScale.figure, fontWeight: weight.bold, color: '#fff' },
+  displayName: { fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary },
+  clubText: { color: colors.text.secondary, fontSize: typeScale.body, marginTop: 4 },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -557,8 +571,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(249,115,22,0.3)',
   },
   roleText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: typeScale.label,
+    fontWeight: weight.bold,
     letterSpacing: 1.5,
     color: colors.orange[400],
   },
@@ -569,12 +583,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 22, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5 },
+  statNum: { fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.5 },
   statLabel: {
-    fontSize: 8,
+    fontSize: typeScale.micro,
     letterSpacing: 2,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginTop: 4,
   },
   statDivider: {
@@ -586,11 +600,11 @@ const styles = StyleSheet.create({
   // DNA rows
   dnaRow: { marginBottom: 12 },
   dnaLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  dnaLabel: { color: colors.text.secondary, fontSize: 13, fontWeight: '500' },
+  dnaLabel: { color: colors.text.secondary, fontSize: typeScale.caption, fontWeight: weight.medium },
   dnaScoreRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dnaDot: { width: 5, height: 5, borderRadius: 2.5 },
-  dnaTierText: { fontSize: 11, fontWeight: '700' },
-  dnaNoData: { color: colors.text.dimmed, fontSize: 12 },
+  dnaDot: { width: 5, height: 5, borderRadius: radius.full },
+  dnaTierText: { fontSize: typeScale.label, fontWeight: weight.bold },
+  dnaNoData: { color: colors.text.dimmed, fontSize: typeScale.caption },
 
   // Edit button
   editBtn: {
@@ -606,7 +620,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(249,115,22,0.25)',
   },
-  editBtnText: { color: colors.orange[400], fontSize: 12, fontWeight: '600' },
+  editBtnText: { color: colors.orange[400], fontSize: typeScale.caption, fontWeight: weight.medium },
 
   // Info rows
   infoRow: {
@@ -620,32 +634,32 @@ const styles = StyleSheet.create({
   infoIconWrap: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: radius.chip,
     backgroundColor: 'rgba(255,255,255,0.04)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  infoLabel: { color: colors.text.secondary, fontSize: 14, flex: 1 },
-  infoValue: { color: colors.text.primary, fontSize: 14, fontWeight: '500' },
+  infoLabel: { color: colors.text.secondary, fontSize: typeScale.body, flex: 1 },
+  infoValue: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
 
   // Edit form
   fieldWrap: { marginBottom: spacing.md },
   fieldLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginBottom: 6,
   },
   fieldInput: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.sm,
+    borderRadius: radius.chip,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
-    fontSize: 15,
+    fontSize: typeScale.body,
     color: colors.text.primary,
   },
   btnRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
@@ -653,15 +667,15 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  cancelBtnText: { color: colors.text.secondary, fontWeight: '600' },
+  cancelBtnText: { color: colors.text.secondary, fontWeight: weight.medium },
   saveBtn: {
     flex: 1,
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 14,
     alignItems: 'center',
     shadowColor: colors.orange[500],
@@ -669,7 +683,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  saveBtnText: { color: '#fff', fontWeight: '700' },
+  saveBtnText: { color: '#fff', fontWeight: weight.bold },
 
   // Sign out
   signOutBtn: {
@@ -681,10 +695,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     borderWidth: 1,
     borderColor: 'rgba(251,113,133,0.2)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     backgroundColor: 'rgba(251,113,133,0.04)',
   },
-  signOutText: { color: colors.red, fontSize: 15, fontWeight: '600' },
+  crossLink: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderWidth: 1, borderRadius: radius.card, padding: 15,
+    marginBottom: spacing.lg,
+  },
+  crossLinkTitle: { fontSize: typeScale.body, fontWeight: weight.bold },
+  crossLinkBody: { fontSize: typeScale.caption, marginTop: 2 },
+
+  signOutText: { color: colors.red, fontSize: typeScale.body, fontWeight: weight.medium },
 
   // Theme toggle
   themeRow: {
@@ -699,14 +721,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   themeLabelText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: typeScale.body,
+    fontWeight: weight.medium,
     color: colors.text.primary,
   },
   themeToggle: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     padding: 3,
@@ -717,14 +739,14 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: radius.md - 2,
+    borderRadius: radius.control - 2,
   },
   themeOptionActive: {
     backgroundColor: colors.orange[500] + '15',
   },
   themeOptionText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: typeScale.label,
+    fontWeight: weight.medium,
     color: colors.text.dimmed,
   },
   themeOptionTextActive: {
@@ -735,7 +757,7 @@ const styles = StyleSheet.create({
   version: {
     textAlign: 'center',
     color: colors.text.dimmed,
-    fontSize: 11,
+    fontSize: typeScale.label,
     marginTop: spacing.lg,
     letterSpacing: 1,
   },

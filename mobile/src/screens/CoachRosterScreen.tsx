@@ -4,12 +4,11 @@
 // Inspired by Strava/Whoop: clean typography, no emojis, data-dense cards
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   StyleSheet,
   RefreshControl,
@@ -21,7 +20,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { WA_IMPORT_ENABLED } from '../lib/featureFlags'
 import CoachInvitePanel from '../components/CoachInvitePanel'
 import { useAuth } from '../contexts/AuthContext'
@@ -29,31 +29,21 @@ import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
-import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup, isTimeDiscipline } from '../lib/performanceLevels'
+import { formatMark, isLowerBetter } from '../lib/disciplineScience'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
+import { Tappable } from '../components/ui'
+import AppHeader from '../components/AppHeader'
 import { ageFromDob } from '../lib/age'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
-const isThrowsDiscipline = (d: string) => THROWS.some(t => d?.toLowerCase().includes(t.toLowerCase()))
-
-function formatMark(value: number | null, discipline: string): string {
-  if (!value) return '—'
-  if (isThrowsDiscipline(discipline)) return `${value.toFixed(2)}m`
-  const mins = Math.floor(value / 60)
-  const secs = (value % 60).toFixed(2)
-  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
-}
+// Helpers live in lib/disciplineScience. The local THROWS list that used to
+// sit here listed no JUMPS, so a long jumper's PB was computed as their
+// SHORTEST jump and printed in seconds.
 
 
-function getGreeting(): string {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
 
 // ── Skeleton Loader ─────────────────────────────────────────────────────────
 function SkeletonCard() {
@@ -73,13 +63,13 @@ function SkeletonCard() {
       <View style={cardStyles.leftSection}>
         <Animated.View style={[cardStyles.avatar, { backgroundColor: 'rgba(255,255,255,0.06)', opacity }]} />
         <View style={cardStyles.nameBlock}>
-          <Animated.View style={{ width: 120, height: 14, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 6 }} />
-          <Animated.View style={{ width: 80, height: 10, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
+          <Animated.View style={{ width: 120, height: 14, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 6 }} />
+          <Animated.View style={{ width: 80, height: 10, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
         </View>
       </View>
       <View style={cardStyles.rightSection}>
-        <Animated.View style={{ width: 50, height: 14, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 4 }} />
-        <Animated.View style={{ width: 30, height: 16, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
+        <Animated.View style={{ width: 50, height: 14, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.06)', opacity, marginBottom: 4 }} />
+        <Animated.View style={{ width: 30, height: 16, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.04)', opacity }} />
       </View>
     </View>
   )
@@ -183,11 +173,11 @@ function AddAthleteModal({
       }))
 
       // Compute PB
-      const isThrows = isThrowsDiscipline(discipline || '')
+      const lowerIsBetter = isLowerBetter(discipline || '')
       let pbNumeric: number | null = null
       for (const race of races) {
         if (race.value == null) continue
-        if (pbNumeric == null || (isThrows ? race.value > pbNumeric : race.value < pbNumeric)) {
+        if (pbNumeric == null || (lowerIsBetter ? race.value < pbNumeric : race.value > pbNumeric)) {
           pbNumeric = race.value
         }
       }
@@ -201,9 +191,9 @@ function AddAthleteModal({
       if (sortedRaces.length >= 3) {
         const recent = sortedRaces.slice(0, 3).map((r: any) => r.value).filter(Boolean)
         if (recent.length >= 2) {
-          const improving = isThrows ? recent[0] > recent[recent.length - 1] : recent[0] < recent[recent.length - 1]
+          const improving = lowerIsBetter ? recent[0] < recent[recent.length - 1] : recent[0] > recent[recent.length - 1]
           if (improving) trend = 'up'
-          else if (isThrows ? recent[0] < recent[recent.length - 1] : recent[0] > recent[recent.length - 1]) trend = 'down'
+          else if (lowerIsBetter ? recent[0] > recent[recent.length - 1] : recent[0] < recent[recent.length - 1]) trend = 'down'
         }
       }
 
@@ -257,15 +247,15 @@ function AddAthleteModal({
             <Text style={modalStyles.headerTitle}>
               {method === 'manual' ? 'Manual Entry' : method === 'url' ? 'World Athletics Import' : method === 'invite' ? 'Invite Athlete' : 'Add Athlete'}
             </Text>
-            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            <Tappable onPress={() => { tapFeedback(); handleClose() }} hitSlop={12} accessibilityLabel="Close"
               style={modalStyles.closeBtn}>
-              <Ionicons name="close" size={18} color={colors.text.muted} />
-            </TouchableOpacity>
+              <Ionicons name="close" size={18} color={onImage.muted} />
+            </Tappable>
           </View>
 
           {!method && (
             <View style={modalStyles.methodPicker}>
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('invite')} activeOpacity={0.7}>
+              <Tappable style={modalStyles.methodCard} onPress={() => { tapFeedback(); setMethod('invite') }}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(249,115,22,0.08)' }]}>
                   <Ionicons name="mail-outline" size={22} color={colors.orange[500]} />
                 </View>
@@ -273,10 +263,10 @@ function AddAthleteModal({
                   <Text style={modalStyles.methodTitle}>Invite Athlete</Text>
                   <Text style={modalStyles.methodDesc}>They approve before you see their data</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
-              </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
+              </Tappable>
 
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('manual')} activeOpacity={0.7}>
+              <Tappable style={modalStyles.methodCard} onPress={() => { tapFeedback(); setMethod('manual') }}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(167,139,250,0.08)' }]}>
                   <Ionicons name="person-add-outline" size={22} color="#a78bfa" />
                 </View>
@@ -284,11 +274,11 @@ function AddAthleteModal({
                   <Text style={modalStyles.methodTitle}>Manual Entry</Text>
                   <Text style={modalStyles.methodDesc}>Private record — name, discipline, DOB</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
-              </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
+              </Tappable>
 
               {WA_IMPORT_ENABLED && (
-              <TouchableOpacity style={modalStyles.methodCard} onPress={() => setMethod('url')} activeOpacity={0.7}>
+              <Tappable style={modalStyles.methodCard} onPress={() => { tapFeedback(); setMethod('url') }}>
                 <View style={[modalStyles.methodIconWrap, { backgroundColor: 'rgba(59,130,246,0.08)' }]}>
                   <Ionicons name="globe-outline" size={22} color={colors.blue} />
                 </View>
@@ -296,19 +286,19 @@ function AddAthleteModal({
                   <Text style={modalStyles.methodTitle}>World Athletics</Text>
                   <Text style={modalStyles.methodDesc}>Import from athlete profile URL</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.dimmed} />
-              </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={16} color={onImage.dim} />
+              </Tappable>
               )}
             </View>
           )}
 
           {method === 'invite' && (
             <View style={{ flex: 1, paddingBottom: spacing.lg }}>
-              <TouchableOpacity onPress={() => setMethod(null)}
+              <Tappable onPress={() => { tapFeedback(); setMethod(null) }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
-                <Ionicons name="chevron-back" size={16} color={colors.text.muted} />
-                <Text style={{ color: colors.text.muted, fontSize: 13 }}>Back</Text>
-              </TouchableOpacity>
+                <Ionicons name="chevron-back" size={16} color={onImage.muted} />
+                <Text style={{ color: onImage.muted, fontSize: typeScale.caption }}>Back</Text>
+              </Tappable>
               <CoachInvitePanel />
             </View>
           )}
@@ -318,42 +308,42 @@ function AddAthleteModal({
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>NAME</Text>
                 <TextInput style={modalStyles.input} placeholder="Athlete name"
-                  placeholderTextColor={colors.text.dimmed} value={name}
+                  placeholderTextColor={onImage.dim} value={name}
                   onChangeText={setName} autoCapitalize="words" />
               </View>
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>DISCIPLINE</Text>
                 <TextInput style={modalStyles.input} placeholder="e.g. 100m, Discus Throw"
-                  placeholderTextColor={colors.text.dimmed} value={discipline}
+                  placeholderTextColor={onImage.dim} value={discipline}
                   onChangeText={setDiscipline} />
               </View>
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>GENDER</Text>
                 <View style={modalStyles.segmentRow}>
                   {(['Male', 'Female'] as const).map((g) => (
-                    <TouchableOpacity key={g}
+                    <Tappable key={g}
                       style={[modalStyles.segmentBtn, gender === g && modalStyles.segmentBtnActive]}
-                      onPress={() => setGender(g)}>
+                      onPress={() => { tapFeedback(); setGender(g) }}>
                       <Text style={[modalStyles.segmentText, gender === g && modalStyles.segmentTextActive]}>{g}</Text>
-                    </TouchableOpacity>
+                    </Tappable>
                   ))}
                 </View>
               </View>
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>DATE OF BIRTH</Text>
                 <TextInput style={modalStyles.input} placeholder="YYYY-MM-DD (optional)"
-                  placeholderTextColor={colors.text.dimmed} value={dob}
+                  placeholderTextColor={onImage.dim} value={dob}
                   onChangeText={setDob} keyboardType="numbers-and-punctuation" />
               </View>
               {error ? <Text style={modalStyles.error}>{error}</Text> : null}
-              <TouchableOpacity style={[modalStyles.primaryBtn, loading && { opacity: 0.6 }]}
-                onPress={handleManualSave} disabled={loading}>
+              <Tappable style={[modalStyles.primaryBtn, loading && { opacity: 0.6 }]}
+                onPress={() => { tapFeedback(); handleManualSave() }} disabled={loading}>
                 <Text style={modalStyles.primaryBtnText}>{loading ? 'Adding...' : 'Add to Squad'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setMethod(null)} style={modalStyles.backLink}>
-                <Ionicons name="chevron-back" size={14} color={colors.text.muted} />
+              </Tappable>
+              <Tappable onPress={() => { tapFeedback(); setMethod(null) }} style={modalStyles.backLink}>
+                <Ionicons name="chevron-back" size={14} color={onImage.muted} />
                 <Text style={modalStyles.backLinkText}>Back</Text>
-              </TouchableOpacity>
+              </Tappable>
               <View style={{ height: 40 }} />
             </ScrollView>
           )}
@@ -362,9 +352,9 @@ function AddAthleteModal({
             <View style={modalStyles.form}>
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>ATHLETE URL</Text>
-                <TextInput style={[modalStyles.input, { fontSize: 14 }]}
+                <TextInput style={[modalStyles.input, { fontSize: typeScale.body }]}
                   placeholder="https://worldathletics.org/athletes/..."
-                  placeholderTextColor={colors.text.dimmed} value={urlInput}
+                  placeholderTextColor={onImage.dim} value={urlInput}
                   onChangeText={setUrlInput} autoCapitalize="none" keyboardType="url" multiline />
               </View>
               {urlProgress ? (
@@ -374,14 +364,14 @@ function AddAthleteModal({
                 </View>
               ) : null}
               {error ? <Text style={modalStyles.error}>{error}</Text> : null}
-              <TouchableOpacity style={[modalStyles.primaryBtn, loading && { opacity: 0.6 }]}
-                onPress={handleUrlImport} disabled={loading}>
+              <Tappable style={[modalStyles.primaryBtn, loading && { opacity: 0.6 }]}
+                onPress={() => { tapFeedback(); handleUrlImport() }} disabled={loading}>
                 <Text style={modalStyles.primaryBtnText}>{loading ? 'Importing...' : 'Import Athlete'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setMethod(null)} style={modalStyles.backLink}>
-                <Ionicons name="chevron-back" size={14} color={colors.text.muted} />
+              </Tappable>
+              <Tappable onPress={() => { tapFeedback(); setMethod(null) }} style={modalStyles.backLink}>
+                <Ionicons name="chevron-back" size={14} color={onImage.muted} />
                 <Text style={modalStyles.backLinkText}>Back</Text>
-              </TouchableOpacity>
+              </Tappable>
             </View>
           )}
         </View>
@@ -419,12 +409,12 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
   }, [athlete])
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.6} style={cardStyles.cardOuter}>
+    <Tappable onPress={() => { tapFeedback(); onPress() }} style={cardStyles.cardOuter} hitSlop={0}>
       <View style={cardStyles.card}>
         {/* Avatar with tier-colored ring */}
-        <View style={[cardStyles.avatarRing, { borderColor: (tier?.color || colors.text.dimmed) + '30' }]}>
-          <View style={[cardStyles.avatar, { backgroundColor: (tier?.color || colors.text.dimmed) + '12' }]}>
-            <Text style={[cardStyles.avatarText, { color: tier?.color || colors.text.muted }]}>
+        <View style={[cardStyles.avatarRing, { borderColor: (tier?.color || onImage.dim) + '30' }]}>
+          <View style={[cardStyles.avatar, { backgroundColor: (tier?.color || onImage.dim) + '12' }]}>
+            <Text style={[cardStyles.avatarText, { color: tier?.color || onImage.muted }]}>
               {athlete.name?.charAt(0)?.toUpperCase() || '?'}
             </Text>
           </View>
@@ -462,7 +452,7 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
           {tier ? (
             <View style={[cardStyles.tierBadge, { backgroundColor: tier.color + '14', borderColor: tier.color + '25' }]}>
               <View style={[cardStyles.tierDot, { backgroundColor: tier.color }]} />
-              <Text style={[cardStyles.tierText, { color: tier.color }]}>
+              <Text style={[cardStyles.tierText, { color: TIER_INK[tier.tier] || tier.color }]}>
                 {TIER_SHORT[tier.tier]}
               </Text>
             </View>
@@ -471,14 +461,18 @@ function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }
           ) : null}
         </View>
 
-        <Ionicons name="chevron-forward" size={14} color={colors.text.dimmed} style={{ marginLeft: 2 }} />
+        <Ionicons name="chevron-forward" size={14} color={onImage.dim} style={{ marginLeft: 2 }} />
       </View>
-    </TouchableOpacity>
+    </Tappable>
   )
 }
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function CoachRosterScreen() {
+  // Drives the backdrop's parallax and blur. Without a scroll driver the
+  // photograph never dissolves — it sits at full strength behind the whole
+  // list, which is what made these two screens unreadable.
+  const scrollY = useRef(new Animated.Value(0)).current
   const { user, profile } = useAuth()
   const { colors: c } = useTheme()
   const navigation = useNavigation<any>()
@@ -561,32 +555,41 @@ export default function CoachRosterScreen() {
   }, [roster])
 
   const ageGroups = ['all', 'U13', 'U15', 'U17', 'U20', 'Senior']
-  const firstName = profile?.full_name?.split(' ')[0] || 'Coach'
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <AppHeader onImage />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
+          <Tappable
+            onPress={() => { tapFeedback(); navigation.goBack() }}
+            accessibilityLabel="Back"
+            style={{ width: 36, height: 36, borderRadius: radius.full, marginRight: 4,
+                     alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+          </Tappable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>{getGreeting()}, {firstName}</Text>
             <Text style={styles.title}>Your Squad</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <TouchableOpacity
+            <Tappable
               style={styles.scanBtn}
-              onPress={() => navigation.navigate('CoachResults')}
-              activeOpacity={0.7}
+              onPress={() => { tapFeedback(); navigation.navigate('CoachResults') }}
+              accessibilityLabel="Scan results"
             >
               <Ionicons name="scan-outline" size={18} color={colors.orange[500]} />
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Tappable>
+            <Tappable
               style={styles.addBtn}
-              onPress={() => setAddModalVisible(true)}
-              activeOpacity={0.7}
+              onPress={() => { tapFeedback(); setAddModalVisible(true) }}
+              accessibilityLabel="Add athlete"
             >
               <Ionicons name="add" size={20} color="#fff" />
-            </TouchableOpacity>
+            </Tappable>
           </View>
         </View>
 
@@ -630,18 +633,18 @@ export default function CoachRosterScreen() {
       {/* Search */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Ionicons name="search-outline" size={16} color={colors.text.dimmed} />
+          <Ionicons name="search-outline" size={16} color={onImage.dim} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name or discipline"
-            placeholderTextColor={colors.text.dimmed}
+            placeholderTextColor={onImage.dim}
             value={search}
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={16} color={colors.text.dimmed} />
-            </TouchableOpacity>
+            <Tappable onPress={() => { tapFeedback(); setSearch('') }} hitSlop={8} accessibilityLabel="Clear search">
+              <Ionicons name="close-circle" size={16} color={onImage.dim} />
+            </Tappable>
           )}
         </View>
       </View>
@@ -650,25 +653,27 @@ export default function CoachRosterScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}
         contentContainerStyle={{ paddingHorizontal: spacing.lg }}>
         {ageGroups.map(ag => (
-          <TouchableOpacity key={ag}
+          <Tappable key={ag}
             style={[styles.chip, filterAgeGroup === ag && styles.chipActive]}
-            onPress={() => setFilterAgeGroup(ag)}>
+            onPress={() => { tapFeedback(); setFilterAgeGroup(ag) }}>
             <Text style={[styles.chipText, filterAgeGroup === ag && styles.chipTextActive]}>
               {ag === 'all' ? 'All' : ag}
             </Text>
-          </TouchableOpacity>
+          </Tappable>
         ))}
       </ScrollView>
 
       {/* Roster list */}
       {loading ? (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
           {[1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
-        </ScrollView>
+        </Animated.ScrollView>
       ) : filtered.length === 0 ? (
         <View style={styles.emptyWrap}>
           <View style={styles.emptyIconWrap}>
-            <Ionicons name="people-outline" size={32} color={colors.text.dimmed} />
+            <Ionicons name="people-outline" size={32} color={onImage.dim} />
           </View>
           <Text style={styles.emptyTitle}>
             {roster.length === 0 ? 'No athletes yet' : 'No matches'}
@@ -680,8 +685,10 @@ export default function CoachRosterScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={styles.content}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.orange[500]} />}
           showsVerticalScrollIndicator={false}
         >
@@ -695,11 +702,11 @@ export default function CoachRosterScreen() {
             <AthleteCard
               key={athlete.id}
               athlete={athlete}
-              onPress={() => navigation.navigate('AthleteDetail', { athlete })}
+              onPress={() => { tapFeedback(); navigation.navigate('AthleteDetail', { athlete }) }}
             />
           ))}
           <View style={{ height: 40 }} />
-        </ScrollView>
+        </Animated.ScrollView>
       )}
 
       <AddAthleteModal
@@ -708,13 +715,14 @@ export default function CoachRosterScreen() {
         onSaved={() => fetchRoster()}
         coachId={user?.id || ''}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   )
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1, backgroundColor: BACKDROP_GROUND },
 
   header: {
     paddingHorizontal: spacing.lg,
@@ -729,21 +737,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   greeting: {
-    fontSize: 13,
-    color: colors.text.muted,
-    fontWeight: '500',
+    fontSize: typeScale.caption,
+    color: onImage.muted,
+    fontWeight: weight.medium,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text.primary,
+    fontSize: typeScale.figure,
+    fontWeight: weight.bold,
+    color: onImage.ink,
     marginTop: 2,
     letterSpacing: -0.5,
   },
   addBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     backgroundColor: colors.orange[500],
     justifyContent: 'center',
     alignItems: 'center',
@@ -756,7 +764,7 @@ const styles = StyleSheet.create({
   scanBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(249,115,22,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(249,115,22,0.25)',
@@ -770,19 +778,19 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },
   quickStatItem: { flex: 1, alignItems: 'center' },
-  quickStatNum: { fontSize: 20, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5 },
-  quickStatLabel: { fontSize: 10, letterSpacing: 1, color: colors.text.muted, fontWeight: '500', marginTop: 2, textTransform: 'uppercase' },
+  quickStatNum: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink, letterSpacing: -0.5 },
+  quickStatLabel: { fontSize: typeScale.label, letterSpacing: 1, color: onImage.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   quickStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
 
   tierBar: {
     flexDirection: 'row',
     height: 3,
-    borderRadius: 1.5,
+    borderRadius: radius.full,
     overflow: 'hidden',
     marginTop: spacing.md,
   },
@@ -799,15 +807,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
     height: 42,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: colors.text.primary,
+    fontSize: typeScale.body,
+    color: onImage.ink,
     paddingVertical: 0,
   },
 
@@ -818,7 +826,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 18,
+    borderRadius: radius.card,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -828,7 +836,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.orange[500] + '12',
     borderColor: colors.orange[500] + '30',
   },
-  chipText: { fontSize: 12, fontWeight: '600', color: colors.text.muted },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.medium, color: onImage.muted },
   chipTextActive: { color: colors.orange[500] },
 
   content: {
@@ -836,10 +844,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   listCount: {
-    fontSize: 11,
+    fontSize: typeScale.label,
     letterSpacing: 1,
-    color: colors.text.dimmed,
-    fontWeight: '500',
+    color: onImage.dim,
+    fontWeight: weight.medium,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
     marginTop: spacing.xs,
@@ -854,7 +862,7 @@ const styles = StyleSheet.create({
   emptyIconWrap: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -863,14 +871,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.text.primary,
+    fontSize: typeScale.title,
+    fontWeight: weight.medium,
+    color: onImage.ink,
     marginBottom: 6,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: colors.text.muted,
+    fontSize: typeScale.body,
+    color: onImage.muted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -891,7 +899,7 @@ const cardStyles = StyleSheet.create({
   avatarRing: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.full,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -899,39 +907,39 @@ const cardStyles = StyleSheet.create({
   avatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { fontSize: 14, fontWeight: '700' },
+  avatarText: { fontSize: typeScale.body, fontWeight: weight.bold },
   nameBlock: { flex: 1, marginLeft: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 15, fontWeight: '600', color: colors.text.primary },
+  name: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink },
   trendDot: {
     width: 14,
     height: 14,
-    borderRadius: 7,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  meta: { fontSize: 12, color: colors.text.muted, marginTop: 1 },
+  meta: { fontSize: typeScale.caption, color: onImage.muted, marginTop: 1 },
 
   rightSection: { alignItems: 'flex-end', marginLeft: spacing.md },
-  pbValue: { fontSize: 15, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.3 },
-  noPb: { fontSize: 14, color: colors.text.dimmed },
+  pbValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: onImage.ink, letterSpacing: -0.3 },
+  noPb: { fontSize: typeScale.body, color: onImage.dim },
   tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: radius.chip,
     borderWidth: 1,
     marginTop: 3,
   },
-  tierDot: { width: 5, height: 5, borderRadius: 2.5 },
-  tierText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
-  raceCount: { fontSize: 10, color: colors.text.dimmed, marginTop: 3 },
+  tierDot: { width: 5, height: 5, borderRadius: radius.full },
+  tierText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.5 },
+  raceCount: { fontSize: typeScale.label, color: onImage.dim, marginTop: 3 },
 })
 
 // ── Modal Styles ────────────────────────────────────────────────────────────
@@ -942,7 +950,7 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.bg.secondary,
+    backgroundColor: onImage.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: spacing.sm,
@@ -953,7 +961,7 @@ const modalStyles = StyleSheet.create({
   handle: {
     width: 36,
     height: 4,
-    borderRadius: 2,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignSelf: 'center',
     marginBottom: spacing.lg,
@@ -964,11 +972,11 @@ const modalStyles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.text.primary },
+  headerTitle: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink },
   closeBtn: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -986,37 +994,37 @@ const modalStyles = StyleSheet.create({
   methodIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: radius.control,
     justifyContent: 'center',
     alignItems: 'center',
   },
   methodInfo: { flex: 1 },
-  methodTitle: { fontSize: 15, fontWeight: '600', color: colors.text.primary },
-  methodDesc: { fontSize: 12, color: colors.text.muted, marginTop: 1 },
+  methodTitle: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink },
+  methodDesc: { fontSize: typeScale.caption, color: onImage.muted, marginTop: 1 },
 
   form: { gap: 0 },
   inputWrap: { marginBottom: spacing.lg },
   label: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 2,
-    color: colors.text.muted,
-    fontWeight: '600',
+    color: onImage.muted,
+    fontWeight: weight.medium,
     marginBottom: 6,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
-    fontSize: 16,
-    color: colors.text.primary,
+    fontSize: typeScale.body,
+    color: onImage.ink,
   },
   segmentRow: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     padding: 3,
@@ -1024,18 +1032,18 @@ const modalStyles = StyleSheet.create({
   segmentBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: radius.md - 2,
+    borderRadius: radius.control - 2,
     alignItems: 'center',
   },
   segmentBtnActive: {
     backgroundColor: colors.orange[500] + '15',
   },
-  segmentText: { fontSize: 14, fontWeight: '600', color: colors.text.muted },
+  segmentText: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted },
   segmentTextActive: { color: colors.orange[500] },
 
   error: {
     color: colors.red,
-    fontSize: 13,
+    fontSize: typeScale.caption,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
@@ -1048,18 +1056,18 @@ const modalStyles = StyleSheet.create({
   progressDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: radius.full,
     backgroundColor: colors.orange[500],
   },
-  progressText: { color: colors.orange[500], fontSize: 13, fontWeight: '500' },
+  progressText: { color: colors.orange[500], fontSize: typeScale.caption, fontWeight: weight.medium },
 
   primaryBtn: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  primaryBtnText: { color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold },
 
   backLink: {
     flexDirection: 'row',
@@ -1068,5 +1076,5 @@ const modalStyles = StyleSheet.create({
     gap: 4,
     marginTop: spacing.lg,
   },
-  backLinkText: { color: colors.text.muted, fontSize: 14, fontWeight: '500' },
+  backLinkText: { color: onImage.muted, fontSize: typeScale.body, fontWeight: weight.medium },
 })

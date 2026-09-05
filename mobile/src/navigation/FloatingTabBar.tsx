@@ -31,7 +31,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { useTheme } from '../contexts/ThemeContext'
-import { onImage } from '../lib/theme'
+import { onImage, typeScale, weight, radius } from '../lib/theme'
+import { useApprovals } from '../contexts/ApprovalsContext'
 import { tapFeedback } from '../lib/haptics'
 
 /** Bottom padding a scrolling screen needs so its last row clears the bar. */
@@ -44,19 +45,38 @@ const ICONS: Record<string, [string, string]> = {
   Home: ['home', 'home-outline'],
   Programs: ['barbell', 'barbell-outline'],
   Trajectory: ['trending-up', 'trending-up-outline'],
+  // Coach side
+  Squad: ['people', 'people-outline'],
+  Analyse: ['flash', 'flash-outline'],
+  Schedule: ['calendar', 'calendar-outline'],
+  Leaderboards: ['podium', 'podium-outline'],
+  Boards: ['podium', 'podium-outline'],
+  CoachProfile: ['person', 'person-outline'],
 }
 
-export default function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function FloatingTabBar({
+  state, descriptors, navigation, actionRoute = 'Log', actionIcon = 'add',
+}: BottomTabBarProps & { actionRoute?: string; actionIcon?: string }) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
-  // The Log route is pulled OUT of the row and rendered as the action button.
-  // Indices are kept from the original list so focus and navigation still
-  // refer to the real routes.
+  // One route is pulled OUT of the row and rendered as the action button —
+  // Log for an athlete, Assign for a coach. It is named rather than assumed,
+  // because the two stacks have different routes and neither should have to
+  // know about the other's. Indices are kept from the original list so focus
+  // and navigation still refer to the real routes.
+  //
+  // If the named route isn't in this stack there simply is no button, and the
+  // pill takes the full width. That is the correct state before the coach's
+  // Assign screen exists, rather than a button that goes nowhere.
+  // Answers owed, so a coach on any tab can see that somebody is waiting.
+  // The badge sits on Home because Home is where the inbox opens.
+  const { count: owed } = useApprovals()
+
   const items = state.routes
     .map((route, index) => ({ route, index }))
-    .filter(({ route }) => route.name !== 'Log')
-  const log = state.routes.findIndex((r) => r.name === 'Log')
+    .filter(({ route }) => route.name !== actionRoute)
+  const log = state.routes.findIndex((r) => r.name === actionRoute)
   const logFocused = state.index === log
 
   const go = (index: number, isFocused: boolean) => {
@@ -93,7 +113,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
             backgroundColor: colors.accent[500] + (logFocused ? 'FF' : 'F0'),
           }]} />
           <View pointerEvents="none" style={styles.fabEdge} />
-          <Ionicons name="add" size={28} color="#FFFFFF" />
+          <Ionicons name={actionIcon as any} size={28} color="#FFFFFF" />
         </Pressable>
       )}
 
@@ -124,17 +144,25 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
               accessibilityLabel={label}
               style={({ pressed }) => [styles.item, pressed && { opacity: 0.7 }]}
             >
-              <Ionicons
-                name={(isFocused ? on : off) as any}
-                size={21}
-                color={isFocused ? '#FFFFFF' : onImage.navDim}
-              />
+              <View>
+                <Ionicons
+                  name={(isFocused ? on : off) as any}
+                  size={21}
+                  color={isFocused ? '#FFFFFF' : onImage.navDim}
+                />
+                {/* A dot, not a number. The count is on the banner one tap
+                    away; here the only question is "is there anything?", and
+                    a two-digit badge on a 21pt icon is unreadable anyway. */}
+                {route.name === 'Home' && owed > 0 && !isFocused && (
+                  <View style={styles.badge} />
+                )}
+              </View>
               <Text
                 numberOfLines={1}
                 style={[
                   styles.label,
                   { color: isFocused ? '#FFFFFF' : onImage.navDim },
-                  isFocused && { fontWeight: '700' },
+                  isFocused && { fontWeight: weight.bold },
                 ]}
               >
                 {label}
@@ -190,5 +218,13 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center',
     gap: 3, paddingVertical: 8, minHeight: 48,
   },
-  label: { fontSize: 8.5, letterSpacing: 1, fontWeight: '600' },
+  // Positioned off the icon's top-right, with a ring in the pill's own
+  // colour so it reads as a dot ON the icon rather than a stray pixel.
+  badge: {
+    position: 'absolute', top: -2, right: -4,
+    width: 9, height: 9, borderRadius: radius.hair,
+    backgroundColor: '#8B83FF',
+    borderWidth: 1.5, borderColor: 'rgba(28,30,48,0.98)',
+  },
+  label: { fontSize: typeScale.micro, letterSpacing: 1, fontWeight: weight.medium },
 })

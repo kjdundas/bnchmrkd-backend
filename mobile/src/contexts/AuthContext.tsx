@@ -1,5 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase, selectFrom, insertInto, updateIn, setCachedToken } from '../lib/supabase'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { supabase, selectFrom, insertInto, updateIn, setCachedToken, getCachedToken, SUPABASE_URL } from '../lib/supabase'
+
+// ── The session, recovered without getSession() ──────────────────────
+//
+// getSession() can hang indefinitely on the gotrue Web Locks bug — that is
+// why the REST helpers cache the token instead of calling it. The startup
+// path below still called it, guarded by a 3s timeout that gave up and let
+// the app render. When it hung, the timeout fired, the app came up looking
+// signed in, and setCachedToken was NEVER called: every read then ran as
+// anon and returned [] with a 200, and every write returned 401 into a
+// silent catch. A check-in buzzed and did nothing.
+//
+// So the timeout no longer just gives up. It reads the persisted session
+// straight out of storage — the same place supabase-js keeps it — and
+// caches the token itself. An expired one is treated as absent, which is
+// the honest answer: writes then fail loudly with 'you're signed out'
+// rather than quietly.
+const SESSION_KEY = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`
+
+async function tokenFromStorage(): Promise<string | null> {
+  try {
+    const raw = await AsyncStorage.getItem(SESSION_KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw)
+    const sess = p?.currentSession ?? p
+    const token = sess?.access_token ?? null
+    const expiresAt = Number(sess?.expires_at ?? 0)
+    // 30s of slack so a token about to expire is not treated as usable.
+    if (!token || (expiresAt && Date.now() / 1000 > expiresAt - 30)) return null
+    return token
+  } catch {
+    return null
+  }
+}
 import type { Session, User } from '@supabase/supabase-js'
 
 // user_profiles table — matches web app structure
@@ -169,7 +203,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Safety timeout: never stay on splash more than 3s
-    const timeout = setTimeout(() => setLoading(false), 3000)
+    const timeout = setTimeout(async () => {
+      // getSession() never came back. Recover the token ourselves rather than
+      // rendering a signed-in app with no credentials behind it.
+      if (!getCachedToken()) {
+        const token = await tokenFromStorage()
+        if (token) setCachedToken(token)
+      }
+      setLoading(false)
+    }, 3000)
+
+    // Prime the token from storage straight away. getSession() may resolve
+    // late rather than never, and until it does every REST call would run as
+    // anon. Whatever getSession() or the auth listener returns overwrites this
+    // a moment later.
+    tokenFromStorage().then((t) => { if (t && !getCachedToken()) setCachedToken(t) })
 
     // Get initial session
     supabase.auth
@@ -186,13 +234,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
       })
 
-    // Listen for auth changes — also cache the token for REST helpers
+    // Listen for auth changes — also cache the token for REST helpers.
+    //
+    // This callback MUST stay synchronous. supabase-js runs it while holding
+    // the auth lock, and awaiting inside it deadlocks that lock — the same
+    // Web Locks failure that makes getSession() hang. It was `async` and
+    // awaited fetchProfile, so after a sign-out/sign-in the lock never
+    // cleared, later events stopped arriving, and the cached token silently
+    // went stale. Every REST call then fell through to the anon key: reads
+    // came back 200-with-nothing, writes came back 401, and the check-in
+    // button did nothing at all.
+    //
+    // So: cache the token first, on the same tick, and push the profile fetch
+    // out to a later one where it is free to await whatever it likes.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, s) => {
+      (_event, s) => {
         setSession(s)
         setCachedToken(s?.access_token ?? null)
-        if (s?.user) await fetchProfile(s.user.id, s)
-        else setProfile(null)
+        if (s?.user) {
+          const uid = s.user.id
+          setTimeout(() => { fetchProfile(uid, s) }, 0)
+        } else {
+          setProfile(null)
+        }
       },
     )
     return () => {

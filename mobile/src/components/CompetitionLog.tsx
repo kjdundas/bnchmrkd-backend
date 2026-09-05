@@ -8,32 +8,31 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Animated,
-} from 'react-native'
+  Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 // Rendered only from the Log tab, which runs on the dark ground under
 // <OnImageTheme/>. This file was still on the static LIGHT palette, so every
 // label was #16181D — near-black ink on #0B0C18. The event chips were
 // technically on screen the whole time and completely unreadable.
-import { onImageColors as colors, spacing, radius, fonts, onImage } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import { insertInto, selectFrom } from '../lib/supabase'
 import {
   RESULT_STATUSES, ROUNDS, PROGRESSIONS, ROUND_LABEL,
   isWindAffected, isCompleted, countsForAnalysis, roundHasProgression,
-  countPersonalBests, optionalNumber, WIND_LIMIT, type ResultStatus,
-} from '../lib/resultSemantics'
+  countPersonalBests, optionalNumber, WIND_LIMIT, type ResultStatus } from '../lib/resultSemantics'
 import { isLowerBetter, performancePercentile, performanceZoneLabel } from '../lib/disciplineScience'
-import { GlassCard, SectionHeader } from './ui'
+import {
+  GlassCard,
+  SectionHeader,
+  Tappable } from './ui'
 import { loadProgress, saveProgress } from '../lib/progress'
 import {
   calculateLogXP, calculateStreak, getLevelFromXP,
-  getEarnedBadges, getMotivationalMessage, type Badge,
-} from '../lib/gamification'
+  getEarnedBadges, getMotivationalMessage, type Badge } from '../lib/gamification'
 
 // Parse a competition mark. Field events: plain metres ("7.85"). Time events:
 // seconds ("10.52"), m:ss ("1:52.30") or h:mm:ss ("2:05:30" for marathon).
@@ -61,13 +60,11 @@ function parseCompetitionMark(raw: string, isTime: boolean): number | null {
 // A selectable option. `danger` tints the non-completion statuses, so DNF and
 // DQ do not read as neutral alternatives to finishing.
 function Pill({
-  label, active, danger, onPress,
-}: { label: string; active: boolean; danger?: boolean; onPress: () => void }) {
+  label, active, danger, onPress }: { label: string; active: boolean; danger?: boolean; onPress: () => void }) {
   const on = active ? (danger ? colors.red : colors.accent[500]) : null
   return (
-    <TouchableOpacity
+    <Tappable
       onPress={onPress}
-      activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={label}
@@ -77,7 +74,7 @@ function Pill({
       ]}
     >
       <Text style={[styles.pillText, on ? { color: on } : null]}>{label}</Text>
-    </TouchableOpacity>
+    </Tappable>
   )
 }
 
@@ -171,8 +168,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
       }
       const thisRow = {
         status, mark: numMark, discipline,
-        wind_mps: isWindAffected(discipline) ? numWind : null,
-      }
+        wind_mps: isWindAffected(discipline) ? numWind : null }
       const eligible = countsForAnalysis(thisRow, discipline)
       const isPB = eligible && (priorPB == null
         || (lower ? numMark! < priorPB : numMark! > priorPB))
@@ -193,8 +189,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
         wind_mps: isWindAffected(discipline) ? numWind : null,
         competition_name: competition || null,
         competition_date: logDate,
-        sex: profile?.sex || profile?.gender || 'M',
-      })
+        sex: profile?.sex || profile?.gender || 'M' })
 
       // Benchmarks. Only a legal result has a percentile — ranking a DQ or a
       // wind-assisted mark against the population would be a flattering lie,
@@ -214,8 +209,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
         // marks, cannot count a DNF or a voided time as a best.
         const allPerfs = [...prior, {
           discipline, mark: numMark, competition_date: logDate,
-          status, wind_mps: thisRow.wind_mps,
-        }]
+          status, wind_mps: thisRow.wind_mps }]
         const allDates = allPerfs.map((p) => p.competition_date).filter(Boolean)
         const newStreak = calculateStreak(allDates)
         const logsToday = allDates.filter((d) => String(d).slice(0, 10) === logDate).length
@@ -224,8 +218,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
           isPB, hasNotes: false,
           isFirstEver: prior.length === 0,
           isNewCategory: false,
-          logsToday, currentStreak: newStreak.current,
-        })
+          logsToday, currentStreak: newStreak.current })
 
         const progress = await loadProgress(user.id)
         const prevXP = progress?.totalXP ?? 0
@@ -240,8 +233,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
           totalXP: newTotalXP,
           daysActive: new Set(allDates.map((d) => String(d).slice(0, 10))).size,
           logsToday,
-          uniqueMetrics: 0,
-        }
+          uniqueMetrics: 0 }
         const earnedIds = getEarnedBadges(stats).map((b) => b.id)
         const prevIds = new Set(progress?.badgesEarned ?? [])
         const freshBadges = getEarnedBadges(stats).filter((b) => !prevIds.has(b.id))
@@ -254,8 +246,7 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
           longestStreak: stats.longestStreak,
           badgesEarned: earnedIds,
           lastLogDate: logDate,
-          bootstrapped: true,
-        })
+          bootstrapped: true })
 
         setXpEarned(xpResult.total)
         setXpBreakdown(xpResult.breakdown)
@@ -342,9 +333,9 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
           </GlassCard>
         )}
 
-        <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
+        <Tappable style={styles.doneBtn} onPress={onClose}>
           <Text style={styles.doneBtnText}>Done</Text>
-        </TouchableOpacity>
+        </Tappable>
       </ScrollView>
     )
   }
@@ -354,12 +345,12 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
     return (
       <ScrollView contentContainerStyle={styles.pickerContent}>
         <View style={styles.pickerHeader}>
-          <TouchableOpacity
+          <Tappable
             onPress={onClose} hitSlop={12} style={styles.headerBtn}
             accessibilityRole="button" accessibilityLabel="Close"
           >
             <Ionicons name="close" size={22} color={colors.text.secondary} />
-          </TouchableOpacity>
+          </Tappable>
           <Text style={styles.pickerTitle}>Log Competition</Text>
           <View style={{ width: 44 }} />
         </View>
@@ -370,14 +361,13 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
             <Text style={styles.groupLabel}>{group.group}</Text>
             <View style={styles.disciplineGrid}>
               {group.items.map((d) => (
-                <TouchableOpacity
+                <Tappable
                   key={d}
                   style={styles.disciplineChip}
                   onPress={() => setDiscipline(d)}
-                  activeOpacity={0.7}
                 >
                   <Text style={styles.disciplineText}>{d}</Text>
-                </TouchableOpacity>
+                </Tappable>
               ))}
             </View>
           </View>
@@ -397,12 +387,12 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
   return (
     <ScrollView contentContainerStyle={styles.inputContent} keyboardShouldPersistTaps="handled">
       <View style={styles.pickerHeader}>
-        <TouchableOpacity
+        <Tappable
           onPress={() => setDiscipline(null)} hitSlop={12} style={styles.headerBtn}
           accessibilityRole="button" accessibilityLabel="Back to events"
         >
           <Ionicons name="arrow-back" size={22} color={colors.text.secondary} />
-        </TouchableOpacity>
+        </Tappable>
         <Text style={styles.pickerTitle}>{discipline}</Text>
         <View style={{ width: 44 }} />
       </View>
@@ -544,14 +534,13 @@ export default function CompetitionLog({ onClose }: CompetitionLogProps) {
         </View>
       )}
 
-      <TouchableOpacity
+      <Tappable
         style={[styles.logBtn, (!mark || saving) && { opacity: 0.4 }]}
         onPress={handleSave}
         disabled={!mark || saving}
-        activeOpacity={0.8}
       >
         <Text style={styles.logBtnText}>{saving ? 'Saving…' : 'Log Result'}</Text>
-      </TouchableOpacity>
+      </Tappable>
     </ScrollView>
   )
 }
@@ -560,31 +549,26 @@ const styles = StyleSheet.create({
   // Discipline picker
   pickerContent: { padding: spacing.lg, paddingBottom: TAB_BAR_CLEARANCE },
   headerBtn: {
-    width: 44, height: 44, alignItems: 'flex-start', justifyContent: 'center',
-  },
+    width: 44, height: 44, alignItems: 'flex-start', justifyContent: 'center' },
   pickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   pickerTitle: {
-    fontSize: 20, fontWeight: '700', color: colors.text.primary,
-    letterSpacing: -0.3,
-  },
+    fontSize: typeScale.title, fontWeight: weight.bold, color: colors.text.primary,
+    letterSpacing: -0.3 },
   pickerSub: {
-    color: colors.text.secondary, fontSize: 14, marginBottom: spacing.xl,
-  },
+    color: colors.text.secondary, fontSize: typeScale.body, marginBottom: spacing.xl },
 
   groupWrap: { marginBottom: spacing.lg },
   groupLabel: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     letterSpacing: 2,
     textTransform: 'uppercase',
     color: colors.text.muted,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
+    fontWeight: weight.medium,
+    marginBottom: spacing.sm },
   disciplineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   disciplineChip: {
     // 4% fill with an 8% border on #0B0C18 is a 1.05:1 edge — the chips were
@@ -598,43 +582,38 @@ const styles = StyleSheet.create({
     // for the boundary of a control. 0.34 lands at 3.02:1. These chips are
     // the only thing on the screen to tap, so their edge has to be findable.
     borderColor: 'rgba(255,255,255,0.34)',
-    borderRadius: 12,
+    borderRadius: radius.control,
     paddingHorizontal: 18,
     minHeight: 44,
-    justifyContent: 'center',
-  },
+    justifyContent: 'center' },
   disciplineText: {
-    color: colors.text.primary, fontSize: 14.5, fontWeight: '600',
-  },
+    color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
 
   // Mark input
   inputContent: { padding: spacing.xxl, paddingBottom: TAB_BAR_CLEARANCE },
   inputLabel: {
     color: colors.text.secondary,
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: typeScale.caption,
+    fontWeight: weight.medium,
     marginBottom: spacing.sm,
-    marginTop: spacing.lg,
-  },
+    marginTop: spacing.lg },
   markInput: {
-    fontSize: 44,
-    fontWeight: '700',
+    fontSize: typeScale.display,
+    fontWeight: weight.bold,
     color: colors.orange[400],
     textAlign: 'center',
     borderBottomWidth: 2,
     borderBottomColor: colors.orange[500] + '40',
-    paddingVertical: spacing.md,
-  },
+    paddingVertical: spacing.md },
   compInput: {
     backgroundColor: colors.bg.input,
     borderWidth: 1,
     borderColor: colors.bg.inputBorder,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
-    fontSize: 16,
-    color: colors.text.primary,
-  },
+    fontSize: typeScale.body,
+    color: colors.text.primary },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -642,92 +621,80 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(251,113,133,0.08)',
     borderWidth: 1,
     borderColor: 'rgba(251,113,133,0.2)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.md,
-    marginTop: spacing.lg,
-  },
+    marginTop: spacing.lg },
   errorText: {
     color: colors.red,
-    fontSize: 13,
+    fontSize: typeScale.caption,
     lineHeight: 18,
-    flex: 1,
-  },
+    flex: 1 },
   logBtn: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 18,
     alignItems: 'center',
-    marginTop: spacing.xxl,
-  },
-  logBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
+    marginTop: spacing.xxl },
+  logBtnText: { color: '#fff', fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: 0.5 },
 
   // Success
   successView: { padding: spacing.xxl, alignItems: 'center', paddingTop: 60 },
   successIcon: { marginBottom: spacing.md },
-  successTitle: { fontSize: 24, fontWeight: '700', color: colors.green, marginBottom: 4 },
-  successDiscipline: { fontSize: 16, color: colors.text.secondary },
-  successMark: { fontSize: 40, fontWeight: '700', color: colors.text.primary, marginTop: spacing.sm },
+  successTitle: { fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.green, marginBottom: 4 },
+  successDiscipline: { fontSize: typeScale.body, color: colors.text.secondary },
+  successMark: { fontSize: typeScale.display, fontWeight: weight.bold, color: colors.text.primary, marginTop: spacing.sm },
   benchmarkRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
-  },
-  benchmarkLabel: { color: colors.text.secondary, fontSize: 14 },
-  benchmarkValue: { fontSize: 18, fontWeight: '700' },
-  benchmarkZone: { color: colors.text.primary, fontSize: 14, fontWeight: '600' },
+    borderBottomColor: 'rgba(255,255,255,0.04)' },
+  benchmarkLabel: { color: colors.text.secondary, fontSize: typeScale.body },
+  benchmarkValue: { fontSize: typeScale.title, fontWeight: weight.bold },
+  benchmarkZone: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
   doneBtn: {
     marginTop: spacing.xxl,
     paddingHorizontal: 40,
     paddingVertical: 14,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: colors.text.dimmed,
-  },
-  doneBtnText: { color: colors.text.primary, fontSize: 15, fontWeight: '600' },
+    borderColor: colors.text.dimmed },
+  doneBtnText: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
 
   // Input hint + gamification on success screen
-  inputHint: { color: colors.text.muted, fontSize: 11, marginTop: 6, lineHeight: 16 },
+  inputHint: { color: colors.text.muted, fontSize: typeScale.label, marginTop: 6, lineHeight: 16 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
   pill: {
     // 44pt minimum touch target (Apple HIG) — these read as small chips but
     // are full-size targets.
     minHeight: 44, minWidth: 44, paddingHorizontal: 14, justifyContent: 'center',
-    borderRadius: radius.md, borderWidth: 1,
-    borderColor: colors.glass.border, backgroundColor: colors.bg.primary,
-  },
-  pillText: { fontSize: 13, fontWeight: '700', color: colors.text.secondary },
+    borderRadius: radius.control, borderWidth: 1,
+    borderColor: colors.glass.border, backgroundColor: colors.bg.primary },
+  pillText: { fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.text.secondary },
   pbTag: {
-    color: colors.orange[400], fontSize: 11, fontWeight: '700',
-    letterSpacing: 2, marginTop: 4,
-  },
+    color: colors.orange[400], fontSize: typeScale.label, fontWeight: weight.bold,
+    letterSpacing: 2, marginTop: 4 },
   celebMsg: {
-    color: colors.text.secondary, fontSize: 14, textAlign: 'center',
-    marginTop: spacing.md, lineHeight: 20, paddingHorizontal: spacing.lg,
-  },
+    color: colors.text.secondary, fontSize: typeScale.body, textAlign: 'center',
+    marginTop: spacing.md, lineHeight: 20, paddingHorizontal: spacing.lg },
   xpHeaderRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  xpHeaderLabel: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
-  xpHeaderValue: { color: colors.orange[400], fontSize: 20, fontWeight: '800' },
+    marginBottom: spacing.sm },
+  xpHeaderLabel: { color: colors.text.secondary, fontSize: typeScale.caption, fontWeight: weight.medium },
+  xpHeaderValue: { color: colors.orange[400], fontSize: typeScale.title, fontWeight: weight.bold },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  xpRowReason: { color: colors.text.muted, fontSize: 12 },
-  xpRowVal: { color: colors.orange[400], fontSize: 12, fontWeight: '700' },
+  xpRowReason: { color: colors.text.muted, fontSize: typeScale.caption },
+  xpRowVal: { color: colors.orange[400], fontSize: typeScale.caption, fontWeight: weight.bold },
   levelUpRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: spacing.md, paddingTop: spacing.md,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)',
-  },
-  levelUpText: { color: colors.text.primary, fontSize: 13, fontWeight: '700' },
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' },
+  levelUpText: { color: colors.text.primary, fontSize: typeScale.caption, fontWeight: weight.bold },
   badgeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md },
   badgeChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
-  },
-  badgeIcon: { fontSize: 14 },
-  badgeTitle: { color: colors.text.primary, fontSize: 12, fontWeight: '600' },
-})
+    borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 5 },
+  badgeIcon: { fontSize: typeScale.body },
+  badgeTitle: { color: colors.text.primary, fontSize: typeScale.caption, fontWeight: weight.medium } })

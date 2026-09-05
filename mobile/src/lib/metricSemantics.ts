@@ -17,15 +17,17 @@ export const THROWS = [
 export const isThrowsDiscipline = (d?: string | null) =>
   THROWS.some((t) => (d || '').toLowerCase().includes(t.toLowerCase()))
 
-/** Throws print in metres; everything else as ss.xx s or m:ss.xx. */
-export function formatMark(value: number | null | undefined, discipline?: string | null): string {
-  if (value == null || !Number.isFinite(Number(value))) return '—'
-  const v = Number(value)
-  if (isThrowsDiscipline(discipline)) return `${v.toFixed(2)}m`
-  const mins = Math.floor(v / 60)
-  const secs = (v % 60).toFixed(2)
-  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
-}
+/**
+ * Field events print in metres, combined events in points, everything else
+ * as a time. Re-exported from disciplineScience so there is one answer.
+ *
+ * This used to key off isThrowsDiscipline above, which lists no JUMPS — so a
+ * 7.20 m long jump printed as "7.20s" on every screen that formats a mark.
+ * The right question isn't "is this a throw", it's "is a bigger number
+ * better", which isLowerBetter already answers for jumps, throws and
+ * combined events alike.
+ */
+export { formatMark } from './disciplineScience'
 
 // ── PB direction ───────────────────────────────────────────────────
 // Metrics where a LOWER value is the better result. This is the UNION of the
@@ -45,6 +47,28 @@ export const LOWER_IS_BETTER = new Set<string>([
 export const NO_PB = new Set<string>([
   'body_mass', 'standing_height', 'sitting_height', 'wingspan', 'lean_mass',
 ])
+
+/**
+ * The one gate for "does this reading count".
+ *
+ * It exists for the same reason countsForAnalysis does on the results side:
+ * there are five places that read metrics and a sixth that will be written
+ * next month, and a rule copied into each of them is a rule that will
+ * disagree with itself. Absent approval means accepted — every row logged
+ * before the approval flow existed, and every row belonging to an athlete
+ * with no coach, carries no approval and must not vanish.
+ */
+export function countsAsMetric(row: any): boolean {
+  const a = row?.approval
+  return a == null || a === 'accepted'
+}
+
+/** Waiting on an answer. A DECLINED reading is not pending — it has been
+ *  answered, and the answer was no. Counting it as waiting would leave a
+ *  "1 awaiting approval" line on screen that no action can ever clear. */
+export function isMetricPending(row: any): boolean {
+  return row?.approval === 'pending'
+}
 
 export const isLowerBetter = (key: string) => LOWER_IS_BETTER.has(key)
 export const hasNoPb = (key: string) => NO_PB.has(key)
@@ -66,6 +90,10 @@ export interface MetricGroup {
   latest: MetricRow
   best: MetricRow
   history: MetricRow[]
+  /** Readings logged but not yet answered by the other party. Never in the
+   *  maths above — this is only so a screen can say why a number it can see
+   *  in its own log is not the number it is showing. */
+  pending: number
 }
 
 /**
@@ -75,12 +103,23 @@ export interface MetricGroup {
  */
 export function groupMetrics(metrics: MetricRow[] | null | undefined): MetricGroup[] {
   const byKey: Record<string, MetricGroup> = {}
+  const pendingBy: Record<string, number> = {}
   for (const r of metrics || []) {
     if (r?.value == null) continue
+    // A reading the other party has not answered is not yet a fact about
+    // this athlete, exactly as an unapproved race result is not. Counted,
+    // so the screen can say so, but never folded into latest, best or the
+    // history the rings and trends are drawn from.
+    if (!countsAsMetric(r)) {
+      if (r.metric_key && isMetricPending(r)) {
+        pendingBy[r.metric_key] = (pendingBy[r.metric_key] || 0) + 1
+      }
+      continue
+    }
     if (!byKey[r.metric_key]) {
       byKey[r.metric_key] = {
         key: r.metric_key, label: r.metric_label, unit: r.unit,
-        latest: r, best: r, history: [r],
+        latest: r, best: r, history: [r], pending: 0,
       }
     } else {
       const g = byKey[r.metric_key]
@@ -94,6 +133,15 @@ export function groupMetrics(metrics: MetricRow[] | null | undefined): MetricGro
   const groups = Object.values(byKey)
   for (const g of groups) {
     g.history.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime())
+    g.pending = pendingBy[g.key] || 0
+  }
+  // A metric whose ONLY readings are pending still deserves a row, or the
+  // athlete logs a test and watches it disappear without a word.
+  for (const [k, n] of Object.entries(pendingBy)) {
+    if (byKey[k]) continue
+    const r = (metrics || []).find((x) => x.metric_key === k && isMetricPending(x))!
+    groups.push({ key: k, label: r.metric_label, unit: r.unit,
+      latest: r, best: r, history: [], pending: n })
   }
   return groups.sort(
     (a, b) => new Date(b.latest.recorded_at).getTime() - new Date(a.latest.recorded_at).getTime()

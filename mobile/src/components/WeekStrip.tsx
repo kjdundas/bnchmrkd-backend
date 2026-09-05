@@ -27,7 +27,7 @@ import Svg, { Circle } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius, numerals } from '../lib/theme'
+import { spacing, radius, numerals, typeScale, weight } from '../lib/theme'
 import { READINESS_COLORS } from '../lib/readiness'
 import {
   WEEKDAY_LETTER, weekHeading, weekLabel, parseDay,
@@ -95,10 +95,14 @@ export default function WeekStrip({
           written as a paragraph nobody could act on. This is that paragraph,
           cut into the week you are actually in. */}
       {week.blocks.map((b) => (
-        <BlockRow key={b.programId} b={b} />
+        <BlockRow key={b.programId} b={b} multi={week.blocks.length > 1} />
       ))}
 
-      {/* ── Week total ───────────────────────────────────────────── */}
+      {/* ── Week total, and what the dots meant ──────────────────
+          The dots under each day had no legend at all: a green one meant a
+          check-in that came back green, a hollow one meant no check-in, and
+          nothing on the screen said so. Now the key sits under the strip
+          that uses it. */}
       <View style={s.summary}>
         <MonoKicker color={colors.text.muted}>
           {week.plannedCount === 0
@@ -109,11 +113,20 @@ export default function WeekStrip({
           <Text style={[s.suggested, { color: colors.text.muted }]}>Days suggested</Text>
         )}
       </View>
+
+      <View style={s.legend}>
+        <View style={[s.legendDot, { backgroundColor: READINESS_COLORS.green }]} />
+        <Text style={[s.legendText, { color: colors.text.muted }]}>checked in</Text>
+        <View style={[s.legendDot, {
+          backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.glass.borderHover,
+        }]} />
+        <Text style={[s.legendText, { color: colors.text.muted }]}>not yet</Text>
+      </View>
     </View>
   )
 }
 
-function BlockRow({ b }: { b: BlockWeek }) {
+function BlockRow({ b, multi }: { b: BlockWeek; multi?: boolean }) {
   const { colors } = useTheme()
   const deload = b.phase === 'deload'
   // A finished block is said plainly. Rolling on to "week 6 of 4" would be a
@@ -134,9 +147,18 @@ function BlockRow({ b }: { b: BlockWeek }) {
             </Text>
           </View>
         )}
-        <Text numberOfLines={1} style={[s.blockTitle, { color: colors.text.muted }]}>
-          {b.programTitle}
-        </Text>
+        {/* The programme name was here, truncated to "4-Week Off-Season
+            General Preparation Pro…" — and again on every session row, and
+            again on the card below. Three copies, none of them readable in
+            full. The card below is the one that has room for it, so this
+            row carries the thing only it knows: where in the block you are.
+            It comes back the moment there is more than one block running
+            and you need to know which this is. */}
+        {multi && (
+          <Text numberOfLines={1} style={[s.blockTitle, { color: colors.text.muted }]}>
+            {b.programTitle}
+          </Text>
+        )}
       </View>
       <Text style={[s.blockText, { color: colors.text.secondary }]}>
         {b.finished
@@ -180,7 +202,7 @@ function Day({ d, selected, onPress }: { d: DayCell; selected: boolean; onPress:
     >
       <Text style={[s.letter, {
         color: d.isToday ? colors.accent[500] : colors.text.muted,
-        fontWeight: d.isToday ? '800' : '600',
+        fontWeight: d.isToday ? weight.bold : weight.medium,
       }]}>
         {WEEKDAY_LETTER[d.weekday - 1]}
       </Text>
@@ -204,7 +226,7 @@ function Day({ d, selected, onPress }: { d: DayCell; selected: boolean; onPress:
         <View style={s.centre}>
           <Text style={[s.date, {
             color: d.isToday ? colors.text.primary : colors.text.secondary,
-            fontWeight: d.isToday ? '800' : '600',
+            fontWeight: d.isToday ? weight.bold : weight.medium,
           }]}>
             {parseDay(d.date).getDate()}
           </Text>
@@ -231,39 +253,42 @@ function Day({ d, selected, onPress }: { d: DayCell; selected: boolean; onPress:
 const s = StyleSheet.create({
   nav: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   arrow: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.07)',
   },
-  heading: { fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
-  range: { fontSize: 11, marginTop: 2, fontWeight: '600' },
+  heading: { fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: -0.2 },
+  range: { fontSize: typeScale.label, marginTop: 2, fontWeight: weight.medium },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   day: {
     flex: 1, alignItems: 'center', paddingVertical: 8,
-    borderRadius: radius.md, gap: 0,
+    borderRadius: radius.control, gap: 0,
   },
-  letter: { fontSize: 10.5, letterSpacing: 0.5 },
+  letter: { fontSize: typeScale.label, letterSpacing: 0.5 },
   centre: {
     position: 'absolute', left: 0, right: 0, top: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
   },
-  date: { fontSize: 13, ...numerals },
-  dot: { width: 7, height: 7, borderRadius: 3.5, marginTop: 6 },
+  date: { fontSize: typeScale.caption, ...numerals },
+  dot: { width: 7, height: 7, borderRadius: radius.full, marginTop: 6 },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  legendDot: { width: 6, height: 6, borderRadius: radius.full },
+  legendText: { fontSize: typeScale.micro, letterSpacing: 0.4, marginRight: 6 },
   // 5pt rather than 4: a 4pt mark on a translucent panel over a photograph
   // is under the 3:1 a non-text indicator needs to be seen at all.
   pips: { flexDirection: 'row', gap: 3, height: 5, marginTop: 5, alignItems: 'center' },
-  pip: { width: 5, height: 5, borderRadius: 2.5 },
+  pip: { width: 5, height: 5, borderRadius: radius.full },
   summary: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: spacing.md,
   },
-  suggested: { fontSize: 10, fontWeight: '600', letterSpacing: 0.3 },
+  suggested: { fontSize: typeScale.label, fontWeight: weight.medium, letterSpacing: 0.3 },
   block: {
-    marginTop: spacing.md, padding: 12, borderRadius: radius.md, borderWidth: 1, gap: 5,
+    marginTop: spacing.md, padding: 12, borderRadius: radius.control, borderWidth: 1, gap: 5,
   },
-  blockWeek: { fontSize: 12.5, fontWeight: '800', letterSpacing: 0.2 },
-  phase: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
-  phaseText: { fontSize: 8.5, fontWeight: '800', letterSpacing: 0.9 },
-  blockTitle: { fontSize: 11, flexShrink: 1 },
-  blockText: { fontSize: 12, lineHeight: 17 },
+  blockWeek: { fontSize: typeScale.caption, fontWeight: weight.bold, letterSpacing: 0.2 },
+  phase: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: radius.hair },
+  phaseText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.9 },
+  blockTitle: { fontSize: typeScale.label, flexShrink: 1 },
+  blockText: { fontSize: typeScale.caption, lineHeight: 17 },
 })

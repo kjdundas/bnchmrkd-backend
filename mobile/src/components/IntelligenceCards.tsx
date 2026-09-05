@@ -13,7 +13,6 @@ import {
   Text,
   StyleSheet,
   Animated,
-  TouchableOpacity,
   Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -21,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 // file was still on the static LIGHT palette — the swap repaints every
 // reference below in one line, and is safe precisely because there is no
 // light-surface caller to preserve.
-import { onImageColors as colors, spacing, radius } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import {
   buildDnaProfile,
   scoreToTier,
@@ -35,7 +34,11 @@ import {
   disciplineFamily,
   isLowerBetter,
 } from '../lib/disciplineScience'
-import { AlmanacCard, MonoKicker } from './ui'
+import {
+  AlmanacCard,
+  MonoKicker,
+  Tappable,
+} from './ui'
 
 // ═══════════════════════════════════════════════════════════════════════
 // 1. DNA SHIFT CARD — Shows axis changes after logging a metric
@@ -196,9 +199,9 @@ export function MetricImpactLine({ metricKey, value, unit, discipline, sex, visi
       <View style={{ flex: 1 }}>
         {percentile != null && percentile > 0 && (
           <Text style={styles.impactText}>
-            <Text style={{ color: colors.teal, fontWeight: '700' }}>{value}{unit}</Text>
+            <Text style={{ color: colors.teal, fontWeight: weight.bold }}>{value}{unit}</Text>
             {' '}places you at the{' '}
-            <Text style={{ color: colors.text.primary, fontWeight: '600' }}>
+            <Text style={{ color: colors.text.primary, fontWeight: weight.medium }}>
               {ordinal(percentile)} percentile
             </Text>
             {' '}for {discipline} athletes.
@@ -206,7 +209,7 @@ export function MetricImpactLine({ metricKey, value, unit, discipline, sex, visi
         )}
         {expectedVal != null && Math.abs(expectedVal - value) > 0.01 && (
           <Text style={styles.impactSubText}>
-            Semifinalist average: <Text style={{ color: colors.amber, fontWeight: '600' }}>{expectedVal.toFixed(1)}{unit}</Text>
+            Semifinalist average: <Text style={{ color: colors.amber, fontWeight: weight.medium }}>{expectedVal.toFixed(1)}{unit}</Text>
             {impactSecs != null && Math.abs(impactSecs) > 0.001 && (
               <Text> · Bridging the gap could save ~{Math.abs(impactSecs).toFixed(2)}s</Text>
             )}
@@ -279,14 +282,14 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
 
   return (
     <AlmanacCard kicker="WHAT IF" title="Scenario Explorer" accent={colors.purple}>
-      <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
+      <Tappable onPress={() => setExpanded(!expanded)}>
         <View style={styles.whatIfHeader}>
           <View style={styles.whatIfLimitIcon}>
             <Ionicons name="flask" size={16} color={colors.purple} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.whatIfQuestion}>
-              What if your <Text style={{ color: colors.purple, fontWeight: '700' }}>{metricLabel || metricKey?.replace(/_/g, ' ')}</Text> improved?
+              What if your <Text style={{ color: colors.purple, fontWeight: weight.bold }}>{metricLabel || metricKey?.replace(/_/g, ' ')}</Text> improved?
             </Text>
             <Text style={styles.whatIfSub}>
               Your weakest axis: {axisLabel} ({score}/100)
@@ -294,7 +297,7 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
           </View>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.text.muted} />
         </View>
-      </TouchableOpacity>
+      </Tappable>
 
       {expanded && (
         <View style={styles.whatIfBody}>
@@ -318,19 +321,18 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
             {steps.map((val, i) => {
               const isActive = Math.abs(val - current) < stepSize * 0.3
               return (
-                <TouchableOpacity
+                <Tappable
                   key={i}
                   style={[
                     styles.whatIfStep,
                     isActive && { backgroundColor: colors.purple + '20', borderColor: colors.purple + '50' },
                   ]}
                   onPress={() => setSliderValue(val)}
-                  activeOpacity={0.7}
                 >
                   <Text style={[styles.whatIfStepText, isActive && { color: colors.purple }]}>
                     {i === 0 ? 'Now' : `+${i}`}
                   </Text>
-                </TouchableOpacity>
+                </Tappable>
               )
             })}
           </View>
@@ -343,7 +345,7 @@ export function WhatIfExplorer({ dnaProfile, discipline, pb, sex, metrics }: Wha
               <View style={{ flex: 1 }}>
                 <Text style={styles.whatIfResultTitle}>Estimated Impact</Text>
                 <Text style={styles.whatIfResultValue}>
-                  <Text style={{ color: colors.green, fontWeight: '800', fontSize: 18 }}>
+                  <Text style={{ color: colors.green, fontWeight: weight.bold, fontSize: typeScale.title }}>
                     {impact > 0 ? '-' : '+'}{Math.abs(impact).toFixed(3)}s
                   </Text>
                   <Text style={styles.whatIfResultDisc}> on your {discipline}</Text>
@@ -574,7 +576,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(249,115,22,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(249,115,22,0.15)',
-    borderRadius: radius.xl,
+    borderRadius: radius.card,
     padding: spacing.lg,
     marginTop: spacing.lg,
   },
@@ -587,20 +589,20 @@ const styles = StyleSheet.create({
   dnaShiftIconWrap: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: radius.chip,
     backgroundColor: 'rgba(139,131,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   dnaShiftKicker: {
-    fontSize: 8,
+    fontSize: typeScale.micro,
     letterSpacing: 2,
     color: colors.orange[400],
-    fontWeight: '700',
+    fontWeight: weight.bold,
   },
   dnaShiftTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: typeScale.body,
+    fontWeight: weight.medium,
     color: colors.text.primary,
     marginTop: 2,
   },
@@ -616,8 +618,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52,211,153,0.2)',
   },
   dnaShiftBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: typeScale.caption,
+    fontWeight: weight.bold,
     color: colors.green,
   },
   dnaAxisRow: {
@@ -628,32 +630,32 @@ const styles = StyleSheet.create({
   },
   dnaAxisLabel: {
     width: 80,
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: typeScale.label,
+    fontWeight: weight.medium,
     color: colors.text.secondary,
     textTransform: 'capitalize',
   },
   dnaBarTrack: {
     flex: 1,
     height: 6,
-    borderRadius: 3,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.04)',
     overflow: 'hidden',
   },
   dnaBarFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: radius.full,
   },
   dnaAxisScore: {
     width: 28,
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: typeScale.caption,
+    fontWeight: weight.bold,
     textAlign: 'right',
   },
   dnaAxisDelta: {
     width: 36,
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: typeScale.label,
+    fontWeight: weight.bold,
     textAlign: 'right',
   },
 
@@ -665,26 +667,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(45,212,191,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(45,212,191,0.15)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     padding: spacing.md,
     marginTop: spacing.md,
   },
   impactDot: {
     width: 24,
     height: 24,
-    borderRadius: 8,
+    borderRadius: radius.chip,
     backgroundColor: 'rgba(45,212,191,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
   },
   impactText: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: colors.text.secondary,
     lineHeight: 19,
   },
   impactSubText: {
-    fontSize: 12,
+    fontSize: typeScale.caption,
     color: colors.text.muted,
     lineHeight: 18,
     marginTop: 4,
@@ -699,18 +701,18 @@ const styles = StyleSheet.create({
   whatIfLimitIcon: {
     width: 36,
     height: 36,
-    borderRadius: 11,
+    borderRadius: radius.chip,
     backgroundColor: 'rgba(167,139,250,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   whatIfQuestion: {
-    fontSize: 14,
+    fontSize: typeScale.body,
     color: colors.text.primary,
-    fontWeight: '500',
+    fontWeight: weight.medium,
   },
   whatIfSub: {
-    fontSize: 11,
+    fontSize: typeScale.label,
     color: colors.text.muted,
     marginTop: 2,
   },
@@ -732,28 +734,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     paddingHorizontal: 24,
     paddingVertical: 14,
     minWidth: 100,
   },
   whatIfStatLabel: {
-    fontSize: 8,
+    fontSize: typeScale.micro,
     letterSpacing: 2,
-    fontWeight: '700',
+    fontWeight: weight.bold,
     color: colors.text.dimmed,
     marginBottom: 4,
   },
   whatIfStatVal: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: typeScale.stat,
+    fontWeight: weight.bold,
     color: colors.text.primary,
     letterSpacing: -0.5,
   },
   whatIfStatUnit: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     color: colors.text.muted,
-    fontWeight: '600',
+    fontWeight: weight.medium,
     marginTop: 2,
   },
   whatIfSliderRow: {
@@ -771,8 +773,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
   },
   whatIfStepText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: typeScale.label,
+    fontWeight: weight.medium,
     color: colors.text.muted,
   },
   whatIfResult: {
@@ -782,7 +784,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(52,211,153,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(52,211,153,0.2)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     padding: spacing.lg,
     marginBottom: spacing.md,
     position: 'relative',
@@ -794,29 +796,29 @@ const styles = StyleSheet.create({
     right: -30,
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: radius.full,
     backgroundColor: colors.green,
     opacity: 0.06,
   },
   whatIfResultTitle: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 1.5,
-    fontWeight: '700',
+    fontWeight: weight.bold,
     color: colors.text.muted,
     textTransform: 'uppercase',
   },
   whatIfResultValue: {
-    fontSize: 14,
+    fontSize: typeScale.body,
     color: colors.text.primary,
     marginTop: 4,
   },
   whatIfResultDisc: {
-    fontSize: 13,
-    fontWeight: '400',
+    fontSize: typeScale.caption,
+    fontWeight: weight.regular,
     color: colors.text.secondary,
   },
   whatIfContext: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     color: colors.text.dimmed,
     lineHeight: 15,
     fontStyle: 'italic',
@@ -827,7 +829,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(251,191,36,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(251,191,36,0.12)',
-    borderRadius: radius.xl,
+    borderRadius: radius.card,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -838,9 +840,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   milestoneKicker: {
-    fontSize: 8,
+    fontSize: typeScale.micro,
     letterSpacing: 2,
-    fontWeight: '700',
+    fontWeight: weight.bold,
     color: colors.amber,
   },
   milestoneRow: {
@@ -852,23 +854,23 @@ const styles = StyleSheet.create({
   milestoneIcon: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: radius.chip,
     alignItems: 'center',
     justifyContent: 'center',
   },
   milestoneLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: typeScale.caption,
+    fontWeight: weight.medium,
     color: colors.text.primary,
   },
   milestoneGap: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: typeScale.caption,
+    fontWeight: weight.bold,
     marginTop: 2,
   },
 
   // ── Smart Insight ──
   insightRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   insightIcon: { marginTop: 2 },
-  insightText: { color: colors.text.secondary, fontSize: 14, lineHeight: 21, flex: 1 },
+  insightText: { color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21, flex: 1 },
 })

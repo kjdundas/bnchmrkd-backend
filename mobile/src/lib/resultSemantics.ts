@@ -150,7 +150,68 @@ export function countsForAnalysis(row: any, discipline?: string | null): boolean
   // `num`, not Number: a null mark coerces to 0, and in a time event 0.00s
   // would be an unbeatable personal best that no real run could ever displace.
   if (num(row.mark) == null) return false
+  // A result awaiting a coach's approval is not yet a fact about the athlete.
+  // This one line is what makes PBs, career stats, trajectory, projections
+  // and the squad leaderboards all approval-aware — they every one of them
+  // pass through here, which is the entire reason it was consolidated.
+  //
+  // Absent means accepted, deliberately: rows that predate the approval
+  // columns, and the denormalised race blobs the coach roster still reads,
+  // carry no `approval` field and must not silently vanish from the maths.
+  if (!isApproved(row)) return false
   return !isWindAssisted(row, discipline ?? row.discipline)
+}
+
+/**
+ * Split a discipline's rows into what the maths may use and what is still
+ * waiting on a coach.
+ *
+ * This exists because the two were being counted separately. Trajectory read
+ * `marks.length` for "1 race" and `Math.min(...counted)` for the PB — and with
+ * the only race pending, `Math.min()` of nothing is `Infinity`, which is what
+ * the athlete was shown. Home did the same thing one level up: no countable
+ * race meant a null PB, which fell through to a physical-metric fallback and
+ * printed a 47cm jump as a 47.00-second 200m.
+ *
+ * A screen that takes both halves from here cannot make either mistake, and
+ * it gets the thing it actually needs to say — that the result is not lost,
+ * it is awaiting approval.
+ */
+export function partitionResults(
+  rows: any[],
+  discipline?: string | null,
+): { counted: any[]; awaiting: any[] } {
+  const counted: any[] = []
+  const awaiting: any[] = []
+  for (const r of rows || []) {
+    if (countsForAnalysis(r, discipline)) counted.push(r)
+    // Only a real, finished mark can be "awaiting" — a pending DNF is still
+    // a DNF, and promising the athlete a PB once it clears would be a lie.
+    else if (isPending(r) && isCompleted(r?.status) && num(r?.mark) != null) awaiting.push(r)
+  }
+  return { counted, awaiting }
+}
+
+/**
+ * Approval states, shared by programs, calendar events and results.
+ * One vocabulary in both directions — an athlete accepting a coach's program
+ * and a coach approving an athlete's result are the same act, so they get the
+ * same words, the same colours and the same component.
+ */
+export type Approval = 'pending' | 'accepted' | 'declined'
+
+/** Absent counts as accepted. See countsForAnalysis for why. */
+export function isApproved(row: any): boolean {
+  const a = row?.approval
+  return a == null || a === 'accepted'
+}
+
+export function isPending(row: any): boolean {
+  return row?.approval === 'pending'
+}
+
+export function isDeclined(row: any): boolean {
+  return row?.approval === 'declined'
 }
 
 /** Why a result was left out, for a table that has to explain itself. */
@@ -158,6 +219,8 @@ export function exclusionReason(row: any, discipline?: string | null): string | 
   if (!row) return null
   if (!isCompleted(row.status)) return STATUS_LABEL[row.status as ResultStatus] || 'Not a result'
   if (num(row.mark) == null) return 'No mark'
+  if (isPending(row)) return 'Awaiting approval'
+  if (isDeclined(row)) return 'Not approved'
   if (isWindAssisted(row, discipline ?? row.discipline)) return 'Wind-assisted'
   return null
 }

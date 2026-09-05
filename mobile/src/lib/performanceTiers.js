@@ -10,33 +10,86 @@ import { PERFORMANCE_LEVELS, isTimeDiscipline } from './performanceLevels';
 export const TIER_COUNT_JUNIOR = 6;
 export const TIER_COUNT_SENIOR = 7;
 
+/** @type {Record<number, string>} */
+// Senior percentiles are of public.season_bests, ages 20-32 — World Athletics
+// listed seniors, not the general population. T2 is the 70th percentile OF
+// THAT, which is a good club athlete, and the name should be read that way.
+// T1 alone is off this distribution: it is a development standard from
+// Keenan's spreadsheet, kept because season_bests holds no club athletes to
+// place an entry rung against.
 export const TIER_NAMES = {
-  1: 'Emerging',      // Entry — age-group ~25th percentile
-  2: 'Developing',    // Solid age-group competitor — ~60th percentile
-  3: 'National',      // Top of domestic pool — country top-50 median
-  4: 'Qualifier',     // Olympic / World qualifier median (made the start line)
-  5: 'Finalist',      // Olympic finalist median (positions 4–8)
-  6: 'Medalist',      // Olympic medalist median (top 3)
-  7: 'World Class',   // Senior only — world-record-adjacent
+  1: 'Emerging',      // Entry — award standard, and the join with the U20 ladder
+  2: 'Developing',    // p70 of senior season bests
+  3: 'National',      // p40 — top of the domestic pool
+  4: 'Qualifier',     // p10 — Olympic / World qualifier median (made the start line)
+  5: 'Finalist',      // p5  — Olympic finalist median (positions 4–8)
+  6: 'Medalist',      // p1  — Olympic medalist median (top 3)
+  7: 'World Class',   // p0.2, Senior only — world-record-adjacent
 };
 
+/** @type {Record<number, string>} */
 export const TIER_SHORT = {
   1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7',
 };
 
-// Monochrome orange density. T1 dim ember → T7 blazing brand orange.
-// Intensity carries tier, hue stays constant — proprietary & brand-cohesive.
+// Monochrome INDIGO density. Constant hue, rising luminance — the same
+// "intensity carries tier" idea the orange ramp had, in the brand's actual
+// colour. The old ramp ran #3a1f0e → #fb923c and its own comment called
+// #fb923c the "brand orange apex", against a project guide that says: one
+// brand colour, Electric Indigo #4F3CF0, no orange, that was the old scheme.
+// It was rendering on the most prominent element of the home screen.
+//
+// Every surface that draws these is dark — Trajectory, Full Analysis, the
+// coach boards, athlete detail — so the ramp climbs toward light. The old
+// one climbed from near-black, which meant T1 and T2 were invisible on the
+// surfaces they were drawn on.
+/** @type {Record<number, string>} */
 export const TIER_COLORS = {
-  1: '#3a1f0e',   // deepest bronze, almost black
-  2: '#5a2d0f',
-  3: '#82400f',
-  4: '#a85416',
-  5: '#d16a1f',
-  6: '#f08028',
-  7: '#fb923c',   // brand orange apex
+  1: '#4A4770',   // indigo-grey — present, not shouting
+  2: '#585096',
+  3: '#665ABE',
+  4: '#7466E4',
+  5: '#8B83FF',   // --indigo-bright
+  6: '#A79FFF',
+  7: '#C9C4FF',   // apex
 };
 
+// ── TIER_COLORS IS A FILL RAMP. IT IS NOT A TEXT RAMP. ──────────────
+//
+// The ramp above climbs from #4A4770 (L=0.071) to #C9C4FF (L=0.591) so that
+// intensity carries tier on a dark surface. That is right for a bar, a lane
+// or a chip background, and wrong for a word.
+//
+// Measured on the live hero: "QUALIFIER" drawn in TIER_COLORS[4] over the
+// stadium photograph scored 1.00:1 — the glyph and the ground either side
+// of it were both L=0.129, the same colour to three decimal places. The
+// text shadow was working; it had darkened the surround to exactly the
+// luminance of the letters. On a dark panel it is less severe but still
+// fails: T1 lands at 1.95:1.
+//
+// So there are two ramps. TIER_INK is the same hue walked up in lightness
+// until every step clears AA on a panel — 5.2:1 at T1 through 14.2:1 at T7.
+// Use it for any tier name, short code or number rendered as TEXT.
+/** @type {Record<number, string>} */
+export const TIER_INK = {
+  1: '#8B7EF5',
+  2: '#9C92F7',
+  3: '#ACA3F8',
+  4: '#BCB5F9',
+  5: '#CAC4FA',
+  6: '#DAD6FC',
+  7: '#EAE8FD',
+};
+
+// And a warning that no ramp solves: OVER A PHOTOGRAPH, none of these work
+// either. Against the measured backdrop ground, TIER_INK[4] reaches only
+// 3.10:1 and even T7 stops at 4.88. Text laid on ScreenBackdrop is white or
+// near-white, full stop — the tier is already carried by the word itself and
+// by whatever the drawing fills in the tier's colour, which sits on a ground
+// it controls rather than one the photographer chose.
+
 // Opacity stops for building layered orange washes (used by cell backgrounds).
+/** @type {Record<number, number>} */
 export const TIER_OPACITY = {
   1: 0.08,
   2: 0.16,

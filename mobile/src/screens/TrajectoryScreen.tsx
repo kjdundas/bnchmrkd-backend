@@ -9,7 +9,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
   RefreshControl,
   Dimensions,
@@ -28,13 +27,14 @@ import { Ionicons } from '@expo/vector-icons'
 // (`rgba(255,255,255,0.06)` borders, `0.03` header cells, and so on). Those
 // were never wrong — they were written for a dark surface and only started
 // looking broken when the app's paper went light underneath them.
-import { onImageColors as colors, spacing, radius, rhythm, onImage } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, onImage, typeScale, weight } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
+import PhysicalProfile from '../components/PhysicalProfile'
 import { BACKDROP_GROUND } from '../components/ScreenBackdrop'
-import { ScienceSpotlight, RivalCard } from '../components/HomeSections'
+import { ScienceSpotlight } from '../components/HomeSections'
 import { selectFrom, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { LinearGradient as Gradient } from 'expo-linear-gradient'
 import {
@@ -47,19 +47,23 @@ import {
   TrendArrow,
   EmptyState,
   Divider,
+  Tappable,
 } from '../components/ui'
-import { projectAllTrajectories, hasImprovementCurves } from '../lib/improvementCurves'
-import ProjectionChart, { type HistorySummary } from '../components/ProjectionChart'
+// The projection card now lives in its own component, because the coach
+// side shows the same chart and two copies of a young athlete's projected
+// future is exactly the kind of thing that must not be able to disagree.
+import ImprovementScenariosSection from '../components/ImprovementScenarios'
+import { similarAthletes as corpusSimilar } from '../lib/corpus'
 import {
   isLowerBetter,
   performancePercentile,
   qualifierZones,
   getCalibration,
 } from '../lib/disciplineScience'
-import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, buildMatrix, AGE_GROUPS } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS, TIER_SHORT, buildMatrix, AGE_GROUPS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob, ageExact } from '../lib/age'
-import { countsForAnalysis } from '../lib/resultSemantics'
+import { countsForAnalysis, partitionResults } from '../lib/resultSemantics'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -150,11 +154,16 @@ function formatPerformance(value: number, discipline: string): string {
 function DisciplinePicker({
   performances,
   onSelectDiscipline,
+  onLog,
 }: {
   performances: any[]
   onSelectDiscipline: (discipline: string) => void
+  /** Into the Log tab — the only action either empty state offers. */
+  onLog: () => void
 }) {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  const athleteId = user?.id
+  const dob = profile?.dob
 
   // Group performances by discipline and get stats.
   //
@@ -172,21 +181,26 @@ function DisciplinePicker({
     }
 
     return Object.entries(grouped).map(([discipline, marks]) => {
-      const values = marks
-        .filter((m: any) => countsForAnalysis(m, discipline))
+      // Both halves from one split. The card used to count `marks.length` but
+      // take its PB from the countable subset, so an athlete whose only race
+      // was awaiting approval was shown "1 race" and a PB of `Infinity` —
+      // `Math.min()` of an empty list — sitting under "BELOW EMERGING".
+      const { counted, awaiting } = partitionResults(marks, discipline)
+      const values = counted
         .map((m: any) => parseFloat(m.mark))
         .filter(Number.isFinite)
       const lower = isLowerBetter(discipline)
-      const pb = lower ? Math.min(...values) : Math.max(...values)
+      const pb = values.length ? (lower ? Math.min(...values) : Math.max(...values)) : null
       const age = ageFromDob(profile?.dob)
       const ageGroup = age ? getAgeGroup(age) : 'Senior'
       const sex = (profile?.sex || 'M') as string
-      const tier = getTier(discipline, sex, ageGroup, pb)
+      const tier = pb == null ? null : getTier(discipline, sex, ageGroup, pb)
 
       return {
         discipline,
         pb,
-        count: marks.length,
+        count: values.length,
+        awaiting: awaiting.length,
         tier,
         age,
         ageGroup,
@@ -195,6 +209,10 @@ function DisciplinePicker({
     })
   }, [performances, profile])
 
+  // No races is not no athlete. The physical profile still renders — for
+  // most people it is the first thing in the app that has anything to say
+  // about them, and hiding it behind a race they have not run yet was how it
+  // ended up on a settings screen in the first place.
   if (disciplineStats.length === 0) {
     return (
       <ScrollView
@@ -206,6 +224,13 @@ function DisciplinePicker({
           title="No competition data yet"
           subtitle="Log your first race in the Log tab to see your trajectory analysis."
         />
+        <PhysicalProfile
+          athleteId={athleteId}
+          discipline={null}
+          dob={dob}
+          onLog={onLog}
+        />
+        <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
     )
   }
@@ -216,22 +241,27 @@ function DisciplinePicker({
       showsVerticalScrollIndicator={false}
     >
       {disciplineStats.map((stat) => (
-        <TouchableOpacity
+        <Tappable
           key={stat.discipline}
           onPress={() => onSelectDiscipline(stat.discipline)}
-          activeOpacity={0.7}
         >
           <AlmanacCard glass
             kicker={stat.ageGroup}
             title={stat.discipline}
-            number={`${stat.count} race${stat.count !== 1 ? 's' : ''}`}
+            number={
+              stat.count > 0
+                ? `${stat.count} race${stat.count !== 1 ? 's' : ''}`
+                : `${stat.awaiting} pending`
+            }
             accent={stat.tier?.color || colors.orange[500]}
           >
             <View style={styles.disciplineCardContent}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.pbLabel}>Personal best</Text>
+                <Text style={styles.pbLabel}>
+                  {stat.pb == null ? 'No approved result yet' : 'Personal best'}
+                </Text>
                 <Text style={styles.pbValue}>
-                  {formatPerformance(stat.pb, stat.discipline)}
+                  {stat.pb == null ? '—' : formatPerformance(stat.pb, stat.discipline)}
                 </Text>
                 {/* Tier as a coloured word under a hairline, not a pill.
                     The pill also computed `undefined + '20'` for an unrated
@@ -244,14 +274,24 @@ function DisciplinePicker({
                   styles.tierLabel,
                   { color: stat.tier?.color || colors.text.muted },
                 ]}>
-                  {stat.tier?.tierName || 'Unrated'}
+                  {stat.tier?.tierName
+                    || (stat.awaiting > 0 ? 'Awaiting coach approval' : 'Unrated')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.text.dimmed} />
             </View>
           </AlmanacCard>
-        </TouchableOpacity>
+        </Tappable>
       ))}
+
+      {/* Under the discipline cards, because it is the same subject one level
+          down: these are the qualities that produce the marks above. */}
+      <PhysicalProfile
+        athleteId={athleteId}
+        discipline={disciplineStats[0]?.discipline || null}
+        dob={dob}
+        onLog={onLog}
+      />
 
       <View style={{ height: TAB_BAR_CLEARANCE }} />
     </ScrollView>
@@ -420,9 +460,9 @@ function TierPositioningSection({
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           {shortLabel && (
-            <Text style={[styles.tierShortLarge, { color: tier.color }]}>{shortLabel}</Text>
+            <Text style={[styles.tierShortLarge, { color: TIER_INK[tier.tier] || tier.color }]}>{shortLabel}</Text>
           )}
-          <Text style={[styles.tierNameLarge, { color: tier.color }]}>{tier.tierName}</Text>
+          <Text style={[styles.tierNameLarge, { color: TIER_INK[tier.tier] || tier.color }]}>{tier.tierName}</Text>
         </View>
       </View>
 
@@ -495,7 +535,7 @@ function TierPositioningSection({
             style={{
               position: 'absolute', left: 0, top: 0, bottom: 0,
               width: `${Math.max(2, (tier.tier / tier.maxTier) * 100)}%`,
-              borderRadius: 3,
+              borderRadius: radius.hair,
             }}
           />
           {Array.from({ length: tier.maxTier - 1 }, (_, i) => i + 1).map((t) => (
@@ -536,63 +576,30 @@ function SimilarAthletesSection({
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const loadSimilarAthletes = async () => {
-      if (!age) return
-      setLoading(true)
-      try {
-        const eventCode = getDisciplineEventCode(discipline, sex)
-        if (!eventCode) {
-          setSimilar([])
-          setLoading(false)
-          return
-        }
-
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/rpc/find_similar_athletes`,
-          {
-            method: 'POST',
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              'Content-Type': 'application/json',
-            },
-            // ALWAYS send p_implement_weight (null for non-throws). Two overloads
-            // of find_similar_athletes exist in the DB and differ only by this
-            // argument, so omitting it makes the call ambiguous — PostgREST
-            // returns HTTP 300 / PGRST203 and every comparison silently returns
-            // nothing. Passing it resolves to the 5-arg version. Same fix the
-            // web app already carries in bnchmarkd-app.jsx.
-            body: JSON.stringify({
-              p_discipline_code: eventCode,
-              p_pb: pb,
-              p_age: age,
-              p_limit: 3,
-              p_implement_weight: null,
-            }),
-          }
-        )
-
-        if (response.ok) {
-          const data = await response.json()
-          setSimilar(data || [])
-          setError('')
-        } else {
-          // Previously there was no else here, which is how the broken RPC
-          // stayed invisible: a failed call just rendered an empty section.
-          const body = await response.text().catch(() => '')
-          console.warn('Similar athletes RPC failed:', response.status, body)
-          setSimilar([])
-          setError("Couldn't load comparable athletes. Pull to refresh.")
-        }
-      } catch (e) {
-        console.warn('Similar athletes load:', e)
-        setSimilar([])
-        setError("Couldn't load comparable athletes. Check your connection.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadSimilarAthletes()
+    // This one WORKED. Whoever wrote it had already found the two overloads
+    // of find_similar_athletes and passed p_implement_weight explicitly to
+    // resolve the ambiguity — the comment below the old body said so. Then I
+    // dropped both overloads while consolidating, and killed it.
+    //
+    // Now it asks the corpus, like everywhere else. Two things it gains: the
+    // implement is part of the event rather than an argument, so a 5 kg shot
+    // is matched against 5 kg; and it runs as the signed-in user rather than
+    // anon, which the old hand-rolled fetch did not — it sent only the apikey
+    // header, no bearer token.
+    let live = true
+    if (!age || pb == null) { setSimilar([]); return }
+    setLoading(true); setError('')
+    corpusSimilar({ discipline, sex, age, mark: pb, limit: 3 })
+      .then((rows) => {
+        if (!live) return
+        setSimilar(rows)
+        // An empty result and a failed call are different answers and the
+        // section says so differently; corpusSimilar returns [] for both, so
+        // "no matches" is the honest thing to show for either.
+        setError('')
+      })
+      .finally(() => { if (live) setLoading(false) })
+    return () => { live = false }
   }, [discipline, pb, age, sex])
 
   if (loading) {
@@ -608,7 +615,7 @@ function SimilarAthletesSection({
   if (error) {
     return (
       <AlmanacCard glass kicker="BENCHMARKS" title="Similar athletes" accent={colors.accent[500]}>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, lineHeight: 20 }}>{error}</Text>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 20 }}>{error}</Text>
       </AlmanacCard>
     )
   }
@@ -616,7 +623,7 @@ function SimilarAthletesSection({
   if (!age) {
     return (
       <AlmanacCard glass kicker="BENCHMARKS" title="Similar athletes" accent={colors.accent[500]}>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, lineHeight: 20 }}>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 20 }}>
           Add your date of birth in Profile to compare yourself against athletes
           who ran this time at your age.
         </Text>
@@ -627,7 +634,7 @@ function SimilarAthletesSection({
   if (similar.length === 0) {
     return (
       <AlmanacCard glass kicker="BENCHMARKS" title="Similar athletes" accent={colors.accent[500]}>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, lineHeight: 20 }}>
+        <Text style={{ fontSize: typeScale.body, color: colors.text.secondary, lineHeight: 20 }}>
           No close matches in the database for this mark at your age yet.
         </Text>
       </AlmanacCard>
@@ -636,18 +643,26 @@ function SimilarAthletesSection({
 
   return (
     <AlmanacCard glass kicker="BENCHMARKS" title="Similar Athletes" accent={colors.orange[500]}>
+      <Text style={{ fontSize: typeScale.caption, color: colors.text.muted, lineHeight: 18, marginBottom: 10 }}>
+        Athletes who were on a comparable mark at the same age. What they went
+        on to do is underneath — it is what happened to them, not a forecast.
+      </Text>
       {similar.map((athlete: any, idx: number) => (
         <View key={idx} style={styles.similarAthleteRow}>
           <Text style={styles.similarRank}>{String(idx + 1).padStart(2, '0')}</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.similarAthleteName}>{athlete.athlete_name || 'Athlete'}</Text>
-            <Text style={styles.similarAthleteCountry}>{athlete.country || '—'}</Text>
+            <Text style={styles.similarAthleteName}>{athlete.athlete || 'Athlete'}</Text>
+            <Text style={styles.similarAthleteCountry}>{athlete.nationality || '—'}</Text>
           </View>
           <View style={styles.similarAthletePb}>
-            <Text style={styles.similarAthletePbValue}>{formatPerformance(athlete.pb, discipline)}</Text>
-            {athlete.age && (
-              <Text style={styles.similarAthleteAge}>Age {athlete.age}</Text>
-            )}
+            {/* Their mark at the age they were matched on. The age is stated
+                because the version before this showed the age of their CAREER
+                best next to it, which read as the age of the match and made
+                the whole table look wrong. */}
+            <Text style={styles.similarAthletePbValue}>
+              {formatPerformance(athlete.atYourAge, discipline)}
+            </Text>
+            <Text style={styles.similarAthleteAge}>at {athlete.matchedAge}</Text>
           </View>
         </View>
       ))}
@@ -656,152 +671,6 @@ function SimilarAthletesSection({
 }
 
 // ── Improvement Scenarios ────────────────────────────────────────────────────
-function ImprovementScenariosSection({
-  discipline,
-  pb,
-  age,
-  sex,
-  history,
-  nowAge,
-}: {
-  discipline: string
-  pb: number
-  age: number | null
-  sex: string
-  /** Raced marks with the athlete's age AT THE TIME of each race. */
-  history: { age: number; value: number; date?: string }[]
-  /** Fractional age today — the boundary between raced and projected. */
-  nowAge?: number
-}) {
-  // Why this section rendered nothing for two years: it passed 'female' /
-  // 'male' into a table keyed '100m_Female', so the lookup always missed,
-  // projectPerformance returned [], and the guard below dropped the whole
-  // card. `sex` is now passed through untouched — improvementCurves
-  // normalises it — and the failure modes are told apart instead of all
-  // collapsing into one silent null.
-  const { projections, blocked } = useMemo(() => {
-    if (!pb) return { projections: null, blocked: 'nopb' as const }
-    if (!age) return { projections: null, blocked: 'noage' as const }
-    if (!hasImprovementCurves(discipline, sex)) {
-      return { projections: null, blocked: 'nocurve' as const }
-    }
-    try {
-      const result = projectAllTrajectories(pb, age, discipline, sex)
-      if (!result?.steady?.length || result.steady.length < 2) {
-        return { projections: null, blocked: 'noproj' as const }
-      }
-      return { projections: result, blocked: null }
-    } catch (e) {
-      // Was a bare `catch { return null }`. A throw in the projection maths
-      // erased the section with no trace anywhere — which is exactly how a
-      // dead feature stays dead.
-      console.warn('[Trajectory] projection failed for', discipline, sex, e)
-      return { projections: null, blocked: 'error' as const }
-    }
-  }, [pb, age, discipline, sex])
-
-  const lower = isLowerBetter(discipline)
-
-  const [histSummary, setHistSummary] = useState<HistorySummary | null>(null)
-
-  // Pulled through so the chart can draw the next tier as a target line —
-  // the same number the Tier Positioning card above quotes as the gap.
-  const ageGroup = age ? getAgeGroup(age) : 'Senior'
-  const tierNow = getTier(discipline, sex, ageGroup, pb)
-  const nextCut = tierNow?.nextCut
-  const nextTierName = tierNow?.nextTierName
-
-  if (!projections) {
-    const message =
-      blocked === 'noage'
-        ? 'Add your date of birth in Profile and we can project this forward — the curves are age-dependent, so there is nothing to anchor to without it.'
-        : blocked === 'nocurve'
-          ? `We don't hold development curves for ${discipline} yet, so there's nothing honest to project.`
-          : blocked === 'error'
-            ? "Couldn't build a projection from this mark. Pull to refresh."
-            : 'Not enough to project from yet.'
-
-    // Renders the card rather than vanishing. A section that disappears is
-    // indistinguishable from a section that was never built.
-    return (
-      <AlmanacCard glass kicker="FUTURE" title="Improvement Scenarios" accent={colors.orange[500]}>
-        <View style={styles.calNote}>
-          <Ionicons name="information-circle-outline" size={13} color={colors.text.muted} />
-          <Text style={styles.calNoteText}>{message}</Text>
-        </View>
-      </AlmanacCard>
-    )
-  }
-
-  // The steady trajectory is the headline; the other two are context. Web
-  // removed its own version of this as "a dense table that didn't earn its
-  // space", and three cards of peak values had the same problem — they show
-  // three endpoints where the interesting thing is the shape between here and
-  // there.
-  const peakOf = (set: any[]) =>
-    (set || []).reduce(
-      (best: any, pt: any) =>
-        !best ? pt : (lower ? (pt.projected < best.projected ? pt : best)
-          : (pt.projected > best.projected ? pt : best)),
-      null,
-    )
-  const peak = peakOf(projections.steady)
-  const gain = peak ? (lower ? pb - peak.projected : peak.projected - pb) : null
-  const peakTier = peak
-    ? getTier(discipline, sex, getAgeGroup(peak.age), peak.projected)
-    : null
-
-  return (
-    <AlmanacCard glass kicker="FUTURE" title="Where this could go" accent={colors.orange[500]}>
-      <ProjectionChart
-        steady={projections.steady}
-        history={history}
-        nowAge={nowAge}
-        lower={lower}
-        valueFmt={(v) => formatPerformance(v, discipline)}
-        nextCut={nextCut ?? null}
-        nextTierName={nextTierName ?? null}
-        onSummary={setHistSummary}
-      />
-
-      {/* What the history could actually support. A chart that silently draws
-          four marks from one afternoon as if it were a season is worse than
-          one that says what it has. */}
-      {histSummary && histSummary.days < 2 && (
-        <View style={styles.calNote}>
-          <Ionicons name="information-circle-outline" size={13} color={colors.text.muted} />
-          <Text style={styles.calNoteText}>
-            {histSummary.marks > 1
-              ? `All ${histSummary.marks} of your ${discipline} marks are from one competition, so there's no trend to read yet — the dots sit on the same date. Log results from another meet and the line will have something to follow.`
-              : `One ${discipline} result logged. Add a few more across the season and this becomes a trend rather than a single point.`}
-          </Text>
-        </View>
-      )}
-
-      {/* One sentence, not a table. */}
-      {peak && (
-        <Text style={styles.projLede}>
-          On a consistent development path you'd peak around{' '}
-          <Text style={styles.projStrong}>{formatPerformance(peak.projected, discipline)}</Text>
-          {' '}at <Text style={styles.projStrong}>age {peak.age}</Text>
-          {gain != null && gain > 0
-            ? ` — ${Math.abs(gain).toFixed(2)}${lower ? 's' : 'm'} on your current best`
-            : ''}
-          {peakTier?.tierName ? `, which is ${peakTier.tierName} for that age group.` : '.'}
-        </Text>
-      )}
-
-      <Text style={styles.projFootnote}>
-        Built from year-on-year improvement rates of real athletes in this
-        event, by age. The shaded band is the 25th to 75th percentile of how
-        they developed — a spread of outcomes, not a confidence interval, and
-        not a prediction about you. It stops five years out because the
-        optimistic edge assumes a top-quarter year every year, which nobody
-        sustains for longer than that.
-      </Text>
-    </AlmanacCard>
-  )
-}
 
 // ── Competition Ladder ───────────────────────────────────────────────────────
 // Four rungs from development to finalist, with the athlete's gap to each.
@@ -930,8 +799,8 @@ function CompetitionLadderSection({
               numberOfLines={1}
               style={[
                 styles.ladderLabel,
-                isMet && { color: colors.text.primary, fontWeight: '600' },
-                isNext && { color: colors.orange[500], fontWeight: '700' },
+                isMet && { color: colors.text.primary, fontWeight: weight.medium },
+                isNext && { color: colors.orange[500], fontWeight: weight.bold },
               ]}
             >
               {rung.label}
@@ -993,7 +862,7 @@ function PerformanceMatrixSection({
               <View style={[styles.matrixCell, styles.matrixLabelCell]}>
                 {/* The dot was a 7pt circle repeated seven times down the
                     left edge. The tier colour belongs ON the label. */}
-                <Text style={[styles.matrixTierLabel, { color: TIER_COLORS[t] }]}>{TIER_SHORT[t]}</Text>
+                <Text style={[styles.matrixTierLabel, { color: TIER_INK[t] }]}>{TIER_SHORT[t]}</Text>
               </View>
               {matrix.rows.map((row: any) => {
                 const val = row.cuts[t - 1]
@@ -1008,7 +877,7 @@ function PerformanceMatrixSection({
                     ]}
                   >
                     {val != null ? (
-                      <Text style={[styles.matrixVal, isYou && { color: colors.orange[500], fontWeight: '700' }]}>
+                      <Text style={[styles.matrixVal, isYou && { color: colors.orange[500], fontWeight: weight.bold }]}>
                         {formatPerformance(val, discipline)}
                       </Text>
                     ) : (
@@ -1142,9 +1011,9 @@ function TrajectoryBody() {
       {/* Header */}
       <View style={styles.header}>
         {selectedDiscipline && (
-          <TouchableOpacity onPress={() => setSelectedDiscipline(null)} style={styles.backBtn}>
+          <Tappable onPress={() => setSelectedDiscipline(null)} style={styles.backBtn} accessibilityLabel="Back">
             <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
-          </TouchableOpacity>
+          </Tappable>
         )}
         <View style={{ flex: 1 }}>
           <MonoKicker>
@@ -1172,12 +1041,10 @@ function TrajectoryBody() {
           {/* Historical rival — a named athlete who ran this at your age.
               Runs off local data in historicalRivals.js, so it works even when
               the similar-athletes RPC or the network doesn't. */}
-          <RivalCard
-            pb={selectedPb}
-            discipline={selectedDiscipline}
-            sex={sex}
-            dob={(profile as any)?.dob}
-          />
+          {/* RivalCard removed: this screen already has the Similar
+              Athletes table above, and one athlete pulled out of that same
+              query into a second card said the same thing twice — with a
+              different age on it, which is worse than redundant. */}
 
           <ImprovementScenariosSection
             discipline={selectedDiscipline} pb={selectedPb} age={age} sex={sex}
@@ -1196,6 +1063,7 @@ function TrajectoryBody() {
         <DisciplinePicker
           performances={performances}
           onSelectDiscipline={(d) => setSelectedDiscipline(d)}
+          onLog={() => navigation.navigate('Log' as never)}
         />
       )}
     </SafeAreaView>
@@ -1206,21 +1074,21 @@ function TrajectoryBody() {
 
 const styles = StyleSheet.create({
   // Performance Matrix (age-group × tier grid)
-  matrixCaption: { color: colors.text.secondary, fontSize: 12, lineHeight: 17, marginBottom: spacing.md },
+  matrixCaption: { color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 17, marginBottom: spacing.md },
   matrixRow: { flexDirection: 'row' },
   matrixCell: {
     width: 62, height: 34, alignItems: 'center', justifyContent: 'center',
     borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.06)',
   },
   matrixHeaderCell: { backgroundColor: 'rgba(255,255,255,0.03)' },
-  matrixHeaderText: { color: colors.text.muted, fontSize: 10, fontWeight: '700' },
+  matrixHeaderText: { color: colors.text.muted, fontSize: typeScale.label, fontWeight: weight.bold },
   matrixActiveCol: { backgroundColor: 'rgba(139,131,255,0.07)' },
   matrixLabelCell: { flexDirection: 'row', gap: 5, backgroundColor: 'rgba(255,255,255,0.03)' },
-  matrixTierLabel: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 },
+  matrixTierLabel: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.5 },
   matrixYouCell: { backgroundColor: 'rgba(139,131,255,0.20)', borderColor: colors.orange[500] },
-  matrixVal: { color: colors.text.secondary, fontSize: 10.5 },
-  matrixNull: { color: colors.text.dimmed, fontSize: 10.5 },
-  matrixYouNote: { color: colors.orange[400], fontSize: 11, fontWeight: '600', marginTop: spacing.md },
+  matrixVal: { color: colors.text.secondary, fontSize: typeScale.label },
+  matrixNull: { color: colors.text.dimmed, fontSize: typeScale.label },
+  matrixYouNote: { color: colors.orange[400], fontSize: typeScale.label, fontWeight: weight.medium, marginTop: spacing.md },
 
   // The ground Home and Programs both land on once you scroll past their
   // photographs. Trajectory has no photograph, so it simply starts there.
@@ -1236,25 +1104,25 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginLeft: -spacing.sm,
   },
-  title: { fontSize: 26, fontWeight: '700', color: colors.text.primary, marginTop: 4 },
+  title: { fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.text.primary, marginTop: 4 },
 
   content: { padding: spacing.lg, paddingTop: spacing.md },
 
   // Discipline picker
   disciplineCardContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   pbLabel: {
-    color: colors.text.muted, fontSize: 9, letterSpacing: 2,
-    textTransform: 'uppercase', fontWeight: '600',
+    color: colors.text.muted, fontSize: typeScale.micro, letterSpacing: 2,
+    textTransform: 'uppercase', fontWeight: weight.medium,
   },
   pbValue: {
-    color: colors.text.primary, fontSize: 34, fontWeight: '700',
+    color: colors.text.primary, fontSize: typeScale.hero, fontWeight: weight.bold,
     letterSpacing: -1.2, marginTop: 3, fontVariant: ['tabular-nums'],
   },
-  tierRule: { width: 26, height: 2, borderRadius: 1, marginTop: 12, marginBottom: 7 },
+  tierRule: { width: 26, height: 2, borderRadius: radius.full, marginTop: 12, marginBottom: 7 },
 
   tierSection: { alignItems: 'center' },
   tierLabel: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1.6,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.6,
     textTransform: 'uppercase',
   },
 
@@ -1263,17 +1131,17 @@ const styles = StyleSheet.create({
   // with the tier label beside it; white against the tier's own wash is the
   // contrast that reads as premium rather than as a highlight.
   pbDisplay: {
-    fontSize: 56, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.mark, fontWeight: weight.bold, color: colors.text.primary,
     letterSpacing: -2.2, marginTop: 4,
     fontVariant: ['tabular-nums'],
   },
   heroPanel: { padding: 22, marginBottom: spacing.lg },
   heroTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 14 },
   tierNameLarge: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1.6,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.6,
     textTransform: 'uppercase', marginTop: 2,
   },
-  tierShortLarge: { fontSize: 14, fontWeight: '600', marginTop: spacing.xs },
+  tierShortLarge: { fontSize: typeScale.body, fontWeight: weight.medium, marginTop: spacing.xs },
 
   tierStats: {
     flexDirection: 'row',
@@ -1285,8 +1153,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   tierStat: { flex: 1, alignItems: 'center' },
-  tierStatLabel: { fontSize: 9, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
-  tierStatValue: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
+  tierStatLabel: { fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: weight.medium, marginBottom: 2 },
+  tierStatValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
   tierStatDivider: {
     width: 1,
     height: 32,
@@ -1298,7 +1166,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md, paddingHorizontal: 2,
   },
   calNoteText: {
-    flex: 1, color: colors.text.muted, fontSize: 11.5, lineHeight: 17,
+    flex: 1, color: colors.text.muted, fontSize: typeScale.label, lineHeight: 17,
   },
   trendRow: {
     flexDirection: 'row', gap: 9, alignItems: 'flex-start',
@@ -1306,15 +1174,15 @@ const styles = StyleSheet.create({
   },
   // A rule, like the ladder spine — so the whole screen speaks one language
   // rather than mixing bars and bubbles.
-  trendDot: { width: 2, height: 15, borderRadius: 1, marginTop: 3 },
-  trendText: { flex: 1, fontSize: 13.5, lineHeight: 20, fontWeight: '500' },
+  trendDot: { width: 2, height: 15, borderRadius: radius.full, marginTop: 3 },
+  trendText: { flex: 1, fontSize: typeScale.caption, lineHeight: 20, fontWeight: weight.medium },
   pctFootnote: {
-    color: colors.text.dimmed, fontSize: 10.5, lineHeight: 15,
+    color: colors.text.dimmed, fontSize: typeScale.label, lineHeight: 15,
     marginTop: spacing.md,
   },
   tierLadderContainer: { marginTop: spacing.md },
   tierTrack: {
-    height: 6, borderRadius: 3, overflow: 'hidden',
+    height: 6, borderRadius: radius.full, overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.10)',
     position: 'relative',
   },
@@ -1323,7 +1191,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 2,
   },
-  tierLadderLabel: { fontSize: 9, color: colors.text.dimmed, fontWeight: '600' },
+  tierLadderLabel: { fontSize: typeScale.micro, color: colors.text.dimmed, fontWeight: weight.medium },
 
   // Similar athletes
   similarAthleteRow: {
@@ -1334,20 +1202,20 @@ const styles = StyleSheet.create({
   // A ranked list reads as a ranking. The rows used to be name-left,
   // value-right with nothing saying these were ordered by closeness.
   similarRank: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1,
+    fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1,
     color: colors.text.dimmed, width: 20,
     fontVariant: ['tabular-nums'],
   },
-  similarAthleteName: { fontSize: 14, fontWeight: '700', color: colors.text.primary, marginBottom: 2 },
-  similarAthleteCountry: { fontSize: 12, color: colors.text.dimmed },
+  similarAthleteName: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary, marginBottom: 2 },
+  similarAthleteCountry: { fontSize: typeScale.caption, color: colors.text.dimmed },
   similarAthletePb: { alignItems: 'flex-end' },
-  similarAthletePbValue: { fontSize: 16, fontWeight: '700', color: colors.orange[500] },
-  similarAthleteAge: { fontSize: 10, color: colors.text.muted, marginTop: 2 },
+  similarAthletePbValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.orange[500] },
+  similarAthleteAge: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 2 },
 
   // Improvement scenarios
   scenarioCard: {
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
@@ -1359,9 +1227,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
-  scenarioName: { fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  scenarioAge: { fontSize: 12, color: colors.text.muted },
-  scenarioPb: { fontSize: 18, fontWeight: '700', textAlign: 'right' },
+  scenarioName: { fontSize: typeScale.body, fontWeight: weight.bold, marginBottom: 4 },
+  scenarioAge: { fontSize: typeScale.caption, color: colors.text.muted },
+  scenarioPb: { fontSize: typeScale.title, fontWeight: weight.bold, textAlign: 'right' },
 
   scenarioStats: {
     flexDirection: 'row',
@@ -1370,8 +1238,8 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.04)',
   },
   scenarioStat: { flex: 1, alignItems: 'center' },
-  scenarioStatLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.dimmed, fontWeight: '600', marginBottom: 2 },
-  scenarioStatValue: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
+  scenarioStatLabel: { fontSize: typeScale.micro, letterSpacing: 1, color: colors.text.dimmed, fontWeight: weight.medium, marginBottom: 2 },
+  scenarioStatValue: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
   scenarioStatDivider: {
     width: 1,
     height: 28,
@@ -1380,23 +1248,23 @@ const styles = StyleSheet.create({
 
   // Competition ladder
   projLede: {
-    color: colors.text.secondary, fontSize: 14, lineHeight: 21,
+    color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21,
     marginTop: spacing.lg,
   },
-  projStrong: { color: colors.text.primary, fontWeight: '700' },
+  projStrong: { color: colors.text.primary, fontWeight: weight.bold },
   projFootnote: {
-    color: colors.text.dimmed, fontSize: 10.5, lineHeight: 16,
+    color: colors.text.dimmed, fontSize: typeScale.label, lineHeight: 16,
     marginTop: spacing.md,
   },
   ladderLede: {
-    color: colors.text.secondary, fontSize: 13, lineHeight: 19,
+    color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 19,
     marginBottom: spacing.md,
   },
-  ladderCountValue: { color: colors.orange[500], fontSize: 24, fontWeight: '700', letterSpacing: -0.5 },
-  ladderCountOf: { color: colors.text.dimmed, fontSize: 15, fontWeight: '600' },
+  ladderCountValue: { color: colors.orange[500], fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.5 },
+  ladderCountOf: { color: colors.text.dimmed, fontSize: typeScale.body, fontWeight: weight.medium },
   ladderCountLabel: {
-    color: colors.text.muted, fontSize: 9, letterSpacing: 2,
-    fontWeight: '600', marginTop: 2,
+    color: colors.text.muted, fontSize: typeScale.micro, letterSpacing: 2,
+    fontWeight: weight.medium, marginTop: 2,
   },
   ladderRungNext: {
     // The tint used to be applied with marginHorizontal: -10, which made the
@@ -1404,7 +1272,7 @@ const styles = StyleSheet.create({
     // to jut out of the stack. The inset is constant now and only the fill
     // changes.
     backgroundColor: 'rgba(139,131,255,0.09)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
   },
   ladderRung: {
     flexDirection: 'row', alignItems: 'center',
@@ -1414,7 +1282,7 @@ const styles = StyleSheet.create({
   },
   ladderSpine: {
     position: 'absolute', left: 0, top: 8, bottom: 8,
-    width: 2, borderRadius: 1,
+    width: 2, borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.14)',
   },
   // The label column has to take the slack, or the mark packs up against it
@@ -1422,14 +1290,14 @@ const styles = StyleSheet.create({
   // circle used to give this row its width, and removing the circle collapsed
   // it onto the label.
   ladderLabel: {
-    flex: 1, fontSize: 15, color: colors.text.secondary, fontWeight: '500',
+    flex: 1, fontSize: typeScale.body, color: colors.text.secondary, fontWeight: weight.medium,
   },
   // Fixed width so the marks form a true column down the card rather than
   // ragging against labels of different lengths.
   ladderRight: { alignItems: 'flex-end', minWidth: 92 },
   ladderThreshold: {
-    fontSize: 16, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary,
     fontVariant: ['tabular-nums'], letterSpacing: -0.3,
   },
-  ladderGap: { fontSize: 11.5, color: colors.text.muted, marginTop: 3 },
+  ladderGap: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 3 },
 })

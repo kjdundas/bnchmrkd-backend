@@ -23,7 +23,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius, numerals } from '../lib/theme'
+import { spacing, radius, numerals, typeScale, weight } from '../lib/theme'
 import { formatMark, isLowerBetter } from '../lib/metricSemantics'
 import {
   countsForAnalysis, exclusionReason, ordinal, formatWind, isWindAffected,
@@ -209,26 +209,26 @@ function ResultRow({ r, isSeasonBest }: { r: any; isSeasonBest: boolean }) {
 }
 
 const s = StyleSheet.create({
-  empty: { fontSize: 13, lineHeight: 19, paddingVertical: spacing.md },
-  season: { borderWidth: 1, borderRadius: radius.md, overflow: 'hidden' },
+  empty: { fontSize: typeScale.caption, lineHeight: 19, paddingVertical: spacing.md },
+  season: { borderWidth: 1, borderRadius: radius.control, overflow: 'hidden' },
   seasonHead: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: 14, paddingVertical: 12,
   },
-  year: { fontSize: 16, fontWeight: '700', ...numerals },
-  seasonMeta: { fontSize: 11.5, marginTop: 2 },
+  year: { fontSize: typeScale.body, fontWeight: weight.bold, ...numerals },
+  seasonMeta: { fontSize: typeScale.label, marginTop: 2 },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 11, borderBottomWidth: 1,
   },
   date: { width: 30, alignItems: 'center' },
-  day: { fontSize: 15, fontWeight: '700', ...numerals },
-  mon: { fontSize: 9.5, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: '600' },
-  disc: { fontSize: 14.5, fontWeight: '600', flexShrink: 1 },
-  tag: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
-  tagText: { fontSize: 8.5, fontWeight: '800', letterSpacing: 0.8 },
-  meta: { fontSize: 11.5 },
-  reason: { fontSize: 10.5, fontWeight: '600', marginTop: 1 },
-  mark: { fontSize: 15.5, fontWeight: '700', ...numerals },
-  wind: { fontSize: 10.5, marginTop: 1, ...numerals },
+  day: { fontSize: typeScale.body, fontWeight: weight.bold, ...numerals },
+  mon: { fontSize: typeScale.micro, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: weight.medium },
+  disc: { fontSize: typeScale.body, fontWeight: weight.medium, flexShrink: 1 },
+  tag: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: radius.hair },
+  tagText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 0.8 },
+  meta: { fontSize: typeScale.label },
+  reason: { fontSize: typeScale.label, fontWeight: weight.medium, marginTop: 1 },
+  mark: { fontSize: typeScale.body, fontWeight: weight.bold, ...numerals },
+  wind: { fontSize: typeScale.label, marginTop: 1, ...numerals },
 })

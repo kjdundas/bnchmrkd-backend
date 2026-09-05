@@ -35,7 +35,7 @@ import React, { useMemo, useState } from 'react'
 import { View, Text, Modal, ScrollView, StyleSheet } from 'react-native'
 import Svg, { Line, Circle, Path, Text as SvgText } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
-import { onImageColors as colors, spacing, radius, rhythm, numerals, onDark } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, numerals, onDark, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from './ui'
 import { useReducedMotion } from '../lib/motion'
 import { tapFeedback } from '../lib/haptics'
@@ -271,7 +271,7 @@ export default function WellnessHistorySheet({
     >
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
 
         <View style={s.header}>
@@ -430,9 +430,9 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,
   },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5, marginTop: 4 },
+  title: { fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.5, marginTop: 4 },
   close: {
-    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
   },
   chips: {
@@ -441,44 +441,44 @@ const s = StyleSheet.create({
   chip: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
     minHeight: 44, paddingHorizontal: 6,
-    borderRadius: radius.md, borderWidth: 1,
+    borderRadius: radius.control, borderWidth: 1,
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  chipText: { fontSize: 12.5, fontWeight: '700' },
-  chipCount: { fontSize: 11, fontWeight: '600', ...numerals },
+  chipText: { fontSize: typeScale.caption, fontWeight: weight.bold },
+  chipCount: { fontSize: typeScale.label, fontWeight: weight.medium, ...numerals },
   intro: {
-    fontSize: 13, lineHeight: 19, color: colors.text.secondary,
+    fontSize: typeScale.caption, lineHeight: 19, color: colors.text.secondary,
     paddingHorizontal: spacing.lg,
   },
   empty: {
-    fontSize: 13.5, lineHeight: 20, color: colors.text.secondary,
+    fontSize: typeScale.caption, lineHeight: 20, color: colors.text.secondary,
     paddingHorizontal: spacing.lg, paddingTop: spacing.sm,
   },
   fieldHead: {
     flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     marginBottom: 2,
   },
-  fieldName: { fontSize: 15, fontWeight: '700', color: colors.text.primary },
-  fieldAvg: { fontSize: 11.5, color: colors.text.muted, ...numerals },
-  fieldNow: { fontSize: 17, fontWeight: '700', ...numerals },
+  fieldName: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
+  fieldAvg: { fontSize: typeScale.label, color: colors.text.muted, ...numerals },
+  fieldNow: { fontSize: typeScale.title, fontWeight: weight.bold, ...numerals },
   axis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -4 },
-  axisText: { fontSize: 10, color: colors.text.muted, ...numerals },
+  axisText: { fontSize: typeScale.label, color: colors.text.muted, ...numerals },
   thead: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10,
     paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.12)',
   },
-  th: { fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.text.muted, fontWeight: '700' },
+  th: { fontSize: typeScale.micro, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.text.muted, fontWeight: weight.bold },
   cell: { width: 38, textAlign: 'right' },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  dot: { width: 7, height: 7, borderRadius: 3.5 },
-  date: { fontSize: 13.5, color: colors.text.primary, fontWeight: '500' },
-  reasons: { fontSize: 10.5, color: colors.text.muted, marginTop: 2, marginLeft: 13 },
-  val: { fontSize: 14, fontWeight: '700', ...numerals },
+  dot: { width: 7, height: 7, borderRadius: radius.full },
+  date: { fontSize: typeScale.caption, color: colors.text.primary, fontWeight: weight.medium },
+  reasons: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 2, marginLeft: 13 },
+  val: { fontSize: typeScale.body, fontWeight: weight.bold, ...numerals },
   foot: {
-    fontSize: 11, color: colors.text.muted, lineHeight: 16,
+    fontSize: typeScale.label, color: colors.text.muted, lineHeight: 16,
     marginTop: rhythm.section, paddingHorizontal: spacing.lg,
   },
 })

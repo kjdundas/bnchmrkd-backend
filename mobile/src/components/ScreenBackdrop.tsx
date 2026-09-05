@@ -60,7 +60,13 @@ export const BACKDROPS = {
     source: require('../../assets/stadium-hero.jpg'),
     position: 'top center' as const,
     topScrim: 0.24,
-    leftScrim: 0,
+    // 0.62, not 0. I set this to zero on the assumption that the stadium's
+    // left side was dark and nothing laid a hero title on it. Both were
+    // wrong: measured off the actual crop, the band where the greeting and
+    // title sit is a warm sunlit rgb(234,207,160), which puts white type at
+    // 1.70:1 and the 62%-white greeting kicker at 1.40:1 — worse than the
+    // gym photo ever was. 0.62 takes them to 7.7:1 and 4.1:1.
+    leftScrim: 0.62,
   },
   gym: {
     source: require('../../assets/gym-hero.jpg'),
@@ -68,7 +74,56 @@ export const BACKDROPS = {
     topScrim: 0.62,
     leftScrim: 0.66,
   },
+  // The discus cage, for Boards. The brightest of the three by a wide
+  // margin — it is two thirds sky — so it needs the heaviest hand. Measured
+  // off the portrait crop, the band the header and title sit in has a 90th
+  // percentile of L=0.679, which puts plain white at 1.44:1 before any
+  // scrim. What each setting buys, and costs:
+  //
+  //   topScrim   white     photo kept
+  //     0.62     3.41:1       38%
+  //     0.70     4.14:1       30%
+  //     0.74     4.64:1       26%   <- here
+  //
+  // 0.74 is the first step where white clears AA outright rather than
+  // merely clearing the large-text allowance, and on Boards that matters:
+  // the scope chips sit on bare photograph at label size, not title size.
+  // A quarter of the picture survives, which on a photo this bright is
+  // still plainly a discus cage.
+  discus: {
+    source: require('../../assets/discus-hero.jpg'),
+    position: 'center' as const,
+    topScrim: 0.74,
+    leftScrim: 0.66,
+  },
 } as const
+
+/**
+ * How much of the left vignette survives at the RIGHT edge, as a fraction
+ * of leftScrim. 0 restores the original gradient exactly — this is the one
+ * number to change to revert.
+ *
+ * What it buys, measured on the gym photo's brightest right-edge band,
+ * rgb(170,167,149), with no plate under the text:
+ *
+ *   floor   alpha    plain white   68% white   photo brightness kept
+ *   0.00    0.000       2.99:1       2.20:1          100%
+ *   0.18    0.119       3.69:1       2.59:1           80%
+ *   0.34    0.224       4.51:1       3.02:1           65%   <- here
+ *   0.55    0.363       5.95:1       3.76:1           47%
+ *
+ * And what it does NOT buy, which is the more useful half of the table:
+ * 68% white never reaches 4.5:1 at any floor worth having. You cannot scrim
+ * your way to legible secondary text over a sunlit photograph — at 0.55 it
+ * is still 3.76:1 and half the picture is gone. Anything with a LABEL to
+ * read still needs onImage.chipPlate under it; this is a floor under the
+ * worst case, not a substitute.
+ *
+ * 0.34 is the point where plain white crosses AA on its own, so a future
+ * screen that lays white type on the right edge is safe by default rather
+ * than by having been measured.
+ */
+const RIGHT_FLOOR = 0.34
 
 export type BackdropName = keyof typeof BACKDROPS
 
@@ -198,17 +253,22 @@ export default function ScreenBackdrop({
 
         {/* Left-edge vignette. Horizontal, full height of the photo, so it
             has no top or bottom edge to give itself away — unlike a panel
-            behind the title, which would read as a smudge. Gone by 78%
-            across, which keeps the right two-thirds of the frame at full
-            strength. Measured on the gym photo: title 1.91 → 6.88:1. */}
+            behind the title, which would read as a smudge.
+            Measured on the gym photo: title 1.91 → 6.88:1.
+
+            It used to reach zero at the right edge, which is why the same
+            chip component measured 3.44:1 on "Long" and 1.84:1 on "Jumps"
+            in one row: not a colour choice, a position. RIGHT_FLOOR stops
+            it reaching zero. See the constant for what it can and cannot
+            buy. */}
         {bd.leftScrim > 0 && (
           <Gradient
             colors={[
               `rgba(11,12,24,${bd.leftScrim})`,
               `rgba(11,12,24,${(bd.leftScrim * 0.88).toFixed(3)})`,
               `rgba(11,12,24,${(bd.leftScrim * 0.61).toFixed(3)})`,
-              `rgba(11,12,24,${(bd.leftScrim * 0.18).toFixed(3)})`,
-              'rgba(11,12,24,0)',
+              `rgba(11,12,24,${(bd.leftScrim * Math.max(0.42, RIGHT_FLOOR)).toFixed(3)})`,
+              `rgba(11,12,24,${(bd.leftScrim * RIGHT_FLOOR).toFixed(3)})`,
             ]}
             locations={[0, 0.30, 0.55, 0.78, 1]}
             start={{ x: 0, y: 0.5 }}

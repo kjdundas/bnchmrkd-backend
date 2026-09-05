@@ -23,7 +23,7 @@
 
 import React, { useMemo, useRef, useEffect } from 'react'
 import { View, Text, Animated, StyleSheet } from 'react-native'
-import { onDark, spacing } from '../lib/theme'
+import { onDark, spacing, typeScale, weight, radius } from '../lib/theme'
 import { DURATION, EASE, useReducedMotion } from '../lib/motion'
 
 export interface StripRace { value: number; date?: string | null }
@@ -247,7 +247,7 @@ export default function RaceStrip({
 const styles = StyleSheet.create({
   axis: {
     position: 'absolute', left: 0, right: 0, top: AXIS_Y,
-    height: 2, borderRadius: 1,
+    height: 2, borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.16)',
   },
   cutWrap: { position: 'absolute', top: AXIS_Y - 18, alignItems: 'center', width: 1 },
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     // 64 not 90: a label wider than the gap between two standards is what
     // makes them collide in the first place.
     position: 'absolute', top: -14, width: 64, textAlign: 'center',
-    fontSize: 9, letterSpacing: 0.8, fontWeight: '700',
+    fontSize: typeScale.micro, letterSpacing: 0.8, fontWeight: weight.bold,
     color: onDark.muted, textTransform: 'uppercase',
   },
   dot: {
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     width: LATEST, height: LATEST, alignItems: 'center', justifyContent: 'center',
   },
   latestHalo: {
-    position: 'absolute', width: 30, height: 30, borderRadius: 15,
+    position: 'absolute', width: 30, height: 30, borderRadius: radius.full,
     backgroundColor: onDark.accent, opacity: 0.26,
   },
   latestDot: {
@@ -278,18 +278,18 @@ const styles = StyleSheet.create({
   },
   endLabel: {
     position: 'absolute', top: AXIS_Y + 16,
-    fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase',
-    color: onDark.dim, fontWeight: '600',
+    fontSize: typeScale.micro, letterSpacing: 1.4, textTransform: 'uppercase',
+    color: onDark.dim, fontWeight: weight.medium,
   },
   offscreen: {
     position: 'absolute', top: AXIS_Y - 42, right: 0,
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   offscreenText: {
-    fontSize: 9.5, letterSpacing: 0.6, fontWeight: '700',
+    fontSize: typeScale.micro, letterSpacing: 0.6, fontWeight: weight.bold,
     color: onDark.muted, textTransform: 'uppercase',
   },
-  offscreenGap: { fontWeight: '500', color: onDark.dim },
+  offscreenGap: { fontWeight: weight.medium, color: onDark.dim },
   offscreenArrow: {
     width: 0, height: 0, borderTopWidth: 4, borderBottomWidth: 4, borderLeftWidth: 6,
     borderTopColor: 'transparent', borderBottomColor: 'transparent',
@@ -297,6 +297,6 @@ const styles = StyleSheet.create({
   },
   uncal: {
     position: 'absolute', top: AXIS_Y + 36, left: 0, right: 0,
-    fontSize: 10, color: onDark.dim, textAlign: 'center',
+    fontSize: typeScale.label, color: onDark.dim, textAlign: 'center',
   },
 })

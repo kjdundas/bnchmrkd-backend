@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated } from 'react-native'
-import { darkColors as colors } from '../lib/theme'
+import { darkColors as colors, typeScale, weight } from '../lib/theme'
 import Wordmark from '../components/Wordmark'
 
 export default function SplashScreen() {
@@ -38,16 +38,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    fontSize: 38,
-    fontWeight: '700',
+    fontSize: typeScale.hero,
+    fontWeight: weight.bold,
     color: colors.orange[500],
     letterSpacing: -1,
   },
   tagline: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 3,
     color: colors.text.dimmed,
     marginTop: 12,
-    fontWeight: '600',
+    fontWeight: weight.medium,
   },
 })

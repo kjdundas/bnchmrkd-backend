@@ -7,7 +7,7 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native'
 import Svg, { Polygon, Line, Circle, Text as SvgText } from 'react-native-svg'
-import { colors, spacing, radius, fonts } from '../lib/theme'
+import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { TierBadge } from './ui'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -213,25 +213,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   overallScore: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.text.primary,
-  },
+    fontSize: typeScale.hero,
+    fontWeight: weight.bold,
+    color: colors.text.primary },
 
   svgWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: spacing.sm,
-  },
+    marginVertical: spacing.sm },
 
   axisList: {
     width: '100%',
     marginTop: spacing.md,
-    gap: 6,
-  },
+    gap: 6 },
   axisRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -239,22 +235,20 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.03)',
-  },
+    borderBottomColor: 'rgba(255,255,255,0.03)' },
   axisLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  axisDot: { width: 8, height: 8, borderRadius: 4 },
-  axisLabel: { color: colors.text.secondary, fontSize: 13, fontWeight: '500' },
+  axisDot: { width: 8, height: 8, borderRadius: radius.full },
+  axisLabel: { color: colors.text.secondary, fontSize: typeScale.caption, fontWeight: weight.medium },
   axisScoreRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  axisScore: { fontSize: 16, fontWeight: '700' },
-  axisTierLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  axisNoData: { color: colors.text.dimmed, fontSize: 14 },
+  axisScore: { fontSize: typeScale.body, fontWeight: weight.bold },
+  axisTierLabel: { fontSize: typeScale.label, fontWeight: weight.medium, textTransform: 'uppercase', letterSpacing: 0.5 },
+  axisNoData: { color: colors.text.dimmed, fontSize: typeScale.body },
 
   // Empty state
   emptyRadar: { alignItems: 'center', paddingVertical: spacing.xl },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.text.primary, marginBottom: 6 },
-  emptyText: { color: colors.text.secondary, fontSize: 13, textAlign: 'center', marginBottom: spacing.lg },
+  emptyTitle: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary, marginBottom: 6 },
+  emptyText: { color: colors.text.secondary, fontSize: typeScale.caption, textAlign: 'center', marginBottom: spacing.lg },
   axisHints: { gap: 6, width: '100%' },
   axisHint: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
-  hintDot: { width: 6, height: 6, borderRadius: 3 },
-  hintLabel: { color: colors.text.muted, fontSize: 13 },
-})
+  hintDot: { width: 6, height: 6, borderRadius: radius.full },
+  hintLabel: { color: colors.text.muted, fontSize: typeScale.caption } })

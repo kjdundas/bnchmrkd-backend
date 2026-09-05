@@ -4,36 +4,44 @@
 // Strava/Whoop-inspired: large numbers, clean sections, no emojis
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
+  Animated,
   StyleSheet,
+  RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, onImage, typeScale, weight } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { useTheme } from '../contexts/ThemeContext'
-import { getTier, TIER_NAMES, TIER_COLORS } from '../lib/performanceTiers'
+import { getTier, TIER_NAMES, TIER_COLORS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
-import { isLowerBetter, performancePercentile } from '../lib/disciplineScience'
+import { isLowerBetter, performancePercentile, formatMark } from '../lib/disciplineScience'
+import {
+  fetchResults, subjectOf, pbOf, seasonBestsOf, trendOf,
+} from '../lib/athleteResults'
 import FullAnalysis from '../components/FullAnalysis'
+// The SAME projection card the athlete sees of themselves, not a coach's
+// version of it. Two differently-drawn futures for one young athlete is a
+// disagreement that would surface in a conversation about their career.
+import ImprovementScenariosSection from '../components/ImprovementScenarios'
+import { inEvent } from '../lib/athleteResults'
+import { ageExact } from '../lib/age'
+import GrowthPanel from '../components/GrowthPanel'
+import { SkeletonRows, LoadFailed } from '../components/LoadState'
+import { newTrouble } from '../lib/loadState'
+import { growthOf } from '../lib/squads'
+import { maturityOffsetMirwald, decimalAge } from '../lib/maturation'
+import { fetchMetricsForMany } from '../lib/athleteResults'
+import { Tappable } from '../components/ui'
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-const THROWS = ['Discus Throw', 'Shot Put', 'Javelin Throw', 'Hammer Throw', 'Discus', 'Javelin', 'Hammer', 'Shot']
-const isThrowsDiscipline = (d: string) => THROWS.some(t => d?.toLowerCase().includes(t.toLowerCase()))
-
-function formatMark(value: number | null, discipline: string): string {
-  if (!value) return '—'
-  if (isThrowsDiscipline(discipline)) return `${value.toFixed(2)}m`
-  const mins = Math.floor(value / 60)
-  const secs = (value % 60).toFixed(2)
-  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
-}
+// Helpers now live in lib/disciplineScience — see formatMark there.
 
 
 export default function AthleteDetailScreen() {
@@ -44,9 +52,9 @@ export default function AthleteDetailScreen() {
 
   if (!athlete) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: BACKDROP_GROUND }]}>
         <View style={styles.emptyWrap}>
-          <Ionicons name="person-outline" size={32} color={colors.text.dimmed} />
+          <Ionicons name="person-outline" size={32} color={onImage.dim} />
           <Text style={styles.emptyText}>No athlete data</Text>
         </View>
       </SafeAreaView>
@@ -58,61 +66,137 @@ export default function AthleteDetailScreen() {
   const genderCode = athlete.gender === 'Female' ? 'F' : 'M'
   const lower = isLowerBetter(athlete.discipline)
 
-  // Compute PB
-  const pb = useMemo(() => {
-    if (athlete.pb_value) return athlete.pb_value
-    if (!athlete.races?.length) return null
-    const values = athlete.races.map((r: any) => parseFloat(r.value)).filter(Number.isFinite)
-    if (!values.length) return null
-    return lower ? Math.min(...values) : Math.max(...values)
-  }, [athlete])
+  // Results now come from `performances` for BOTH kinds of athlete — one with
+  // an account and one the coach keeps on their roster. This screen used to
+  // read a JSON blob on the roster row that carried no status and no wind, so
+  // a coach's view of a mark could not apply the rules the athlete's own view
+  // applied: the same +2.9 sprint was a personal best to one of them and not
+  // to the other. Everything below goes through countsForAnalysis now.
+  // Drives the backdrop's parallax and blur, as on every other screen.
+  const scrollY = useRef(new Animated.Value(0)).current
+  const [results, setResults] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const loadResults = useCallback(async () => {
+    const subject = subjectOf(athlete)
+    if (!subject) { setResults([]); setLoading(false); return }
+    const t = newTrouble()
+    const rows = await fetchResults(subject, t)
+    setResults(rows)
+    setFailed(t.failed)
+    setLoading(false)
+  }, [athlete?.id, athlete?.linked_user_id])
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    loadResults().catch(() => { if (alive) { setFailed(true); setLoading(false) } })
+    return () => { alive = false }
+  }, [loadResults])
+
+  const pb = useMemo(
+    () => pbOf(results, athlete.discipline), [results, athlete.discipline])
 
   const tier = pb ? getTier(athlete.discipline, genderCode, ageGroup, pb) : null
   const percentile = pb ? performancePercentile(pb, athlete.discipline, genderCode) : null
 
-  // Sort races by date (newest first)
-  const races = useMemo(() => {
-    if (!athlete.races?.length) return []
-    return [...athlete.races]
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [athlete])
+  // Newest first. The date is a plain YYYY-MM-DD, so it sorts as a string —
+  // going through Date would read it as UTC midnight.
+  // inEvent, not a bare date filter. Without it this log listed every
+  // discipline the athlete has ever recorded under whichever event's
+  // heading happened to be on screen — a 60m of 7.43 sat in a list titled
+  // 100m, and the "races" count above it said 6 while the season
+  // progression, which does gate by event, said 5. Same class of bug as
+  // the 60m that was once ranked as a 100m personal best: the gate existed
+  // and this path did not go through it.
+  const races = useMemo(
+    () => [...inEvent(results, athlete.discipline)]
+      .filter((r) => r.competition_date)
+      .sort((a, b) => String(b.competition_date).localeCompare(String(a.competition_date)))
+      .map((r) => ({ ...r, value: r.mark, date: r.competition_date, competition: r.competition_name })),
+    [results, athlete.discipline])
 
-  // Season bests
-  const seasonBests = useMemo(() => {
-    if (!races.length) return []
-    const grouped: Record<string, number[]> = {}
-    for (const r of races) {
-      const year = r.date ? new Date(r.date).getFullYear().toString() : 'Unknown'
-      if (!grouped[year]) grouped[year] = []
-      const v = parseFloat(r.value)
-      if (Number.isFinite(v)) grouped[year].push(v)
-    }
-    return Object.entries(grouped)
-      .map(([year, vals]) => ({
-        year,
-        best: lower ? Math.min(...vals) : Math.max(...vals),
-        count: vals.length,
-      }))
-      .sort((a, b) => b.year.localeCompare(a.year))
-  }, [races])
+  const seasonBests = useMemo(
+    () => seasonBestsOf(results, athlete.discipline), [results, athlete.discipline])
 
-  // Trend (last 2 results)
-  const trend = useMemo(() => {
-    if (races.length < 2) return null
-    const curr = parseFloat(races[0].value)
-    const prev = parseFloat(races[1].value)
-    if (!Number.isFinite(curr) || !Number.isFinite(prev)) return null
-    return lower ? (curr < prev ? 'up' : curr > prev ? 'down' : null)
-                 : (curr > prev ? 'up' : curr < prev ? 'down' : null)
-  }, [races])
+  const trend = useMemo(
+    () => trendOf(results, athlete.discipline), [results, athlete.discipline])
+
+  // Every legal mark in THIS event, carrying the athlete's age on the day
+  // they ran it — not their age now. Plotting a 15-year-old's race at their
+  // current 19 would slide their whole history to the right and make an
+  // ordinary progression look like a late surge.
+  // Fractional age, exactly as the athlete's own screen builds it — two
+  // races in one season must not collapse onto the same x.
+  const projHistory = useMemo(() => {
+    if (!athlete.dob) return []
+    return inEvent(results, athlete.discipline)
+      .map((r: any) => {
+        const t = new Date(r.competition_date).getTime()
+        const v = Number(r.mark)
+        if (Number.isNaN(t) || !Number.isFinite(v)) return null
+        const a = ageExact(athlete.dob, t)
+        return a != null && a > 5 && a < 60 ? { age: a, value: v, date: r.competition_date } : null
+      })
+      .filter(Boolean) as { age: number; value: number; date: string }[]
+  }, [results, athlete.discipline, athlete.dob])
+
+  const nowAge = useMemo(() => ageExact(athlete.dob), [athlete.dob])
+
+  // Anthropometrics, for the growth reading. Read through the same fan-out
+  // as everywhere else, so approval and the athlete's sharing choice have
+  // both already been applied by the time the rows arrive.
+  const [metricRows, setMetricRows] = useState<any[]>([])
+  useEffect(() => {
+    let alive = true
+    const subject = subjectOf(athlete)
+    if (!subject) { setMetricRows([]); return }
+    fetchMetricsForMany([subject])
+      .then((m) => {
+        if (!alive) return
+        const key = (subject as any).userId || (subject as any).rosterId
+        setMetricRows(m.get(key) || [])
+      })
+      .catch(() => { if (alive) setMetricRows([]) })
+    return () => { alive = false }
+  }, [athlete?.id, athlete?.linked_user_id])
+
+  const growth = useMemo(() => growthOf(metricRows), [metricRows])
+
+  // The cross-sectional estimate, purely so the panel can say when it
+  // disagrees with the measured series — never as the headline.
+  const maturityStatus = useMemo(() => {
+    const latest = (key: string) => metricRows
+      .filter((r: any) => r?.metric_key === key && r?.recorded_at)
+      .sort((a: any, b: any) => String(b.recorded_at).localeCompare(String(a.recorded_at)))[0]
+    const h = latest('standing_height'), sh = latest('sitting_height'), bm = latest('body_mass')
+    const a = decimalAge(athlete.dob)
+    if (!h || !sh || !bm || a == null) return null
+    return maturityOffsetMirwald({
+      sex: genderCode, ageYears: a,
+      heightCm: Number(h.value), sittingHeightCm: Number(sh.value), weightKg: Number(bm.value),
+    })?.status ?? null
+  }, [metricRows, athlete.dob, genderCode])
+  const heightSeries = useMemo(
+    () => metricRows
+      .filter((r: any) => r?.metric_key === 'standing_height' && r?.recorded_at)
+      .map((r: any) => ({ day: String(r.recorded_at).slice(0, 10), cm: Number(r.value) })),
+    [metricRows])
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
+    <View style={{ flex: 1, backgroundColor: BACKDROP_GROUND }}>
+      {/* The same photographic ground as everywhere else. This screen was the
+          one place still rendering on the light theme — near-black type on a
+          near-white paper, in the middle of a dark app. */}
+      <ScreenBackdrop image="gym" scrollY={scrollY} />
+      <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
-        </TouchableOpacity>
+        <Tappable onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn} accessibilityLabel="Back">
+          <Ionicons name="chevron-back" size={22} color={onImage.ink} />
+        </Tappable>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerName} numberOfLines={1}>{athlete.name}</Text>
           <Text style={styles.headerMeta}>
@@ -133,20 +217,41 @@ export default function AthleteDetailScreen() {
         )}
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing} tintColor={c.accent[500]}
+            onRefresh={async () => {
+              setRefreshing(true)
+              await loadResults().catch(() => setFailed(true))
+              setRefreshing(false)
+            }} />
+        }
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+      >
         {/* Hero PB Card */}
-        {pb ? (
-          <View style={styles.heroCard}>
-            <View pointerEvents="none" style={styles.heroGlow} />
-            <View pointerEvents="none" style={styles.heroGlow2} />
+        {/* A coach approves a result in their inbox, opens the athlete to see
+            it land, and the screen is stale. The pull is the first thing a
+            hand does; nothing happening reads as frozen. */}
+        {loading && <View style={{ marginTop: 10 }}><SkeletonRows rows={3} /></View>}
 
+        {!loading && failed && <LoadFailed />}
+
+        {!loading && !failed && pb ? (
+          <View style={styles.heroCard}>
             <View style={styles.heroInner}>
               <Text style={styles.heroPb}>{formatMark(pb, athlete.discipline)}</Text>
 
               {tier && (
                 <View style={[styles.heroBadge, { backgroundColor: tier.color + '15', borderColor: tier.color + '25' }]}>
                   <View style={[styles.heroBadgeDot, { backgroundColor: tier.color }]} />
-                  <Text style={[styles.heroBadgeText, { color: tier.color }]}>{tier.tierName}</Text>
+                  <Text style={[styles.heroBadgeText, { color: TIER_INK[tier.tier] || tier.color }]}>{tier.tierName}</Text>
                 </View>
               )}
 
@@ -186,13 +291,13 @@ export default function AthleteDetailScreen() {
               </View>
             </View>
           </View>
-        ) : (
+        ) : (!loading && !failed && (
           <View style={styles.noPbCard}>
-            <Ionicons name="timer-outline" size={24} color={colors.text.dimmed} />
+            <Ionicons name="timer-outline" size={24} color={onImage.dim} />
             <Text style={styles.noPbText}>No performances logged yet</Text>
             <Text style={styles.noPbSub}>Race results will appear here once added via the scanner.</Text>
           </View>
-        )}
+        ))}
 
         {/* Season Bests */}
         {seasonBests.length > 0 && (
@@ -265,6 +370,29 @@ export default function AthleteDetailScreen() {
           </View>
         )}
 
+        {/* Growth comes before the marks, because it changes how the marks
+            underneath should be read: a dip through a spurt is not a dip in
+            form. Hidden entirely for anyone 19 or over. */}
+        <GrowthPanel
+          reading={growth}
+          heights={heightSeries}
+          sex={genderCode}
+          age={age}
+          maturityStatus={maturityStatus}
+        />
+
+        {/* Where this could go. Above the five-act analysis because a coach
+            opening an athlete wants the shape of the career before the
+            breakdown of one mark. */}
+        <ImprovementScenariosSection
+          discipline={athlete.discipline}
+          pb={pb as number}
+          age={age}
+          sex={genderCode}
+          history={projHistory}
+          nowAge={nowAge ?? undefined}
+        />
+
         {/* Full 5-Act Analysis */}
         {pb && age && (
           <FullAnalysis
@@ -273,18 +401,20 @@ export default function AthleteDetailScreen() {
             age={age}
             sex={genderCode}
             athleteName={athlete.name}
+            showHero={false}
           />
         )}
 
         <View style={{ height: 40 }} />
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.ScrollView>
+      </SafeAreaView>
+    </View>
   )
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg.primary },
+  safe: { flex: 1 },
 
   header: {
     paddingHorizontal: spacing.lg,
@@ -299,19 +429,19 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.04)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text.primary,
+    fontSize: typeScale.title,
+    fontWeight: weight.bold,
+    color: onImage.ink,
   },
   headerMeta: {
-    fontSize: 12,
-    color: colors.text.muted,
+    fontSize: typeScale.caption,
+    color: onImage.muted,
     marginTop: 1,
   },
   trendChip: {
@@ -320,10 +450,10 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
   },
-  trendChipText: { fontSize: 10, fontWeight: '600' },
+  trendChipText: { fontSize: typeScale.label, fontWeight: weight.medium },
 
   content: { padding: spacing.lg, paddingTop: spacing.lg },
 
@@ -331,40 +461,23 @@ const styles = StyleSheet.create({
   heroCard: {
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: 'rgba(249,115,22,0.06)',
+    // A real surface, not a 6% tint. This card sits over the photograph at
+    // the top of the screen, and a near-transparent card hands everything
+    // inside it whatever the picture happens to be doing.
+    backgroundColor: 'rgba(23,25,53,0.92)',
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.15)',
-    borderRadius: radius.lg,
+    borderColor: 'rgba(249,115,22,0.28)',
+    borderRadius: radius.card,
     marginBottom: spacing.lg,
-  },
-  heroGlow: {
-    position: 'absolute',
-    top: -60,
-    left: -60,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: colors.orange[500],
-    opacity: 0.08,
-  },
-  heroGlow2: {
-    position: 'absolute',
-    bottom: -50,
-    right: -50,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.blue,
-    opacity: 0.04,
   },
   heroInner: {
     padding: spacing.xl,
     alignItems: 'center',
   },
   heroPb: {
-    fontSize: 44,
-    fontWeight: '800',
-    color: colors.text.primary,
+    fontSize: typeScale.display,
+    fontWeight: weight.bold,
+    color: onImage.ink,
     letterSpacing: -2,
     marginBottom: spacing.md,
   },
@@ -374,12 +487,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: radius.card,
     borderWidth: 1,
     marginBottom: spacing.xl,
   },
-  heroBadgeDot: { width: 6, height: 6, borderRadius: 3 },
-  heroBadgeText: { fontSize: 13, fontWeight: '700' },
+  heroBadgeDot: { width: 6, height: 6, borderRadius: radius.full },
+  heroBadgeText: { fontSize: typeScale.caption, fontWeight: weight.bold },
   heroStats: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -388,32 +501,32 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heroStat: { alignItems: 'center', minWidth: 60 },
-  heroStatVal: { fontSize: 17, fontWeight: '700', color: colors.text.primary },
-  heroStatLabel: { fontSize: 9, letterSpacing: 1, color: colors.text.muted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+  heroStatVal: { fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink },
+  heroStatLabel: { fontSize: typeScale.micro, letterSpacing: 1, color: onImage.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   heroStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
   tierBar: { flexDirection: 'row', gap: 3, width: '100%' },
-  tierSegment: { flex: 1, height: 3, borderRadius: 1.5 },
+  tierSegment: { flex: 1, height: 3, borderRadius: radius.full },
 
   // No PB
   noPbCard: {
     alignItems: 'center',
     padding: spacing.xxl,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
-  noPbText: { fontSize: 15, fontWeight: '600', color: colors.text.secondary },
-  noPbSub: { fontSize: 13, color: colors.text.muted, textAlign: 'center', lineHeight: 18 },
+  noPbText: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted },
+  noPbSub: { fontSize: typeScale.caption, color: onImage.muted, textAlign: 'center', lineHeight: 18 },
 
   // Sections
   section: {
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -426,15 +539,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.04)',
   },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: colors.text.primary, flex: 1 },
+  sectionTitle: { fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.ink, flex: 1 },
   sectionCount: {
-    fontSize: 11,
-    color: colors.text.dimmed,
-    fontWeight: '600',
+    fontSize: typeScale.label,
+    color: onImage.dim,
+    fontWeight: weight.medium,
     backgroundColor: 'rgba(255,255,255,0.04)',
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: radius.chip,
   },
 
   // Season progression
@@ -446,21 +559,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)',
     gap: spacing.md,
   },
-  seasonYear: { fontSize: 13, fontWeight: '700', color: colors.text.muted, width: 38 },
+  seasonYear: { fontSize: typeScale.caption, fontWeight: weight.bold, color: onImage.muted, width: 38 },
   seasonBarWrap: {
     flex: 1,
     height: 6,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 3,
+    borderRadius: radius.full,
     overflow: 'hidden',
   },
   seasonBarFill: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: radius.full,
   },
   seasonRight: { alignItems: 'flex-end', minWidth: 70 },
-  seasonBest: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
-  seasonCount: { fontSize: 10, color: colors.text.dimmed, marginTop: 1 },
+  seasonBest: { fontSize: typeScale.body, fontWeight: weight.bold, color: onImage.ink },
+  seasonCount: { fontSize: typeScale.label, color: onImage.dim, marginTop: 1 },
 
   // Race log
   raceRow: {
@@ -472,21 +585,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)',
   },
   raceMarkRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  raceMark: { fontSize: 15, fontWeight: '700', color: colors.text.primary },
-  raceComp: { fontSize: 11, color: colors.text.muted, marginTop: 1 },
-  raceDate: { fontSize: 12, color: colors.text.muted },
+  raceMark: { fontSize: typeScale.body, fontWeight: weight.bold, color: onImage.ink },
+  raceComp: { fontSize: typeScale.label, color: onImage.muted, marginTop: 1 },
+  raceDate: { fontSize: typeScale.caption, color: onImage.muted },
   pbChip: {
     backgroundColor: colors.orange[500] + '18',
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 4,
+    borderRadius: radius.hair,
     borderWidth: 1,
     borderColor: colors.orange[500] + '30',
   },
-  pbChipText: { fontSize: 9, fontWeight: '700', color: colors.orange[500], letterSpacing: 0.5 },
-  moreText: { fontSize: 11, color: colors.text.dimmed, textAlign: 'center', marginTop: spacing.sm },
+  pbChipText: { fontSize: typeScale.micro, fontWeight: weight.bold, color: colors.orange[500], letterSpacing: 0.5 },
+  moreText: { fontSize: typeScale.label, color: onImage.dim, textAlign: 'center', marginTop: spacing.sm },
 
   // Empty
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
-  emptyText: { fontSize: 15, color: colors.text.muted },
+  emptyText: { fontSize: typeScale.body, color: onImage.muted },
 })

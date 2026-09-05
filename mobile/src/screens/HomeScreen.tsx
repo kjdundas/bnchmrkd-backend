@@ -1,12 +1,28 @@
 // ═══════════════════════════════════════════════════════════════════════
-// HOME SCREEN — The athlete's dashboard.
-// Home is the DAILY loop and nothing else: am I okay today, and what was my
-// last mark. It ends after ~2 screens on purpose.
-//   coach requests → MetricRail → CheckInCard → PerformanceHero →   (rings first)
-//   discipline switcher → race trend → since-last-visit
+// HOME SCREEN — four blocks, one question each.
 //
-// Exploration lives on Trajectory (per-discipline analysis) and physical
-// profile on Profile. See the block comment mid-file for what moved where.
+//   1  the mark        what did I do          (hero — no card around it)
+//   2  today           what am I doing now    (session + check-in, one card)
+//   3  where I stand   how do I compare
+//   4  since last time what changed
+//
+// It was ten. Four of those ten answered the same question — the metric rail,
+// the Today card, the check-in and the hero were all "how am I doing right
+// now" — and the rail and the DNA strip were computed from the same `metrics`
+// array, one drawn as rings and one as a score. A screen where everything is
+// a card of equal weight reads as wallpaper: uniformity tells the eye that
+// nothing matters more than anything else.
+//
+// The mark leads and carries no chrome at all, because it is the reason the
+// app exists. It used to be the fourth thing you saw, at 22 points, inside a
+// card, under a kicker reading YOUR HEADLINE.
+//
+// The greeting is gone. It was set at 10px, uppercase, tracked out, in muted
+// grey — the athlete's own name was the smallest, faintest text on their home
+// screen. Identity lives in AppHeader; the streak sits on the date line.
+//
+// Exploration lives on Trajectory (per-discipline analysis), the rings and
+// the DNA profile on Profile.
 //
 // KEY: Physical metrics (athlete_metrics) bridge to competition data.
 // If a user logs sprint_100m = 11.23s, that populates the hero as a "100m" PB.
@@ -19,39 +35,43 @@ import {
   StyleSheet,
   RefreshControl,
   Animated,
-  ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, onImage } from '../lib/theme'
+import { colors, spacing, onImage, typeScale, weight, radius } from '../lib/theme'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { selectFrom } from '../lib/supabase'
-import { AlmanacCard, MonoKicker, EmptyState, Stagger, SectionLabel } from '../components/ui'
+import { selectFrom, callRpc } from '../lib/supabase'
+import { Stagger, SectionLabel, Tappable } from '../components/ui'
 import {
   RivalCard,
   WhereYouStand,
   ScienceSpotlight,
   SinceLastVisit,
-  WeeklyRecap,
   Sparkline,
 } from '../components/HomeSections'
-import { XPBar, StreakChip as GamStreakChip } from '../components/GamificationUI'
+import { StreakChip as GamStreakChip } from '../components/GamificationUI'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 import AppHeader from '../components/AppHeader'
 import { TAB_BAR_CLEARANCE } from '../navigation/FloatingTabBar'
 import CheckInCard from '../components/CheckInCard'
-import DnaStrip from '../components/DnaCard'
 import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
-import { PerformanceHero, RaceTrendCard, MetricRail, type HomeView, type TierBand } from '../components/OuraSections'
-import { isThrowsDiscipline, LOWER_IS_BETTER, groupMetrics } from '../lib/metricSemantics'
-import { countsForAnalysis } from '../lib/resultSemantics'
+import { PerformanceHero, type HomeView, type TierBand } from '../components/OuraSections'
+import { LOWER_IS_BETTER, formatMark } from '../lib/metricSemantics'
+import { isLowerBetter } from '../lib/disciplineScience'
+import { partitionResults } from '../lib/resultSemantics'
 import TodayCard from '../components/TodayCard'
+import HomeStanding from '../components/HomeStanding'
+import CorpusLine from '../components/CorpusLine'
 import { buildWeek, blockWeekFor, mondayOf, todayDay } from '../lib/schedule'
 import { fetchEvents } from '../lib/events'
-import IndicatorPicker from '../components/IndicatorPicker'
-import { loadIndicators, saveIndicators } from '../lib/indicators'
+import ApprovalInbox, { ApprovalBanner, AwaitingApproval } from '../components/ApprovalInbox'
+import GetStartedCard from '../components/GetStartedCard'
+import EventPickerSheet from '../components/EventPickerSheet'
+import { athleteSteps } from '../lib/firstRun'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { tapFeedback } from '../lib/haptics'
+import { useApprovals } from '../contexts/ApprovalsContext'
 import { getTier } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
@@ -65,29 +85,39 @@ import {
 } from '../lib/disciplineScience'
 import {
   WhatIfExplorer,
-  NextMilestone,
   SmartDailyInsight,
 } from '../components/IntelligenceCards'
 
 
 // ── Bridge: physical metric keys → competition disciplines ───────────
-// Maps metric_key from athlete_metrics to a discipline string that
-// disciplineScience.js / historicalRivals.js understand.
+// ONLY where the metric IS the event, measured the same way.
+//
+// This map used to bridge nine keys. It sent `cmj_height` and `sj_height` to
+// High Jump, `broad_jump` to Long Jump, `flying_20m` to 200m, `split_300m` to
+// 400m, and every sprint split from 10m upwards to the 100m. None of those
+// are the same measurement as the event they claimed:
+//
+//   · a countermovement jump is a rig reading in CENTIMETRES; a high jump is
+//     a bar height in metres. Keenan's cmj_height of 47 was picked up here,
+//     handed to a hero anchored on a 200m tier band, and rendered as
+//     "47.00s · New personal best".
+//   · a standing broad jump is not a long jump.
+//   · a 20m flying time is not a 200m; a 300m split is not a 400m; a 10m
+//     acceleration time is not a 100m. Each would be read against tier cuts
+//     built from race results, so the athlete is told a gym number is a race.
+//
+// What survives is the pair where the metric and the event are literally the
+// same performance, timed the same way. Everything else belongs on the
+// physical profile, which is where it already lives.
 const METRIC_TO_DISCIPLINE: Record<string, string> = {
-  sprint_10m: '100m',   sprint_20m: '100m',   sprint_30m: '100m',
-  sprint_40m: '100m',   sprint_60m: '100m',   sprint_100m: '100m',
-  flying_10m: '100m',   flying_20m: '200m',   split_300m: '400m',
-  broad_jump: 'Long Jump',
-  cmj_height: 'High Jump', sj_height: 'High Jump',
+  sprint_60m: '60m',
+  sprint_100m: '100m',
 }
 
 // Priority order: which metric key is most representative for a discipline
 const DISCIPLINE_METRIC_PRIORITY: Record<string, string[]> = {
-  '100m': ['sprint_100m', 'sprint_60m', 'sprint_40m', 'sprint_30m', 'sprint_20m', 'sprint_10m'],
-  '200m': ['flying_20m'],
-  '400m': ['split_300m'],
-  'Long Jump': ['broad_jump'],
-  'High Jump': ['cmj_height'],
+  '60m': ['sprint_60m'],
+  '100m': ['sprint_100m'],
 }
 
 /**
@@ -151,17 +181,38 @@ export default function HomeScreen() {
   // Which discipline Home is currently showing (web calls this activeDiscipline).
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null)
   const [persistedXP, setPersistedXP] = useState<number | null>(null)
+  // First run. The event step is the one that matters: without it there is
+  // no best, no level and no projection, and until now no way to set one.
+  const [eventPickerOpen, setEventPickerOpen] = useState(false)
+  // Reported up by CheckInCard, which already runs this query.
+  const [hasCheckin, setHasCheckin] = useState(false)
+  const [hasCoach, setHasCoach] = useState(false)
+  const [openCheckin, setOpenCheckin] = useState(0)
+  const [setupHidden, setSetupHidden] = useState(false)
+  const setupKey = `@bnchmrkd_setup_hidden_${user?.id || 'anon'}`
+  useEffect(() => {
+    // Whether they have a coach at all — decides if the connect step is even
+    // relevant, and it is the same RPC the sharing controls use.
+    callRpc('my_coaches')
+      .then((r: any) => setHasCoach(Array.isArray(r) && r.length > 0))
+      .catch(() => {})
+  }, [user?.id])
+  useEffect(() => {
+    AsyncStorage.getItem(setupKey).then((v: string | null) => setSetupHidden(v === '1')).catch(() => {})
+  }, [setupKey])
   const [refreshing, setRefreshing] = useState(false)
-  // Which rings the athlete has chosen for the rail, and the picker that
-  // edits them. Empty means automatic — see src/lib/indicators.ts.
-  const [indicators, setIndicators] = useState<string[]>([])
-  const [pickerFor, setPickerFor] = useState<string | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
   // Just enough to answer "what am I doing today" — the schedule tab owns the
   // full picture; this is a window onto the same model.
   const [todayPrograms, setTodayPrograms] = useState<any[]>([])
   const [todayEvents, setTodayEvents] = useState<any[]>([])
   const [todayLogs, setTodayLogs] = useState<any[]>([])
+  // Anything a coach has sent that hasn't been answered, plus anything this
+  // athlete logged that their coach hasn't approved yet. Zero for an athlete
+  // with no coach, so the banner never appears for them.
+  // Shared with the tab bar and with the coach side, so there is one answer
+  // to "how many do I owe" rather than one per screen that mounts.
+  const { count: pendingCount, refresh: refreshPending } = useApprovals()
+  const [inboxOpen, setInboxOpen] = useState(false)
   const [fadeAnim] = useState(new Animated.Value(0))
   // Drives the hero's blur/parallax. Native-driven, so scrolling stays smooth.
   const scrollY = useRef(new Animated.Value(0)).current
@@ -195,6 +246,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadData()
+    refreshPending()
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
@@ -213,7 +265,7 @@ export default function HomeScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await loadData()
+    await Promise.all([loadData(), refreshPending()])
     setRefreshing(false)
   }
 
@@ -247,27 +299,6 @@ export default function HomeScreen() {
     })
     return () => { cancelled = true }
   }, [user, metrics.length])
-
-  // The saved indicator order. Read once per athlete; the rail falls back to
-  // its automatic order while this is in flight, so a slow read never leaves
-  // the rings blank.
-  useEffect(() => {
-    if (!user) { setIndicators([]); return }
-    let cancelled = false
-    loadIndicators(user.id).then((keys) => { if (!cancelled) setIndicators(keys) })
-    return () => { cancelled = true }
-  }, [user])
-
-  // Written through on every edit rather than on dismiss: the sheet can be
-  // swiped away, and a swipe is not a cancel.
-  const changeIndicators = useCallback((keys: string[]) => {
-    setIndicators(keys)
-    if (user) saveIndicators(user.id, keys)
-  }, [user])
-
-  // The picker lists what the athlete has actually logged, in the same
-  // automatic order the rail would use.
-  const metricGroups = useMemo(() => groupMetrics(metrics), [metrics])
 
   // ── Today ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -388,29 +419,42 @@ export default function HomeScreen() {
   // CRITICAL: filter to the active discipline. Without this a 60m result and a
   // 100m result land on the same trend line and gauge, which makes a 60m PB
   // look like a 3-second improvement on a 100m.
-  const perfRaces = useMemo(() => {
+  // A DNF, a DQ'd time, a wind-assisted mark and a result still waiting on the
+  // coach all reach this screen, and none of them may set the PB the gauge is
+  // anchored on or bend the trend line. Number.isFinite catches none of them.
+  //
+  // The pending ones come back separately rather than being dropped, because
+  // "we are not counting this yet" is something the athlete needs told. When
+  // they were merely dropped, Home had a discipline with no countable race,
+  // fell through to the physical-metric fallback below, and printed a 47cm
+  // countermovement jump as a 47.00-second 200m.
+  const { counted: perfCounted, awaiting: perfAwaiting } = useMemo(() => {
     const want = (perfDiscipline || '').trim().toLowerCase()
-    return performances
-      .filter((p: any) => !want || (p.discipline || '').trim().toLowerCase() === want)
-      // A DNF, a DQ'd time and a wind-assisted mark all reach this screen and
-      // none of them may set the PB the gauge is anchored on or bend the
-      // trend line. Number.isFinite alone does not catch the last two.
-      .filter((p: any) => countsForAnalysis(p, p.discipline))
+    const forDiscipline = performances.filter(
+      (p: any) => !want || (p.discipline || '').trim().toLowerCase() === want,
+    )
+    return partitionResults(forDiscipline, perfDiscipline)
+  }, [performances, perfDiscipline])
+
+  const perfRaces = useMemo(() =>
+    perfCounted
       .map((p: any) => ({
         value: parseFloat(p.mark),
         date: p.competition_date || p.created_at,
         competition: p.competition_name || null,
       }))
-      .filter((r) => Number.isFinite(r.value))
-  }, [performances, perfDiscipline])
+      .filter((r) => Number.isFinite(r.value)),
+  [perfCounted])
 
   const sex = profile?.sex || 'M'
   const age = ageFromDob(profile?.dob)
-  // PB direction depends on the event: throws are higher-is-better, track lower.
-  const isThrows = isThrowsDiscipline(perfDiscipline)
+  // PB direction depends on the event. This asked isThrowsDiscipline, whose
+  // list contains no JUMPS — so a long jumper's PB was their SHORTEST jump,
+  // here and in every chart fed from this view.
+  const higherIsBetter = !isLowerBetter(perfDiscipline)
   const perfPb = perfRaces.length > 0
     ? perfRaces.reduce(
-        (best, r) => (best === null ? r.value : isThrows ? Math.max(best, r.value) : Math.min(best, r.value)),
+        (best, r) => (best === null ? r.value : higherIsBetter ? Math.max(best, r.value) : Math.min(best, r.value)),
         null as number | null,
       )
     : null
@@ -421,10 +465,19 @@ export default function HomeScreen() {
     [metrics]
   )
 
-  // Use competition data if available, otherwise use metric-derived data
-  const discipline = perfDiscipline || metricDerived.discipline
-  const competitionPb = perfPb ?? metricDerived.pb
-  const races = perfRaces.length > 0 ? perfRaces : metricDerived.races
+  // Use competition data if available, otherwise use metric-derived data.
+  //
+  // ALL OR NOTHING. These three were resolved independently, so an athlete
+  // with a 200m result that had not been approved yet got the discipline from
+  // the performances table and the PB from a physical metric — `cmj_height`
+  // 47, a jump height in centimetres, bridged to High Jump — and the hero read
+  // "47.00s · New personal best" against a 200m tier band. The fallback is a
+  // substitute for having no competition history at all, not a source of
+  // numbers to mix into one that exists.
+  const useMetricBridge = perfDiscipline == null
+  const discipline = perfDiscipline || (useMetricBridge ? metricDerived.discipline : null)
+  const competitionPb = useMetricBridge ? metricDerived.pb : perfPb
+  const races = useMetricBridge ? metricDerived.races : perfRaces
 
   // Shape the race data the way the Oura sections expect. `chartData` is
   // chronological (oldest → newest) for the trend line; `sortedDesc` is
@@ -438,7 +491,7 @@ export default function HomeScreen() {
     return {
       discipline,
       pb: competitionPb,
-      isThrows: isThrowsDiscipline(discipline),
+      higherIsBetter: !isLowerBetter(discipline),
       lastRace: desc[0] || null,
       sortedDesc: desc,
       chartData: asc.map((r) => ({ date: r.date, value: r.value })),
@@ -480,10 +533,9 @@ export default function HomeScreen() {
     }
   }, [discipline, competitionPb, sex, age])
 
-  // Greeting
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  const firstName = profile?.full_name?.split(' ')[0] || 'Athlete'
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
 
   return (
     // The photograph is the screen. It sits BEHIND the scroll view rather than
@@ -506,101 +558,191 @@ export default function HomeScreen() {
           { useNativeDriver: true },
         )}
       >
-        {/* ── Greeting line (identity moved to AppHeader) ── */}
-        <View style={styles.greetingSection}>
-          <View style={styles.greetingTopRow}>
-            <View style={{ flex: 1 }}>
-              <MonoKicker color="rgba(255,255,255,0.62)">{greeting + ', ' + firstName}</MonoKicker>
-            </View>
-            {streak > 0 && <GamStreakChip streak={streak} />}
-          </View>
-        </View>
+        {/* Anything awaiting an answer comes before anything to read. */}
+        {/* Before anything else on a new account: every panel underneath is
+            empty until the event is set, and nothing else explained why. */}
+        <GetStartedCard
+          steps={athleteSteps({
+            hasEvent: !!storedDiscipline,
+            hasResult: performances.length > 0,
+            hasCheckin,
+            hasCoach,
+          })}
+          // Home has its own Daily check-in row, so the card does not
+          // promote a check-in on top of it.
+          alreadyOffered={['checkin']}
+          dismissed={setupHidden}
+          onDismiss={() => {
+            setSetupHidden(true)
+            AsyncStorage.setItem(setupKey, '1').catch(() => {})
+          }}
+          onAct={(step) => {
+            // A switch on the id, not a chain of route checks. The chain
+            // handled 'Log' and 'Profile' and silently fell through for the
+            // check-in step, whose route is 'Home' — the button rendered, the
+            // press registered, and nothing happened. The default case below
+            // makes that a compile error rather than a dead button: add a
+            // step id without handling it and the default case says so out
+            // loud instead of doing nothing. (It cannot be a compile-time
+            // exhaustiveness check while StepId spans both roles — the coach
+            // ids are in the same union and would never be handled here.)
+            switch (step.id) {
+              case 'event':
+                setEventPickerOpen(true)
+                break
+              case 'result':
+                navigation.navigate('Log' as never)
+                break
+              case 'checkin':
+                // The check-in is not a screen — it is the card further down
+                // this same screen. Open its sheet directly.
+                setOpenCheckin((n) => n + 1)
+                break
+              case 'coach':
+                navigation.navigate('Profile' as never)
+                break
+              default: {
+                const unhandled: never = step.id as never
+                console.warn('Get started step with no action:', unhandled)
+              }
+            }
+          }}
+        />
+
+        <ApprovalBanner count={pendingCount} onPress={() => { tapFeedback(); setInboxOpen(true) }} />
 
         {/* ── Pending coach requests (only renders if any) ── */}
         <View style={{ marginTop: spacing.md }}>
           <AthleteCoachLinks pendingOnly />
         </View>
 
-        {/* ══ Oura-style top: rail → check-in → hero → trend cards ══
-            Order mirrors the web HomeView so both apps read the same. */}
-        {/* Rings first, in the sky. They were nested inside PerformanceHero,
-            which had two problems: they sat below the check-in bar, and they
-            vanished entirely for any athlete with no race result — the hero
-            returns null without one, taking the day's readings with it. They
-            are their own block now. */}
-        {!!metrics.length && (
-          <Stagger index={0}>
-            <MetricRail
-              metrics={metrics}
-              onDarkSurface
-              withLightPool
-              order={indicators}
-              discipline={perfDiscipline || activeDiscipline || storedDiscipline}
-              onCustomise={(key) => { setPickerFor(key); setPickerOpen(true) }}
+        {/* ── Date line ────────────────────────────────────────────
+            What the greeting used to be, carrying something. A 10px
+            "GOOD MORNING, KEENAN" in muted grey was the smallest text on
+            the screen and told the athlete nothing they did not know. */}
+        <View style={styles.dateRow}>
+          <Text style={styles.dateText}>{today}</Text>
+          {streak > 0 && <GamStreakChip streak={streak} />}
+        </View>
+
+        {/* ══ 1 · THE MARK ══════════════════════════════════════════
+            No card. `surface: 'hero'` exists for exactly one block per
+            screen and this is it — the number the app is for. */}
+        <Stagger index={0}>
+          {homeView.lastRace && homeView.pb != null ? (
+            <PerformanceHero
+              view={homeView}
+              disciplines={availableDisciplines}
+              onSelectDiscipline={setActiveDiscipline}
+              scrollY={scrollY}
+              band={tierBand}
             />
-          </Stagger>
+          ) : (
+            // PerformanceHero returns null without a mark, and the block it
+            // leads is the one the screen is built around — so the empty case
+            // needs a shape of its own rather than a hole. Same position, same
+            // weight, one thing to do.
+            <Tappable
+              onPress={() => { tapFeedback(); navigation.navigate('Log' as never) }}
+              accessibilityLabel="No result yet. Log your first one."
+              style={styles.heroEmpty}
+            >
+              <Text style={styles.heroEmptyMark}>—</Text>
+              <Text style={styles.heroEmptyTitle}>
+                {perfAwaiting.length > 0 ? 'Waiting on your coach' : 'No result yet'}
+              </Text>
+              <Text style={styles.heroEmptyBody}>
+                {perfAwaiting.length > 0
+                  ? 'Your result is logged. It becomes your mark once your coach approves it.'
+                  : 'Log a race or a test and this becomes your mark.'}
+              </Text>
+            </Tappable>
+          )}
+        </Stagger>
+
+        {/* Whether or not there is a mark above. An athlete with an approved
+            history AND a newer pending result sees a hero that is correct and
+            a line explaining why it has not moved. */}
+        <AwaitingApproval
+          count={perfAwaiting.length}
+          mark={
+            perfAwaiting.length === 1
+              ? formatMark(parseFloat(perfAwaiting[0].mark), perfDiscipline)
+              : null
+          }
+          onImage
+        />
+
+        {/* The corpus, on Home for the first time. A tier arc is something
+            any app can draw; what happened to the other people who were
+            here is not. Past tense, other people, and silent below four
+            comparable careers. */}
+        {homeView.pb != null && (
+          <CorpusLine
+            discipline={discipline}
+            sex={sex}
+            age={age}
+            mark={homeView.pb}
+            target={tierBand?.nextCut ?? null}
+            lowerBetter={isLowerBetter(discipline)}
+            valueFmt={(v) => formatMark(v, discipline)}
+            onOpen={() => navigation.navigate('Trajectory' as never)}
+          />
         )}
 
-        {/* What is actually happening today, before any of the retrospective
-            material below it. */}
+        {/* ══ 2 · TODAY ═════════════════════════════════════════════
+            The session and the check-in, in one card. They were two, and
+            they are one moment: you look at what you are about to do and
+            you say how you feel about it. The card survives a rest day
+            because the check-in still needs answering on one. */}
         <Stagger index={1}>
           <TodayCard
             day={todayCell}
             block={todayBlock}
             onOpen={() => navigation.navigate('Programs' as never)}
+            footer={
+              <CheckInCard
+                athleteId={user?.id}
+                onImage
+                bare
+                onState={setHasCheckin}
+                openSignal={openCheckin}
+              />
+            }
           />
         </Stagger>
 
-        <Stagger index={2}><CheckInCard athleteId={user?.id} onImage /></Stagger>
-
+        {/* ══ 3 · WHERE YOU STAND ═══════════════════════════════════
+            Silent unless there is a real position. Boards owns the
+            reasons; Home owns the one number. */}
         <Stagger index={2}>
-          <PerformanceHero
-            view={homeView}
-            disciplines={availableDisciplines}
-            onSelectDiscipline={setActiveDiscipline}
-            scrollY={scrollY}
-            band={tierBand}
-          />
-        </Stagger>
-
-        <Stagger index={4}>
-          <RaceTrendCard view={homeView} onLog={() => navigation.navigate('Log' as never)} onImage />
-        </Stagger>
-
-        {/* Athlete DNA — compact by design. One tap opens the full ladder and
-            the tests behind it in a sheet, which keeps the daily screen short
-            without burying the feature. */}
-        <Stagger index={5}>
-          <DnaStrip
-            metrics={metrics}
+          <HomeStanding
             discipline={discipline}
-            dob={profile?.dob}
-            onLog={() => navigation.navigate('Log' as never)}
-            onImage
+            onOpen={() => { tapFeedback(); navigation.navigate('Boards' as never) }}
           />
         </Stagger>
 
-        {/* ── Since you were last here ──────────────────────────────
-            The only ambient block that stays on Home. Recent activity, the
-            weekly recap and the daily insight were three more full cards
-            saying overlapping things; this is the digest.
-
+        {/* ══ 4 · SINCE YOU WERE HERE ═══════════════════════════════
             REMOVED from Home and why:
-              WhereYouStand   → Trajectory already has TierPositioning +
-                                CompetitionLadder for the same question
+              MetricRail      → Profile. It is a profile, not a headline,
+                                and it read the same `metrics` array the
+                                DNA strip did — the same data drawn twice.
+              DnaStrip        → Profile, where it already rendered. It was
+                                on screen twice within two taps.
+              RaceTrendCard   → Trajectory owns history; the hero already
+                                carries the last mark and its delta.
+              Greeting        → AppHeader carries identity.
+              WhereYouStand   → Trajectory has TierPositioning
               RivalCard       → Trajectory has SimilarAthletes
               WhatIfExplorer  → Trajectory has ImprovementScenarios
-              NextMilestone   → covered by Trajectory's tier positioning
-              DNA ladder,
-              Limiting factor → moved to Profile (physical, not per-race)
-              ScienceSpotlight→ moved to Trajectory
-              XP bar          → now a level chip in AppHeader
+              ScienceSpotlight→ Trajectory
+              XP bar          → a level chip in AppHeader
               Recent activity,
               Weekly recap,
               Daily insight   → folded into Since-last-visit
-            ──────────────────────────────────────────────────────────── */}
-        <Stagger index={6}>
-          <SectionLabel color={onImage.dim}>Since you were last here</SectionLabel>
+            ──────────────────────────────────────────────────────── */}
+        <Stagger index={3}>
+          <SectionLabel color={onImage.dim}>Since you were here</SectionLabel>
           <SinceLastVisit metrics={metrics} performances={performances} onImage />
         </Stagger>
 
@@ -609,14 +751,24 @@ export default function HomeScreen() {
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </Animated.ScrollView>
 
-      <IndicatorPicker
-        visible={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        groups={metricGroups}
-        chosen={indicators}
-        onChange={changeIndicators}
-        focusKey={pickerFor}
+      <EventPickerSheet
+        visible={eventPickerOpen}
+        userId={user?.id}
+        initial={storedDiscipline ? [storedDiscipline] : []}
+        onClose={() => setEventPickerOpen(false)}
+        onSaved={(events) => { setStoredDiscipline(events[0]); loadData() }}
       />
+
+      <ApprovalInbox
+        visible={inboxOpen}
+        userId={user?.id}
+        onClose={() => setInboxOpen(false)}
+        // An answer changes what counts: an approved result becomes eligible
+        // for a PB, an accepted program starts generating sessions. Both are
+        // read by loadData, so the screen behind has to refetch.
+        onChanged={() => { refreshPending(); loadData() }}
+      />
+
       </SafeAreaView>
     </View>
   )
@@ -641,29 +793,44 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.lg, paddingTop: spacing.sm },
 
-  greetingSection: { marginBottom: spacing.md, paddingTop: spacing.sm },
-  greetingTopRow: {
-    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+  // The date line the greeting became. Sentence case at reading size, not a
+  // tracked-out 10px label — it is a sentence, so it is set like one.
+  dateRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: spacing.sm, paddingTop: spacing.xs, minHeight: 26,
   },
-  greetingName: {
-    fontSize: 28, fontWeight: '700', color: colors.text.primary,
-    marginTop: 4, letterSpacing: -0.5,
+  // The empty hero. Same slot and roughly the same height as the real one, so
+  // the screen does not reflow the day an athlete logs their first mark.
+  heroEmpty: { alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.lg },
+  heroEmptyMark: {
+    fontSize: typeScale.mark, lineHeight: 60, fontWeight: weight.bold,
+    color: 'rgba(255,255,255,0.22)', letterSpacing: -2.4,
+  },
+  heroEmptyTitle: {
+    fontSize: typeScale.title, fontWeight: weight.bold, color: onImage.ink, marginTop: 4,
+  },
+  heroEmptyBody: {
+    fontSize: typeScale.body, color: onImage.muted, marginTop: 4, textAlign: 'center',
+  },
+  dateText: {
+    fontSize: typeScale.body, fontWeight: weight.medium, color: onImage.muted,
+    letterSpacing: -0.1,
   },
   clubText: {
-    fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase',
-    color: colors.text.muted, marginTop: 4, fontWeight: '600',
+    fontSize: typeScale.label, letterSpacing: 1.5, textTransform: 'uppercase',
+    color: colors.text.muted, marginTop: 4, fontWeight: weight.medium,
   },
 
   // Limiting Factor
   limitingRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   limitingIconWrap: {
-    width: 40, height: 40, borderRadius: 12,
+    width: 40, height: 40, borderRadius: radius.control,
     backgroundColor: 'rgba(245,158,11,0.1)',
     alignItems: 'center', justifyContent: 'center', marginTop: 2,
   },
-  limitingAxis: { color: colors.text.primary, fontSize: 16, fontWeight: '700' },
-  limitingScore: { color: colors.text.secondary, fontSize: 12, marginTop: 2 },
-  limitingDesc: { color: colors.text.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
+  limitingAxis: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.bold },
+  limitingScore: { color: colors.text.secondary, fontSize: typeScale.caption, marginTop: 2 },
+  limitingDesc: { color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 19, marginTop: 6 },
 
   // Activity feed
   activityRow: {
@@ -672,21 +839,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.03)', gap: 8,
   },
   activityDot: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
-  dotInner: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
+  dotInner: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.2)' },
   activityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  activityLabel: { color: colors.text.primary, fontSize: 14, fontWeight: '500', textTransform: 'capitalize' },
-  activityDate: { color: colors.text.dimmed, fontSize: 11, marginTop: 2 },
-  activityValue: { color: colors.orange[400], fontSize: 16, fontWeight: '700' },
-  activityUnit: { fontSize: 11, fontWeight: '400', color: colors.text.muted },
+  activityLabel: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium, textTransform: 'capitalize' },
+  activityDate: { color: colors.text.dimmed, fontSize: typeScale.label, marginTop: 2 },
+  activityValue: { color: colors.orange[400], fontSize: typeScale.body, fontWeight: weight.bold },
+  activityUnit: { fontSize: typeScale.label, fontWeight: weight.regular, color: colors.text.muted },
   pbBadge: {
-    backgroundColor: colors.green + '20', borderRadius: 4,
+    backgroundColor: colors.green + '20', borderRadius: radius.hair,
     paddingHorizontal: 6, paddingVertical: 2,
     borderWidth: 1, borderColor: colors.green + '40',
   },
-  pbText: { color: colors.green, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  pbText: { color: colors.green, fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1 },
 
   // Insight
   insightRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  insightIcon: { fontSize: 22, marginTop: 2 },
-  insightText: { color: colors.text.secondary, fontSize: 14, lineHeight: 21, flex: 1 },
+  insightIcon: { fontSize: typeScale.stat, marginTop: 2 },
+  insightText: { color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21, flex: 1 },
 })

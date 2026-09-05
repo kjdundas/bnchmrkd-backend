@@ -16,17 +16,20 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { radius, numerals } from '../lib/theme'
+import { radius, numerals, typeScale, weight } from '../lib/theme'
 import { READINESS_COLORS } from '../lib/readiness'
 import { dayLabel, type DayCell } from '../lib/schedule'
-import { sessionType, TYPE_STYLE, exerciseMeta, filled } from '../lib/sessionTypes'
+import {
+  sessionType, TYPE_STYLE, exerciseMeta, filled, stripWeekday, outranksTraining,
+} from '../lib/sessionTypes'
 import { EVENT_STYLE, eventKind } from '../lib/events'
+import SessionTick from './SessionTick'
 import { metricForExercise } from '../lib/exerciseMetrics'
 import { fmtMetricValue, formatMark } from '../lib/metricSemantics'
 
 export default function DaySchedule({
   day, onToggleSession, busyKey, onOpenWellness, onMoveSession,
-  sessionBody, onLogExercise, onTrackExercise, loggedCount,
+  sessionBody, onLogExercise, onTrackExercise, loggedCount, showProgram = false,
 }: {
   day: DayCell
   onToggleSession: (programId: string, index: number) => void
@@ -39,6 +42,9 @@ export default function DaySchedule({
   onTrackExercise?: (metricKey: string, exercise: any) => void
   /** How many sets are already logged for one exercise. */
   loggedCount?: (programId: string, sessionIndex: number, blockIndex: number, exerciseIndex: number) => number
+  /** Name the programme on each session. Only worth it with more than one
+      running — otherwise it is the same string three times on one screen. */
+  showProgram?: boolean
 }) {
   const { colors } = useTheme()
   const [openSession, setOpenSession] = useState<string | null>(null)
@@ -64,24 +70,17 @@ export default function DaySchedule({
         </Text>
       )}
 
-      {/* ── Events ─────────────────────────────────────────────── */}
-      {day.events.map((e: any, i: number) => {
-        const k = eventKind(e.kind)
-        const st = EVENT_STYLE[k]
-        const tone = st.tone === 'muted' ? colors.text.muted : (colors as any)[st.tone] || colors.accent[500]
-        return (
-          <View key={e.id || i} style={[s.event, { borderColor: tone + '59', backgroundColor: tone + '14' }]}>
-            <Ionicons name={st.icon as any} size={16} color={tone} />
-            <View style={{ flex: 1 }}>
-              <Text style={[s.sessLabel, { color: colors.text.primary }]}>{e.title}</Text>
-              <Text style={[s.sessMeta, { color: tone }]}>
-                {st.l}{e.end_date && e.end_date !== e.event_date ? ' · multi-day' : ''}
-                {e.notes ? ` · ${e.notes}` : ''}
-              </Text>
-            </View>
-          </View>
-        )
-      })}
+      {/* ── The days that outrank training ─────────────────────── */}
+      {/* A race, a competition or a test day comes first and keeps the
+          colour. Everything else on the calendar — an ad-hoc warm-up, a
+          camp, a rest day — is context and renders after the plan, quietly.
+          `session` is a valid event kind, so treating every event as
+          important put the accent border on a warm-up while the programmed
+          session below it went untagged. */}
+      {day.events.filter((e: any) => outranksTraining(eventKind(e.kind)))
+        .map((e: any, i: number) => (
+          <EventRow key={e.id || `p${i}`} event={e} colors={colors} emphasis />
+        ))}
 
       {/* ── Sessions ───────────────────────────────────────────── */}
       {day.sessions.map((sess) => {
@@ -96,18 +95,13 @@ export default function DaySchedule({
               accessibilityLabel={`${sess.label}. ${sess.done ? 'Done. Tap to undo' : 'Tap to mark done'}`}
               style={s.cardRow}
             >
-              <View style={[
-                s.tick,
-                sess.done
-                  ? { backgroundColor: colors.accent[500], borderColor: colors.accent[500] }
-                  : { borderColor: colors.glass.borderHover },
-              ]}>
-                {busy
-                  ? <ActivityIndicator size="small" color={sess.done ? '#fff' : colors.text.muted} />
-                  : sess.done
-                    ? <Ionicons name="checkmark" size={16} color="#fff" />
-                    : null}
-              </View>
+              <SessionTick
+                done={sess.done}
+                busy={busy}
+                accent={colors.accent[500]}
+                idle={colors.glass.borderHover}
+                muted={colors.text.muted}
+              />
 
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -125,12 +119,16 @@ export default function DaySchedule({
                     textDecorationLine: sess.done ? 'line-through' : 'none',
                     opacity: sess.done ? 0.66 : 1,
                   }]}>
-                    {sess.label}
+                    {stripWeekday(sess.label)}
                   </Text>
                 </View>
                 <Text style={[s.sessMeta, { color: colors.text.muted }]}>
                   {TYPE_STYLE[sessionType(sess.type)].label}
-                  {` · ${sess.programTitle}`}
+                  {/* The programme name is already the banner above this
+                      list and the card below it. Three truncated copies of
+                      one string is not information — it only earns its
+                      place when there is more than one to tell apart. */}
+                  {showProgram ? ` · ${sess.programTitle}` : ''}
                   {sess.blocks ? ` · ${sess.blocks} blocks` : ''}
                   {!sess.dayIsCertain ? ' · day suggested' : ''}
                 </Text>
@@ -353,42 +351,72 @@ function SessionBody({
   )
 }
 
+/** A calendar day. `emphasis` is for the ones that outrank training. */
+function EventRow({ event, colors, emphasis }: { event: any; colors: any; emphasis?: boolean }) {
+  const st = EVENT_STYLE[eventKind(event.kind)]
+  const tone = st.tone === 'muted'
+    ? colors.text.muted
+    : (colors as any)[st.tone] || colors.accent[500]
+  const multi = event.end_date && event.end_date !== event.event_date
+  return (
+    <View style={[
+      s.event,
+      emphasis
+        ? { borderColor: tone + '59', backgroundColor: tone + '14' }
+        : { borderColor: colors.glass.border, backgroundColor: 'transparent' },
+    ]}>
+      <Ionicons name={st.icon as any} size={16} color={emphasis ? tone : colors.text.dimmed} />
+      <View style={{ flex: 1 }}>
+        <Text style={[s.sessLabel, {
+          color: emphasis ? colors.text.primary : colors.text.secondary,
+          fontWeight: emphasis ? weight.bold : weight.medium,
+        }]}>
+          {event.title}
+        </Text>
+        <Text style={[s.sessMeta, { color: emphasis ? tone : colors.text.muted }]}>
+          {st.l}{multi ? ' · multi-day' : ''}{event.notes ? ` · ${event.notes}` : ''}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
 const s = StyleSheet.create({
   wrap: { gap: 8 },
   head: { marginBottom: 2 },
-  title: { fontSize: 19, fontWeight: '700', letterSpacing: -0.3 },
-  sub: { fontSize: 11.5, marginTop: 2, fontWeight: '600' },
-  empty: { fontSize: 13, lineHeight: 19, paddingVertical: 6 },
-  cardWrap: { borderRadius: radius.md, borderWidth: 1 },
+  title: { fontSize: typeScale.title, fontWeight: weight.bold, letterSpacing: -0.3 },
+  sub: { fontSize: typeScale.label, marginTop: 2, fontWeight: weight.medium },
+  empty: { fontSize: typeScale.caption, lineHeight: 19, paddingVertical: 6 },
+  cardWrap: { borderRadius: radius.control, borderWidth: 1 },
   card: { flexDirection: 'row', alignItems: 'center', paddingRight: 8 },
   event: {
     flexDirection: 'row', alignItems: 'center', gap: 11,
-    borderRadius: radius.md, borderWidth: 1, padding: 12,
+    borderRadius: radius.control, borderWidth: 1, padding: 12,
   },
-  blockName: { fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
+  blockName: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.2 },
   ex: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderRadius: radius.sm, borderWidth: 1, padding: 9, marginBottom: 6,
+    borderRadius: radius.chip, borderWidth: 1, padding: 9, marginBottom: 6,
   },
-  exName: { fontSize: 13, fontWeight: '600', flexShrink: 1 },
-  exPrescription: { fontSize: 12.5, fontWeight: '700' },
-  exMeta: { fontSize: 10.5, lineHeight: 15 },
-  exLogged: { fontSize: 10.5, fontWeight: '700', marginTop: 1 },
+  exName: { fontSize: typeScale.caption, fontWeight: weight.medium, flexShrink: 1 },
+  exPrescription: { fontSize: typeScale.caption, fontWeight: weight.bold },
+  exMeta: { fontSize: typeScale.label, lineHeight: 15 },
+  exLogged: { fontSize: typeScale.label, fontWeight: weight.bold, marginTop: 1 },
   exBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
     minWidth: 62, minHeight: 30, paddingHorizontal: 8,
-    borderRadius: radius.sm, borderWidth: 1,
+    borderRadius: radius.chip, borderWidth: 1,
   },
-  exBtnText: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.3 },
+  exBtnText: { fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 0.3 },
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   tick: {
-    width: 28, height: 28, borderRadius: 14, borderWidth: 1.5,
+    width: 28, height: 28, borderRadius: radius.full, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
   },
-  sessLabel: { fontSize: 14.5, fontWeight: '600' },
-  sessMeta: { fontSize: 11.5 },
+  sessLabel: { fontSize: typeScale.body, fontWeight: weight.medium },
+  sessMeta: { fontSize: typeScale.label },
   move: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 34, height: 34, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
@@ -397,12 +425,12 @@ const s = StyleSheet.create({
     paddingVertical: 9, paddingHorizontal: 2,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)',
   },
-  bullet: { width: 5, height: 5, borderRadius: 2.5 },
-  lineText: { flex: 1, fontSize: 13.5, fontWeight: '500' },
-  lineValue: { fontSize: 14, fontWeight: '700', ...numerals },
+  bullet: { width: 5, height: 5, borderRadius: radius.full },
+  lineText: { flex: 1, fontSize: typeScale.caption, fontWeight: weight.medium },
+  lineValue: { fontSize: typeScale.body, fontWeight: weight.bold, ...numerals },
   checkin: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: radius.md, borderWidth: 1, padding: 12, marginTop: 6,
+    borderRadius: radius.control, borderWidth: 1, padding: 12, marginTop: 6,
   },
-  readDot: { width: 12, height: 12, borderRadius: 6 },
+  readDot: { width: 12, height: 12, borderRadius: radius.full },
 })

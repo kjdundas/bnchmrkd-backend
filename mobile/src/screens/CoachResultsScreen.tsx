@@ -9,7 +9,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   StyleSheet,
   ActivityIndicator,
@@ -19,13 +18,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius } from '../lib/theme'
+import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
+import { tapFeedback } from '../lib/haptics'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { selectFrom, insertInto, updateIn, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { API_BASE } from '../lib/api'
 import { getCachedToken } from '../lib/supabase'
 import { isTimeDiscipline } from '../lib/performanceLevels'
+import { Tappable } from '../components/ui'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -102,11 +103,10 @@ function ScanInputStage({
         numberOfLines={12}
       />
 
-      <TouchableOpacity
+      <Tappable
         style={[styles.primaryBtn, (!text.trim() || loading) && { opacity: 0.4 }]}
-        onPress={() => onSubmit(text.trim())}
+        onPress={() => { tapFeedback(); onSubmit(text.trim()) }}
         disabled={!text.trim() || loading}
-        activeOpacity={0.7}
       >
         {loading ? (
           <View style={styles.btnRow}>
@@ -119,7 +119,7 @@ function ScanInputStage({
             <Text style={styles.primaryBtnText}>Scan Results</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </Tappable>
 
       {/* Info card */}
       <View style={styles.infoCard}>
@@ -210,12 +210,11 @@ function ScanReviewStage({
             const key = `${cidx}:${ridx}`
             const selected = selections[key] ?? candidate.matched
             return (
-              <TouchableOpacity
+              <Tappable
                 key={ridx}
                 style={[styles.resultRow, selected && styles.resultRowSelected]}
-                onPress={() => candidate.matched && onToggle(key)}
+                hitSlop={0} onPress={() => { tapFeedback(); candidate.matched && onToggle(key) }}
                 disabled={!candidate.matched}
-                activeOpacity={0.6}
               >
                 {candidate.matched && (
                   <Ionicons
@@ -237,7 +236,7 @@ function ScanReviewStage({
                   </Text>
                   {result.date && <Text style={styles.resultDate}>{result.date}</Text>}
                 </View>
-              </TouchableOpacity>
+              </Tappable>
             )
           })}
         </View>
@@ -245,12 +244,12 @@ function ScanReviewStage({
 
       {/* Action buttons */}
       <View style={styles.reviewActions}>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={onBack}>
+        <Tappable style={styles.secondaryBtn} onPress={() => { tapFeedback(); onBack() }}>
           <Text style={styles.secondaryBtnText}>Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Tappable>
+        <Tappable
           style={[styles.primaryBtn, { flex: 2 }, (saving || selectedCount === 0) && { opacity: 0.4 }]}
-          onPress={onSave}
+          onPress={() => { tapFeedback(); onSave() }}
           disabled={saving || selectedCount === 0}
         >
           {saving ? (
@@ -260,7 +259,7 @@ function ScanReviewStage({
               Save {selectedCount} result{selectedCount !== 1 ? 's' : ''}
             </Text>
           )}
-        </TouchableOpacity>
+        </Tappable>
       </View>
 
       <View style={{ height: 40 }} />
@@ -279,12 +278,12 @@ function ScanDoneStage({ savedCount, onReset }: { savedCount: number; onReset: (
       <Text style={styles.doneSubtitle}>
         Athlete records have been updated on your roster.
       </Text>
-      <TouchableOpacity style={styles.primaryBtn} onPress={onReset} activeOpacity={0.7}>
+      <Tappable style={styles.primaryBtn} onPress={() => { tapFeedback(); onReset() }}>
         <View style={styles.btnRow}>
           <Ionicons name="scan-outline" size={16} color="#fff" />
           <Text style={styles.primaryBtnText}>Scan More Results</Text>
         </View>
-      </TouchableOpacity>
+      </Tappable>
     </View>
   )
 }
@@ -403,16 +402,16 @@ export default function CoachResultsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg.primary }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Tappable onPress={() => { tapFeedback(); navigation.goBack() }} style={styles.backBtn} hitSlop={10} accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
-        </TouchableOpacity>
+        </Tappable>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Scan results</Text>
         </View>
         {stage === 'review' && (
-          <TouchableOpacity onPress={handleReset} style={styles.resetBtn}>
+          <Tappable onPress={() => { tapFeedback(); handleReset() }} style={styles.resetBtn} accessibilityLabel="Start over">
             <Ionicons name="refresh-outline" size={18} color={colors.text.secondary} />
-          </TouchableOpacity>
+          </Tappable>
         )}
       </View>
 
@@ -451,7 +450,7 @@ const stepStyles = StyleSheet.create({
   dot: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
@@ -466,9 +465,9 @@ const stepStyles = StyleSheet.create({
     backgroundColor: colors.green,
     borderColor: colors.green,
   },
-  dotNum: { fontSize: 10, fontWeight: '700', color: colors.text.dimmed },
+  dotNum: { fontSize: typeScale.label, fontWeight: weight.bold, color: colors.text.dimmed },
   dotNumActive: { color: colors.orange[500] },
-  label: { fontSize: 10, fontWeight: '600', color: colors.text.dimmed },
+  label: { fontSize: typeScale.label, fontWeight: weight.medium, color: colors.text.dimmed },
   labelActive: { color: colors.text.secondary },
   line: {
     height: 1,
@@ -492,15 +491,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: typeScale.figure,
+    fontWeight: weight.bold,
     color: colors.text.primary,
     letterSpacing: -0.5,
   },
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.xs,
@@ -509,7 +508,7 @@ const styles = StyleSheet.create({
   resetBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.04)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -528,19 +527,19 @@ const styles = StyleSheet.create({
   sectionIconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: radius.chip,
     backgroundColor: colors.orange[500] + '10',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: typeScale.title,
+    fontWeight: weight.medium,
     color: colors.text.primary,
   },
   sectionDesc: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: colors.text.muted,
     marginTop: 2,
     lineHeight: 18,
@@ -552,9 +551,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: spacing.lg,
-    fontSize: 14,
+    fontSize: typeScale.body,
     color: colors.text.primary,
     minHeight: 200,
     marginBottom: spacing.lg,
@@ -564,21 +563,21 @@ const styles = StyleSheet.create({
   // Buttons
   primaryBtn: {
     backgroundColor: colors.orange[500],
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  primaryBtnText: { color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold },
   secondaryBtn: {
     flex: 1,
     paddingVertical: 15,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
   },
-  secondaryBtnText: { fontSize: 15, fontWeight: '600', color: colors.text.secondary },
+  secondaryBtnText: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.secondary },
   btnRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 
   // Info card
@@ -589,11 +588,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: radius.sm,
+    borderRadius: radius.chip,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.04)',
   },
-  infoText: { flex: 1, fontSize: 12, color: colors.text.muted, lineHeight: 17 },
+  infoText: { flex: 1, fontSize: typeScale.caption, color: colors.text.muted, lineHeight: 17 },
 
   // Review stats
   reviewStatsRow: {
@@ -601,13 +600,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
   },
   reviewStat: { flex: 1, alignItems: 'center' },
-  reviewStatNum: { fontSize: 22, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5 },
-  reviewStatLabel: { fontSize: 9, letterSpacing: 1.2, color: colors.text.muted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+  reviewStatNum: { fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.5 },
+  reviewStatLabel: { fontSize: typeScale.micro, letterSpacing: 1.2, color: colors.text.muted, fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase' },
   reviewStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.06)' },
 
   // Candidate cards
@@ -615,7 +614,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     marginBottom: spacing.md,
     overflow: 'hidden',
   },
@@ -630,13 +629,13 @@ const styles = StyleSheet.create({
   candidateStatus: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  candidateName: { fontSize: 15, fontWeight: '600', color: colors.text.primary },
-  candidateUnmatched: { fontSize: 11, color: colors.text.dimmed, marginTop: 1 },
-  candidateTag: { fontSize: 10, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase' },
+  candidateName: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary },
+  candidateUnmatched: { fontSize: typeScale.label, color: colors.text.dimmed, marginTop: 1 },
+  candidateTag: { fontSize: typeScale.label, fontWeight: weight.medium, letterSpacing: 0.5, textTransform: 'uppercase' },
 
   // Result rows
   resultRow: {
@@ -650,10 +649,10 @@ const styles = StyleSheet.create({
   resultRowSelected: {
     backgroundColor: 'rgba(249,115,22,0.03)',
   },
-  resultDiscipline: { fontSize: 14, fontWeight: '600', color: colors.text.primary },
-  resultComp: { fontSize: 11, color: colors.text.muted, marginTop: 1 },
-  resultMark: { fontSize: 15, fontWeight: '700', color: colors.text.muted },
-  resultDate: { fontSize: 10, color: colors.text.dimmed, marginTop: 1 },
+  resultDiscipline: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary },
+  resultComp: { fontSize: typeScale.label, color: colors.text.muted, marginTop: 1 },
+  resultMark: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.muted },
+  resultDate: { fontSize: typeScale.label, color: colors.text.dimmed, marginTop: 1 },
 
   // Review actions
   reviewActions: {
@@ -670,7 +669,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
   },
   doneCheckWrap: { marginBottom: spacing.lg },
-  doneTitle: { fontSize: 22, fontWeight: '700', color: colors.text.primary, marginBottom: 6 },
-  doneSubtitle: { fontSize: 14, color: colors.text.muted, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 20 },
+  doneTitle: { fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary, marginBottom: 6 },
+  doneSubtitle: { fontSize: typeScale.body, color: colors.text.muted, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 20 },
 })
 

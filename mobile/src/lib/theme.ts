@@ -152,7 +152,20 @@ export const lightColors = {
 // ── Default export — light, matching the web app.
 // Components that import `colors` directly (rather than useTheme()) are
 // pinned to this palette, so this is what flips them light.
-export const colors = lightColors
+// ── The resolved palette ──────────────────────────────────────────────
+// darkColors, not lightColors.
+//
+// The app renders dark everywhere — #0B0C18 grounds, photographic backdrops,
+// glass cards — but the resolved palette was the LIGHT one, so
+// colors.text.primary was #16181D, near-black. Every screen written against
+// these tokens was painting near-black type on a near-black ground; the ones
+// that looked right were the ones that reached for onImage.* or a literal
+// white instead, which is why the problem hid for so long and then appeared
+// all at once on the coach screens.
+//
+// lightColors is kept because the web app is light and these files are the
+// shared vocabulary; nothing in the mobile app selects it today.
+export const colors = darkColors
 
 export const spacing = {
   xs: 4,
@@ -164,19 +177,54 @@ export const spacing = {
   xxxl: 32,
 } as const
 
+// ── Radius ─────────────────────────────────────────────────────────
+// Five steps, from thirty-one. Eight of those thirty-one were card-sized
+// — 14, 15, 16, 17, 18, 19, 20, 22 — so two cards sitting on the same
+// screen had corners a pixel or two apart. Nobody can name why that looks
+// wrong, but the eye does the arithmetic. CheckInCard alone used four.
+//
+// Named by role rather than by size: a card is a card whatever the number
+// turns out to be, and the next person cannot invent a sixth step without
+// noticing they are doing it.
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  full: 9999,
+  hair: 4,      // bar fills, progress tracks, tiny indicators
+  chip: 8,      // chips, badges, tags
+  control: 12,  // buttons, inputs, segmented controls
+  card: 20,     // every card, one corner
+  full: 9999,   // pills, and circles where radius = half the box
 } as const
 
-export const fonts = {
-  mono: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const },
-  display: { fontSize: 16, fontWeight: '600' as const },
-  hero: { fontSize: 32, fontWeight: '700' as const },
+// ── Type scale ─────────────────────────────────────────────────────
+// Ten steps, from forty.
+//
+// The forty were never a scale. They were the residue of fitting text to a
+// box one component at a time, which is why 12.5 appeared 33 times, 11.5
+// twenty-one and 10.5 twenty. Half a pixel is invisible — nobody chose it
+// for how it looked, it was nudged until the text stopped wrapping.
+//
+// The steps sit where the app's real mass already was: 10 to 16 accounted
+// for two thirds of every use, so almost nothing here moves more than a
+// point. Roles, not sizes, because a role survives a redesign.
+export const typeScale = {
+  micro: 9,     // badges, chart ticks, tab-bar labels
+  label: 11,    // mono kickers and section labels — uppercase, tracked
+  caption: 13,  // secondary and meta text
+  body: 15,     // default reading size
+  title: 18,    // card titles
+  stat: 22,     // a figure inside a card
+  figure: 28,   // the figure a card is about
+  hero: 34,     // the focal figure on a screen
+  display: 44,  // a screen that exists for one number
+  mark: 56,     // the mark itself
 } as const
+
+// Three weights, from five. 500 and 800 were each used a handful of times
+// and neither is distinguishable from its neighbour at these sizes.
+export const weight = {
+  regular: '400' as const,  // body
+  medium: '600' as const,   // labels, kickers, buttons
+  bold: '700' as const,     // figures and titles
+}
 
 // Tabular figures. Proportional digits change width as values change, so a
 // counting number or a switching mark visibly jitters. Every numeral the user
@@ -246,6 +294,30 @@ export const onDark = {
   glow: 'rgba(139,131,255,0.30)',
 } as const
 
+// ── Text over a photograph ─────────────────────────────────────────
+// A precaution, NOT a fix for a measured failure. Read the next paragraph
+// before citing this anywhere.
+//
+// I originally justified this token with contrast ratios of 1.04, 1.08 and
+// 1.59 to 1, taken by sampling single points I had guessed the position of.
+// Those samples were landing on the photograph BETWEEN the glyphs, so they
+// were comparing the picture with itself. Measured properly — cluster the
+// near-white pixels, then compare each cluster against the ground ringing
+// it — every text element on the Programs screen scores between 3.87 and
+// 15.39 to 1. Nothing failed. The numbers were an artefact of my method.
+//
+// The token stays because the backdrop is a PHOTOGRAPH and photographs are
+// swapped: text that passes on a dim gym at dusk can fail on a bright one,
+// and a shadow makes each glyph carry its own local darkness for the cost
+// of no chrome at all. Use it on Text sitting on ScreenBackdrop rather than
+// on a panel — as insurance against an image nobody has chosen yet, not as
+// a repair to something broken.
+export const lift = {
+  textShadowColor: 'rgba(6,7,18,0.92)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 6,
+} as const
+
 // ── On-image PALETTE ───────────────────────────────────────────────
 // A whole resolved palette, not a handful of tokens — for screens that sit on
 // a photographic backdrop end to end.
@@ -299,6 +371,27 @@ export const onImage = {
   muted: 'rgba(255,255,255,0.68)',
   dim: 'rgba(255,255,255,0.44)',
   divider: 'rgba(255,255,255,0.14)',
+
+  // ── Controls ────────────────────────────────────────────────────
+  // Chips, segmented toggles and day pills — anything small whose LABEL
+  // has to be read, sitting high on the screen where the backdrop is
+  // still at full strength because nothing has been scrolled yet.
+  //
+  // `card` above cannot do this job and the measurement is the reason.
+  // A 10% WHITE plate lifts the ground toward the ink, so over a sunlit
+  // wall it makes contrast worse, not better: the Analyse filter row was
+  // 1.74:1 on a white plate and 2.25:1 with no plate at all. The plate
+  // has to pull the ground DOWN.
+  //
+  // Measured on the brightest pixels a chip actually lands on in a real
+  // screenshot — rgb(170,167,149), the gym window:
+  //   white 10%   idle 1.74:1   active 2.35:1
+  //   ground 42%  idle 3.66:1   active 5.17:1
+  //   ground 78%  idle 7.12:1   active 10.36:1  ← this
+  // Over the flat dark ground it stays a chip rather than vanishing,
+  // because chipEdge carries the shape when the fill matches behind it.
+  chipPlate: 'rgba(11,12,24,0.78)',
+  chipEdge: 'rgba(255,255,255,0.22)',
 
   // ── Navigation chrome ───────────────────────────────────────────
   // The floating tab bar has to stay legible over two opposite grounds:

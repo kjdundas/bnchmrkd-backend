@@ -17,7 +17,7 @@ import { celebrationFeedback } from '../lib/haptics'
 // file was still on the static LIGHT palette — the swap repaints every
 // reference below in one line, and is safe precisely because there is no
 // light-surface caller to preserve.
-import { onImageColors as colors, spacing, radius } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, typeScale, weight } from '../lib/theme'
 import { getLevelFromXP, type Badge } from '../lib/gamification'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -81,7 +81,7 @@ const xpStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -101,40 +101,40 @@ const xpStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(139,131,255,0.34)',
   },
-  levelIcon: { fontSize: 12 },
+  levelIcon: { fontSize: typeScale.caption },
   levelNum: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: typeScale.label,
+    fontWeight: weight.bold,
     color: colors.orange[400],
     letterSpacing: 0.5,
   },
   levelTitle: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: typeScale.caption,
+    fontWeight: weight.medium,
     color: colors.text.secondary,
     marginLeft: 8,
   },
   xpText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: typeScale.body,
+    fontWeight: weight.bold,
     color: colors.text.primary,
   },
   xpLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: typeScale.label,
+    fontWeight: weight.medium,
     color: colors.text.muted,
     letterSpacing: 1,
   },
   barTrack: {
     height: 6,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 3,
+    borderRadius: radius.full,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: radius.full,
     backgroundColor: colors.orange[500],
   },
   bottomRow: {
@@ -144,11 +144,11 @@ const xpStyles = StyleSheet.create({
     marginTop: 6,
   },
   nextText: {
-    fontSize: 10,
+    fontSize: typeScale.label,
     color: colors.text.dimmed,
-    fontWeight: '500',
+    fontWeight: weight.medium,
   },
-  nextIcon: { fontSize: 12 },
+  nextIcon: { fontSize: typeScale.caption },
 })
 
 // ── STREAK CHIP (for header) ──────────────────────────────────────────
@@ -165,7 +165,9 @@ export function StreakChip({ streak }: { streak: number }) {
       isFire && streakStyles.chipFire,
     ]}>
       <Ionicons
-        name={isFire ? 'flame' : isHot ? 'flash' : 'link'}
+        // 'link' rendered a chain-link on every streak under a week, which
+        // reads as a hyperlink, not a run of days.
+        name={isFire ? 'flame' : isHot ? 'flash' : 'ellipse'}
         size={13}
         color={isFire ? colors.accent[300] : isHot ? colors.accent[400] : colors.text.muted}
       />
@@ -200,10 +202,10 @@ const streakStyles = StyleSheet.create({
     backgroundColor: 'rgba(139,131,255,0.16)',
     borderColor: 'rgba(139,131,255,0.30)',
   },
-  icon: { fontSize: 12 },
+  icon: { fontSize: typeScale.caption },
   text: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: typeScale.label,
+    fontWeight: weight.bold,
     color: colors.text.muted,
     letterSpacing: 0.3,
   },
@@ -317,7 +319,7 @@ const popupStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'rgba(11,12,24,0.96)',
-    borderRadius: radius.xl,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: 'rgba(139,131,255,0.40)',
     padding: spacing.lg,
@@ -333,16 +335,16 @@ const popupStyles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: 'rgba(249,115,22,0.15)',
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingVertical: 10,
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: 'rgba(139,131,255,0.30)',
   },
-  levelUpIcon: { fontSize: 20 },
+  levelUpIcon: { fontSize: typeScale.title },
   levelUpText: {
-    fontSize: 13,
-    fontWeight: '800',
+    fontSize: typeScale.caption,
+    fontWeight: weight.bold,
     color: colors.orange[400],
     letterSpacing: 2,
   },
@@ -353,14 +355,14 @@ const popupStyles = StyleSheet.create({
     marginBottom: 8,
   },
   xpAmount: {
-    fontSize: 32,
-    fontWeight: '800',
+    fontSize: typeScale.figure,
+    fontWeight: weight.bold,
     color: colors.orange[400],
     letterSpacing: -1,
   },
   xpLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: typeScale.body,
+    fontWeight: weight.bold,
     color: colors.orange[300],
     letterSpacing: 1,
   },
@@ -370,16 +372,16 @@ const popupStyles = StyleSheet.create({
     paddingVertical: 3,
   },
   breakdownReason: {
-    fontSize: 12,
+    fontSize: typeScale.caption,
     color: colors.text.secondary,
   },
   breakdownXP: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: typeScale.caption,
+    fontWeight: weight.bold,
     color: colors.orange[400],
   },
   message: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: colors.text.muted,
     fontStyle: 'italic',
     marginTop: 10,
@@ -392,10 +394,10 @@ const popupStyles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.06)',
   },
   badgeTitle: {
-    fontSize: 9,
+    fontSize: typeScale.micro,
     letterSpacing: 2,
     color: colors.orange[300],
-    fontWeight: '700',
+    fontWeight: weight.bold,
     marginBottom: 8,
   },
   badgeRow: {
@@ -404,14 +406,14 @@ const popupStyles = StyleSheet.create({
     gap: 10,
     paddingVertical: 6,
   },
-  badgeIcon: { fontSize: 24 },
+  badgeIcon: { fontSize: typeScale.stat },
   badgeName: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: typeScale.body,
+    fontWeight: weight.bold,
     color: colors.text.primary,
   },
   badgeDesc: {
-    fontSize: 11,
+    fontSize: typeScale.label,
     color: colors.text.muted,
     marginTop: 1,
   },
@@ -506,32 +508,32 @@ const pbStyles = StyleSheet.create({
     top: 0,
     width: 160,
     height: 160,
-    borderRadius: 80,
+    borderRadius: radius.full,
     backgroundColor: colors.green,
     opacity: 0.1,
   },
-  emoji: { fontSize: 64, marginBottom: spacing.sm },
+  emoji: { fontSize: typeScale.mark, marginBottom: spacing.sm },
   title: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: typeScale.body,
+    fontWeight: weight.bold,
     color: colors.green,
     letterSpacing: 4,
     marginBottom: 4,
   },
   metricName: {
-    fontSize: 13,
+    fontSize: typeScale.caption,
     color: colors.text.secondary,
-    fontWeight: '500',
+    fontWeight: weight.medium,
     marginBottom: spacing.sm,
   },
   value: {
-    fontSize: 36,
-    fontWeight: '800',
+    fontSize: typeScale.hero,
+    fontWeight: weight.bold,
     color: colors.text.primary,
   },
   unit: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: typeScale.body,
+    fontWeight: weight.medium,
     color: colors.text.muted,
   },
   improvementChip: {
@@ -544,8 +546,8 @@ const pbStyles = StyleSheet.create({
     borderColor: 'rgba(52,211,153,0.25)',
   },
   improvementText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: typeScale.caption,
+    fontWeight: weight.bold,
     color: colors.green,
     letterSpacing: 0.5,
   },

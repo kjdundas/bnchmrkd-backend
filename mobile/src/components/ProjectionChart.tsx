@@ -54,7 +54,7 @@ import { View, Text } from 'react-native'
 import Svg, {
   Path, Polyline, Line, Circle, Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
-import { onImageColors as colors, spacing } from '../lib/theme'
+import { onImageColors as colors, spacing, typeScale, radius } from '../lib/theme'
 
 export interface ProjPoint { age: number; projected: number; p25: number; p75: number; n: number | null }
 
@@ -385,19 +385,19 @@ export default function ProjectionChart({
       {/* Legend */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: spacing.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 14, height: 2.5, borderRadius: 2, backgroundColor: ACTUAL }} />
-          <Text style={{ fontSize: 11, color: colors.text.muted }}>Your races</Text>
+          <View style={{ width: 14, height: 2.5, borderRadius: radius.hair, backgroundColor: ACTUAL }} />
+          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>Your races</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 14, height: 2.5, borderRadius: 2, backgroundColor: STEADY, opacity: 0.9 }} />
-          <Text style={{ fontSize: 11, color: colors.text.muted }}>Projected</Text>
+          <View style={{ width: 14, height: 2.5, borderRadius: radius.hair, backgroundColor: STEADY, opacity: 0.9 }} />
+          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>Projected</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{
-            width: 14, height: 9, borderRadius: 2,
+            width: 14, height: 9, borderRadius: radius.hair,
             backgroundColor: STEADY, opacity: 0.24,
           }} />
-          <Text style={{ fontSize: 11, color: colors.text.muted }}>Slower / faster quarter</Text>
+          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>Slower / faster quarter</Text>
         </View>
       </View>
     </View>

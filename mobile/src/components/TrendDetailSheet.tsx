@@ -16,7 +16,7 @@ import React, { useMemo } from 'react'
 import { View, Text, Modal, ScrollView, StyleSheet } from 'react-native'
 import Svg, { Line, Polyline, Circle, Text as SvgText } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
-import { onImageColors as colors, spacing, radius, rhythm, onDark } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, onDark, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from './ui'
 import { useReducedMotion } from '../lib/motion'
 
@@ -134,7 +134,7 @@ export default function TrendDetailSheet({
     >
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
 
         <View style={s.header}>
@@ -250,11 +250,11 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg,
   },
   title: {
-    fontSize: 24, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary,
     letterSpacing: -0.5, marginTop: 4,
   },
   close: {
-    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
   },
   thead: {
@@ -262,22 +262,22 @@ const s = StyleSheet.create({
     paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   th: {
-    fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase',
-    color: colors.text.muted, fontWeight: '700',
+    fontSize: typeScale.micro, letterSpacing: 1.6, textTransform: 'uppercase',
+    color: colors.text.muted, fontWeight: weight.bold,
   },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  date: { fontSize: 14, color: colors.text.primary, fontWeight: '500' },
-  verdict: { fontSize: 10.5, fontWeight: '700', marginTop: 2, letterSpacing: 0.3 },
-  mark: { fontSize: 15, fontWeight: '700', color: colors.text.primary },
-  delta: { fontSize: 13.5, fontWeight: '600' },
+  date: { fontSize: typeScale.body, color: colors.text.primary, fontWeight: weight.medium },
+  verdict: { fontSize: typeScale.label, fontWeight: weight.bold, marginTop: 2, letterSpacing: 0.3 },
+  mark: { fontSize: typeScale.body, fontWeight: weight.bold, color: colors.text.primary },
+  delta: { fontSize: typeScale.caption, fontWeight: weight.medium },
   num: { textAlign: 'right', fontVariant: ['tabular-nums'] },
   foot: {
     // 38% white measures 3.86:1 against #0B0C18 — under the 4.5:1 body copy
     // at this size needs. 54% clears it at 6.0:1.
-    fontSize: 11, color: colors.text.muted, lineHeight: 16,
+    fontSize: typeScale.label, color: colors.text.muted, lineHeight: 16,
     marginTop: rhythm.section,
   },
 })

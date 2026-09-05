@@ -33,7 +33,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Modal, ScrollView, StyleSheet } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
-import { onImageColors as colors, spacing, radius, rhythm, numerals, onDark } from '../lib/theme'
+import { onImageColors as colors, spacing, radius, rhythm, numerals, onDark, typeScale, weight } from '../lib/theme'
 import { Tappable, MonoKicker } from './ui'
 import { useReducedMotion } from '../lib/motion'
 import { MAX_INDICATORS } from '../lib/indicators'
@@ -134,7 +134,7 @@ export default function IndicatorPicker({
     >
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
 
         <View style={s.header}>
@@ -320,7 +320,7 @@ function MiniRing({ uid: key, shown, isPb, on, value }: {
         position: 'absolute', left: 0, right: 0, top: 0, bottom: 0,
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <Text style={{ fontSize: 10, fontWeight: '700', color: colors.text.primary, ...numerals }}>
+        <Text style={{ fontSize: typeScale.label, fontWeight: weight.bold, color: colors.text.primary, ...numerals }}>
           {fmtMetricValue(value)}
         </Text>
       </View>
@@ -342,26 +342,26 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,
   },
   title: {
-    fontSize: 24, fontWeight: '700', color: colors.text.primary,
+    fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary,
     letterSpacing: -0.5, marginTop: 4,
   },
   close: {
-    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
   },
   intro: {
-    fontSize: 13, lineHeight: 19, color: colors.text.secondary,
+    fontSize: typeScale.caption, lineHeight: 19, color: colors.text.secondary,
     paddingHorizontal: spacing.lg, paddingBottom: spacing.md,
   },
   section: {
     paddingHorizontal: spacing.lg, paddingTop: rhythm.section, paddingBottom: 8,
   },
   sectionText: {
-    fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase',
-    color: colors.text.muted, fontWeight: '700',
+    fontSize: typeScale.micro, letterSpacing: 1.6, textTransform: 'uppercase',
+    color: colors.text.muted, fontWeight: weight.bold,
   },
   empty: {
-    fontSize: 12.5, lineHeight: 18, color: colors.text.muted,
+    fontSize: typeScale.caption, lineHeight: 18, color: colors.text.muted,
     paddingHorizontal: spacing.lg, paddingBottom: 8,
   },
   row: {
@@ -375,23 +375,23 @@ const s = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 8,
   },
-  name: { fontSize: 15, fontWeight: '600', color: colors.text.primary },
-  meta: { fontSize: 11.5, color: colors.text.muted, fontVariant: ['tabular-nums'] },
+  name: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.primary },
+  meta: { fontSize: typeScale.label, color: colors.text.muted, fontVariant: ['tabular-nums'] },
   moves: { marginLeft: 8, gap: 2 },
   move: {
-    width: 34, height: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
+    width: 34, height: 24, borderRadius: radius.chip, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   reset: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    height: 48, borderRadius: radius.md,
+    height: 48, borderRadius: radius.control,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  resetText: { fontSize: 14, fontWeight: '600', color: colors.text.secondary },
+  resetText: { fontSize: typeScale.body, fontWeight: weight.medium, color: colors.text.secondary },
   foot: {
     // dimmed (38% white) measures 3.86:1 on this ground — below the 4.5:1
     // this size needs. muted clears it at 6.0:1.
-    fontSize: 11, color: colors.text.muted, lineHeight: 16, marginTop: 12,
+    fontSize: typeScale.label, color: colors.text.muted, lineHeight: 16, marginTop: 12,
   },
 })

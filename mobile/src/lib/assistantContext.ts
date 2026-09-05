@@ -32,7 +32,7 @@
 import { buildDnaSummary } from './disciplineScience'
 import { maturityFromProfile } from './maturation'
 import { ageFromDob } from './age'
-import { isThrowsDiscipline } from './metricSemantics'
+import { isLowerBetter } from './disciplineScience'
 import { countsForAnalysis } from './resultSemantics'
 
 export interface ProgramContext {
@@ -79,9 +79,12 @@ export function buildProgramContext({
   const discipline = String(
     athleteRow?.discipline || profile?.primary_discipline || '',
   ).trim()
-  // Throws are measured in metres, so a bigger mark is better; everything
-  // else is a time.
-  const lowerIsBetter = !isThrowsDiscipline(discipline)
+  // Field events are measured in metres and combined events in points, so a
+  // bigger mark is better; everything else is a time. This asked
+  // isThrowsDiscipline, which lists no jumps — so every program generated for
+  // a long jumper was built on the claim that their shortest jump was their
+  // best one.
+  const lowerIsBetter = isLowerBetter(discipline)
 
   // Race history comes from two places — the scraped `races` blob on the
   // athlete row and the athlete's own logged performances. Both, deduped by

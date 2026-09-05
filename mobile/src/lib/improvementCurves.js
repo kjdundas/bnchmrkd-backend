@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// IMPROVEMENT CURVES — Statistically derived from 10,423 Olympic-pipeline
-// athlete careers across 38 disciplines (Sydney 2000 → Paris 2024).
+// IMPROVEMENT CURVES — Statistically derived from Olympic-pipeline athlete
+// careers across 38 disciplines (Sydney 2000 → Paris 2024). The corpus has
+// been re-ingested since these curves were fitted; CORPUS_CAREERS in
+// lib/corpus.ts is the current size, and the figure that used to sit here
+// (10,423) was 44% high by the time anyone read it.
 //
 // Each curve is the median year-on-year % improvement at each age,
 // smoothed with a 3-year rolling median. Positive = improvement.

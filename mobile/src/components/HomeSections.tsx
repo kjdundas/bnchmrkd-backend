@@ -11,11 +11,10 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
-  TouchableOpacity,
 } from 'react-native'
 import Svg, { Path, Defs, LinearGradient as SvgGrad, Stop, Circle, Line } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, radius, onImage, onDark } from '../lib/theme'
+import { colors, spacing, radius, onImage, onDark, typeScale, weight } from '../lib/theme'
 import { useTheme } from '../contexts/ThemeContext'
 import { AlmanacCard, HeroCard, MonoKicker, TierBadge, StreakChip, GlassPanel } from './ui'
 import {
@@ -34,7 +33,7 @@ import {
   AXIS_INFO,
   disciplinePriority,
 } from '../lib/disciplineScience'
-import { findRival } from '../lib/historicalRivals'
+import { similarAthletes, type SimilarAthlete } from '../lib/corpus'
 // Not historicalRivals' own ageFromDob: that file is synced verbatim from the
 // web frontend, so mobile points its callers at the shared helper instead of
 // forking the sync.
@@ -269,82 +268,85 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
   const cal = discipline ? getCalibration(discipline, sex) : null
   const higher = !!cal?.higher
   const athleteAge = useMemo(() => (dob ? ageFromDob(dob) : null), [dob])
-  const rival = useMemo(
-    () => (discipline ? findRival(discipline, sex, athleteAge, pb, higher) : null),
-    [discipline, sex, athleteAge, pb, higher]
-  )
 
-  if (!rival || pb == null) return null
+  // Was HISTORICAL_RIVALS: about 150 hand-typed rows of famous names, whose
+  // slowest 100m entry was 10.75, so a fifteen-year-old was "paced" by
+  // whichever Olympian happened to be nearest. Several events had no
+  // women's pool and fell back to the men's; five events returned nothing.
+  //
+  // Now it asks the corpus: of every real career in it, who was actually at your
+  // mark at your age, in your event and on your implement. And because
+  // these are whole careers rather than a single famous moment, it can also
+  // say what happened to them afterwards — which is the part a fifteen-
+  // year-old needs, in both directions.
+  const [rival, setRival] = useState<SimilarAthlete | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // findRival falls back to `bucket.M` when an event has no women's pool, so a
-  // female athlete could be silently benchmarked against men with nothing on
-  // screen saying so. Say so.
-  const crossSex = sex === 'F' && (rival as any).poolSex === 'M'
+  useEffect(() => {
+    let live = true
+    if (!discipline || pb == null || athleteAge == null) { setRival(null); return }
+    setLoading(true)
+    similarAthletes({ discipline, sex, age: athleteAge, mark: pb, limit: 1 })
+      .then((rows) => { if (live) setRival(rows[0] || null) })
+      .finally(() => { if (live) setLoading(false) })
+    return () => { live = false }
+  }, [discipline, sex, athleteAge, pb])
+
+  // No corpus for this event, or nobody near this mark at this age. Say
+  // nothing rather than reaching for someone who is not comparable.
+  if (loading || !rival || pb == null) return null
 
   const unit = higher ? 'm' : 's'
-  const diff = Math.abs(rival.diff)
-  const ageLabel =
-    athleteAge != null && rival.age != null
-      ? rival.age === athleteAge
-        ? `at age ${athleteAge}`
-        : athleteAge < rival.age
-        ? `${rival.age - athleteAge} year${rival.age - athleteAge === 1 ? '' : 's'} younger`
-        : `${athleteAge - rival.age} year${athleteAge - rival.age === 1 ? '' : 's'} older`
-      : rival.age != null
-      ? `at age ${rival.age}`
-      : ''
+  const diff = Math.abs(pb - rival.atYourAge)
+  const ahead = higher ? pb > rival.atYourAge : pb < rival.atYourAge
 
-  const youPct = barPct(pb, rival.mark, higher)
-  const themPct = barPct(rival.mark, rival.mark, higher)
+  // What they went on to do — on the senior implement where the athlete is
+  // still on an age-group one, because a career that stops at seventeen is
+  // an artefact of the specification change, not a retirement.
+  const later = rival.seniorBest ?? rival.bestSameEvent
+  const laterAge = rival.ageAtSeniorBest
+  const laterEvent = rival.seniorEvent && rival.seniorEvent !== discipline ? rival.seniorEvent : null
+  const wentOn = later != null && laterAge != null && laterAge > (athleteAge ?? 0)
+
+  const youPct = barPct(pb, rival.atYourAge, higher)
+  const themPct = barPct(rival.atYourAge, rival.atYourAge, higher)
   const lo = Math.min(youPct, themPct)
   const span = Math.abs(youPct - themPct)
 
   return (
-    // Was a bespoke purple card with two 120pt blurred "glow orbs" bleeding
-    // out of the corners, white text on a 6%-purple fill. On the light paper
-    // it was unreadable; on the dark ground the orbs were just smudges. It is
-    // the same glass as every other block now, and the accent lives in the
-    // type rather than in decoration behind it.
     <GlassPanel tone="deep" intensity={24} radius={20} style={s.rivalCard}>
       <View style={s.rivalHeader}>
         <View style={{ flex: 1 }}>
-          <MonoKicker color={c.text.muted}>Your pacer</MonoKicker>
-          <Text style={[s.rivalName, { color: c.text.primary }]}>{rival.name}</Text>
-          {!!rival.note && (
-            <Text style={[s.rivalNote, { color: c.text.dimmed }]}>{rival.note}</Text>
-          )}
+          <MonoKicker color={c.text.muted}>At your age</MonoKicker>
+          <Text style={[s.rivalName, { color: c.text.primary }]}>{rival.athlete}</Text>
         </View>
-        <Text style={[s.rivalCountry, { color: c.text.dimmed }]}>{rival.country}</Text>
+        <Text style={[s.rivalCountry, { color: c.text.dimmed }]}>{rival.nationality || ''}</Text>
       </View>
 
       <View style={s.rivalBody}>
         <Text style={[s.rivalDesc, { color: c.text.secondary }]}>
-          {rival.name.split(' ').slice(-1)[0]}'s breakthrough{ageLabel ? ` ${ageLabel}` : ''}:{' '}
+          At {Math.floor(athleteAge ?? 0)}, {rival.athlete.split(' ').slice(-1)[0]} was on{' '}
           <Text style={[s.rivalBold, { color: c.text.primary }]}>
-            {fmtMark(rival.mark, higher, discipline)}
+            {fmtMark(rival.atYourAge, higher, discipline)}
           </Text>.
         </Text>
-        <Text style={[s.rivalDiff, { color: rival.ahead ? c.green : c.amber }]}>
-          Your PB is {diff.toFixed(2)}{unit}{' '}
-          {rival.ahead
-            ? higher ? 'beyond' : 'faster than'
-            : higher ? 'short of' : 'off'}{' '}
-          that benchmark
+        {/* "You are 0.00s off that" is not a sentence anyone learns anything
+            from. With 7,787 careers the nearest match is often exact, and the
+            interesting fact then is that you are level, not that the gap
+            rounds to zero. */}
+        <Text style={[s.rivalDiff, { color: diff < 0.01 ? c.accent[500] : ahead ? c.green : c.amber }]}>
+          {diff < 0.01
+            ? 'Level with them at that age'
+            : `You are ${diff.toFixed(2)}${unit} ${ahead ? (higher ? 'beyond' : 'ahead of') : (higher ? 'short of' : 'off')} that`}
         </Text>
       </View>
 
       <View style={s.rivalBarWrap}>
         <View style={[s.rivalBarTrack, { backgroundColor: 'rgba(255,255,255,0.10)' }]}>
-          <View
-            style={[
-              s.rivalBarFill,
-              {
-                left: `${lo}%` as any,
-                width: `${span}%` as any,
-                backgroundColor: rival.ahead ? c.green : c.amber,
-              },
-            ]}
-          />
+          <View style={[s.rivalBarFill, {
+            left: `${lo}%` as any, width: `${span}%` as any,
+            backgroundColor: ahead ? c.green : c.amber,
+          }]} />
         </View>
         <View style={s.rivalBarLabels}>
           <View>
@@ -354,18 +356,19 @@ export function RivalCard({ pb, discipline, sex = 'M', dob }: RivalCardProps) {
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[s.rivalBarTag, { color: c.accent[500] }]}>PACER</Text>
+            <Text style={[s.rivalBarTag, { color: c.accent[500] }]}>THEM, THEN</Text>
             <Text style={[s.rivalBarVal, { color: c.accent[500] }]}>
-              {fmtMark(rival.mark, higher, discipline)}
+              {fmtMark(rival.atYourAge, higher, discipline)}
             </Text>
           </View>
         </View>
       </View>
 
-      {crossSex && (
+      {wentOn && (
         <Text style={[s.rivalNote, { color: c.text.muted, marginTop: 12, letterSpacing: 0 }]}>
-          We don't hold a women's pool for {discipline} yet, so this comparison is
-          against a men's mark. Read it as a shape, not a target.
+          They went on to {fmtMark(later as number, higher, discipline)}
+          {laterEvent ? ` in the ${laterEvent}` : ''} at {laterAge}. That is what one
+          athlete did, not what you will do.
         </Text>
       )}
     </GlassPanel>
@@ -522,10 +525,10 @@ export function WhereYouStand({ pb, discipline, sex = 'M' }: WhereYouStandProps)
             <Text style={s.contFooterKicker}>NEXT MILESTONE</Text>
             <Text style={s.contFooterText}>
               You've cleared{' '}
-              <Text style={{ color: '#fff', fontWeight: '600' }}>{nearestTier.label}</Text>
+              <Text style={{ color: '#fff', fontWeight: weight.medium }}>{nearestTier.label}</Text>
               {nextTier && nextTier !== nearestTier && gap != null && (
                 <Text>
-                  . Next — <Text style={{ color: colors.orange[300], fontWeight: '600' }}>{nextTier.label}</Text>{' '}
+                  . Next — <Text style={{ color: colors.orange[300], fontWeight: weight.medium }}>{nextTier.label}</Text>{' '}
                   <Text style={{ color: colors.text.muted }}>
                     ({higher ? '+' : '−'}{Math.abs(gap).toFixed(2)}{higher ? 'm' : 's'})
                   </Text>
@@ -909,125 +912,125 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
-  heroSubtitle: { color: colors.text.secondary, fontSize: 14, marginTop: 4 },
+  heroSubtitle: { color: colors.text.secondary, fontSize: typeScale.body, marginTop: 4 },
   heroStatsGrid: { flexDirection: 'row', marginTop: spacing.sm },
   heroStatCol: { flex: 1 },
   heroStatBorder: { paddingLeft: 12, borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.06)' },
   heroStatKicker: {
-    fontSize: 8, letterSpacing: 2, color: 'rgba(253,186,116,0.8)', fontWeight: '600',
+    fontSize: typeScale.micro, letterSpacing: 2, color: 'rgba(253,186,116,0.8)', fontWeight: weight.medium,
   },
   heroStatKickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   heroStatKickerDim: {
-    fontSize: 8, letterSpacing: 2, color: colors.text.dimmed, fontWeight: '600',
+    fontSize: typeScale.micro, letterSpacing: 2, color: colors.text.dimmed, fontWeight: weight.medium,
   },
   heroPbValue: {
-    fontSize: 32, fontWeight: '700', color: colors.orange[400],
+    fontSize: typeScale.figure, fontWeight: weight.bold, color: colors.orange[400],
     marginTop: 4, letterSpacing: -1,
   },
-  heroPbUnit: { fontSize: 11, color: colors.text.muted, fontWeight: '500' },
+  heroPbUnit: { fontSize: typeScale.label, color: colors.text.muted, fontWeight: weight.medium },
   heroPbBar: {
-    width: 32, height: 2, borderRadius: 1, marginTop: 6,
+    width: 32, height: 2, borderRadius: radius.full, marginTop: 6,
     backgroundColor: ORANGE,
   },
   heroTierLabel: {
-    fontSize: 11, color: colors.orange[300], fontWeight: '600', marginTop: 6,
+    fontSize: typeScale.label, color: colors.orange[300], fontWeight: weight.medium, marginTop: 6,
   },
   heroPbChip: {
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.hair,
     backgroundColor: 'rgba(249,115,22,0.25)',
     borderWidth: 1, borderColor: 'rgba(249,115,22,0.5)',
   },
-  heroPbChipText: { fontSize: 7, fontWeight: '800', letterSpacing: 1, color: ORANGE_LITE },
+  heroPbChipText: { fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1, color: ORANGE_LITE },
   heroStatBigVal: {
-    fontSize: 24, fontWeight: '600', color: '#fff',
+    fontSize: typeScale.stat, fontWeight: weight.medium, color: '#fff',
     marginTop: 4, letterSpacing: -0.5,
   },
-  heroStatUnit: { fontSize: 10, color: colors.text.muted },
-  heroDelta: { fontSize: 10, fontWeight: '700', marginTop: 4 },
-  heroDeltaVs: { color: colors.text.dimmed, fontWeight: '400' },
+  heroStatUnit: { fontSize: typeScale.label, color: colors.text.muted },
+  heroDelta: { fontSize: typeScale.label, fontWeight: weight.bold, marginTop: 4 },
+  heroDeltaVs: { color: colors.text.dimmed, fontWeight: weight.regular },
   heroTimeAgo: {
-    fontSize: 8, letterSpacing: 1.5, color: colors.text.dimmed,
-    fontWeight: '600', marginTop: 2, textTransform: 'uppercase',
+    fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.dimmed,
+    fontWeight: weight.medium, marginTop: 2, textTransform: 'uppercase',
   },
   heroEmpty: {
-    fontSize: 9, letterSpacing: 2, color: colors.text.dimmed,
-    textAlign: 'center', marginTop: spacing.md, fontWeight: '600',
+    fontSize: typeScale.micro, letterSpacing: 2, color: colors.text.dimmed,
+    textAlign: 'center', marginTop: spacing.md, fontWeight: weight.medium,
   },
   heroFooter: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingTop: spacing.md, marginTop: spacing.md,
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)',
   },
-  heroFooterText: { color: colors.text.secondary, fontSize: 12, flex: 1 },
-  heroFooterBold: { color: '#fff', fontWeight: '600' },
+  heroFooterText: { color: colors.text.secondary, fontSize: typeScale.caption, flex: 1 },
+  heroFooterBold: { color: '#fff', fontWeight: weight.medium },
 
   // RivalCard
   rivalCard: { padding: 20, marginBottom: spacing.md },
   rivalHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  rivalName: { fontSize: 22, fontWeight: '700', letterSpacing: -0.4, marginTop: 4 },
-  rivalNote: { fontSize: 9, letterSpacing: 1.5, color: colors.text.dimmed, textTransform: 'uppercase', marginTop: 2 },
-  rivalCountry: { fontSize: 10, letterSpacing: 2, color: colors.text.dimmed, fontWeight: '600' },
+  rivalName: { fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.4, marginTop: 4 },
+  rivalNote: { fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.dimmed, textTransform: 'uppercase', marginTop: 2 },
+  rivalCountry: { fontSize: typeScale.label, letterSpacing: 2, color: colors.text.dimmed, fontWeight: weight.medium },
   rivalBody: { marginBottom: spacing.md },
-  rivalDesc: { color: colors.text.secondary, fontSize: 14, lineHeight: 20 },
-  rivalBold: { fontWeight: '700' },
-  rivalDiff: { fontSize: 15, fontWeight: '600', marginTop: 8 },
+  rivalDesc: { color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 20 },
+  rivalBold: { fontWeight: weight.bold },
+  rivalDiff: { fontSize: typeScale.body, fontWeight: weight.medium, marginTop: 8 },
 
   rivalBarWrap: { marginTop: spacing.sm },
   rivalBarTrack: {
-    height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.07)',
+    height: 3, borderRadius: radius.hair, backgroundColor: 'rgba(255,255,255,0.07)',
     position: 'relative',
   },
-  rivalBarFill: { position: 'absolute', top: 0, bottom: 0, borderRadius: 2 },
+  rivalBarFill: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.hair },
   rivalBarLabels: {
     flexDirection: 'row', justifyContent: 'space-between', marginTop: 8,
   },
   rivalBarTag: {
-    fontSize: 8, letterSpacing: 2, color: colors.orange[300],
-    fontWeight: '600', textTransform: 'uppercase',
+    fontSize: typeScale.micro, letterSpacing: 2, color: colors.orange[300],
+    fontWeight: weight.medium, textTransform: 'uppercase',
   },
-  rivalBarVal: { fontSize: 10, color: '#fff', fontWeight: '600', marginTop: 2 },
+  rivalBarVal: { fontSize: typeScale.label, color: '#fff', fontWeight: weight.medium, marginTop: 2 },
 
   // WhereYouStand
-  contEmpty: { color: colors.text.secondary, fontSize: 14, lineHeight: 20 },
+  contEmpty: { color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 20 },
   contPbRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: spacing.lg,
   },
   contPbLabel: {
-    fontSize: 9, letterSpacing: 2, color: colors.text.dimmed, fontWeight: '600',
+    fontSize: typeScale.micro, letterSpacing: 2, color: colors.text.dimmed, fontWeight: weight.medium,
   },
   contPbValue: {
-    fontSize: 28, fontWeight: '600', color: colors.orange[400], letterSpacing: -0.5,
+    fontSize: typeScale.figure, fontWeight: weight.medium, color: colors.orange[400], letterSpacing: -0.5,
   },
   contRailWrap: {
     position: 'relative', height: 100, alignSelf: 'center', marginBottom: spacing.md,
     justifyContent: 'center',
   },
   contTrack: {
-    position: 'absolute', left: 0, right: 0, height: 3, borderRadius: 2,
+    position: 'absolute', left: 0, right: 0, height: 3, borderRadius: radius.hair,
     backgroundColor: 'rgba(255,255,255,0.07)', top: '50%', marginTop: -1.5,
   },
   contFill: {
-    position: 'absolute', left: 0, height: 3, borderRadius: 2, top: '50%', marginTop: -1.5,
+    position: 'absolute', left: 0, height: 3, borderRadius: radius.hair, top: '50%', marginTop: -1.5,
     backgroundColor: ORANGE,
   },
   contTierDot: { position: 'absolute', top: '50%', marginTop: -4, zIndex: 2 },
-  contDotInner: { width: 8, height: 8, borderRadius: 4, borderWidth: 1.5 },
+  contDotInner: { width: 8, height: 8, borderRadius: radius.full, borderWidth: 1.5 },
   contTierLabel: {
     position: 'absolute', left: -30, width: 68, alignItems: 'center',
   },
   contTierTag: {
-    fontSize: 7, letterSpacing: 1.5, color: colors.text.dimmed,
-    fontWeight: '600', textTransform: 'uppercase',
+    fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.dimmed,
+    fontWeight: weight.medium, textTransform: 'uppercase',
   },
-  contTierName: { fontSize: 9, color: colors.text.muted, fontWeight: '500', marginTop: 1 },
+  contTierName: { fontSize: typeScale.micro, color: colors.text.muted, fontWeight: weight.medium, marginTop: 1 },
   contMarker: { position: 'absolute', top: '50%', marginTop: -8, zIndex: 3 },
   contMarkerGlow: {
-    position: 'absolute', width: 40, height: 40, borderRadius: 20,
+    position: 'absolute', width: 40, height: 40, borderRadius: radius.full,
     backgroundColor: ORANGE, opacity: 0.2, top: -12, left: -12,
   },
   contMarkerDot: {
-    width: 16, height: 16, borderRadius: 8,
+    width: 16, height: 16, borderRadius: radius.full,
     backgroundColor: '#fff', borderWidth: 2, borderColor: ORANGE,
   },
   contFooter: {
@@ -1036,23 +1039,23 @@ const s = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.05)',
   },
   contFooterBar: {
-    width: 3, height: 32, borderRadius: 2, backgroundColor: ORANGE, marginTop: 2,
+    width: 3, height: 32, borderRadius: radius.hair, backgroundColor: ORANGE, marginTop: 2,
   },
   contFooterKicker: {
-    fontSize: 8, letterSpacing: 2, color: colors.text.dimmed,
-    fontWeight: '600', marginBottom: 4,
+    fontSize: typeScale.micro, letterSpacing: 2, color: colors.text.dimmed,
+    fontWeight: weight.medium, marginBottom: 4,
   },
-  contFooterText: { color: colors.text.secondary, fontSize: 13, lineHeight: 19 },
+  contFooterText: { color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 19 },
 
   // DNA Ladder
   ladderMeta: {
-    fontSize: 9, letterSpacing: 1.5, color: colors.text.muted,
-    fontWeight: '600', marginBottom: spacing.sm,
+    fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.muted,
+    fontWeight: weight.medium, marginBottom: spacing.sm,
   },
   ladderSummary: { marginBottom: spacing.md, gap: 4 },
   ladderSummaryItem: { flexDirection: 'row', flexWrap: 'wrap' },
-  ladderSummaryTag: { fontSize: 9, letterSpacing: 1.5, fontWeight: '700' },
-  ladderSummaryText: { fontSize: 12, color: colors.text.secondary },
+  ladderSummaryTag: { fontSize: typeScale.micro, letterSpacing: 1.5, fontWeight: weight.bold },
+  ladderSummaryText: { fontSize: typeScale.caption, color: colors.text.secondary },
   ladderRow: { marginBottom: 16 },
   ladderRowHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -1060,22 +1063,22 @@ const s = StyleSheet.create({
   },
   ladderRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
   ladderAxisLabel: {
-    fontSize: 11, letterSpacing: 1, color: colors.text.secondary,
-    fontWeight: '600', textTransform: 'uppercase',
+    fontSize: typeScale.label, letterSpacing: 1, color: colors.text.secondary,
+    fontWeight: weight.medium, textTransform: 'uppercase',
   },
   ladderPriorityChip: {
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.hair,
     backgroundColor: 'rgba(249,115,22,0.12)',
     borderWidth: 1, borderColor: 'rgba(249,115,22,0.25)',
   },
   ladderPriorityText: {
-    fontSize: 7, fontWeight: '800', letterSpacing: 1, color: ORANGE_LITE,
+    fontSize: typeScale.micro, fontWeight: weight.bold, letterSpacing: 1, color: ORANGE_LITE,
   },
   ladderUnlockText: {
-    fontSize: 9, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: '600',
+    fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.dimmed, fontWeight: weight.medium,
   },
   ladderBarRow: {
-    flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden',
+    flexDirection: 'row', height: 8, borderRadius: radius.full, overflow: 'hidden',
     position: 'relative',
   },
   ladderSegment: { flex: 1, height: 8 },
@@ -1085,60 +1088,60 @@ const s = StyleSheet.create({
   },
   ladderMarker: {
     position: 'absolute', top: '50%', marginTop: -5, width: 10, height: 10,
-    borderRadius: 5, borderWidth: 2, borderColor: '#0f172a',
+    borderRadius: radius.full, borderWidth: 2, borderColor: '#0f172a',
   },
   ladderFooter: {
     flexDirection: 'row', justifyContent: 'space-between', marginTop: 4,
   },
-  ladderFooterText: { fontSize: 9, color: colors.text.dimmed },
-  ladderFooterScore: { fontSize: 9, color: colors.text.dimmed },
+  ladderFooterText: { fontSize: typeScale.micro, color: colors.text.dimmed },
+  ladderFooterScore: { fontSize: typeScale.micro, color: colors.text.dimmed },
   ladderLegend: {
     flexDirection: 'row', justifyContent: 'center', gap: 20,
     paddingTop: spacing.md, marginTop: spacing.sm,
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)',
   },
   ladderLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  ladderLegendDot: { width: 8, height: 8, borderRadius: 4 },
+  ladderLegendDot: { width: 8, height: 8, borderRadius: radius.full },
   ladderLegendDash: {
     width: 12, height: 6,
     backgroundColor: 'rgba(148,163,184,0.4)',
   },
   ladderLegendText: {
-    fontSize: 9, letterSpacing: 1.5, color: colors.text.muted,
-    fontWeight: '600', textTransform: 'uppercase',
+    fontSize: typeScale.micro, letterSpacing: 1.5, color: colors.text.muted,
+    fontWeight: weight.medium, textTransform: 'uppercase',
   },
 
   // ScienceSpotlight
-  sciText: { color: colors.text.secondary, fontSize: 14, lineHeight: 21 },
+  sciText: { color: colors.text.secondary, fontSize: typeScale.body, lineHeight: 21 },
   sciRec: {
     flexDirection: 'row', gap: 8, alignItems: 'flex-start',
     marginTop: spacing.md, paddingTop: spacing.md,
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.04)',
   },
-  sciRecText: { color: colors.text.secondary, fontSize: 13, lineHeight: 19, flex: 1 },
+  sciRecText: { color: colors.text.secondary, fontSize: typeScale.caption, lineHeight: 19, flex: 1 },
 
   // SinceLastVisit
   sinceCard: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 10, paddingHorizontal: 16,
     backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: 12, borderWidth: 1,
+    borderRadius: radius.control, borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     marginBottom: spacing.md,
   },
-  sinceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
-  sinceText: { fontSize: 11, color: colors.text.muted, fontWeight: '600' },
-  sinceSummary: { fontSize: 11, color: colors.text.secondary, fontWeight: '500' },
+  sinceDot: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.green },
+  sinceText: { fontSize: typeScale.label, color: colors.text.muted, fontWeight: weight.medium },
+  sinceSummary: { fontSize: typeScale.label, color: colors.text.secondary, fontWeight: weight.medium },
 
   // WeeklyRecap
   recapGrid: { flexDirection: 'row' },
   recapCell: { flex: 1, alignItems: 'center', paddingVertical: 8 },
   recapCellBorder: { borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.06)' },
   recapNum: {
-    fontSize: 22, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.5,
+    fontSize: typeScale.stat, fontWeight: weight.bold, color: colors.text.primary, letterSpacing: -0.5,
   },
   recapLabel: {
-    fontSize: 8, letterSpacing: 2, color: colors.text.muted,
-    fontWeight: '600', marginTop: 4,
+    fontSize: typeScale.micro, letterSpacing: 2, color: colors.text.muted,
+    fontWeight: weight.medium, marginTop: 4,
   },
 })

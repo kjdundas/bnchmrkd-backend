@@ -32,7 +32,7 @@ import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing, rhythm } from '../lib/theme'
+import { spacing, rhythm, typeScale, weight, radius } from '../lib/theme'
 import { Tappable } from './ui'
 
 interface Props {
@@ -66,7 +66,7 @@ export default function DisciplineToggle({ disciplines, active, onSelect, onHero
 
         const label = (
           <Text style={{
-            fontSize: 14, fontWeight: '700', letterSpacing: 0.3,
+            fontSize: typeScale.body, fontWeight: weight.bold, letterSpacing: 0.3,
             color: on
               ? '#FFFFFF'
               : onHero ? 'rgba(255,255,255,0.82)' : colors.text.secondary,
@@ -77,7 +77,7 @@ export default function DisciplineToggle({ disciplines, active, onSelect, onHero
 
         const shell = {
           paddingHorizontal: 20, minHeight: 44, justifyContent: 'center' as const,
-          alignItems: 'center' as const, borderRadius: 999, overflow: 'hidden' as const,
+          alignItems: 'center' as const, borderRadius: radius.full, overflow: 'hidden' as const,
         }
 
         // Selected chip stays solid indigo in both paths — a glass "selected"
@@ -117,7 +117,7 @@ export default function DisciplineToggle({ disciplines, active, onSelect, onHero
                   covered by the absolutely-filled blur layer. Without it the
                   chip has no shape at all on a smooth dark background. */}
               <View pointerEvents="none" style={[StyleSheet.absoluteFill, {
-                borderRadius: 999, borderWidth: 1,
+                borderRadius: radius.full, borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.28)',
               }]} />
               <View pointerEvents="none" style={{

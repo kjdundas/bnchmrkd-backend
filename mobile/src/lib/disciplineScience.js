@@ -20,7 +20,7 @@ const FAMILIES = {
   hurdles:  ['110mH', '100mH', '60mH'],
   jumps:    ['Long Jump', 'Triple Jump', 'High Jump', 'Pole Vault'],
   throws:   ['Shot Put', 'Discus Throw', 'Javelin Throw', 'Hammer Throw',
-             'Shot', 'Discus', 'Javelin', 'Hammer'],
+             'Weight Throw', 'Shot', 'Discus', 'Javelin', 'Hammer'],
   midDistance: ['800m', '1500m', 'Mile'],
   distance: ['3000m', '5000m', '10000m', 'Marathon', '3000mSC'],
 }
@@ -38,9 +38,52 @@ export function disciplineFamily(discipline) {
   return 'sprint'
 }
 
+// Combined events score in POINTS, so more is better — but they belong to no
+// family here, and disciplineFamily falls back to 'sprint' for anything it
+// doesn't recognise. That fallback was making a decathlete's PB their WORST
+// score and ranking a combined-events leaderboard upside down. Checked by
+// name rather than by adding a family, because three other call sites switch
+// on the family value and a new one would fall through their branches.
+const COMBINED = ['decathlon', 'heptathlon', 'pentathlon', 'octathlon', 'tetrathlon']
+export function isCombinedEvent(discipline) {
+  const d = (discipline || '').trim().toLowerCase()
+  return COMBINED.some((c) => d.includes(c))
+}
+
+/**
+ * Is this row's event the event we are asking about?
+ *
+ * Trivial-looking, and its absence let a 60m time be ranked as a 100m
+ * personal best — 7.43 shown as a 100m PB, which the tier maths then scored
+ * as World Class at the 99th percentile. Compared case-insensitively and
+ * trimmed, because the same event has been stored as '100m', '100M' and
+ * '100m ' at various points.
+ */
+export function sameDiscipline(a, b) {
+  return (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase()
+}
+
 export function isLowerBetter(discipline) {
+  if (isCombinedEvent(discipline)) return false
   const family = disciplineFamily(discipline)
   return family !== 'jumps' && family !== 'throws'
+}
+
+// ── One way to print a mark ───────────────────────────────────────────
+// This existed three times: twice copy-pasted into screens as `formatMark`
+// with a local THROWS list that contained no JUMPS, so a 7.20 m long jump
+// printed as "7.20s" on both coach screens, and once as `formatPerformance`
+// in TrajectoryScreen. Direction now comes from isLowerBetter, which is the
+// same question already answered above — a mark measured in metres is
+// exactly a mark where higher is better.
+export function formatMark(value, discipline) {
+  const n = typeof value === 'number' ? value : parseFloat(value)
+  if (!Number.isFinite(n)) return '\u2014'
+  if (isCombinedEvent(discipline)) return `${Math.round(n)} pts`
+  if (!isLowerBetter(discipline)) return `${n.toFixed(2)}m`
+  const mins = Math.floor(n / 60)
+  const secs = (n % 60).toFixed(2)
+  return mins > 0 ? `${mins}:${secs.padStart(5, '0')}` : `${secs}s`
 }
 
 // ── Discipline calibration (mean / std of Olympic-qualifier distribution)

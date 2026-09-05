@@ -22,7 +22,7 @@ import { View, Text, Modal, ScrollView, TextInput, StyleSheet, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../contexts/ThemeContext'
 import { Tappable, MonoKicker } from './ui'
-import { spacing, radius, numerals } from '../lib/theme'
+import { spacing, radius, numerals, typeScale, weight } from '../lib/theme'
 import { parsePrescription, prefillLoadKg, deviations } from '../lib/prescription'
 import { sessionType, TYPE_STYLE, filled } from '../lib/sessionTypes'
 import { tapFeedback, successFeedback, errorFeedback } from '../lib/haptics'
@@ -118,7 +118,7 @@ export default function SetLogger({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: '#0B0C18' }}>
         <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.22)' }} />
         </View>
 
         <View style={s.header}>
@@ -220,12 +220,12 @@ export default function SetLogger({
               style={[s.ghost, { borderColor: colors.glass.border }]}
             >
               <Ionicons name="add" size={15} color={colors.text.secondary} />
-              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text.secondary }}>Set</Text>
+              <Text style={{ fontSize: typeScale.caption, fontWeight: weight.bold, color: colors.text.secondary }}>Set</Text>
             </Tappable>
             <Tappable onPress={save} disabled={saving} accessibilityLabel="Save"
               style={[s.save, { backgroundColor: colors.accent[500] }]}>
               {saving ? <ActivityIndicator color="#fff" />
-                : <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Save</Text>}
+                : <Text style={{ color: '#fff', fontSize: typeScale.body, fontWeight: weight.bold }}>Save</Text>}
             </Tappable>
           </View>
 
@@ -243,31 +243,31 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,
   },
-  title: { fontSize: 22, fontWeight: '700', letterSpacing: -0.4, marginTop: 4 },
+  title: { fontSize: typeScale.stat, fontWeight: weight.bold, letterSpacing: -0.4, marginTop: 4 },
   close: {
-    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
   },
-  note: { fontSize: 12, lineHeight: 18, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
+  note: { fontSize: typeScale.caption, lineHeight: 18, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
   thead: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: spacing.lg, paddingBottom: 8, borderBottomWidth: 1,
   },
-  th: { fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', fontWeight: '700' },
+  th: { fontSize: typeScale.micro, letterSpacing: 1.2, textTransform: 'uppercase', fontWeight: weight.bold },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: spacing.lg, paddingVertical: 8, borderBottomWidth: 1,
   },
   cell: { flex: 1, textAlign: 'center' },
-  setNum: { fontSize: 14, fontWeight: '700', textAlign: 'center', ...numerals },
+  setNum: { fontSize: typeScale.body, fontWeight: weight.bold, textAlign: 'center', ...numerals },
   input: {
-    minHeight: 44, borderRadius: radius.sm, borderWidth: 1,
-    fontSize: 15, fontWeight: '600', paddingHorizontal: 4, ...numerals,
+    minHeight: 44, borderRadius: radius.chip, borderWidth: 1,
+    fontSize: typeScale.body, fontWeight: weight.medium, paddingHorizontal: 4, ...numerals,
   },
-  dev: { fontSize: 10.5, fontWeight: '700', paddingHorizontal: spacing.lg, paddingTop: 4, paddingBottom: 6 },
+  dev: { fontSize: typeScale.label, fontWeight: weight.bold, paddingHorizontal: spacing.lg, paddingTop: 4, paddingBottom: 6 },
   ghost: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
-    minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1,
+    minHeight: 48, paddingHorizontal: 16, borderRadius: radius.control, borderWidth: 1,
   },
-  save: { flex: 1, minHeight: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  save: { flex: 1, minHeight: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
 })

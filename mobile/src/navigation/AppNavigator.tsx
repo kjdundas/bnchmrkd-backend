@@ -7,14 +7,13 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, { useMemo } from 'react'
-import { Platform, View, Text, Pressable } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { spacing } from '../lib/theme'
+import { spacing, weight } from '../lib/theme'
 import { tapFeedback } from '../lib/haptics'
 import FloatingTabBar from './FloatingTabBar'
 
@@ -32,6 +31,11 @@ import CoachHomeScreen from '../screens/CoachHomeScreen'
 import CoachRosterScreen from '../screens/CoachRosterScreen'
 import CoachResultsScreen from '../screens/CoachResultsScreen'
 import CoachAnalyseScreen from '../screens/CoachAnalyseScreen'
+import CoachAssignScreen from '../screens/CoachAssignScreen'
+import CoachLeaderboardScreen from '../screens/CoachLeaderboardScreen'
+import LeaderboardScreen from '../screens/LeaderboardScreen'
+import CoachScheduleScreen from '../screens/CoachScheduleScreen'
+import { ApprovalsProvider } from '../contexts/ApprovalsContext'
 import AthleteDetailScreen from '../screens/AthleteDetailScreen'
 
 const Tab = createBottomTabNavigator()
@@ -54,57 +58,40 @@ function AthleteTabs() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'HOME' }} />
       <Tab.Screen name="Programs" component={ProgramsScreen} options={{ tabBarLabel: 'PROGRAMS' }} />
       <Tab.Screen name="Log" component={LogScreen} options={{ tabBarLabel: 'LOG' }} />
+      <Tab.Screen name="Boards" component={LeaderboardScreen} options={{ tabBarLabel: 'BOARDS' }} />
       <Tab.Screen name="Trajectory" component={TrajectoryScreen} options={{ tabBarLabel: 'TRAJECTORY' }} />
     </Tab.Navigator>
   )
 }
 
 // ── Coach Tab Navigator ─────────────────────────────────────────────────────
+// The same bar as the athlete side. It was a stock Tab.Navigator with a
+// bordered strip across the bottom, which is why a coach signing in got the
+// app as it looked before the rebuild while the athlete got the current one.
+//
+// Assign is lifted out of the pill and rendered as the action button, the
+// same slot Log occupies on the athlete side. It is not a place you go, it
+// is a thing you start — which is exactly why it is not a peer of the rest.
+//
+// Squad and Profile are NOT tabs. The squad lives on Home behind the
+// switcher, which is where a coach actually starts; and Profile sits behind
+// the initials in the header, exactly as it does for an athlete. Roster
+// management — adding an athlete, importing one from World Athletics — is a
+// push screen reached from the switcher's (+), because it is a thing you do
+// occasionally, not a place you live.
 function CoachTabs() {
-  const { colors } = useTheme()
-  const tabBarOptions = useMemo(() => ({
-    headerShown: false,
-    tabBarStyle: {
-      backgroundColor: colors.tabBar.bg,
-      borderTopColor: colors.tabBar.border,
-      borderTopWidth: 1,
-      height: Platform.OS === 'ios' ? 85 : 70,
-      paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-      paddingTop: 8,
-      elevation: 0,
-    },
-    tabBarActiveTintColor: colors.tabBar.active,
-    tabBarInactiveTintColor: colors.tabBar.inactive,
-    tabBarLabelStyle: {
-      fontSize: 10,
-      letterSpacing: 0.5,
-      fontWeight: '600' as const,
-      marginTop: 2,
-    },
-  }), [colors])
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        ...tabBarOptions,
-        tabBarIcon: ({ color, size, focused }) => {
-          let iconName: string = 'home-outline'
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline'
-          else if (route.name === 'Squad') iconName = focused ? 'people' : 'people-outline'
-          else if (route.name === 'Analyse') iconName = focused ? 'flash' : 'flash-outline'
-          else if (route.name === 'CoachProfile') iconName = focused ? 'person' : 'person-outline'
-          return <Ionicons name={iconName as any} size={size} color={color} />
-        },
-      })}
+      tabBar={(props) => <FloatingTabBar {...props} actionRoute="Assign" actionIcon="send" />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen name="Home" component={CoachHomeScreen} />
-      <Tab.Screen name="Squad" component={CoachRosterScreen} />
-      <Tab.Screen name="Analyse" component={CoachAnalyseScreen} />
-      <Tab.Screen
-        name="CoachProfile"
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
-      />
+      <Tab.Screen name="Home" component={CoachHomeScreen} options={{ tabBarLabel: 'HOME' }} />
+      {/* Second slot, where Programs sits for an athlete — the same place in
+          the bar for the same kind of question, asked from the other side. */}
+      <Tab.Screen name="Schedule" component={CoachScheduleScreen} options={{ tabBarLabel: 'WEEK' }} />
+      <Tab.Screen name="Assign" component={CoachAssignScreen} options={{ tabBarLabel: 'ASSIGN' }} />
+      <Tab.Screen name="Leaderboards" component={CoachLeaderboardScreen} options={{ tabBarLabel: 'BOARDS' }} />
+      <Tab.Screen name="Analyse" component={CoachAnalyseScreen} options={{ tabBarLabel: 'ANALYSE' }} />
     </Tab.Navigator>
   )
 }
@@ -125,10 +112,10 @@ export default function AppNavigator() {
       notification: colors.orange[500],
     },
     fonts: {
-      regular: { fontFamily: 'System', fontWeight: '400' as const },
-      medium: { fontFamily: 'System', fontWeight: '500' as const },
-      bold: { fontFamily: 'System', fontWeight: '700' as const },
-      heavy: { fontFamily: 'System', fontWeight: '900' as const },
+      regular: { fontFamily: 'System', fontWeight: weight.regular },
+      medium: { fontFamily: 'System', fontWeight: weight.medium },
+      bold: { fontFamily: 'System', fontWeight: weight.bold },
+      heavy: { fontFamily: 'System', fontWeight: weight.bold },
     },
   }), [colors, isDark])
 
@@ -141,6 +128,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       {session ? (
+        <ApprovalsProvider>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen
             name="MainTabs"
@@ -148,9 +136,11 @@ export default function AppNavigator() {
           />
           {/* Shared push screens */}
           <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="CoachRoster" component={CoachRosterScreen} />
           <Stack.Screen name="AthleteDetail" component={AthleteDetailScreen} />
           <Stack.Screen name="CoachResults" component={CoachResultsScreen} />
         </Stack.Navigator>
+        </ApprovalsProvider>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
