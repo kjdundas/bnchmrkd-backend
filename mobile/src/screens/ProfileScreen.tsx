@@ -212,11 +212,19 @@ export default function ProfileScreen() {
         date_of_birth: dob || null,
         gender: sex === 'F' ? 'Female' : sex === 'M' ? 'Male' : null,
       })
-      await upsertInto('athlete_profiles', {
-        id: profile.id,
-        height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
-        weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
-      })
+      // Height and weight are an ATHLETE's fields, and athlete_profiles is
+      // an athlete's table. A coach was being upserted into it on every
+      // save — which is how a coach hit a not-null constraint on
+      // `primary_events`, a column belonging to a web onboarding flow no
+      // coach ever sees. The screen already hides these inputs from a
+      // coach (`!isCoach`), so it was writing values it never collected.
+      if (!isCoach) {
+        await upsertInto('athlete_profiles', {
+          id: profile.id,
+          height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
+          weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
+        })
+      }
       setPhysical({
         height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
         weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
