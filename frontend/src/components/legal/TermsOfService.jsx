@@ -22,7 +22,7 @@ export default function TermsOfService({ onBack }) {
         <div className="space-y-6 text-[14px] leading-relaxed">
           <p className="text-slate-400 italic">
             These Terms of Service ("Terms") govern your access to and use of bnchmrkd., a sports analytics platform
-            for track and field athletics (the "Service"), operated by [COMPANY NAME] ("we", "us", "our"). By creating
+            for track and field athletics (the "Service"), operated by Keenan Dundas (trading as bnchmrkd) ("we", "us", "our"). By creating
             an account or otherwise using the Service, you agree to be bound by these Terms. If you do not agree, do
             not use the Service.
           </p>
@@ -55,7 +55,7 @@ export default function TermsOfService({ onBack }) {
             <h2 className="text-lg font-bold text-white mb-2">3. Account responsibilities</h2>
             <p className="mb-2">
               You are responsible for maintaining the confidentiality of your login credentials and for all activity
-              that occurs under your account. You agree to notify us promptly at [CONTACT EMAIL] if you suspect
+              that occurs under your account. You agree to notify us promptly at keenan.bnchmrkd@gmail.com if you suspect
               unauthorised access to your account.
             </p>
             <p>
@@ -107,7 +107,7 @@ export default function TermsOfService({ onBack }) {
             </p>
             <p>
               All other aspects of the Service, including its design, code, logos, database schema, and the aggregated
-              elite performance datasets we compile, are the intellectual property of [COMPANY NAME] and are protected
+              elite performance datasets we compile, are the intellectual property of Keenan Dundas (trading as bnchmrkd) and are protected
               by applicable intellectual property laws.
             </p>
           </section>
@@ -142,8 +142,8 @@ export default function TermsOfService({ onBack }) {
           <section>
             <h2 className="text-lg font-bold text-white mb-2">10. Limitation of liability</h2>
             <p>
-              TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL [COMPANY NAME], ITS OFFICERS,
-              EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
+              TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL Keenan Dundas (trading as bnchmrkd),
+              OR HIS CONTRACTORS OR AGENTS, BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
               INCLUDING LOSS OF PROFITS, DATA, OR GOODWILL, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF, OR
               INABILITY TO USE, THE SERVICE. OUR AGGREGATE LIABILITY TO YOU FOR ANY CLAIM RELATED TO THE SERVICE SHALL
               NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU HAVE PAID US IN THE TWELVE MONTHS BEFORE THE CLAIM, OR
@@ -154,7 +154,7 @@ export default function TermsOfService({ onBack }) {
           <section>
             <h2 className="text-lg font-bold text-white mb-2">11. Indemnification</h2>
             <p>
-              You agree to indemnify and hold harmless [COMPANY NAME] from any claims, damages, liabilities, or
+              You agree to indemnify and hold harmless Keenan Dundas (trading as bnchmrkd) from any claims, damages, liabilities, or
               expenses (including reasonable legal fees) arising from your violation of these Terms, your misuse of
               the Service, or your infringement of any third-party right.
             </p>
@@ -163,7 +163,7 @@ export default function TermsOfService({ onBack }) {
           <section>
             <h2 className="text-lg font-bold text-white mb-2">12. Termination</h2>
             <p>
-              You may terminate your account at any time by contacting us at [CONTACT EMAIL] or using an in-app delete
+              You may terminate your account at any time by contacting us at keenan.bnchmrkd@gmail.com or using an in-app delete
               function if provided. We may suspend or terminate your access to the Service at any time, with or
               without notice, if we believe you have violated these Terms or applicable law, or if continuing to
               provide the Service becomes commercially or legally impractical.
@@ -192,7 +192,7 @@ export default function TermsOfService({ onBack }) {
           <section>
             <h2 className="text-lg font-bold text-white mb-2">15. Contact</h2>
             <p>
-              Questions about these Terms should be directed to [CONTACT EMAIL].
+              Questions about these Terms should be directed to keenan.bnchmrkd@gmail.com.
             </p>
           </section>
 
