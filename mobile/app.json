@@ -37,10 +37,16 @@
     "primaryColor": "#4F3CF0",
     "updates": {
       "enabled": true,
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/295dbb19-eae1-4eed-bb48-ed18e57931c3"
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "295dbb19-eae1-4eed-bb48-ed18e57931c3"
+      }
     }
   }
 }
