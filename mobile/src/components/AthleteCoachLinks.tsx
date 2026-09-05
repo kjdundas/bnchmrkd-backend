@@ -4,6 +4,24 @@
 // Backed by get_my_links / respond_to_invite / revoke_link RPCs.
 //   pendingOnly — render only pending invites (or null if none). Home prompt.
 //
+// AND ONE DIRECTION. Only a coach can start a link — invite_athlete is
+// coach-only and there is no request_coach. An athlete arriving here from
+// "Connect your coach" on the Get started card found a receive-only list
+// whose empty state said "when you approve a coach request, they'll appear
+// here", which is a description of waiting, not something to do. There was
+// no way to reach a coach and nothing explaining why.
+//
+// Worse, invite_athlete has two outcomes. If the athlete already has an
+// account it makes a pending link they can approve — that path worked. If
+// they DON'T, it mints an invite_token and hands the coach a share link, and
+// `claim_invite` — the function that redeems that token — was called from
+// nowhere in the app. Every invite sent to someone who had not yet signed up
+// was unredeemable.
+//
+// So the empty state now does three things instead of describing one: it
+// says which way a link travels, shows the athlete the exact email their
+// coach has to type, and takes an invite code.
+//
 // ONE link, TWO sides. get_my_links returns the same row to both parties and
 // names the other one, so a coach opening their profile was reading their own
 // athletes under the heading "Your coaches" — the component knew the data and
@@ -16,6 +34,7 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
+  TextInput,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, radius, typeScale, weight } from '../lib/theme'
@@ -95,6 +114,38 @@ export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly
     }
   }
 
+  // Invite code redemption. The token comes off the end of the share link a
+  // coach is given, so accept either — nobody should have to know that
+  // "https://bnchmrkd.app/?invite=abc123" and "abc123" are the same thing.
+  const [code, setCode] = useState('')
+  const [claiming, setClaiming] = useState(false)
+  const [claimMsg, setClaimMsg] = useState('')
+
+  const claim = async () => {
+    const token = (code.match(/[0-9a-f]{24,}/i)?.[0] || code).trim()
+    if (!token) return
+    setClaiming(true); setClaimMsg(''); setError('')
+    try {
+      const r: any = await callRpc('claim_invite', { p_token: token })
+      const result = Array.isArray(r) ? r[0]?.result : r?.result
+      if (result === 'claimed') {
+        setCode('')
+        setClaimMsg('Found it. Approve the request above to finish.')
+        await load()
+      } else if (result === 'already') {
+        setClaimMsg('You are already linked to that coach.')
+      } else if (result === 'not_pending') {
+        setClaimMsg('That code has already been used.')
+      } else {
+        setClaimMsg("That code didn't match an invite. Check it with your coach.")
+      }
+    } catch (e: any) {
+      setClaimMsg(e.message || 'Could not check that code.')
+    } finally {
+      setClaiming(false)
+    }
+  }
+
   const pending = links.filter((l) => l.status === 'pending')
   const active = links.filter((l) => l.status === 'active')
 
@@ -142,7 +193,52 @@ export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly
             <Text style={styles.sectionKicker}>{W.heading}</Text>
           </View>
           {active.length === 0 ? (
-            <Text style={styles.empty}>{W.empty}</Text>
+            isCoach ? (
+              <Text style={styles.empty}>{W.empty}</Text>
+            ) : (
+              <View style={styles.howto}>
+                <Text style={styles.howtoTitle}>Your coach adds you</Text>
+                <Text style={styles.empty}>
+                  Links only travel one way — a coach sends the request and you
+                  approve it. Give your coach the email you signed up with and
+                  they can add you from their roster.
+                </Text>
+                {profile?.email ? (
+                  <View style={styles.emailBox}>
+                    <Text style={styles.emailLabel}>YOUR SIGN-UP EMAIL</Text>
+                    {/* Selectable rather than a copy button: expo-clipboard is
+                        a native module, and this had to reach the build that
+                        is already on people's phones. */}
+                    <Text style={styles.emailValue} selectable>{profile.email}</Text>
+                  </View>
+                ) : null}
+                <Text style={[styles.empty, { marginTop: spacing.md }]}>
+                  Been sent an invite link instead? Paste it here.
+                </Text>
+                <View style={styles.codeRow}>
+                  <TextInput
+                    style={styles.codeInput}
+                    value={code}
+                    onChangeText={(t) => { setCode(t); setClaimMsg('') }}
+                    placeholder="Invite link or code"
+                    placeholderTextColor={colors.text.dimmed}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!claiming}
+                  />
+                  <Tappable
+                    style={[styles.codeBtn, (!code.trim() || claiming) && { opacity: 0.5 }]}
+                    disabled={!code.trim() || claiming}
+                    onPress={claim}
+                  >
+                    {claiming
+                      ? <ActivityIndicator size="small" color={colors.text.primary} />
+                      : <Text style={styles.codeBtnText}>Use</Text>}
+                  </Tappable>
+                </View>
+                {claimMsg ? <Text style={styles.claimMsg}>{claimMsg}</Text> : null}
+              </View>
+            )
           ) : (
             <View style={{ gap: 6, marginTop: spacing.sm }}>
               {active.map((l) => (
@@ -168,6 +264,37 @@ export default function AthleteCoachLinks({ pendingOnly = false }: { pendingOnly
 }
 
 const styles = StyleSheet.create({
+  howto: { marginTop: spacing.sm, gap: 6 },
+  howtoTitle: {
+    color: colors.text.primary, fontSize: typeScale.body,
+    fontWeight: weight.bold, marginBottom: 2,
+  },
+  emailBox: {
+    marginTop: spacing.sm, paddingVertical: 10, paddingHorizontal: 12,
+    borderRadius: radius.control, backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
+  },
+  emailLabel: {
+    color: colors.text.muted, fontSize: typeScale.micro,
+    letterSpacing: 0.8, fontWeight: weight.bold, marginBottom: 3,
+  },
+  emailValue: { color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.medium },
+  codeRow: { flexDirection: 'row', gap: 8, marginTop: 6, alignItems: 'center' },
+  codeInput: {
+    flex: 1, height: 42, paddingHorizontal: 12,
+    borderRadius: radius.control, color: colors.text.primary,
+    fontSize: typeScale.body,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
+  },
+  codeBtn: {
+    height: 42, minWidth: 64, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 16, borderRadius: radius.control,
+    backgroundColor: colors.orange[500],
+  },
+  codeBtnText: { color: '#FFFFFF', fontSize: typeScale.body, fontWeight: weight.bold },
+  claimMsg: { color: colors.text.secondary, fontSize: typeScale.caption, marginTop: 4 },
+
   rowCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   pendingCard: {
     backgroundColor: 'rgba(249,115,22,0.06)', borderWidth: 1, borderColor: 'rgba(249,115,22,0.25)',

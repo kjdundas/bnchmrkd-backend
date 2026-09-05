@@ -59,7 +59,6 @@ export default function CoachInvitePanel() {
     try { await callRpc('revoke_link', { p_link_id: id }); load() } catch { /* ignore */ }
   }
 
-  const shareLink = result?.invite_token ? `https://bnchmrkd.app/?invite=${result.invite_token}` : null
   const pending = links.filter((l) => l.status === 'pending')
   const active = links.filter((l) => l.status === 'active')
 
@@ -86,10 +85,20 @@ export default function CoachInvitePanel() {
       {result?.delivery === 'in_app' && (
         <Text style={styles.ok}>✓ Invite sent — they'll see a request in their app to approve.</Text>
       )}
-      {result?.delivery === 'share_link' && shareLink && (
+      {result?.delivery === 'share_link' && result?.invite_token && (
         <View style={styles.shareBox}>
-          <Text style={styles.shareLabel}>No account found — share this sign-up link (long-press to copy):</Text>
-          <Text selectable style={styles.shareLink}>{shareLink}</Text>
+          {/* The CODE, not the URL. This used to offer only
+              https://bnchmrkd.app/?invite=<token> — a domain that resolves to
+              nothing, on an app with no deep-link handler, carrying a token
+              that `claim_invite` could redeem but which nothing in the app
+              ever called. Every invite to someone without an account died
+              here. The athlete now pastes this into Profile → Your coaches. */}
+          <Text style={styles.shareLabel}>
+            No account with that email yet. Send them this code — they sign up,
+            then paste it under "Your coaches" on their Profile.
+          </Text>
+          <Text selectable style={styles.shareCode}>{result.invite_token}</Text>
+          <Text style={styles.shareHint}>Long-press to copy. The invite waits until they use it.</Text>
         </View>
       )}
       {result?.result === 'already' && <Text style={styles.muted}>That athlete is already invited or linked.</Text>}
@@ -139,7 +148,11 @@ const styles = StyleSheet.create({
   muted: { color: colors.text.muted, fontSize: typeScale.caption, marginTop: spacing.sm },
   shareBox: { marginTop: spacing.md, backgroundColor: 'rgba(59,130,246,0.06)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.2)', borderRadius: radius.control, padding: spacing.md },
   shareLabel: { color: colors.text.secondary, fontSize: typeScale.label, marginBottom: 6 },
-  shareLink: { color: colors.blue, fontSize: typeScale.caption },
+  shareCode: {
+    color: colors.text.primary, fontSize: typeScale.body, fontWeight: weight.bold,
+    letterSpacing: 0.5, marginTop: 6,
+  },
+  shareHint: { color: colors.text.muted, fontSize: typeScale.caption, marginTop: 6 },
   section: { marginTop: spacing.xl },
   sectionKicker: { color: colors.text.dimmed, fontSize: typeScale.label, fontWeight: weight.bold, letterSpacing: 1.5, marginBottom: spacing.sm },
   item: {

@@ -90,11 +90,17 @@ export function athleteSteps(f: AthleteFacts): SetupStep[] {
     },
     {
       id: 'coach',
-      title: 'Connect your coach',
-      why: 'If your coach uses bnchmrkd they can send you sessions and see '
-        + 'the results you approve. You choose what they see, and you can '
-        + 'change your mind at any time.',
-      cta: 'How this works',
+      // "Connect your coach" read as something the athlete does. It is not:
+      // invite_athlete is coach-only, and the athlete's end of this is
+      // approving a request or redeeming a code. Naming the step for the
+      // thing the reader can actually do is the difference between a screen
+      // that helps and a screen they bounce off.
+      title: 'Get your coach to add you',
+      why: 'Coaches send the request and you approve it — so your coach needs '
+        + 'the email you signed up with. Once linked they can send you '
+        + 'sessions and see the results you approve, and you can cut that off '
+        + 'at any time.',
+      cta: 'Show my email',
       route: 'Profile',
       done: f.hasCoach,
       optional: true,
