@@ -136,7 +136,8 @@ function applyShift(value, shift, isTime) {
 // Returns an array of length 6 (juniors) or 7 (Senior). null entries
 // indicate the tier is out of reach for that age group.
 export function deriveTiers(discipline, gender, ageGroup) {
-  const genderCode = gender === 'Male' || gender === 'M' ? 'M' : 'F';
+  const g = String(gender || '').trim().toLowerCase();
+  const genderCode = (g === 'm' || g === 'male' || g === 'men') ? 'M' : 'F';
   const key = `${discipline}_${genderCode}`;
   const levelData = PERFORMANCE_LEVELS[key];
   if (!levelData) return null;

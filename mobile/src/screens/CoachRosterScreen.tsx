@@ -36,6 +36,7 @@ import ScreenBackdrop, { BACKDROP_GROUND } from '../components/ScreenBackdrop'
 import { Tappable } from '../components/ui'
 import AppHeader from '../components/AppHeader'
 import { ageFromDob } from '../lib/age'
+import { toSexCode, toGenderColumn, sexLabel, type SexCode } from '../lib/identity'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -90,7 +91,11 @@ function AddAthleteModal({
   const [method, setMethod] = useState<'manual' | 'url' | 'invite' | null>(null)
   const [name, setName] = useState('')
   const [discipline, setDiscipline] = useState('')
-  const [gender, setGender] = useState<'Male' | 'Female'>('Male')
+  // Held 'Male'/'Female' and wrote it straight into coach_roster.gender,
+  // which is varchar(1) — so adding an athlete by hand returned 22001 and
+  // failed, every time, for every coach. The state is the code now; the
+  // buttons render the label from it.
+  const [gender, setGender] = useState<SexCode>('M')
   const [dob, setDob] = useState('')
   const [urlInput, setUrlInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -98,7 +103,7 @@ function AddAthleteModal({
   const [urlProgress, setUrlProgress] = useState('')
 
   const reset = () => {
-    setMethod(null); setName(''); setDiscipline(''); setGender('Male')
+    setMethod(null); setName(''); setDiscipline(''); setGender('M')
     setDob(''); setUrlInput(''); setLoading(false); setError(''); setUrlProgress('')
   }
 
@@ -207,7 +212,7 @@ function AddAthleteModal({
         coach_id: coachId,
         name: athleteName,
         dob: dob || null,
-        gender: scrapedGender || 'M',
+        gender: toGenderColumn(scrapedGender) || 'M',
         discipline: discipline,
         disciplines: supportedDisciplines,
         disciplines_data: disciplinesData,
@@ -325,11 +330,11 @@ function AddAthleteModal({
               <View style={modalStyles.inputWrap}>
                 <Text style={modalStyles.label}>GENDER</Text>
                 <View style={modalStyles.segmentRow}>
-                  {(['Male', 'Female'] as const).map((g) => (
+                  {(['M', 'F'] as const).map((g) => (
                     <Tappable key={g}
                       style={[modalStyles.segmentBtn, gender === g && modalStyles.segmentBtnActive]}
                       onPress={() => { tapFeedback(); setGender(g) }}>
-                      <Text style={[modalStyles.segmentText, gender === g && modalStyles.segmentTextActive]}>{g}</Text>
+                      <Text style={[modalStyles.segmentText, gender === g && modalStyles.segmentTextActive]}>{sexLabel(g)}</Text>
                     </Tappable>
                   ))}
                 </View>
@@ -389,7 +394,12 @@ function AddAthleteModal({
 function AthleteCard({ athlete, onPress }: { athlete: any; onPress: () => void }) {
   const age = ageFromDob(athlete.dob)
   const ageGroup = age ? getAgeGroup(age) : 'Senior'
-  const genderCode = athlete.gender === 'Female' ? 'F' : 'M'
+  // coach_roster.gender is varchar(1) and holds 'F'. This compared it to
+  // 'Female', which is never true, so it resolved to 'M' for every woman on
+  // every roster — and genderCode is what picks the tier ladder. Salma's
+  // 55.42m hammer was being scored against MEN'S standards, which is where
+  // "1% PERCENTILE" on a good U20 throw came from.
+  const genderCode = toSexCode(athlete.gender) || 'M'
 
   const pb = useMemo(() => {
     if (athlete.pb_value) return athlete.pb_value
@@ -551,7 +561,7 @@ export default function CoachRosterScreen() {
         withPb++
         const age = ageFromDob(a.dob)
         const ageGroup = age ? getAgeGroup(age) : 'Senior'
-        const genderCode = a.gender === 'Female' ? 'F' : 'M'
+        const genderCode = toSexCode(a.gender) || 'M'
         const tier = getTier(a.discipline, genderCode, ageGroup, pb)
         if (tier) tierCounts[tier.tier] = (tierCounts[tier.tier] || 0) + 1
       }

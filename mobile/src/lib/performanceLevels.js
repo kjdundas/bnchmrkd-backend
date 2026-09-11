@@ -309,7 +309,12 @@ export const getAgeGroup = (age) => {
 // Throws: pb >= threshold (higher = better)
 // Sprints/Hurdles: pb <= threshold (lower = better)
 export const getPerformanceLevel = (discipline, gender, age, pb) => {
-  const genderCode = gender === 'Male' ? 'M' : 'F';
+  // Was `gender === 'Male' ? 'M' : 'F'` — so passing the code 'M', which is
+  // what the column holds and what every screen carries, returned 'F' and
+  // looked up women's levels for a man. No caller today, which is the only
+  // reason it never showed.
+  const g = String(gender || '').trim().toLowerCase();
+  const genderCode = (g === 'm' || g === 'male' || g === 'men') ? 'M' : 'F';
   const key = `${discipline}_${genderCode}`;
   const levelData = PERFORMANCE_LEVELS[key];
   if (!levelData) return null;

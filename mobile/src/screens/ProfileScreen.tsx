@@ -43,6 +43,7 @@ import {
 } from '../lib/disciplineScience'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
 import BuildInfo from '../components/BuildInfo'
+import { toGenderColumn } from '../lib/identity'
 
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile } = useAuth()
@@ -211,7 +212,12 @@ export default function ProfileScreen() {
         // Real column names. The app reads dob / sex; AuthContext maps these
         // back to those aliases on the way in.
         date_of_birth: dob || null,
-        gender: sex === 'F' ? 'Female' : sex === 'M' ? 'Male' : null,
+        // THE bug. This wrote 'Female' — six characters — into a
+        // character(1) column, so every profile save any user ever
+        // attempted came back 22001 "value too long". Coach and athlete
+        // alike; name, club, country and date of birth all went down with
+        // it, because they share the one statement.
+        gender: toGenderColumn(sex),
       })
       // Height and weight are an ATHLETE's fields, and athlete_profiles is
       // an athlete's table. A coach was being upserted into it on every

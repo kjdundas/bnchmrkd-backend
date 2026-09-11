@@ -21,6 +21,7 @@ import Wordmark from '../components/Wordmark'
 import { useAuth } from '../contexts/AuthContext'
 import DobField from '../components/DobField'
 import { Tappable } from '../components/ui'
+import { toGenderColumn } from '../lib/identity'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 
@@ -75,7 +76,7 @@ export default function LoginScreen() {
         const { error: e } = await signUp(
           email.trim(), password, fullName.trim(), role,
           role === 'athlete'
-            ? { date_of_birth: dob, gender: sex === 'F' ? 'Female' : 'Male' }
+            ? { date_of_birth: dob, gender: toGenderColumn(sex) }
             : undefined,
         )
         if (e) setError(e.message)

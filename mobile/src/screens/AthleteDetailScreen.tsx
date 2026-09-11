@@ -23,6 +23,7 @@ import { getTier, TIER_NAMES, TIER_COLORS , TIER_INK} from '../lib/performanceTi
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
 import { isLowerBetter, performancePercentile, formatMark, eventNoun, countEvents } from '../lib/disciplineScience'
+import { toSexCode } from '../lib/identity'
 import {
   fetchResults, subjectOf, pbOf, seasonBestsOf, trendOf,
 } from '../lib/athleteResults'
@@ -63,7 +64,11 @@ export default function AthleteDetailScreen() {
 
   const age = ageFromDob(athlete.dob)
   const ageGroup = age ? getAgeGroup(age) : 'Senior'
-  const genderCode = athlete.gender === 'Female' ? 'F' : 'M'
+  // athlete.gender is one character — 'F' — and this compared it to
+  // 'Female', which never matched, so every woman on this screen was graded
+  // against men's standards. Salma's 55.42m hammer read "1% PERCENTILE"
+  // because 55.42m IS about the 1st percentile among men.
+  const genderCode = toSexCode(athlete.gender) || 'M'
   const lower = isLowerBetter(athlete.discipline)
 
   // Results now come from `performances` for BOTH kinds of athlete — one with

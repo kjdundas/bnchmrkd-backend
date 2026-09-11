@@ -35,6 +35,7 @@ async function tokenFromStorage(): Promise<string | null> {
   }
 }
 import type { Session, User } from '@supabase/supabase-js'
+import { toSexCode, toGenderColumn } from '../lib/identity'
 
 // user_profiles table — matches web app structure
 interface UserProfile {
@@ -88,9 +89,7 @@ function normaliseProfile(row: any, fallbackRole: 'athlete' | 'coach' = 'athlete
   p.role = p.account_type || p.role || fallbackRole
   if (!p.dob && p.date_of_birth) p.dob = p.date_of_birth
   if (!p.club && p.club_school) p.club = p.club_school
-  if (!p.sex && p.gender) {
-    p.sex = p.gender === 'Female' ? 'F' : p.gender === 'Male' ? 'M' : p.gender
-  }
+  if (!p.sex && p.gender) p.sex = toSexCode(p.gender)
   return p as UserProfile
 }
 
@@ -116,9 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Map date_of_birth → dob, gender → sex for consistency
         if (p.date_of_birth && !p.dob) p.dob = p.date_of_birth
         if (p.club_school && !p.club) p.club = p.club_school
-        if (p.gender && !p.sex) {
-          p.sex = p.gender === 'Female' ? 'F' : p.gender === 'Male' ? 'M' : p.gender
-        }
+        if (p.gender && !p.sex) p.sex = toSexCode(p.gender)
         setProfile(p)
         return
       }
@@ -145,7 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // created HERE on first fetch rather than by the sign-up call itself.
       const authMeta: any = currentSession?.user?.user_metadata || {}
       const authDob = authMeta.date_of_birth || null
-      const authGender = authMeta.gender || null
+      // user_profiles.gender is character(1). This used to pass auth
+      // metadata through untouched, and sign-up wrote 'Male'/'Female' into
+      // it — so this insert raised 22001 and fell into the retry branch
+      // below on every single new account. It looked like it worked only
+      // because the handle_new_user trigger had already written the row
+      // correctly. Normalised here so the fallback path is a fallback
+      // rather than the path.
+      const authGender = toGenderColumn(authMeta.gender)
 
       try {
         await insertInto('user_profiles', {
