@@ -237,5 +237,37 @@ const { eventNoun, countEvents, isLowerBetter } = load('lib/disciplineScience')
       `       matched ${re}`)
 }
 
+// ── 8. The app can say which code it is running ──────────────────────
+//
+// An OTA update went out and neither the tester nor the person reading the
+// report could tell whether the phone had picked it up. The only version
+// string in the app was the literal "bnchmrkd. v0.1.0", which could not be
+// wrong because it never changed.
+{
+  const bi = code('components/BuildInfo.tsx')
+  const prof = code('screens/ProfileScreen.tsx')
+
+  check('the version is read at runtime, not typed in',
+    /Updates\.runtimeVersion/.test(bi) && !/v0\.1\.0/.test(prof),
+    '       a hard-coded version can never be wrong, and never right')
+  check('the running update is identified',
+    /Updates\.updateId/.test(bi) && /Updates\.channel/.test(bi))
+  check('an embedded launch is told apart from an applied update',
+    /Updates\.isEmbeddedLaunch/.test(bi),
+    '       "did my update land?" is otherwise unanswerable')
+  check('a failed launch that fell back is surfaced',
+    /isEmergencyLaunch/.test(bi))
+  check('a tester can pull an update without the two-launch dance',
+    /checkForUpdateAsync/.test(bi) && /fetchUpdateAsync/.test(bi)
+    && /reloadAsync/.test(bi),
+    '       fallbackToCacheTimeout is 0, so an update runs on the NEXT launch')
+  check('every native constant is read defensively',
+    /function safe</.test(bi) && /catch \{/.test(bi),
+    '       expo-updates is disabled in Expo Go; this screen must not throw')
+  check('the failure reason is shown, not swallowed',
+    /Couldn't check: \{problem\}/.test(bi))
+  check('the panel is on the profile screen', /<BuildInfo \/>/.test(prof))
+}
+
 console.log(`\n${failures === 0 ? 'all passed' : failures + ' of ' + checks + ' checks failed'}`)
 process.exit(failures === 0 ? 0 : 1)

@@ -42,6 +42,7 @@ import {
   scoreToTier,
 } from '../lib/disciplineScience'
 import AthleteCoachLinks from '../components/AthleteCoachLinks'
+import BuildInfo from '../components/BuildInfo'
 
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile } = useAuth()
@@ -487,8 +488,10 @@ export default function ProfileScreen() {
           <Text style={[styles.signOutText, { color: c.red }]}>Sign Out</Text>
         </Tappable>
 
-        {/* Version */}
-        <Text style={[styles.version, { color: c.text.dimmed }]}>bnchmrkd. v0.1.0</Text>
+        {/* Which code is this phone running?
+            Was a hard-coded "v0.1.0" — the only version string in the app,
+            and one that could never be wrong because it never changed. */}
+        <BuildInfo />
 
         <View style={{ height: 30 }} />
       </ScrollView>
