@@ -965,9 +965,22 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: onImage.card,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    // onImage.card is rgba(255,255,255,0.10) — a TRANSLUCENT plate, built to
+    // float a card over the photographic headers on the coach screens. Used
+    // as a modal's own surface it is 10% white over a 65% scrim, so the
+    // roster behind it stayed legible THROUGH it: "Send a link request to an
+    // athlete's account" printed across "Suleiman ABDULRAHMAN 45.58s", and
+    // the sheet read as a rendering fault rather than a panel.
+    //
+    // A sheet is its own surface. Every other modal in the app is opaque
+    // (TrendDetailSheet is a flat #0B0C18); this is the one that reached for
+    // the on-image vocabulary by mistake. The other fourteen onImage.card
+    // uses are all genuine cards over photographs and are left alone.
+    backgroundColor: colors.bg.card,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.10)',
+    borderTopLeftRadius: radius.card,
+    borderTopRightRadius: radius.card,
     paddingTop: spacing.sm,
     paddingHorizontal: spacing.xl,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
