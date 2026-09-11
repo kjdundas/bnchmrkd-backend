@@ -63,6 +63,33 @@ export function sameDiscipline(a, b) {
   return (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase()
 }
 
+// ── What do you call one of these ─────────────────────────────────────
+//
+// "Race Log". "5 RACES". "Log a race result". "Your races are too close
+// together". Every one of those was written while looking at a sprinter, and
+// the app now holds hammer throwers and javelin throwers and high jumpers,
+// none of whom race. A thrower opening their own profile and reading "RACE
+// LOG" above five throws is being told the app was not built for them.
+//
+// `one` / `many` are for counting things that happened ("5 throws"); `log`
+// is the heading, and is deliberately NOT discipline-specific — a coach's
+// roster and an athlete's own screen both show mixed events, and a heading
+// that changed between two athletes reads as two different features. The
+// heading is "Competition Log" for everyone; the counts speak the event.
+export function eventNoun(discipline) {
+  const family = disciplineFamily(discipline)
+  if (isCombinedEvent(discipline)) return { one: 'competition', many: 'competitions' }
+  if (family === 'throws') return { one: 'throw', many: 'throws' }
+  if (family === 'jumps') return { one: 'jump', many: 'jumps' }
+  return { one: 'race', many: 'races' }
+}
+
+/** "5 throws", "1 race" — counted and pluralised in the athlete's own event. */
+export function countEvents(n, discipline) {
+  const noun = eventNoun(discipline)
+  return `${n} ${n === 1 ? noun.one : noun.many}`
+}
+
 export function isLowerBetter(discipline) {
   if (isCombinedEvent(discipline)) return false
   const family = disciplineFamily(discipline)

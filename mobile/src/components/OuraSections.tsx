@@ -42,6 +42,7 @@ import {
   groupMetrics, ringModel, fmtMetricValue, timeAgo, formatMark,
   LOWER_IS_BETTER, NO_PB, type MetricRow,
 } from '../lib/metricSemantics'
+import { eventNoun } from '../lib/disciplineScience'
 import { applyIndicatorOrder, MAX_INDICATORS } from '../lib/indicators'
 
 // The web hardcodes these two in the SVGs; they are brand constants.
@@ -653,7 +654,7 @@ function TrendCard({
       {detail ? (
         <Tappable
           onPress={() => setOpenDetail(true)}
-          accessibilityLabel={`${title}: open every race with times and deltas`}
+          accessibilityLabel={`${title}: open every result with marks and deltas`}
           style={{ marginTop: 4 }}
         >
           {chart}
@@ -662,7 +663,7 @@ function TrendCard({
               fontSize: typeScale.label, letterSpacing: 1.4, textTransform: 'uppercase',
               fontWeight: weight.bold, color: over ? onDark.accent : INDIGO,
             }}>
-              Every race
+              Every result
             </Text>
             <Ionicons name="chevron-forward" size={12} color={over ? onDark.accent : INDIGO} />
           </View>
@@ -759,7 +760,7 @@ export function RaceTrendCard({
           valueFmt={(v) => Number(v).toFixed(2)}
         />
       }
-      action="Log a race result"
+      action={`Log a ${eventNoun(view.discipline).one} result`}
       onLog={onLog}
       detail={{
         title: `${view.discipline || 'Performance'} progression`,

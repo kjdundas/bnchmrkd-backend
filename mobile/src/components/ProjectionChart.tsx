@@ -67,8 +67,11 @@ const plotH = H - padT - padB
 // evidence, and the chart says so rather than drawing it with equal weight.
 const THIN_N = 40
 
-/** See the note above — beyond this the optimistic edge stops being physical. */
-const HORIZON_YEARS = 5
+/** See the note above — beyond this the optimistic edge stops being physical.
+ *  Exported because the sentence under the chart used to quote a peak the
+ *  chart had already clipped off — "peak at age 23" printed under an axis
+ *  that stopped at 19. One horizon, both places. */
+export const HORIZON_YEARS = 5
 
 /** How far back the raced history is drawn. */
 const HISTORY_YEARS = 4
@@ -164,7 +167,16 @@ export default function ProjectionChart({
     const a1 = aEnd + shift
 
     // The x-axis starts at the first race, not at today.
-    const x0 = Hs.length ? Math.min(Hs[0].age, today) : today
+    //
+    // With a floor. An athlete whose only logged results are from this season
+    // has a history span of a few weeks against a five-year projection, so the
+    // raced marks were crushed into the leftmost 4% of the plot — a scribble
+    // against the axis, with the "age 14" and "now" captions printed on top of
+    // each other underneath it. The history is the only part of this chart
+    // that actually happened; it gets at least a sixth of the width.
+    const x0Raw = Hs.length ? Math.min(Hs[0].age, today) : today
+    const minHistorySpan = Math.max(0.9, (a1 - today) * 0.2)
+    const x0 = Hs.length ? Math.min(x0Raw, today - minHistorySpan) : today
 
     // ── Value domain ─────────────────────────────────────────────
     const vals: number[] = []
@@ -213,9 +225,27 @@ export default function ProjectionChart({
     // chart should say so rather than draw a line through a single date.
     const distinctDays = byDay.size
 
+    // ── The join between what happened and what is projected ─────
+    //
+    // These two halves were drawn as two unconnected strokes and read as two
+    // unrelated charts: a white scribble on the left, a dashed line starting
+    // somewhere else on the right, nothing between them. They are not
+    // unrelated — the projection is anchored on the PB, and the PB is one of
+    // those white dots.
+    //
+    // So the anchor is stated rather than left to be inferred: a faint carry
+    // from the best raced mark across to today, where the dashed line starts.
+    // It is drawn distinctly from both (thin, dotted, white at low opacity)
+    // because no race happened along it. Nothing is invented — it is the same
+    // number held level, which is exactly what the maths does.
+    const anchorY = Y(steady[0].projected)
+    const carry = best
+      ? { x1: X(best.age), y1: Y(best.value), x2: X(today), y2: anchorY }
+      : null
+
     return {
       a0, a1, aEnd, x0, today, shift, lo, hi, X, Y, PX, S, Hs, best, peak,
-      dayBests, distinctDays,
+      dayBests, distinctDays, carry,
       corridor, steadyLine: line(S),
       historyLine: dayBests.map((r) => `${X(r.age).toFixed(1)},${Y(r.value).toFixed(1)}`).join(' '),
       thinX: thin ? X(PX(thin.age)) : null,
@@ -239,6 +269,46 @@ export default function ProjectionChart({
   if (!geom) return null
   const { X, Y } = geom
   const start = geom.S[0]
+
+  // ── Right-gutter labels, decluttered ─────────────────────────────
+  //
+  // Four labels share a 48px gutter and each is pinned to the y of the line
+  // it names. When two lines coincide the two captions print on top of each
+  // other: "PB" was struck through "30.62m" on a javelin chart where the
+  // pessimistic edge of the corridor sat exactly on the PB, and the result
+  // was an unreadable smudge that looked like a rendering fault.
+  //
+  // They are placed by priority, and a label that cannot sit 9px clear of one
+  // already placed is dropped rather than nudged. Nudging would point a
+  // number at a line it does not belong to, which is worse than saying less:
+  // every one of these lines is still drawn, so nothing disappears from the
+  // chart, only from the margin.
+  const gutter: { y: number; text: string; fill: string; size: number }[] = []
+  const placeLabel = (y: number, text: string, fill: string, size: number) => {
+    if (!Number.isFinite(y)) return
+    if (gutter.some((g) => Math.abs(g.y - y) < 9)) return
+    gutter.push({ y, text, fill, size })
+  }
+  placeLabel(Y(geom.endBest), valueFmt(geom.endBest), STEADY, 9)
+  if (nextCut != null && Number.isFinite(nextCut)) {
+    placeLabel(Y(nextCut), nextTierName ? nextTierName.slice(0, 9) : 'Target', colors.amber, 8.5)
+  }
+  placeLabel(Y(geom.endWorst), valueFmt(geom.endWorst), 'rgba(255,255,255,0.44)', 9)
+  placeLabel(Y(start.projected), 'PB', 'rgba(255,255,255,0.55)', 8.5)
+
+  // Same problem along the bottom. "age 14" is anchored at the left edge and
+  // "now" at the divider; once the history is narrow they overlap, and the
+  // peak caption can land on either. Captions are suppressed when they would
+  // collide rather than printed through one another.
+  const xStart = X(geom.x0)
+  const xNow = X(geom.today)
+  const xEnd = X(geom.a1)
+  const xPeak = geom.peakInView ? X(geom.PX(geom.peak.age)) : null
+  const showNow = geom.Hs.length > 0 && xNow - xStart > 26 && xEnd - xNow > 20
+  const showPeak = xPeak != null
+    && xPeak - xStart > 26
+    && xEnd - xPeak > 24
+    && (!showNow || Math.abs(xPeak - xNow) > 30)
 
   return (
     <View>
@@ -285,9 +355,6 @@ export default function ProjectionChart({
           x1={padL} x2={W - padR} y1={Y(start.projected)} y2={Y(start.projected)}
           stroke="rgba(255,255,255,0.30)" strokeWidth={1} strokeDasharray="2 3"
         />
-        <SvgText x={W - padR + 5} y={Y(start.projected) + 3} fontSize={8.5} fill="rgba(255,255,255,0.55)">
-          PB
-        </SvgText>
 
         {/* Next tier target */}
         {nextCut != null && Number.isFinite(nextCut) && (
@@ -296,9 +363,6 @@ export default function ProjectionChart({
               x1={padL} x2={W - padR} y1={Y(nextCut)} y2={Y(nextCut)}
               stroke={colors.amber} strokeOpacity={0.65} strokeWidth={1} strokeDasharray="5 4"
             />
-            <SvgText x={W - padR + 5} y={Y(nextCut) + 3} fontSize={8.5} fill={colors.amber}>
-              {nextTierName ? nextTierName.slice(0, 9) : 'Target'}
-            </SvgText>
           </>
         )}
 
@@ -308,6 +372,16 @@ export default function ProjectionChart({
           <Line
             x1={X(geom.today)} x2={X(geom.today)} y1={padT} y2={padT + plotH}
             stroke="rgba(255,255,255,0.28)" strokeWidth={1}
+          />
+        )}
+
+        {/* The carry from the best raced mark to where the projection is
+            anchored. Dotted and faint: nothing happened along it. */}
+        {geom.carry && (
+          <Line
+            x1={geom.carry.x1} y1={geom.carry.y1} x2={geom.carry.x2} y2={geom.carry.y2}
+            stroke={ACTUAL} strokeOpacity={0.32} strokeWidth={1.5} strokeDasharray="1 3"
+            strokeLinecap="round"
           />
         )}
 
@@ -354,30 +428,30 @@ export default function ProjectionChart({
         <Circle cx={X(geom.today)} cy={Y(start.projected)} r={4}
           fill={STEADY} stroke="#0B0C18" strokeWidth={1.5} />
 
-        {/* The corridor's own edges at the horizon — real marks, not the
-            padded domain. */}
-        <SvgText x={W - padR + 5} y={Y(geom.endBest) + 3} fontSize={9} fill={STEADY}>
-          {valueFmt(geom.endBest)}
-        </SvgText>
-        <SvgText x={W - padR + 5} y={Y(geom.endWorst) + 3} fontSize={9} fill="rgba(255,255,255,0.44)">
-          {valueFmt(geom.endWorst)}
-        </SvgText>
+        {/* The gutter: the corridor's own edges at the horizon, the target
+            cut and the PB — whichever of them can be read without printing
+            through each other. See the placer above. */}
+        {gutter.map((g, i) => (
+          <SvgText key={`g${i}`} x={W - padR + 5} y={g.y + 3} fontSize={g.size} fill={g.fill}>
+            {g.text}
+          </SvgText>
+        ))}
 
         {/* Age axis */}
-        <SvgText x={X(geom.x0)} y={H - 10} fontSize={9} fill="rgba(255,255,255,0.44)" textAnchor="start">
+        <SvgText x={xStart} y={H - 10} fontSize={9} fill="rgba(255,255,255,0.44)" textAnchor="start">
           {`age ${Math.round(geom.x0)}`}
         </SvgText>
-        {geom.Hs.length > 0 && geom.x0 < geom.today - 0.2 && (
-          <SvgText x={X(geom.today)} y={H - 10} fontSize={9} fill="rgba(255,255,255,0.70)" textAnchor="middle">
+        {showNow && (
+          <SvgText x={xNow} y={H - 10} fontSize={9} fill="rgba(255,255,255,0.70)" textAnchor="middle">
             now
           </SvgText>
         )}
-        {geom.peakInView && (
-          <SvgText x={X(geom.PX(geom.peak.age))} y={H - 10} fontSize={9} fill={STEADY} textAnchor="middle">
+        {showPeak && xPeak != null && (
+          <SvgText x={xPeak} y={H - 10} fontSize={9} fill={STEADY} textAnchor="middle">
             {`peak ${geom.peak.age}`}
           </SvgText>
         )}
-        <SvgText x={X(geom.a1)} y={H - 10} fontSize={9} fill="rgba(255,255,255,0.44)" textAnchor="end">
+        <SvgText x={xEnd} y={H - 10} fontSize={9} fill="rgba(255,255,255,0.44)" textAnchor="end">
           {`age ${Math.round(geom.a1)}`}
         </SvgText>
       </Svg>
@@ -386,7 +460,7 @@ export default function ProjectionChart({
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: spacing.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ width: 14, height: 2.5, borderRadius: radius.hair, backgroundColor: ACTUAL }} />
-          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>Your races</Text>
+          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>Your results</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ width: 14, height: 2.5, borderRadius: radius.hair, backgroundColor: STEADY, opacity: 0.9 }} />
@@ -397,7 +471,9 @@ export default function ProjectionChart({
             width: 14, height: 9, borderRadius: radius.hair,
             backgroundColor: STEADY, opacity: 0.24,
           }} />
-          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>Slower / faster quarter</Text>
+          <Text style={{ fontSize: typeScale.label, color: colors.text.muted }}>
+            {lower ? 'Slower / faster quarter' : 'Lower / higher quarter'}
+          </Text>
         </View>
       </View>
     </View>

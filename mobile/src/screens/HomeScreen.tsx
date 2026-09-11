@@ -654,7 +654,7 @@ export default function HomeScreen() {
               <Text style={styles.heroEmptyBody}>
                 {perfAwaiting.length > 0
                   ? 'Your result is logged. It becomes your mark once your coach approves it.'
-                  : 'Log a race or a test and this becomes your mark.'}
+                  : 'Log a competition result or a physical test and this becomes your mark.'}
               </Text>
             </Tappable>
           )}

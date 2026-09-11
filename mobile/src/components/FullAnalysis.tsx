@@ -108,9 +108,12 @@ function buildEditorial(
     : isDistanceDiscipline(discipline) ? 'distance runners' : 'sprinters'
   const discDisplay = discipline.toLowerCase()
 
+  // Reads `athlete`, which is what lib/corpus.ts returns. It used to read
+  // `athlete_name` — a column name from the retired find_similar_athletes
+  // RPC — so every name came back empty and the clause never appeared.
   const simNames = similarAthletes.slice(0, 2).map((s: any) =>
-    (s.athlete_name || s.name || '').split(' ').pop()
-  )
+    String(s.athlete || '').split(' ').pop()
+  ).filter(Boolean)
   const simRef = simNames.length > 0 ? ` — a trajectory shared by ${simNames.join(' and ')}` : ''
   const peakSentence = yearsToPeak > 0
     ? ` Typical peak window for ${discDisplay} is age ${peakAgeValue}–${peakAgeValue + 2} (${yearsToPeak} year${yearsToPeak !== 1 ? 's' : ''} out).`
@@ -266,7 +269,7 @@ export default function FullAnalysis({
   const yearsToPeak = Math.max(0, peakAgeValue - age)
 
   // ── Similar athletes ──
-  const [similarAthletes, setSimilarAthletes] = useState<any[]>([])
+  const [similarAthletes, setSimilarAthletes] = useState<SimilarAthlete[]>([])
   const [similarLoading, setSimilarLoading] = useState(true)
 
   useEffect(() => {
@@ -466,38 +469,53 @@ export default function FullAnalysis({
         ) : similarAthletes.length === 0 ? (
           <Text style={s.mutedText}>No career-matched athletes found for this event and age combination.</Text>
         ) : (
-          similarAthletes.map((a: any, idx: number) => (
-            <View key={idx} style={s.athleteCard}>
+          // Every field here is read off the SimilarAthlete shape that
+          // lib/corpus.ts returns. This block used to read athlete_name,
+          // country, pb_time, closest_age, time_at_similar_age, peak_age and
+          // classification — column names from find_similar_athletes, an RPC
+          // that was dropped in the implement-weight consolidation. The rows
+          // arrived fine; every single field read undefined, so the card
+          // rendered five grey "?" avatars with blank names and em-dashes,
+          // and nothing anywhere threw. Typed as SimilarAthlete rather than
+          // `any` so the next rename fails the build instead of the screen.
+          similarAthletes.map((a: SimilarAthlete, idx: number) => (
+            <View key={`${a.athlete}-${idx}`} style={s.athleteCard}>
               <View style={s.athleteHeader}>
                 <View style={s.athleteAvatar}>
-                  <Text style={s.athleteInitial}>{(a.athlete_name || '?')[0]}</Text>
+                  <Text style={s.athleteInitial}>{(a.athlete || '?').trim()[0]}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.athleteName}>{a.athlete_name}</Text>
-                  <Text style={s.athleteMeta}>{a.country}</Text>
+                  <Text style={s.athleteName}>{a.athlete}</Text>
+                  <Text style={s.athleteMeta}>{a.nationality || '\u2014'}</Text>
                 </View>
                 <View style={s.athletePbWrap}>
-                  <Text style={s.athletePbLabel}>PB</Text>
-                  <Text style={s.athletePbVal}>{formatPerf(a.pb_time, discipline)}</Text>
+                  <Text style={s.athletePbLabel}>BEST</Text>
+                  <Text style={s.athletePbVal}>{formatPerf(a.bestSameEvent, discipline)}</Text>
                 </View>
               </View>
               <View style={s.athleteStats}>
+                {/* The age is stated rather than implied. An athlete matched
+                    at 17 and one matched at 19 are different comparisons,
+                    and a bare "at your age" hid which had happened. */}
                 <View style={s.athleteStatItem}>
-                  <Text style={s.athleteStatLabel}>At Age {a.closest_age}</Text>
-                  <Text style={s.athleteStatVal}>{formatPerf(a.time_at_similar_age, discipline)}</Text>
+                  <Text style={s.athleteStatLabel}>At Age {a.matchedAge}</Text>
+                  <Text style={s.athleteStatVal}>{formatPerf(a.atYourAge, discipline)}</Text>
                 </View>
-                {a.peak_age && (
+                {a.seniorBest != null && (
                   <View style={s.athleteStatItem}>
-                    <Text style={s.athleteStatLabel}>Peak Age</Text>
-                    <Text style={s.athleteStatVal}>{a.peak_age}</Text>
+                    <Text style={s.athleteStatLabel}>
+                      {a.seniorEvent && a.seniorEvent !== discipline ? a.seniorEvent : 'Career Best'}
+                    </Text>
+                    <Text style={[s.athleteStatVal, { color: colors.orange[500] }]}>
+                      {formatPerf(a.seniorBest, a.seniorEvent || discipline)}
+                      {a.ageAtSeniorBest != null ? ` @ ${a.ageAtSeniorBest}` : ''}
+                    </Text>
                   </View>
                 )}
-                {a.classification && (
+                {a.yearsStillCompeting != null && a.yearsStillCompeting > 0 && (
                   <View style={s.athleteStatItem}>
-                    <Text style={s.athleteStatLabel}>Olympic</Text>
-                    <Text style={[s.athleteStatVal, { color: colors.orange[500] }]}>
-                      {a.classification === 'F' ? 'Finalist' : a.classification === 'SF' ? 'Semi' : 'Qualifier'}
-                    </Text>
+                    <Text style={s.athleteStatLabel}>Seasons After</Text>
+                    <Text style={s.athleteStatVal}>{a.yearsStillCompeting}</Text>
                   </View>
                 )}
               </View>

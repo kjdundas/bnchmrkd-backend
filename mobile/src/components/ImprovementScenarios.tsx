@@ -16,7 +16,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, spacing, typeScale, weight } from '../lib/theme'
 import { AlmanacCard } from './ui'
-import ProjectionChart, { type HistorySummary } from './ProjectionChart'
+import ProjectionChart, { HORIZON_YEARS, type HistorySummary } from './ProjectionChart'
 import { getTier } from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { isLowerBetter, formatMark as formatPerformance } from '../lib/disciplineScience'
@@ -75,14 +75,38 @@ export default function ImprovementScenariosSection({
     return () => { live = false }
   }, [discipline, sex, age, pb])
 
+  const lowerIsBetter = isLowerBetter(discipline)
+
   const fromCorpus = useMemo(() => {
     if (!band || age == null) return null
     // Only forward: the athlete's own past is drawn from their own results,
     // and other people's pasts are not their history.
+    //
+    // ── p25 and p75 mean opposite things in the two sources ────────
+    //
+    // The bundled curves return percentiles of the IMPROVEMENT RATE, so p75
+    // is the athlete who improved most — the optimistic edge, whichever way
+    // the event is scored. The corpus returns percentiles of the MARK, so
+    // p75 is the 75th-fastest-percentile TIME, which for a track event is
+    // the SLOW edge. ProjectionChart was written against the first meaning
+    // and labels `p75` in the projection colour as the good news.
+    //
+    // Nobody reconciled them. Every track athlete on the corpus path had the
+    // two edges of their corridor labelled backwards: a 27-year-old 400m
+    // runner was shown "47.09s" — the slowest quarter of everyone at his
+    // mark — printed in the projection's own colour at the bottom of his
+    // chart, as if it were what he was heading for. Normalised here, once,
+    // so the chart keeps one meaning: p75 is always the better outcome.
     return band
       .filter((b) => b.age >= Math.floor(age))
-      .map((b) => ({ age: b.age, projected: b.p50, p25: b.p25, p75: b.p75, n: b.n }))
-  }, [band, age])
+      .map((b) => ({
+        age: b.age,
+        projected: b.p50,
+        p25: lowerIsBetter ? b.p75 : b.p25,
+        p75: lowerIsBetter ? b.p25 : b.p75,
+        n: b.n,
+      }))
+  }, [band, age, lowerIsBetter])
 
   const { projections, blocked } = useMemo(() => {
     if (!pb) return { projections: null, blocked: 'nopb' as const }
@@ -105,11 +129,20 @@ export default function ImprovementScenariosSection({
     }
   }, [pb, age, discipline, sex])
 
-  const lower = isLowerBetter(discipline)
+  const lower = lowerIsBetter
   const confidence: Confidence = band && age != null ? confidenceAt(band, age) : 'none'
   // The corpus wins where it has anything to say; the curves stay as the
   // fallback for events and ages it does not reach.
-  const line = fromCorpus && fromCorpus.length >= 2 ? fromCorpus : projections?.steady
+  //
+  // One flag, used by both the line and the footnote that describes it. They
+  // were two different tests — the line needed two corpus points, the
+  // footnote only needed the array to exist — so a band that came back with
+  // a single usable age drew the CURVES while the paragraph underneath told
+  // the reader it was "every athlete in our records who was within 4% of
+  // your mark". Two sources, one picture, and no way to tell which you were
+  // looking at.
+  const usingCorpus = !!(fromCorpus && fromCorpus.length >= 2)
+  const line = usingCorpus ? fromCorpus : projections?.steady
 
   const [histSummary, setHistSummary] = useState<HistorySummary | null>(null)
 
@@ -155,10 +188,46 @@ export default function ImprovementScenariosSection({
           : (pt.projected > best.projected ? pt : best)),
       null,
     )
-  const peak = peakOf(line)
+
+  // ── The sentence has to describe the chart above it ──────────────
+  //
+  // It didn't. `line` runs to age 35; the chart clips at five years and says
+  // so in its own footnote. So a 14-year-old javelin thrower read "you'd peak
+  // around 37.35m at age 23" printed directly beneath an axis whose last tick
+  // was age 19 — a number with no mark on the picture, nine years past
+  // anything drawn, and taken from the far end of an extrapolation the chart
+  // deliberately refuses to show. Peak is now taken from the window that was
+  // actually drawn.
+  const windowEnd = (line?.[0]?.age ?? 0) + HORIZON_YEARS
+  const drawn = (line || []).filter((p: any) => p.age <= windowEnd)
+  const peak = peakOf(drawn)
+
+  // Is the peak just today? For anyone at or past their event's peak age the
+  // median path from here is flat or downhill, so the best point in the
+  // window IS the first one — and the card was announcing "you'd peak around
+  // 45.51s at age 27" to a 27-year-old whose PB is 45.60. That is not a
+  // projection, it's a restatement, and it reads as a prediction that they
+  // are finished. Said plainly instead.
+  const peakIsNow = peak != null && drawn.length > 0 && peak.age === drawn[0].age
   const gain = peak ? (lower ? pb - peak.projected : peak.projected - pb) : null
-  const peakTier = peak
-    ? getTier(discipline, sex, getAgeGroup(peak.age), peak.projected)
+
+  // Grading a projected mark against a tier ladder only means something when
+  // the projection stays inside the athlete's own competition. A U15 girl
+  // throws a 500 g javelin; at 23 she throws 600 g. Carrying her mark forward
+  // and scoring it against SENIOR cuts compared two different implements and
+  // printed "Below Emerging" under a 14-year-old's chart — demoralising, and
+  // measuring nothing. The tier clause is dropped when the projection crosses
+  // out of the age group she is in now, and whenever it lands below the
+  // bottom rung, where the ladder has nothing to say either.
+  const nowGroup = age ? getAgeGroup(age) : 'Senior'
+  const peakGroup = peak ? getAgeGroup(peak.age) : nowGroup
+  const rawPeakTier = peak
+    ? getTier(discipline, sex, peakGroup, peak.projected)
+    : null
+  const peakTier = peakGroup === nowGroup
+    && rawPeakTier?.tierName
+    && rawPeakTier.tierName !== 'Below Emerging'
+    ? rawPeakTier
     : null
 
   return (
@@ -189,20 +258,28 @@ export default function ImprovementScenariosSection({
       )}
 
       {/* One sentence, not a table. */}
-      {peak && (
+      {peak && (peakIsNow ? (
         <Text style={styles.projLede}>
-          On a consistent development path you'd peak around{' '}
+          Over the next {HORIZON_YEARS} years the median athlete who was on your
+          mark at your age did not improve on it — this holds around{' '}
           <Text style={styles.projStrong}>{formatPerformance(peak.projected, discipline)}</Text>
-          {' '}at <Text style={styles.projStrong}>age {peak.age}</Text>
+          {' '}and drifts from there. The band above it is the quarter who did
+          keep improving.
+        </Text>
+      ) : (
+        <Text style={styles.projLede}>
+          On a consistent development path you'd be around{' '}
+          <Text style={styles.projStrong}>{formatPerformance(peak.projected, discipline)}</Text>
+          {' '}by <Text style={styles.projStrong}>age {peak.age}</Text>
           {gain != null && gain > 0
             ? ` — ${Math.abs(gain).toFixed(2)}${lower ? 's' : 'm'} on your current best`
             : ''}
           {peakTier?.tierName ? `, which is ${peakTier.tierName} for that age group.` : '.'}
         </Text>
-      )}
+      ))}
 
       <Text style={styles.projFootnote}>
-        {fromCorpus
+        {usingCorpus
           ? `Every athlete in our records who was within 4% of your mark at your age, and what they actually went on to run. The band is the 25th to 75th percentile of what happened to them — real outcomes, not a forecast, and not a confidence interval. ${CONFIDENCE_COPY[confidence]}`
           : 'Built from year-on-year improvement rates of real athletes in this event, by age. The shaded band is the 25th to 75th percentile of how they developed — a spread of outcomes, not a confidence interval, and not a prediction about you. It stops five years out because the optimistic edge assumes a top-quarter year every year, which nobody sustains for longer than that.'}
       </Text>

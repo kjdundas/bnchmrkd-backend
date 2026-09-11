@@ -1002,11 +1002,35 @@ export function projectPerformance(currentPB, currentAge, discipline, gender, tr
     const n = traj.n[age] || 0;
     
     if (rate === undefined) {
-      // No data for this age — extrapolate from last known rate with decay
-      const lastKnownAge = Math.max(...Object.keys(traj.rates).map(Number).filter(a => a < age));
-      if (lastKnownAge && traj.rates[lastKnownAge] !== undefined) {
-        const lastRate = traj.rates[lastKnownAge];
-        const decayedRate = lastRate * Math.pow(0.85, age - lastKnownAge); // Conservative decay
+      // No data for this age — carry the nearest known rate, decayed.
+      //
+      // This used to look only BACKWARDS: Math.max of the keys below `age`.
+      // For an athlete younger than the table's first entry there are no such
+      // keys, Math.max() of an empty list is -Infinity, traj.rates[-Infinity]
+      // is undefined, and the whole branch was skipped WITHOUT touching
+      // `projected` — so the curve sat flat on the PB for every year before
+      // the table started and then jumped. A 14-year-old javelin thrower got
+      // a dead horizontal dash from 14 to 16 (the Female table starts at 16)
+      // before the line moved at all, which is what "the predictor doesn't
+      // make sense" looks like on the chart.
+      //
+      // Below the table we now reach FORWARD to its first year instead. A
+      // 14-year-old improves at least as fast as a 16-year-old, so borrowing
+      // the youngest rate we hold is conservative, and it is a great deal
+      // more honest than asserting no improvement at all.
+      const ages = Object.keys(traj.rates).map(Number).filter(Number.isFinite);
+      const below = ages.filter(a => a < age);
+      const above = ages.filter(a => a > age);
+      const nearestAge = below.length ? Math.max(...below)
+        : above.length ? Math.min(...above)
+        : null;
+      if (nearestAge != null && traj.rates[nearestAge] !== undefined) {
+        const lastRate = traj.rates[nearestAge];
+        // Only decay when extrapolating PAST the table. Reaching back to its
+        // first year is not an extrapolation in time, and decaying it would
+        // understate a developing athlete.
+        const gap = age - nearestAge;
+        const decayedRate = gap > 0 ? lastRate * Math.pow(0.85, gap) : lastRate;
         if (isDesc) {
           projected *= (1 + decayedRate / 100);
           p25Val *= (1 + (r25 !== undefined ? r25 : decayedRate * 0.6) / 100);

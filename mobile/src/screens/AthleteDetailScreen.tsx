@@ -22,7 +22,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { getTier, TIER_NAMES, TIER_COLORS , TIER_INK} from '../lib/performanceTiers'
 import { getAgeGroup } from '../lib/performanceLevels'
 import { ageFromDob } from '../lib/age'
-import { isLowerBetter, performancePercentile, formatMark } from '../lib/disciplineScience'
+import { isLowerBetter, performancePercentile, formatMark, eventNoun, countEvents } from '../lib/disciplineScience'
 import {
   fetchResults, subjectOf, pbOf, seasonBestsOf, trendOf,
 } from '../lib/athleteResults'
@@ -101,6 +101,8 @@ export default function AthleteDetailScreen() {
 
   const tier = pb ? getTier(athlete.discipline, genderCode, ageGroup, pb) : null
   const percentile = pb ? performancePercentile(pb, athlete.discipline, genderCode) : null
+  // A hammer thrower's profile said "5 RACES" over five throws.
+  const noun = eventNoun(athlete.discipline)
 
   // Newest first. The date is a plain YYYY-MM-DD, so it sorts as a string —
   // going through Date would read it as UTC midnight.
@@ -266,7 +268,7 @@ export default function AthleteDetailScreen() {
                 <View style={styles.heroStatDivider} />
                 <View style={styles.heroStat}>
                   <Text style={styles.heroStatVal}>{races.length}</Text>
-                  <Text style={styles.heroStatLabel}>Races</Text>
+                  <Text style={styles.heroStatLabel}>{noun.many}</Text>
                 </View>
                 {tier?.nextTier && (
                   <>
@@ -324,7 +326,7 @@ export default function AthleteDetailScreen() {
                     <Text style={[styles.seasonBest, isBest && { color: colors.orange[500] }]}>
                       {formatMark(sb.best, athlete.discipline)}
                     </Text>
-                    <Text style={styles.seasonCount}>{sb.count} race{sb.count !== 1 ? 's' : ''}</Text>
+                    <Text style={styles.seasonCount}>{countEvents(sb.count, athlete.discipline)}</Text>
                   </View>
                 </View>
               )
@@ -337,7 +339,7 @@ export default function AthleteDetailScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="list-outline" size={14} color={colors.blue} />
-              <Text style={styles.sectionTitle}>Race Log</Text>
+              <Text style={styles.sectionTitle}>Competition Log</Text>
               <Text style={styles.sectionCount}>{races.length}</Text>
             </View>
             {races.slice(0, 15).map((race: any, idx: number) => {
@@ -365,7 +367,7 @@ export default function AthleteDetailScreen() {
               )
             })}
             {races.length > 15 && (
-              <Text style={styles.moreText}>+ {races.length - 15} more races</Text>
+              <Text style={styles.moreText}>+ {races.length - 15} more {noun.many}</Text>
             )}
           </View>
         )}

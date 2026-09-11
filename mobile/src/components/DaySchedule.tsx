@@ -185,7 +185,7 @@ export default function DaySchedule({
             <View key={i} style={s.line}>
               <View style={[s.bullet, { backgroundColor: colors.accent[500] }]} />
               <Text style={[s.lineText, { color: colors.text.primary }]} numberOfLines={1}>
-                {r.discipline || r.event || 'Race'}
+                {r.discipline || r.event || 'Competition'}
               </Text>
               <Text style={[s.lineValue, { color: colors.text.primary }]}>
                 {formatMark(r.mark ?? r.result ?? r.value, r.discipline || r.event)}

@@ -613,7 +613,7 @@ export default function CoachRosterScreen() {
             <View style={styles.quickStatDivider} />
             <View style={styles.quickStatItem}>
               <Text style={styles.quickStatNum}>{stats.totalRaces}</Text>
-              <Text style={styles.quickStatLabel}>Total Races</Text>
+              <Text style={styles.quickStatLabel}>Total Results</Text>
             </View>
           </View>
         )}

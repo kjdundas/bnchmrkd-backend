@@ -32,6 +32,7 @@ import {
   ageAdjustScore,
   AXIS_INFO,
   disciplinePriority,
+  eventNoun,
 } from '../lib/disciplineScience'
 import { similarAthletes, type SimilarAthlete } from '../lib/corpus'
 // Not historicalRivals' own ageFromDob: that file is synced verbatim from the
@@ -118,6 +119,8 @@ export function TrajectoryHero({ races, pb, discipline, sex = 'M', streak }: Tra
     const sbIsPb = sbRow && pbRow && Math.abs(sbRow.value - pbRow.value) < 1e-6
     return { pb: pbRow, sb: sbRow, last, sbIsPb }
   }, [races, higher])
+
+  const noun = eventNoun(discipline)
 
   const effectivePb = pb != null ? Number(pb) : stats.pb?.value ?? null
 
@@ -206,9 +209,9 @@ export function TrajectoryHero({ races, pb, discipline, sex = 'M', streak }: Tra
           )}
         </View>
 
-        {/* Last Race */}
+        {/* Last result. Not "LAST RACE" — a shot putter has never raced. */}
         <View style={[s.heroStatCol, s.heroStatBorder]}>
-          <Text style={s.heroStatKickerDim}>LAST RACE</Text>
+          <Text style={s.heroStatKickerDim}>LAST {noun.one.toUpperCase()}</Text>
           <Text style={s.heroStatBigVal}>
             {stats.last ? Number(stats.last.value).toFixed(2) : '—'}
           </Text>

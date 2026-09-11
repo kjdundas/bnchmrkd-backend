@@ -387,7 +387,7 @@ function TierPositioningSection({
       tone: 'quiet',
       text: trend.reason === 'few'
         ? `${trend.n} race${trend.n === 1 ? '' : 's'} logged. Three across a season is enough to read a trend.`
-        : `Your races are too close together to read a rate yet — about three months apart is enough.`,
+        : `Your results are too close together to read a rate yet — about three months apart is enough.`,
     }
   } else {
     const per = trend.perYear
