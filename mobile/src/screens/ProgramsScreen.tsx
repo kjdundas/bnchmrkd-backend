@@ -27,7 +27,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { selectFrom, insertInto, deleteFrom, updateIn, upsertInto, authHeader } from '../lib/supabase'
 import { metricForExercise } from '../lib/exerciseMetrics'
-import { API_BASE } from '../lib/api'
+import { API_BASE, generateProgram } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme, OnImageTheme } from '../contexts/ThemeContext'
 import { spacing, radius, rhythm, onImage, typeScale, weight, lift } from '../lib/theme'
@@ -1158,7 +1158,7 @@ function ProgramsBody() {
     setError(''); setGenerating(true)
     try {
       const payload = {
-        role: 'athlete',
+        role: 'athlete' as const,
         // The FULL context, not a name and a discipline. `age` and `maturity`
         // are what the backend picks the loading ceiling from — without them
         // every athlete, at any age, got the adult one.
@@ -1187,16 +1187,10 @@ function ProgramsBody() {
           target_competition_date: intake.target_competition_date || null,
         },
       }
-      const res = await fetch(`${API_BASE}/api/v1/assistant/program`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader() },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) {
-        const b = await res.json().catch(() => ({}))
-        throw new Error((b as any).detail || `Server error ${res.status}`)
-      }
-      const { program } = await res.json()
+      // Was a raw fetch. Now goes through lib/api, which strips the
+      // athlete's name before the request leaves the device and puts it
+      // back in the returned program — see lib/pseudonyms.
+      const { program } = await generateProgram(payload)
       if (!program || !program.title) throw new Error('The program came back empty — try again.')
       const saved = await insertInto('programs', {
         athlete_user_id: user!.id, created_by: user!.id, source: 'ai',
