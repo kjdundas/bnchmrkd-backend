@@ -109,6 +109,12 @@ export default function PrivacyPolicy({ onBack }) {
               appropriate authorisation.
             </p>
             <p className="mb-2">
+              A minor's training data may be sent to OpenAI by the Assistant and the training programme generator, as
+              described in Section 6. Their name is removed first and is never sent. Parents and guardians should read
+              that section, and should know that the Assistant is a training tool only — it is not a counselling,
+              medical or nutrition service, and it is not supervised by a person in real time.
+            </p>
+            <p className="mb-2">
               Where a minor completes daily check-ins, that record may include health-related information such as
               pain and its location (see Section 2). A parent or guardian may contact us at any time to review this
               information, ask us to delete it, or withdraw consent to its collection.
@@ -124,7 +130,29 @@ export default function PrivacyPolicy({ onBack }) {
             <p className="mb-2">We share personal information with the following service providers strictly for the purpose of delivering the Service:</p>
             <p className="mb-2"><strong className="text-white">Supabase</strong> — database and authentication infrastructure. All user profile and performance data is stored in Supabase. Supabase processes data in the regions disclosed in its own privacy documentation.</p>
             <p className="mb-2"><strong className="text-white">Railway</strong> — application hosting for our backend services.</p>
-            <p className="mb-2"><strong className="text-white">OpenAI</strong> — the AI Scanner feature sends the text and images you upload to OpenAI's API for extraction of athlete results. Per OpenAI's policy for API customers, these submissions are not used to train OpenAI's models. OpenAI is a US-based provider and your data may be transferred to, and processed in, the United States.</p>
+            <p className="mb-2"><strong className="text-white">OpenAI</strong> — three features in bnchmrkd. use OpenAI's API, and this is what each one sends:</p>
+            <p className="mb-1 ml-4">— <strong className="text-white">AI Scanner:</strong> the text and images you upload, so that athlete results can be extracted from them.</p>
+            <p className="mb-1 ml-4">— <strong className="text-white">Assistant:</strong> when you ask a question, the athlete data already on your screen goes with it — event, age, biological maturity estimate where we hold one, physical test scores, and competition results. For a coach, that covers the athletes shown in the squad you are looking at.</p>
+            <p className="mb-2 ml-4">— <strong className="text-white">Training programme generator:</strong> the same athlete data, so the plan can be built around the right event, age and development stage.</p>
+            <p className="mb-2">
+              <strong className="text-white">Athletes' names are removed before any of this is sent.</strong> Each
+              athlete is replaced with a label — "Athlete-1", "Athlete-2" — on your own device, and the real names are
+              put back into the answer on your device after it returns. OpenAI does not receive athlete names, email
+              addresses, dates of birth, clubs or photographs from the Assistant or the programme generator. It
+              receives training data attached to a number.
+            </p>
+            <p className="mb-2">
+              Per OpenAI's policy for API customers, submissions are not used to train OpenAI's models. OpenAI retains
+              API content for up to 30 days for abuse monitoring, then deletes it. OpenAI is a US-based provider and
+              this data may be transferred to, and processed in, the United States.
+            </p>
+            <p className="mb-2">
+              The Assistant is a training tool, not a medical, psychological or nutritional service, and it is not a
+              substitute for a coach, a parent or a doctor. Messages an athlete sends to it are checked automatically
+              for signs of self-harm or crisis; where that check triggers, the Assistant stops answering as a coach and
+              directs the athlete to a trusted adult and to local support. We do not store the content of Assistant
+              conversations.
+            </p>
             <p className="mb-2"><strong className="text-white">Cloudflare</strong> — DNS, CDN, and cookieless Web Analytics.</p>
             <p className="mb-2"><strong className="text-white">PostHog</strong> — product usage analytics, hosted in the European Union. Receives events describing how the Service is used. Configured without cookies and with session recording disabled.</p>
             <p className="mb-2"><strong className="text-white">Expo</strong> — build and over-the-air update infrastructure for our mobile applications. Expo delivers application updates to your device; it does not receive your profile, performance, or check-in data.</p>
